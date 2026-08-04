@@ -1,0 +1,12 @@
+Plesiosaur poster and thumbnail derivation record
+=================================================
+
+Generated: 2026-07-31
+
+The poster is a 960 × 540 WebP capture of the accepted model and landscape in
+the shared Three.js viewer, without text, controls, logos, or watermarks. The
+320 × 320 thumbnail uses an independently selected square crop that keeps the
+head, long neck, torso, and flippers clear of the card badge.
+
+The model attribution and CC BY 4.0 terms in model-license.txt continue to
+apply. The background generation record is retained separately.

@@ -1,0 +1,211 @@
+import type { AssetProvenance } from '../../types'
+
+const modelLicense = {
+  spdx: 'CC-BY-4.0',
+  name: 'Creative Commons Attribution 4.0 International',
+  url: 'https://creativecommons.org/licenses/by/4.0/',
+} as const
+
+const generatedImageLicense = {
+  spdx: 'CC-BY-NC-SA-4.0',
+  name: 'CC BY-NC-SA 4.0 project-owned ImageGen output',
+  url: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+} as const
+
+const sharedBackgroundPrompt =
+  'Precise edit of the accepted layered paper-cut and soft-gouache fern forest clearing; subtly raise the horizon and extend continuous level ground through the centred Stegosaurus staging zone; preserve the vegetation, palette, lighting, texture, and framing; no animal, person, text, UI, logo, watermark, or particles.'
+
+const portraitBackgroundPrompt =
+  'Precise portrait edit of the accepted layered paper-cut and soft-gouache fern forest clearing; change only the scene depth by moving the distant forest horizon and start of the open clearing upward about 8–10% of image height, extending continuous level ground behind a Stegosaurus whose feet sit around 61% image height; preserve the 9:16 framing, sky, warm haze, distant conifers, border trunks and ferns, foreground leaves, palette, lighting, paper texture, and perspective; no animal, person, text, UI, logo, watermark, particles, platform, ridge, ledge, hard seam, or new focal object.'
+
+export const provenance = [
+  {
+    assetPath: 'model/model.glb',
+    kind: 'model',
+    source: {
+      type: 'third-party',
+      title: 'PBR Stegasaurus (Animated)',
+      author: 'Ferocious Industries',
+      url: 'https://sketchfab.com/3d-models/pbr-stegasaurus-animated-ec254ea1554941fe8a131f62db0faf3d',
+      accessedOn: '2026-07-26',
+      sha256:
+        '611aa55ad61025a5ec6391081f70bb916e60909b73361e5919f73acfa9012d75',
+      bytes: 8_026_408,
+    },
+    license: modelLicense,
+    runtime: {
+      sha256:
+        '514e673525173134279604efe592e9c5079e916e8e2be0d729701bbb650adae1',
+      bytes: 6_819_152,
+    },
+    modifications: [
+      'Downloaded as the converted GLB with 1K textures.',
+      'Converted legacy specular/glossiness materials to metallic/roughness.',
+      'Cleared zero-weight joint indices.',
+      'Retained IdleA only, renamed it Idle, pruned unused data, and repacked the GLB.',
+      'Corrected the project-facing animal name from “Stegasaurus” to “Stegosaurus”.',
+    ],
+    attribution:
+      '“PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.',
+    redistributionAllowed: true,
+    evidencePaths: [
+      'provenance/LICENSES/model-license.txt',
+      'provenance/LICENSES/model-source.txt',
+    ],
+  },
+  {
+    assetPath: 'backgrounds/landscape.webp',
+    kind: 'background',
+    source: {
+      type: 'generated',
+      title: 'Stegosaurus prehistoric forest — landscape',
+      tool: 'OpenAI built-in image_gen',
+      generatedOn: '2026-07-29',
+      prompt: `${sharedBackgroundPrompt} Subtle 16:9 correction from roughly 62% to about 55% image height.`,
+      sha256:
+        '508cfc15ccd3f0620e05f183110bfd70db7139bee60856d269657a8093badbed',
+      bytes: 2_956_941,
+    },
+    license: generatedImageLicense,
+    runtime: {
+      sha256:
+        '9a1990a3f554b0e237b57298a8495cf4ba7f7db450c1d4795cd9d6a4221e64e4',
+      bytes: 345_538,
+    },
+    modifications: [
+      'Converted the selected 1672 × 941 PNG candidate to lossy WebP at quality 82.',
+      'Removed ancillary metadata without applying a runtime tint, filter, or colour overlay.',
+    ],
+    attribution:
+      'Project-generated Stegosaurus landscape created with OpenAI ImageGen.',
+    redistributionAllowed: true,
+    evidencePaths: ['provenance/LICENSES/background-generation.txt'],
+  },
+  {
+    assetPath: 'backgrounds/portrait.webp',
+    kind: 'background',
+    source: {
+      type: 'generated',
+      title: 'Stegosaurus prehistoric forest — portrait',
+      tool: 'OpenAI built-in image_gen',
+      generatedOn: '2026-07-31',
+      prompt: portraitBackgroundPrompt,
+      sha256:
+        'e042dd7de1e9ad6d2f3703d51640af5d1fbf3bcd1a9ba2b3e55e76f956277a47',
+      bytes: 2_815_335,
+    },
+    license: generatedImageLicense,
+    runtime: {
+      sha256:
+        '7b432f99dab96bb76bc4563776c7b84b03766d128eb0afcc024a10be7a4894ed',
+      bytes: 315_482,
+    },
+    modifications: [
+      'Converted the selected 941 × 1672 PNG candidate to lossy WebP at quality 82.',
+      'Removed ancillary metadata without applying a runtime tint, filter, or colour overlay.',
+    ],
+    attribution:
+      'Project-generated Stegosaurus portrait created with OpenAI ImageGen.',
+    redistributionAllowed: true,
+    evidencePaths: ['provenance/LICENSES/background-generation.txt'],
+  },
+  {
+    assetPath: 'images/poster.webp',
+    kind: 'poster',
+    source: {
+      type: 'derived',
+      title: 'Stegosaurus model fallback poster',
+      generatedOn: '2026-07-29',
+      inputAssetPaths: [
+        'model/model.glb',
+        'backgrounds/landscape.webp',
+      ],
+      method:
+        'Captured the accepted 1440 × 900 runtime presentation with the corrected horizon, cropped the 960 × 540 model stage, then encoded with cwebp quality 84 effort 6.',
+    },
+    license: modelLicense,
+    runtime: {
+      sha256:
+        'f578ce537cd857c008b34262287663fc306f1bd68f5df46700cba74e8f8977bb',
+      bytes: 94_458,
+    },
+    modifications: [
+      'Composited the accepted runtime model presentation with the project-generated landscape.',
+      'Exported a 960 × 540 WebP fallback without text, controls, or labels.',
+    ],
+    attribution:
+      'Poster includes “PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; scene art generated for this project.',
+    redistributionAllowed: true,
+    evidencePaths: [
+      'provenance/LICENSES/model-license.txt',
+      'provenance/LICENSES/derived-images.txt',
+    ],
+  },
+  {
+    assetPath: 'images/thumbnail.webp',
+    kind: 'thumbnail',
+    source: {
+      type: 'derived',
+      title: 'Stegosaurus collection thumbnail',
+      generatedOn: '2026-07-29',
+      inputAssetPaths: ['images/poster.webp'],
+      method:
+        'Cropped a readable 700 × 700 model-stage detail from the corrected runtime presentation, resized it to 320 × 320, then encoded with cwebp quality 82 effort 6.',
+    },
+    license: modelLicense,
+    runtime: {
+      sha256:
+        'a5535eca0d5dc26a4017fa786bbf4d77c91bc78c00017dd6664f1c51913df423',
+      bytes: 18_252,
+    },
+    modifications: [
+      'Replaced the letterboxed overview with a closer crop that keeps the head and back plates readable at card size.',
+      'Exported a 320 × 320 WebP without embedded text, controls, or labels.',
+    ],
+    attribution:
+      'Thumbnail includes “PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; scene art generated for this project.',
+    redistributionAllowed: true,
+    evidencePaths: [
+      'provenance/LICENSES/model-license.txt',
+      'provenance/LICENSES/derived-images.txt',
+    ],
+  },
+  {
+    assetPath: 'audio/narration.zh-CN.mp3',
+    kind: 'narration',
+    source: {
+      type: 'generated',
+      title: 'Stegosaurus Mandarin narration',
+      tool: 'Qwen3-TTS CustomVoice',
+      model: 'Qwen3-TTS-12Hz-0.6B-CustomVoice',
+      revision: 'Serena built-in voice; deterministic local generation',
+      generatedOn: '2026-07-27',
+      prompt:
+        '这是剑龙，它是一种生活在晚侏罗世的食草恐龙。看看它背上的两排骨板，像不像一列起伏的小山？',
+      sha256:
+        '675f68b9f019f5b913089a864803ddc69676c505deee289f4b6ea7641cde6464',
+      bytes: 85_725,
+    },
+    license: {
+      spdx: 'CC-BY-NC-SA-4.0',
+      name: 'CC BY-NC-SA 4.0 project-owned Qwen3-TTS output',
+      url: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+    },
+    runtime: {
+      sha256:
+        '675f68b9f019f5b913089a864803ddc69676c505deee289f4b6ea7641cde6464',
+      bytes: 85_725,
+    },
+    modifications: [
+      'Generated offline from the exact reviewed two-sentence script.',
+      'Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.',
+    ],
+    attribution:
+      'Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).',
+    redistributionAllowed: true,
+    evidencePaths: ['provenance/LICENSES/narration-rights.txt'],
+  },
+] satisfies readonly [
+  AssetProvenance,
+  ...AssetProvenance[],
+]

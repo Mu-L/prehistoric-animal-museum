@@ -1,0 +1,16 @@
+Narration generation and review
+
+Package: qwen-tts 0.1.1
+Model: Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice
+Revision: 85e237c12c027371202489a0ec509ded67b5e4b5
+Speaker: Serena
+Language: Chinese
+Seed: 20260726
+Generated: 2026-08-01
+Runtime bytes: 123645
+Runtime SHA-256: 18724a1f72f6dc6e3843646b4c84bc375d6291b0eba97a0fb94ff6c0d4e23446
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-01
+
+Script: 这是巨脉蜻蜓，它生活在约三亿年前的晚石炭世，是现代蜻蜓的远亲。看看它四片布满翅脉的翅膀、六条腿和一双大大的复眼。

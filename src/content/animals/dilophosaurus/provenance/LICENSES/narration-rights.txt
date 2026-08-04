@@ -1,0 +1,16 @@
+Narration generation and review
+
+Package: qwen-tts 0.1.1
+Model: Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice
+Revision: 85e237c12c027371202489a0ec509ded67b5e4b5
+Speaker: Serena
+Language: Chinese
+Seed: 20260726
+Generated: 2026-07-31
+Runtime bytes: 108525
+Runtime SHA-256: 0b8c7f4b55d947beb9e5df4728289362f7447dc68d3cd751091462c5ed80f7ee
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-07-31
+
+Script: 这是双冠龙，一种生活在早侏罗世北美洲的肉食性恐龙。看看它头顶并排的两片冠，再找找弯曲的尖牙和有力的后腿。

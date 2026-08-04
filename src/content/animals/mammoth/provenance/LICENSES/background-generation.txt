@@ -1,0 +1,30 @@
+Background generation record
+============================
+
+Tool: OpenAI built-in image_gen
+Generated: 2026-07-29; portrait revised 2026-07-31
+Use: project-specific responsive museum backgrounds
+
+Prompt direction:
+Refined layered paper-cut picture-book art with soft gouache texture, tactile
+matte paper, and shallow soft shadows. Preserve the empty Ice Age
+mammoth-steppe, then revise only the portrait depth by moving the distant
+horizon and beginning of the open tundra upward about 8–10% of image height.
+Extend broad snow-dusted earth behind a mammoth whose feet sit around 59%
+image height, while keeping the glacier distant and all edge scenery intact.
+No ice shelf, platform, ledge, hard seam, animal, person, text, UI, logo,
+watermark, blizzard, photorealism, or baked-in particles.
+
+The 16:9 landscape and 9:16 portrait images were generated as separate
+compositions. The portrait is not a crop of the landscape.
+
+Landscape source PNG:
+- bytes: 2879403
+- SHA-256: b8047f909d465bc47d66232b79a4f8dd47d953c53dcb3a7d5529b1d105f8c9e8
+
+Portrait source PNG:
+- bytes: 2526208
+- SHA-256: 9508399ee924f9dfae784d7af0e10951c834bf514a6371a6bdf87b5df231a28a
+
+The runtime copies were converted to WebP at quality 82 with metadata removed. Public
+release remains subject to the repository owner's final rights review.

@@ -1,0 +1,31 @@
+Background generation record
+============================
+
+Tool: OpenAI built-in image_gen
+Generated: 2026-07-29; portrait revised 2026-07-31
+Use: project-specific responsive museum backgrounds
+
+Prompt direction:
+Precisely edit the accepted Morrison floodplain while preserving its
+layered-paper and soft-gouache style, warm palette, mesas, conifers, tree
+ferns, textures, and side framing. The landscape keeps its horizon near 42%.
+For the revised portrait, move the distant horizon and beginning of the open
+valley ground upward about 7–9% of image height, extending the central dirt
+path behind an Apatosaurus whose feet sit around 57% image height. Keep one
+continuous solid ground plane with no platform, ledge, hard seam, or new focal
+object. No animal, person, text, UI, logo, watermark, shadow, or baked-in
+particles.
+
+The accepted 16:9 and 9:16 images were edited independently rather than
+cropped from one another.
+
+Landscape source PNG:
+- bytes: 2599138
+- SHA-256: 347e585b06cf58292c1a56c9150e5325a51b8fe43bd6125d3a313fb3c1c0b111
+
+Portrait source PNG:
+- bytes: 2601546
+- SHA-256: 82c6fe696b2bb1993241d95be0902906200790522a902901b570cea6c4a316a6
+
+The runtime copies were converted to WebP at quality 82 with metadata removed. Public
+release remains subject to the repository owner's final rights review.
