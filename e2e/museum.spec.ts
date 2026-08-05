@@ -305,7 +305,7 @@ test('switches the bounded CSS atmosphere with the committed exhibit', async ({
   await expect(page.locator('.underwater-atmosphere')).toHaveCount(0)
 })
 
-test('keeps the preview and WebGL inside the same responsive model viewport', async ({
+test('fits the preview frame inside a larger WebGL zoom canvas', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 })
@@ -313,10 +313,16 @@ test('keeps the preview and WebGL inside the same responsive model viewport', as
 
   const canvas = page.locator('.viewer-canvas')
   const viewport = page.locator('.model-viewport')
+  const compositionFrame = page.locator('.model-composition-frame')
   const fittedGeometry = async () => {
-    const box = await viewport.boundingBox()
+    const canvasBox = await canvas.boundingBox()
+    const frameBox = await compositionFrame.boundingBox()
+    const viewportBox = await viewport.boundingBox()
     return {
-      height: Math.round(box?.height ?? 0),
+      canvasHeight: Math.round(canvasBox?.height ?? 0),
+      canvasWidth: Math.round(canvasBox?.width ?? 0),
+      frameHeight: Math.round(frameBox?.height ?? 0),
+      frameWidth: Math.round(frameBox?.width ?? 0),
       profile: await viewport.getAttribute('data-preview-profile'),
       rendererHeight: Number(
         await canvas.getAttribute('data-composition-height'),
@@ -324,7 +330,8 @@ test('keeps the preview and WebGL inside the same responsive model viewport', as
       rendererWidth: Number(
         await canvas.getAttribute('data-composition-width'),
       ),
-      width: Math.round(box?.width ?? 0),
+      viewportHeight: Math.round(viewportBox?.height ?? 0),
+      viewportWidth: Math.round(viewportBox?.width ?? 0),
     }
   }
 
@@ -334,16 +341,31 @@ test('keeps the preview and WebGL inside the same responsive model viewport', as
     rendererWidth: expect.any(Number),
   })
   let geometry = await fittedGeometry()
-  expect(geometry.rendererWidth).toBe(geometry.width)
-  expect(geometry.rendererHeight).toBe(geometry.height)
+  expect(geometry.rendererWidth).toBe(geometry.frameWidth)
+  expect(geometry.rendererHeight).toBe(geometry.frameHeight)
+  expect(geometry.canvasWidth).toBe(geometry.viewportWidth)
+  expect(geometry.canvasHeight).toBe(geometry.viewportHeight)
+
+  await page.setViewportSize({ width: 390, height: 750 })
+  await expect
+    .poll(async () => (await fittedGeometry()).profile)
+    .toBe('phonePortraitTall')
+  geometry = await fittedGeometry()
+  expect(geometry.rendererWidth).toBe(geometry.frameWidth)
+  expect(geometry.rendererHeight).toBe(geometry.frameHeight)
+  expect(geometry.canvasWidth).toBe(geometry.viewportWidth)
+  expect(geometry.canvasHeight).toBe(geometry.viewportHeight)
+  expect(geometry.canvasWidth).toBeGreaterThan(geometry.frameWidth)
 
   await page.setViewportSize({ width: 844, height: 390 })
   await expect
     .poll(async () => (await fittedGeometry()).profile)
     .toBe('landscapeCompact')
   geometry = await fittedGeometry()
-  expect(geometry.rendererWidth).toBe(geometry.width)
-  expect(geometry.rendererHeight).toBe(geometry.height)
+  expect(geometry.rendererWidth).toBe(geometry.frameWidth)
+  expect(geometry.rendererHeight).toBe(geometry.frameHeight)
+  expect(geometry.canvasWidth).toBe(geometry.viewportWidth)
+  expect(geometry.canvasHeight).toBe(geometry.viewportHeight)
 })
 
 test('reveals the local loading label after 300 ms while preserving the ready animal', async ({

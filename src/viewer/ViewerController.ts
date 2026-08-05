@@ -27,6 +27,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import {
   computeCameraFit,
+  computeCompositionFieldOfView,
   computeCompositionViewOffset,
 } from './camera-fit'
 import { disposeObject3D } from './dispose'
@@ -109,6 +110,7 @@ export async function readModelResponseBuffer(
 }
 
 export interface ViewerControllerOptions {
+  compositionFrame?: HTMLElement
   modelCache?: ModelCache
   onFailure?: (failure: ViewerFailure) => void
   onModelReady?: (animalId: string) => void
@@ -479,6 +481,12 @@ export class ViewerController {
       this.resize()
     })
     this.resizeObserver.observe(this.container)
+    if (
+      this.options.compositionFrame &&
+      this.options.compositionFrame !== this.container
+    ) {
+      this.resizeObserver.observe(this.options.compositionFrame)
+    }
     this.resize()
     this.startLoop()
   }
@@ -816,10 +824,44 @@ export class ViewerController {
     this.controls.update()
     const containerWidth = Math.max(this.container.clientWidth, 1)
     const containerHeight = Math.max(this.container.clientHeight, 1)
-    const compositionWidth = containerWidth
-    const compositionHeight = containerHeight
-    this.renderer.domElement.dataset.compositionLeft = '0'
-    this.renderer.domElement.dataset.compositionTop = '0'
+    const containerBounds = this.container.getBoundingClientRect()
+    const frameBounds = this.options.compositionFrame?.getBoundingClientRect()
+    const compositionLeft = frameBounds
+      ? MathUtils.clamp(
+          frameBounds.left - containerBounds.left,
+          0,
+          containerWidth - 1,
+        )
+      : 0
+    const compositionTop = frameBounds
+      ? MathUtils.clamp(
+          frameBounds.top - containerBounds.top,
+          0,
+          containerHeight - 1,
+        )
+      : 0
+    const compositionRight = frameBounds
+      ? MathUtils.clamp(
+          frameBounds.right - containerBounds.left,
+          compositionLeft + 1,
+          containerWidth,
+        )
+      : containerWidth
+    const compositionBottom = frameBounds
+      ? MathUtils.clamp(
+          frameBounds.bottom - containerBounds.top,
+          compositionTop + 1,
+          containerHeight,
+        )
+      : containerHeight
+    const compositionWidth = compositionRight - compositionLeft
+    const compositionHeight = compositionBottom - compositionTop
+    this.renderer.domElement.dataset.compositionLeft = String(
+      Math.round(compositionLeft),
+    )
+    this.renderer.domElement.dataset.compositionTop = String(
+      Math.round(compositionTop),
+    )
     this.renderer.domElement.dataset.compositionWidth = String(
       Math.round(compositionWidth),
     )
@@ -836,10 +878,15 @@ export class ViewerController {
     const configuredVerticalOffset = isPortrait
       ? (current.descriptor.presentation.verticalOffset?.portrait ?? 0)
       : (current.descriptor.presentation.verticalOffset?.landscape ?? 0)
+    const compositionFieldOfView = computeCompositionFieldOfView(
+      this.camera.fov,
+      containerHeight,
+      compositionHeight,
+    )
     const fit = computeCameraFit({
       aspect: compositionWidth / compositionHeight,
       bounds: current.bounds,
-      fieldOfViewDegrees: this.camera.fov,
+      fieldOfViewDegrees: compositionFieldOfView,
       paddingFraction: configuredPadding,
     })
     this.camera.near = fit.near
@@ -847,8 +894,8 @@ export class ViewerController {
     this.camera.position.copy(fit.position)
     const viewOffset = computeCompositionViewOffset({
       compositionHeight,
-      compositionLeft: 0,
-      compositionTop: 0,
+      compositionLeft,
+      compositionTop,
       compositionWidth,
       horizontalOffsetFraction: configuredHorizontalOffset,
       verticalOffsetFraction: configuredVerticalOffset,

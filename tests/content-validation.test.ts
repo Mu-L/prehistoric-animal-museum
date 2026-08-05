@@ -29,9 +29,24 @@ describe('content asset validation utilities', () => {
     expect(inspection.version).toBe(2)
     expect(inspection.declaredBytes).toBe(model.byteLength)
     expect(inspection.animationNames).toContain('Idle')
+    expect(inspection.cubicSplineRotationTracks).toBe(0)
     expect(inspection.externalUris).toEqual([])
     expect(inspection.triangles).toBe(19_839)
     expect(inspection.drawCalls).toBeLessThanOrEqual(24)
+  })
+
+  it('keeps the meshopt-compressed ichthyosaur Idle on safe linear rotation tracks', async () => {
+    const model = await readFile(
+      join(
+        process.cwd(),
+        'src/content/animals/ichthyosaur/model/model.glb',
+      ),
+    )
+    const inspection = inspectGlb(model)
+
+    expect(inspection.meshoptCompressed).toBe(true)
+    expect(inspection.animationNames).toEqual(['Idle'])
+    expect(inspection.cubicSplineRotationTracks).toBe(0)
   })
 
   it('reads exact WebP dimensions for both authored orientations', async () => {

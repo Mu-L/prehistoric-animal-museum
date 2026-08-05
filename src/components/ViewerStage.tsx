@@ -45,6 +45,7 @@ export function ViewerStage({
   posterPortraitUrl,
 }: ViewerStageProps) {
   const stageRef = useRef<HTMLDivElement>(null)
+  const compositionFrameRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [initialOverlayMounted, setInitialOverlayMounted] = useState(true)
   const [viewportSize, setViewportSize] = useState<{
@@ -116,6 +117,9 @@ export function ViewerStage({
     let controller: ViewerController
     try {
       controller = new ViewerController(container, {
+        ...(compositionFrameRef.current
+          ? { compositionFrame: compositionFrameRef.current }
+          : {}),
         modelCache,
         onFailure: onViewerFailure,
         onModelReady: onFirstFrameRendered,
@@ -173,67 +177,72 @@ export function ViewerStage({
       <div
         className="model-viewport"
         data-preview-profile={previewProfile.key}
-        style={{
-          height: viewportSize?.height ?? 1,
-          visibility: viewportSize ? 'visible' : 'hidden',
-          width: viewportSize?.width ?? 1,
-        }}
       >
-        {showModelStill ? (
-          <picture aria-hidden="true" className="model-still">
-            <img
-              alt={`${label}的透明背景静态模型图`}
-              decoding="sync"
-              fetchPriority="high"
-              src={previewUrl}
-            />
-          </picture>
-        ) : null}
         <div className="viewer-host" ref={containerRef} />
-        {initialOverlayMounted && !failureMessage ? (
-          <div
-            aria-atomic="true"
-            aria-live="polite"
-            className="stage-loading"
-            role="status"
-          >
-            <span aria-hidden="true" className="fossil-loader">
-              <span className="fossil-loader__ring" />
-              <Footprints size={30} strokeWidth={2} />
-            </span>
-            <strong>
-              {loadingPercent === null
-                ? '正在请第一位朋友出来……'
-                : `正在准备 3D 模型 · ${loadingPercent}%`}
-            </strong>
-            <progress
-              aria-label="3D 模型加载进度"
-              className="model-load-progress"
-              max={100}
-              {...(loadingPercent === null
-                ? {}
-                : { value: loadingPercent })}
-            />
-          </div>
-        ) : null}
-        {modelReady ? (
-          <p aria-hidden="true" className="model-gesture-hint">
-            拖动旋转，滚动或双指缩放
-          </p>
-        ) : null}
-        {failureMessage ? (
-          <div className="model-fallback" role="status">
-            <strong>今天先看看它的静态模型吧</strong>
-            <span>{failureMessage}</span>
-            <button
-              className="friendly-button friendly-button--small"
-              onClick={onRetry}
-              type="button"
+        <div
+          className="model-composition-frame"
+          ref={compositionFrameRef}
+          style={{
+            height: viewportSize?.height ?? 1,
+            visibility: viewportSize ? 'visible' : 'hidden',
+            width: viewportSize?.width ?? 1,
+          }}
+        >
+          {showModelStill ? (
+            <picture aria-hidden="true" className="model-still">
+              <img
+                alt={`${label}的透明背景静态模型图`}
+                decoding="sync"
+                fetchPriority="high"
+                src={previewUrl}
+              />
+            </picture>
+          ) : null}
+          {initialOverlayMounted && !failureMessage ? (
+            <div
+              aria-atomic="true"
+              aria-live="polite"
+              className="stage-loading"
+              role="status"
             >
-              重新加载模型
-            </button>
-          </div>
-        ) : null}
+              <span aria-hidden="true" className="fossil-loader">
+                <span className="fossil-loader__ring" />
+                <Footprints size={30} strokeWidth={2} />
+              </span>
+              <strong>
+                {loadingPercent === null
+                  ? '正在请第一位朋友出来……'
+                  : `正在准备 3D 模型 · ${loadingPercent}%`}
+              </strong>
+              <progress
+                aria-label="3D 模型加载进度"
+                className="model-load-progress"
+                max={100}
+                {...(loadingPercent === null
+                  ? {}
+                  : { value: loadingPercent })}
+              />
+            </div>
+          ) : null}
+          {modelReady ? (
+            <p aria-hidden="true" className="model-gesture-hint">
+              拖动旋转，滚动或双指缩放
+            </p>
+          ) : null}
+          {failureMessage ? (
+            <div className="model-fallback" role="status">
+              <strong>今天先看看它的静态模型吧</strong>
+              <span>{failureMessage}</span>
+              <button
+                className="friendly-button friendly-button--small"
+                onClick={onRetry}
+                type="button"
+              >
+                重新加载模型
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   )

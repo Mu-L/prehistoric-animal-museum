@@ -1,55 +1,55 @@
 {
   "animalId": "ichthyosaur",
   "contractVersion": 1,
-  "generatedAt": "2026-08-05T04:07:51.483Z",
+  "generatedAt": "2026-08-05T05:16:35.298Z",
   "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.95},\"presentation\":{\"cameraLightScale\":1,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":0,\"preciseBounds\":true,\"safeAreaPadding\":{\"landscape\":0.1,\"portrait\":0.1},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
   "profiles": {
     "landscapeCompact": {
-      "bytes": 64212,
+      "bytes": 67128,
       "fileName": "preview-landscape-compact.webp",
       "height": 650,
-      "sha256": "6be0fcf8cf22f5615c6d7d2aa8d9cd299b48d27a2bb293875236506626038652",
+      "sha256": "bab0168869c32472e122e0694d2cd1292820df7d3166f8aeff37c4faed76d937",
       "width": 1250
     },
     "desktopWide": {
-      "bytes": 74216,
+      "bytes": 76082,
       "fileName": "preview-desktop-wide.webp",
       "height": 800,
-      "sha256": "187d517c5a2a4f83fa146cafd0fa233e6064cfbea7058d17dab16e95a067a88d",
+      "sha256": "168936b67c28822225b83cdfc9e2a948c454aa1b95464641524f3daa2a6ebb10",
       "width": 1200
     },
     "phonePortraitCompact": {
-      "bytes": 37952,
+      "bytes": 39488,
       "fileName": "preview-phone-compact.webp",
       "height": 1000,
-      "sha256": "c0e2e6d0cf203653ebdcb720d860a73b949e121fff5b3606ecdbca4a6d9d719c",
+      "sha256": "43e8ce4edf652f9522f44d8ed077460e78cb96f5ccfef82e90ca2cdbefe23df5",
       "width": 875
     },
     "phonePortraitTall": {
-      "bytes": 29052,
+      "bytes": 29254,
       "fileName": "preview-phone-tall.webp",
       "height": 1000,
-      "sha256": "d9236b94a735408df43b844b7afae6fbfe7a5e1e83d35f992f0aa3ea0d6c9891",
+      "sha256": "d069a504bb86528c4656debf03c20cb913b1cba81729e6ccf70dcead0b60367b",
       "width": 640
     },
     "tabletPortrait": {
-      "bytes": 49294,
+      "bytes": 49216,
       "fileName": "preview-tablet-portrait.webp",
       "height": 960,
-      "sha256": "5b4d480c22f775e7ad0f984dddcb5c98a05be82b5b18ede052899b20d37f06b4",
+      "sha256": "7218620eb53000d73397b45d4ee34e8881bb62daeb4878373762700b4836f57d",
       "width": 900
     },
     "desktopStandard": {
-      "bytes": 78368,
+      "bytes": 78366,
       "fileName": "preview-desktop-standard.webp",
       "height": 960,
-      "sha256": "c6a397bf844bcf03179e033fce4424c7ed42f3eb23bbdd6eabc85ded7b02f0d7",
+      "sha256": "f2c4fef0baefa210eb481c4eecb4c6a2823fff4eeea87123daeae154aa2a8ecf",
       "width": 1200
     }
   },
   "sourceModel": {
-    "bytes": 5649820,
-    "sha256": "5ada84a9cd7f078137da276bd735576a00dd07339bcba8f39aa9a7f9987f3cca"
+    "bytes": 5648348,
+    "sha256": "8f3a80ad11713d5dee3ccf29395655af8c7c0dd8f2d7ccba94bda57189fa6cb7"
   },
   "target": "production"
 }

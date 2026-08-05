@@ -12,6 +12,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execFileSync } from 'node:child_process'
+import { resampleCubicRotationTracks } from './resample-cubic-rotation-tracks.mjs'
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const animalsRoot = join(repositoryRoot, 'src/content/animals')
@@ -58,6 +59,7 @@ for (const animalId of animalIds) {
 
   const scratch = await mkdtemp(join(tmpdir(), `museum-${animalId}-`))
   const webpPath = join(scratch, 'textures-webp.glb')
+  const animationSafePath = join(scratch, 'animation-safe.glb')
   const optimizedPath = join(scratch, 'optimized.glb')
   try {
     let meshoptInput = modelPath
@@ -75,6 +77,16 @@ for (const animalId of animalIds) {
         { cwd: repositoryRoot, stdio: 'inherit' },
       )
       meshoptInput = webpPath
+    }
+    const resampledTracks = await resampleCubicRotationTracks(
+      meshoptInput,
+      animationSafePath,
+    )
+    if (resampledTracks > 0) {
+      meshoptInput = animationSafePath
+      console.log(
+        `${animalId}: resampled ${resampledTracks} cubic rotation track(s) before Meshopt compression`,
+      )
     }
     execFileSync(
       cli,

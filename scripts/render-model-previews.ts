@@ -100,7 +100,7 @@ try {
         .stage-panel > :not(.viewer-stage) {
           visibility: hidden !important;
         }
-        .model-viewport > :not(.viewer-host) {
+        .model-composition-frame > * {
           visibility: hidden !important;
         }
         .viewer-host::after {
@@ -124,7 +124,9 @@ try {
         height: profile.referenceHeight,
       })
       const viewport = page.locator('.model-viewport')
+      const compositionFrame = page.locator('.model-composition-frame')
       await viewport.waitFor({ state: 'visible' })
+      await compositionFrame.waitFor({ state: 'visible' })
       await page.waitForFunction(
         (expectedProfile) =>
           document
@@ -146,14 +148,16 @@ try {
       }
       await page.waitForFunction(() => {
         const canvas = document.querySelector<HTMLCanvasElement>('.viewer-canvas')
-        const viewport = document.querySelector<HTMLElement>('.model-viewport')
+        const compositionFrame = document.querySelector<HTMLElement>(
+          '.model-composition-frame',
+        )
         return Boolean(
           canvas &&
-            viewport &&
+            compositionFrame &&
             Number(canvas.dataset.compositionWidth) ===
-              Math.round(viewport.clientWidth) &&
+              Math.round(compositionFrame.clientWidth) &&
             Number(canvas.dataset.compositionHeight) ===
-              Math.round(viewport.clientHeight),
+              Math.round(compositionFrame.clientHeight),
         )
       })
       await page.evaluate(
@@ -174,7 +178,7 @@ try {
       }
       presentationSignature = signature
 
-      const rawScreenshot = await viewport.screenshot({
+      const rawScreenshot = await compositionFrame.screenshot({
         animations: 'disabled',
         omitBackground: true,
         type: 'png',

@@ -36,7 +36,9 @@ export interface GlbInspection {
   readonly version: number
   readonly declaredBytes: number
   readonly animationNames: readonly string[]
+  readonly cubicSplineRotationTracks: number
   readonly externalUris: readonly string[]
+  readonly meshoptCompressed: boolean
   readonly triangles: number
   readonly drawCalls: number
   readonly materials: number
@@ -175,6 +177,23 @@ export function inspectGlb(buffer: Buffer): GlbInspection {
   const animationNames = records(parsed.animations)
     .map((animation) => readString(animation.name))
     .filter((name): name is string => name !== undefined)
+  let cubicSplineRotationTracks = 0
+  for (const animation of records(parsed.animations)) {
+    const samplers = records(animation.samplers)
+    for (const channel of records(animation.channels)) {
+      const target = isRecord(channel.target) ? channel.target : {}
+      const samplerIndex = readNumber(channel.sampler)
+      const sampler =
+        samplerIndex === undefined ? undefined : samplers[samplerIndex]
+      if (
+        readString(target.path) === 'rotation' &&
+        sampler &&
+        readString(sampler.interpolation) === 'CUBICSPLINE'
+      ) {
+        cubicSplineRotationTracks += 1
+      }
+    }
+  }
 
   const externalUris = [
     ...records(parsed.buffers),
@@ -231,7 +250,11 @@ export function inspectGlb(buffer: Buffer): GlbInspection {
     version,
     declaredBytes,
     animationNames,
+    cubicSplineRotationTracks,
     externalUris,
+    meshoptCompressed: readArray(parsed.extensionsUsed).includes(
+      'EXT_meshopt_compression',
+    ),
     triangles,
     drawCalls,
     materials: materialIndices.size,
@@ -737,6 +760,19 @@ async function validatePublishedPackage(
             'error',
             'ANIMATION_CLIP_MISSING',
             `GLB 不包含声明的动画 “${definition.animation.clip}”。`,
+            { ...context, path: 'model/model.glb' },
+          ),
+        )
+      }
+      if (
+        inspection.meshoptCompressed &&
+        inspection.cubicSplineRotationTracks > 0
+      ) {
+        issues.push(
+          issue(
+            'error',
+            'MESHOPT_CUBIC_ROTATION',
+            `GLB 含 ${inspection.cubicSplineRotationTracks} 条经 Meshopt 压缩的 CUBICSPLINE 旋转轨道；必须先重采样为 LINEAR，避免四元数切线被压缩滤镜误处理。`,
             { ...context, path: 'model/model.glb' },
           ),
         )
