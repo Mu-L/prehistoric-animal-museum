@@ -343,7 +343,7 @@ describe('local collection review catalog', () => {
       speed: 0.95,
     })
     expect(ichthyosaur?.review?.status).toBe(
-      '免费候选 B 的模型、皮肤、Idle 与小图已通过本地评审',
+      '替换模型、皮肤、Idle 与静态图已晋升生产',
     )
     expect(ichthyosaur?.review?.note).toContain('80,398 tris')
     expect(ichthyosaur?.review?.note).toContain('14 骨骼')

@@ -10,11 +10,12 @@ export const animalDefinition = {
   atmosphere: 'underwater',
   content: { 'zh-CN': zhCN },
   presentation: {
-    initialYawDegrees: 180,
-    landscapeHorizontalOffset: -0.12,
-    portraitHorizontalOffset: -0.1,
-    portraitSafeAreaPadding: 0.36,
-    safeAreaPadding: 0.18,
+    initialYawDegrees: 0,
+    landscapeHorizontalOffset: 0,
+    portraitHorizontalOffset: 0,
+    portraitSafeAreaPadding: 0.1,
+    preciseBounds: true,
+    safeAreaPadding: 0.1,
     shadow: 'none',
   },
   animation: {

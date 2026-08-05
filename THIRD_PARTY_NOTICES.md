@@ -295,8 +295,8 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Asset type: poster
 - Source: 鱼龙类 transparent portrait model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `dc089ed3580fc58f7811d0854840120faa981965161fbc5b69141e12753244c3`
+- Attribution: “ichthyosaurus” by Julian Johnson-Mortimer / FreddyFoxFreddy, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `8c57dad6101d0086bb548f7bdead01b86d57d1155cedf4b61da67a625a204949`
 - Modifications:
   - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
   - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
@@ -305,36 +305,35 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Asset type: poster
 - Source: 鱼龙类 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `ae9eb1b51fa836bf8e3c0628e609a1b6b82674d38e7a4b405956f9560d131260`
+- Attribution: “ichthyosaurus” by Julian Johnson-Mortimer / FreddyFoxFreddy, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `6fe4ed85e7caf25a502a7aae218de8a1e99662aeba2c3021ad607c42904ae4ec`
 - Modifications:
   - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
   - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 鱼龙类 collection thumbnail, derived on 2026-07-30
+- Source: 鱼龙类 collection thumbnail, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `92da9f1da8c3b76a6776200255ab7ec18e486bbb0ef2b6cf20c3bd8d52e3e843`
+- Attribution: “ichthyosaurus” by Julian Johnson-Mortimer / FreddyFoxFreddy, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
+- Runtime SHA-256: `4cba08ca4c7e727b29b61a95dc5df76b3661a59726845df4f45212a14a20b98e`
 - Modifications:
   - Selected a card-size crop that keeps the animal readable.
   - Exported without embedded text, controls, labels, logos, or watermarks.
 ### `model/model.glb`
 
 - Asset type: model
-- Source: [ichthyosaur](https://sketchfab.com/3d-models/ichthyosaur-dffbc77b634a408f91dd5f68df4cc94f) by pro_alba
+- Source: [ichthyosaurus](https://sketchfab.com/3d-models/ichthyosaurus-ef8609f5efa84984bc1800bdb36aac3c) by Julian Johnson-Mortimer / FreddyFoxFreddy
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `ec57d74faea3f4de14cae1bb639dbc027d9d734bc55ea6d48ce0c72164fba0de`
+- Attribution: “ichthyosaurus” by Julian Johnson-Mortimer / FreddyFoxFreddy, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `5ada84a9cd7f078137da276bd735576a00dd07339bcba8f39aa9a7f9987f3cca`
 - Modifications:
   - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
-  - Normalized the source GLB and retained the gentle swimming Idle clip.
-  - Added the reviewed project-authored 1K irregular slate-grey material v2.
-  - Added a project-authored v3 aquatic skin surface with a subtly detailed 1K base colour, 512-pixel dermal normal map, and 512-pixel matte roughness variation; the detail uses fine irregular grain, shallow longitudinal folds, and pores without fish scales or a glossy plastic finish.
-  - Replaced the source key timing with a six-second continuous natural-swim Idle: ten tail and caudal-fin bones form a three-cycle travelling wave at 0.5 Hz, progressively increasing from approximately 1.8 to 16 degrees, while the four fins make restrained coordinated motions.
-  - Sampled the Idle at 12 frames per second with linear interpolation so the distal tail reverses direction smoothly without holding near either extreme; the longest near-static interval measured across the tail chain is approximately 0.17 seconds.
-  - Normalized the derivative to one closed-loop Idle with 24 rotation-only channels, then repacked, validator-checked, and reviewed it in the shared museum viewer.
+  - Welded the source head and body, closed twelve residual boundary loops, softened the pink wound-like marks and ring-shaped head artifact, and preserved a complete mouth interior.
+  - Re-UVed the accepted body and authored a 2K dark-dorsal/light-ventral aquatic base colour with irregular mottling and tangent-space surface detail plus a 1K roughness map; the skin remains matte and does not imitate fish scales.
+  - Reduced the source teeth from approximately 69,632 triangles to approximately 12,500 while preserving their readable silhouette.
+  - Built a project-authored fourteen-bone Blender rig and one six-second in-place Idle: a six-segment tail chain carries two continuous travelling waves, the front fins move by approximately eight degrees, the rear fins by approximately 4.5 degrees, and the root remains stationary.
+  - Normalized the derivative to one closed-loop Idle, repacked it, validated it with zero Khronos errors and warnings before runtime compression, and reviewed it in the shared museum viewer.
 ## 慈母龙 (`maiasaura`)
 
 ### `audio/narration.zh-CN.mp3`

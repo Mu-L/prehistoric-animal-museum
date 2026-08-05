@@ -391,7 +391,7 @@ export const credits = [
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "attribution": "“ichthyosaurus” by Julian Johnson-Mortimer / FreddyFoxFreddy, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
       "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
       "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
@@ -406,7 +406,7 @@ export const credits = [
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "attribution": "“ichthyosaurus” by Julian Johnson-Mortimer / FreddyFoxFreddy, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
       "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
       "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
@@ -421,7 +421,7 @@ export const credits = [
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“ichthyosaurus” by Julian Johnson-Mortimer / FreddyFoxFreddy, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
     "modifications": [
       "Selected a card-size crop that keeps the animal readable.",
       "Exported without embedded text, controls, labels, logos, or watermarks."
@@ -432,20 +432,19 @@ export const credits = [
     "animalId": "ichthyosaur",
     "assetPath": "model/model.glb",
     "assetKind": "model",
-    "sourceTitle": "ichthyosaur",
-    "author": "pro_alba",
+    "sourceTitle": "ichthyosaurus",
+    "author": "Julian Johnson-Mortimer / FreddyFoxFreddy",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "sourceUrl": "https://sketchfab.com/3d-models/ichthyosaur-dffbc77b634a408f91dd5f68df4cc94f",
-    "attribution": "“ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "sourceUrl": "https://sketchfab.com/3d-models/ichthyosaurus-ef8609f5efa84984bc1800bdb36aac3c",
+    "attribution": "“ichthyosaurus” by Julian Johnson-Mortimer / FreddyFoxFreddy, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
       "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
-      "Normalized the source GLB and retained the gentle swimming Idle clip.",
-      "Added the reviewed project-authored 1K irregular slate-grey material v2.",
-      "Added a project-authored v3 aquatic skin surface with a subtly detailed 1K base colour, 512-pixel dermal normal map, and 512-pixel matte roughness variation; the detail uses fine irregular grain, shallow longitudinal folds, and pores without fish scales or a glossy plastic finish.",
-      "Replaced the source key timing with a six-second continuous natural-swim Idle: ten tail and caudal-fin bones form a three-cycle travelling wave at 0.5 Hz, progressively increasing from approximately 1.8 to 16 degrees, while the four fins make restrained coordinated motions.",
-      "Sampled the Idle at 12 frames per second with linear interpolation so the distal tail reverses direction smoothly without holding near either extreme; the longest near-static interval measured across the tail chain is approximately 0.17 seconds.",
-      "Normalized the derivative to one closed-loop Idle with 24 rotation-only channels, then repacked, validator-checked, and reviewed it in the shared museum viewer."
+      "Welded the source head and body, closed twelve residual boundary loops, softened the pink wound-like marks and ring-shaped head artifact, and preserved a complete mouth interior.",
+      "Re-UVed the accepted body and authored a 2K dark-dorsal/light-ventral aquatic base colour with irregular mottling and tangent-space surface detail plus a 1K roughness map; the skin remains matte and does not imitate fish scales.",
+      "Reduced the source teeth from approximately 69,632 triangles to approximately 12,500 while preserving their readable silhouette.",
+      "Built a project-authored fourteen-bone Blender rig and one six-second in-place Idle: a six-segment tail chain carries two continuous travelling waves, the front fins move by approximately eight degrees, the rear fins by approximately 4.5 degrees, and the root remains stationary.",
+      "Normalized the derivative to one closed-loop Idle, repacked it, validated it with zero Khronos errors and warnings before runtime compression, and reviewed it in the shared museum viewer."
     ]
   },
   {
