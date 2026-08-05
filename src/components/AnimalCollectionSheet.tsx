@@ -143,7 +143,7 @@ export function AnimalCollectionSheet({
                     <img
                       alt=""
                       decoding="async"
-                      loading="lazy"
+                      loading="eager"
                       src={animal.thumbnail}
                     />
                   </span>

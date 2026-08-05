@@ -330,6 +330,9 @@ describe('App', () => {
       within(dialog).getAllByRole('button', { name: /前往.+展台$/ }),
     ).toHaveLength(18)
     expect(
+      dialog.querySelectorAll('.collection-card__image img[loading="eager"]'),
+    ).toHaveLength(18)
+    expect(
       within(dialog).getByRole('button', {
         name: '当前展台，前往剑龙展台',
       }),

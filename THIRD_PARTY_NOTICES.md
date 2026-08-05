@@ -384,10 +384,10 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 慈母龙 collection thumbnail, derived on 2026-07-31
+- Source: 慈母龙 collection thumbnail, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Maiasaura With Rig” by Dino Dan, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `3ef34141efde41bd3b1afce81942662b125fbbec22073b7c6cd5bb18e71cc908`
+- Runtime SHA-256: `25668d76310ee5f0b437c9029f6b2d469aff5b809303ea9fea93b6b54986c7d3`
 - Modifications:
   - Selected a card-size crop that keeps the animal readable.
   - Exported without embedded text, controls, labels, logos, or watermarks.

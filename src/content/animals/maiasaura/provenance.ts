@@ -29,7 +29,7 @@ export const provenance = createPublishedAssetProvenance({
       'Exported a single closed-loop Idle, validator-checked the result, and reviewed the animated skinned bounds in the shared museum viewer.',
     ],
   },
-  derivedImagesGeneratedOn: '2026-07-31',
+  derivedImagesGeneratedOn: '2026-08-05',
   backgrounds: {
     landscape: {
       source: reviewedBackgroundSources.maiasaura.landscape,
@@ -59,9 +59,9 @@ export const provenance = createPublishedAssetProvenance({
       '6e98b0707b8d4760a1f905f944469ea8511d7c8b8f881c449544e36e09447411',
   },
   thumbnail: {
-    bytes: 39_876,
+    bytes: 17_338,
     sha256:
-      '3ef34141efde41bd3b1afce81942662b125fbbec22073b7c6cd5bb18e71cc908',
+      '25668d76310ee5f0b437c9029f6b2d469aff5b809303ea9fea93b6b54986c7d3',
   },
   narration: {
     generatedOn: '2026-07-30',

@@ -123,6 +123,43 @@ test('loads from the nested static base with Chinese semantics and accessible to
   await expect(tooltip).toHaveCSS('opacity', '1')
 })
 
+test('eagerly loads every thumbnail in the complete museum index', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openMuseum(page)
+  await page.getByRole('button', { name: '打开全馆图鉴' }).click()
+
+  const dialog = page.getByRole('dialog', { name: '全馆图鉴' })
+  const cards = dialog.locator('.collection-card')
+  const images = dialog.locator('.collection-card__image img')
+  const cardCount = await cards.count()
+
+  expect(cardCount).toBeGreaterThan(0)
+  await expect(images).toHaveCount(cardCount)
+  expect(
+    await images.evaluateAll((elements) =>
+      elements.every((element) => element.getAttribute('loading') === 'eager'),
+    ),
+  ).toBe(true)
+
+  await dialog.locator('.collection-grid').evaluate((grid) => {
+    grid.scrollTop = grid.scrollHeight
+  })
+  await expect
+    .poll(() =>
+      images.evaluateAll((elements) =>
+        elements.every(
+          (element) =>
+            element instanceof HTMLImageElement &&
+            element.complete &&
+            element.naturalWidth > 0,
+        ),
+      ),
+    )
+    .toBe(true)
+})
+
 test('pauses focus-mode rotation for four idle seconds after a drag', async ({
   page,
 }) => {
