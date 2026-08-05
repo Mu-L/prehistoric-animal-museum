@@ -29,18 +29,33 @@ const port = Number(option('--port', process.env.PORT ?? '4173'))
 const host = option('--host', process.env.HOST ?? '127.0.0.1')
 const rawBase = option('--base', '/')
 const base = `/${rawBase.split('/').filter(Boolean).join('/')}${rawBase === '/' ? '' : '/'}`
+const fixtureModelDelayMs = Number(option('--fixture-model-delay', '0'))
+
+if (!Number.isFinite(fixtureModelDelayMs) || fixtureModelDelayMs < 0) {
+  console.error('--fixture-model-delay must be a non-negative number')
+  process.exit(1)
+}
 
 if (!existsSync(root) || !statSync(root).isDirectory()) {
   console.error(`Static root does not exist: ${root}`)
   process.exit(1)
 }
 
-function sendFile(filePath, response) {
+function sendFile(filePath, response, delayMs = 0) {
   response.writeHead(200, {
     'Content-Type': mimeTypes.get(extname(filePath).toLowerCase()) ?? 'application/octet-stream',
     'Cache-Control': filePath.endsWith('.html') ? 'no-cache' : 'public, max-age=3600',
     'X-Content-Type-Options': 'nosniff',
   })
+  if (delayMs > 0) {
+    // The opt-in e2e fixture keeps a real network transfer pending long enough
+    // to verify the delayed large-model notice and its cache-hit suppression.
+    response.flushHeaders()
+    setTimeout(() => {
+      createReadStream(filePath).pipe(response)
+    }, delayMs)
+    return
+  }
   createReadStream(filePath).pipe(response)
 }
 
@@ -64,7 +79,12 @@ const server = createServer((request, response) => {
   }
 
   if (existsSync(requestedPath) && statSync(requestedPath).isFile()) {
-    sendFile(requestedPath, response)
+    const delayMs =
+      requestUrl.searchParams.get('fixture') === 'fixture-slow' &&
+      extname(requestedPath).toLowerCase() === '.glb'
+        ? fixtureModelDelayMs
+        : 0
+    sendFile(requestedPath, response, delayMs)
     return
   }
 

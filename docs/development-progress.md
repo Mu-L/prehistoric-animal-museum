@@ -81,9 +81,9 @@ The encoded GLB optimization target/hard ceiling is now 12/20 MiB instead of
 to 14/23 MiB so the GLB policy is usable; all per-image/audio, geometry,
 draw-call, texture dimension/decoded-memory, bone, collection, and real-phone
 gates remain unchanged. Production and review packages expose exact typed
-`assets.modelBytes` values. Narrow coarse-pointer layouts show a locally
-remembered first-visit data/Wi-Fi reminder, then only show a non-blocking size
-toast when selecting a GLB strictly above 8 MiB. The behavior
+`assets.modelBytes` values. The interface shows a locally remembered first-visit
+data/Wi-Fi reminder, then only shows a non-blocking size toast when selecting a
+GLB strictly above 6 MiB. The behavior
 uses no runtime network probing and honors reduced motion.
 
 The current UI/UX pass also removes the normal-switch poster flash and the

@@ -11,19 +11,19 @@ import {
 } from '../src/model-policy'
 
 describe('model delivery policy', () => {
-  it('uses a 12/20 MiB production budget and an 8 MiB notice threshold', () => {
+  it('uses a 12/20 MiB production budget and a 6 MiB notice threshold', () => {
     expect(MODEL_GLB_TARGET_BYTES).toBe(12 * MEBIBYTE_BYTES)
     expect(MODEL_GLB_HARD_CEILING_BYTES).toBe(20 * MEBIBYTE_BYTES)
     expect(ANIMAL_PACKAGE_TARGET_BYTES).toBe(14 * MEBIBYTE_BYTES)
     expect(ANIMAL_PACKAGE_HARD_CEILING_BYTES).toBe(23 * MEBIBYTE_BYTES)
-    expect(LARGE_MODEL_NOTICE_THRESHOLD_BYTES).toBe(8 * MEBIBYTE_BYTES)
+    expect(LARGE_MODEL_NOTICE_THRESHOLD_BYTES).toBe(6 * MEBIBYTE_BYTES)
     expect(NARROW_TOUCH_MEDIA_QUERY).toContain('(max-width: 1023px)')
     expect(NARROW_TOUCH_MEDIA_QUERY).toContain('(pointer: coarse)')
   })
 
   it('only classifies models strictly above the notice threshold as large', () => {
-    expect(isLargeModel(8 * MEBIBYTE_BYTES)).toBe(false)
-    expect(isLargeModel(8 * MEBIBYTE_BYTES + 1)).toBe(true)
+    expect(isLargeModel(6 * MEBIBYTE_BYTES)).toBe(false)
+    expect(isLargeModel(6 * MEBIBYTE_BYTES + 1)).toBe(true)
   })
 
   it('formats an approximate encoded transfer size without false precision', () => {

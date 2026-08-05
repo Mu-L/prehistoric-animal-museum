@@ -14,6 +14,7 @@ interface AnimalCollectionSheetProps {
   readonly animals: readonly CollectionAnimal[]
   readonly currentAnimalId: string
   readonly loadingAnimalId: string | null
+  readonly loadingPhase: 'checking-cache' | 'downloading' | 'preparing' | null
   readonly loadingPercent: number | null
   readonly onClose: () => void
   readonly onSelect: (animalId: string) => void
@@ -31,6 +32,7 @@ export function AnimalCollectionSheet({
   animals,
   currentAnimalId,
   loadingAnimalId,
+  loadingPhase,
   loadingPercent,
   onClose,
   onSelect,
@@ -158,9 +160,11 @@ export function AnimalCollectionSheet({
                     </span>
                   ) : loading ? (
                     <span className="collection-card__state">
-                      {loadingPercent === null
-                        ? '准备中'
-                        : `准备中 ${loadingPercent}%`}
+                      {loadingPhase === 'preparing'
+                        ? '正在打开'
+                        : loadingPercent === null
+                          ? '准备中'
+                          : `下载中 ${loadingPercent}%`}
                     </span>
                   ) : null}
                 </button>

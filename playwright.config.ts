@@ -22,7 +22,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run build:e2e && node server.mjs dist --port ${port} --base ${nestedBase}`,
+    command: `npm run build:e2e && node server.mjs dist --port ${port} --base ${nestedBase} --fixture-model-delay 1800`,
     url: `http://127.0.0.1:${port}${nestedBase}`,
     reuseExistingServer: false,
     timeout: 120_000,

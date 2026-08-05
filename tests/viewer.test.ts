@@ -26,16 +26,22 @@ import {
 import { disposeObject3D } from '../src/viewer/dispose'
 import {
   computeContactShadowLayout,
+  classifyModelResourceTiming,
   computeModelTransitionFrame,
   computeModelBounds,
   createCameraRelativeLightingPose,
   readModelResponseBuffer,
+  requestModelResponse,
   resetStagedModelPose,
   updateCameraRelativeLightingPose,
   type ViewerModelDescriptor,
 } from '../src/viewer/ViewerController'
 
 describe('model response loading', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('reports streamed bytes and reassembles the exact model buffer', async () => {
     const progress: Array<{
       readonly loadedBytes: number
@@ -65,6 +71,87 @@ describe('model response loading', () => {
       { loadedBytes: 2, totalBytes: 5 },
       { loadedBytes: 5, totalBytes: 5 },
     ])
+  })
+
+  it('uses exactly one ordinary request so the browser can apply its HTTP cache', async () => {
+    const fetchMock = vi.fn<typeof fetch>(() =>
+      Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const sources: string[] = []
+
+    const result = await requestModelResponse(
+      '/model.glb',
+      undefined,
+      (source) => sources.push(source),
+    )
+
+    expect(result.source).toBe('network')
+    expect(sources).toEqual(['network'])
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/model.glb',
+      expect.objectContaining({
+        priority: 'high',
+      }),
+    )
+    expect(fetchMock.mock.calls[0]?.[1]).not.toHaveProperty('cache')
+    expect(fetchMock.mock.calls[0]?.[1]).not.toHaveProperty('mode')
+  })
+
+  it('reports a failed ordinary request without issuing a second probe', async () => {
+    const fetchMock = vi.fn<typeof fetch>(() =>
+      Promise.resolve(new Response('unavailable', { status: 503 })),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const sources: string[] = []
+
+    await expect(
+      requestModelResponse('/unavailable.glb', undefined, (source) =>
+        sources.push(source),
+      ),
+    ).rejects.toThrow('模型请求失败（503）')
+
+    expect(sources).toEqual(['network'])
+    expect(fetchMock).toHaveBeenCalledOnce()
+  })
+
+  it('classifies a zero-transfer completed resource as an HTTP cache hit', () => {
+    expect(
+      classifyModelResourceTiming(
+        [
+          {
+            decodedBodySize: 4_096,
+            encodedBodySize: 4_096,
+            startTime: 101,
+            transferSize: 0,
+          },
+        ],
+        100,
+      ),
+    ).toBe('http-cache')
+  })
+
+  it('does not mistake an older timing entry or a fresh transfer for cache', () => {
+    expect(
+      classifyModelResourceTiming(
+        [
+          {
+            decodedBodySize: 4_096,
+            encodedBodySize: 4_096,
+            startTime: 80,
+            transferSize: 0,
+          },
+          {
+            decodedBodySize: 4_096,
+            encodedBodySize: 4_096,
+            startTime: 101,
+            transferSize: 4_396,
+          },
+        ],
+        100,
+      ),
+    ).toBe('network')
   })
 })
 

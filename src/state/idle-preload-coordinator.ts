@@ -4,7 +4,7 @@ export const DEFAULT_IDLE_PRELOAD_DELAY_MS = 2_000
 
 export interface IdlePreloadTarget {
   readonly id: string
-  readonly imageUrls: readonly string[]
+  readonly imageUrls: readonly string[] | (() => readonly string[])
   readonly modelUrl: string
 }
 
@@ -29,16 +29,20 @@ type PreloadTask =
       readonly url: string
     }
   | {
-      readonly kind: 'model'
-      readonly url: string
+      readonly kind: 'models'
+      readonly urls: readonly string[]
     }
 
-function shouldPreloadModels(): boolean {
+type OptionalPreloadPolicy = 'all' | 'images-only' | 'none'
+
+function readOptionalPreloadPolicy(): OptionalPreloadPolicy {
   const connection = (navigator as NavigatorWithConnection).connection
   if (connection?.saveData === true) {
-    return false
+    return 'none'
   }
-  return !['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '')
+  return ['slow-2g', '2g'].includes(connection?.effectiveType ?? '')
+    ? 'images-only'
+    : 'all'
 }
 
 function adjacentTargets(
@@ -67,14 +71,13 @@ function adjacentTargets(
 /**
  * Starts optional adjacent-asset work only after a committed presentation has
  * remained selected for the configured delay. Every task is cancellable and
- * launched one at a time from an idle callback.
+ * model work uses normal browser priority while follow-up images stay low.
  */
 export class IdlePreloadCoordinator {
   private readonly idleDelayMs: number
   private readonly modelCache: ModelCache
   private readonly targets: readonly IdlePreloadTarget[]
   private activeController: AbortController | null = null
-  private cancelScheduledIdle: (() => void) | null = null
   private delayTimer: number | null = null
   private destroyed = false
   private generation = 0
@@ -116,8 +119,6 @@ export class IdlePreloadCoordinator {
       window.clearTimeout(this.delayTimer)
       this.delayTimer = null
     }
-    this.cancelScheduledIdle?.()
-    this.cancelScheduledIdle = null
     this.activeController?.abort()
     this.activeController = null
     this.tasks = []
@@ -132,24 +133,44 @@ export class IdlePreloadCoordinator {
   }
 
   private beginPreloading(animalId: string, generation: number): void {
-    const includeModels = shouldPreloadModels()
+    const policy = readOptionalPreloadPolicy()
+    if (policy === 'none') {
+      return
+    }
     const seenUrls = new Set<string>()
     const tasks: PreloadTask[] = []
+    const targets = adjacentTargets(this.targets, animalId)
 
-    for (const target of adjacentTargets(this.targets, animalId)) {
-      for (const url of target.imageUrls) {
+    // Model transfer dominates the perceived switching delay. Start both
+    // adjacent requests as soon as the quiet-period gate opens. Waiting for the
+    // first model to finish can starve the second low-priority request for tens
+    // of seconds while the animated page is still fetching other assets.
+    if (policy === 'all') {
+      const modelUrls: string[] = []
+      for (const target of targets) {
+        if (
+          !seenUrls.has(target.modelUrl) &&
+          this.modelCache.get(target.modelUrl) === null
+        ) {
+          seenUrls.add(target.modelUrl)
+          modelUrls.push(target.modelUrl)
+        }
+      }
+      if (modelUrls.length > 0) {
+        tasks.push({ kind: 'models', urls: modelUrls })
+      }
+    }
+
+    for (const target of targets) {
+      const imageUrls =
+        typeof target.imageUrls === 'function'
+          ? target.imageUrls()
+          : target.imageUrls
+      for (const url of imageUrls) {
         if (!seenUrls.has(url)) {
           seenUrls.add(url)
           tasks.push({ kind: 'image', url })
         }
-      }
-      if (
-        includeModels &&
-        !seenUrls.has(target.modelUrl) &&
-        this.modelCache.get(target.modelUrl) === null
-      ) {
-        seenUrls.add(target.modelUrl)
-        tasks.push({ kind: 'model', url: target.modelUrl })
       }
     }
 
@@ -177,33 +198,7 @@ export class IdlePreloadCoordinator {
       return
     }
 
-    this.scheduleIdle(() => {
-      void this.runTask(task, controller, generation)
-    })
-  }
-
-  private scheduleIdle(callback: () => void): void {
-    if (typeof window.requestIdleCallback === 'function') {
-      const handle = window.requestIdleCallback(
-        () => {
-          this.cancelScheduledIdle = null
-          callback()
-        },
-        { timeout: 1_000 },
-      )
-      this.cancelScheduledIdle = () => {
-        window.cancelIdleCallback(handle)
-      }
-      return
-    }
-
-    const handle = window.setTimeout(() => {
-      this.cancelScheduledIdle = null
-      callback()
-    }, 0)
-    this.cancelScheduledIdle = () => {
-      window.clearTimeout(handle)
-    }
+    void this.runTask(task, controller, generation)
   }
 
   private async runTask(
@@ -212,20 +207,14 @@ export class IdlePreloadCoordinator {
     generation: number,
   ): Promise<void> {
     try {
-      const response = await fetch(task.url, {
-        priority: 'low',
-        signal: controller.signal,
-      })
-      if (!response.ok) {
-        throw new Error(`预加载请求失败（${response.status}）：${task.url}`)
-      }
-      const buffer = await response.arrayBuffer()
-      if (
-        task.kind === 'model' &&
-        !controller.signal.aborted &&
-        generation === this.generation
-      ) {
-        this.modelCache.set(task.url, buffer)
+      if (task.kind === 'models') {
+        await Promise.allSettled(
+          task.urls.map((url) =>
+            this.preloadAsset('model', url, controller, generation),
+          ),
+        )
+      } else {
+        await this.preloadAsset('image', task.url, controller, generation)
       }
     } catch {
       // Adjacent preloading is optional. A later explicit selection performs
@@ -238,6 +227,29 @@ export class IdlePreloadCoordinator {
       ) {
         this.scheduleNextTask(generation)
       }
+    }
+  }
+
+  private async preloadAsset(
+    kind: 'image' | 'model',
+    url: string,
+    controller: AbortController,
+    generation: number,
+  ): Promise<void> {
+    const response = await fetch(url, {
+      priority: kind === 'model' ? 'auto' : 'low',
+      signal: controller.signal,
+    })
+    if (!response.ok) {
+      throw new Error(`预加载请求失败（${response.status}）：${url}`)
+    }
+    const buffer = await response.arrayBuffer()
+    if (
+      kind === 'model' &&
+      !controller.signal.aborted &&
+      generation === this.generation
+    ) {
+      this.modelCache.set(url, buffer)
     }
   }
 }

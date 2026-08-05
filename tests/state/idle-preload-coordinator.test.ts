@@ -26,7 +26,7 @@ describe('IdlePreloadCoordinator', () => {
     vi.useRealTimers()
   })
 
-  it('waits for the committed animal to stay idle before preloading next then previous', async () => {
+  it('waits for the committed animal to stay idle before starting both adjacent models', async () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn<typeof fetch>(() =>
       Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
@@ -45,16 +45,28 @@ describe('IdlePreloadCoordinator', () => {
     expect(fetchMock).not.toHaveBeenCalled()
 
     await vi.advanceTimersByTimeAsync(1)
+    expect(fetchMock.mock.calls.slice(0, 2).map(([url]) => url)).toEqual([
+      '/mammoth.glb',
+      '/stegosaurus.glb',
+    ])
     await vi.runAllTimersAsync()
 
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
-      '/mammoth-background.webp',
       '/mammoth.glb',
-      '/stegosaurus-background.webp',
       '/stegosaurus.glb',
+      '/mammoth-background.webp',
+      '/stegosaurus-background.webp',
     ])
-    for (const [, init] of fetchMock.mock.calls) {
-      expect(init).toMatchObject({ priority: 'low' })
+    for (const [url, init] of fetchMock.mock.calls) {
+      const requestUrl =
+        typeof url === 'string'
+          ? url
+          : url instanceof URL
+            ? url.href
+            : url.url
+      expect(init).toMatchObject({
+        priority: requestUrl.endsWith('.glb') ? 'auto' : 'low',
+      })
     }
     expect(cache.get('/mammoth.glb')).not.toBeNull()
     expect(cache.get('/stegosaurus.glb')).not.toBeNull()
@@ -64,11 +76,14 @@ describe('IdlePreloadCoordinator', () => {
 
   it('immediately aborts in-flight idle work when a user request takes priority', async () => {
     vi.useFakeTimers()
-    let preloadSignal: AbortSignal | undefined
+    const preloadSignals: AbortSignal[] = []
     const fetchMock = vi.fn(
       (_url: string | URL | Request, init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
-          preloadSignal = init?.signal ?? undefined
+          const preloadSignal = init?.signal
+          if (preloadSignal) {
+            preloadSignals.push(preloadSignal)
+          }
           preloadSignal?.addEventListener(
             'abort',
             () => reject(new DOMException('aborted', 'AbortError')),
@@ -86,23 +101,50 @@ describe('IdlePreloadCoordinator', () => {
     coordinator.scheduleAfterCommit('triceratops')
     await vi.advanceTimersByTimeAsync(2_000)
     await vi.advanceTimersToNextTimerAsync()
-    expect(fetchMock).toHaveBeenCalledOnce()
-    expect(preloadSignal?.aborted).toBe(false)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(preloadSignals.every((signal) => !signal.aborted)).toBe(true)
 
     coordinator.cancelAll()
 
-    expect(preloadSignal?.aborted).toBe(true)
+    expect(preloadSignals.every((signal) => signal.aborted)).toBe(true)
     await Promise.resolve()
     await vi.runAllTimersAsync()
-    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
 
     coordinator.destroy()
   })
 
-  it('preloads only images when the user has enabled data saving', async () => {
+  it('does not perform optional preloading when the user has enabled data saving', async () => {
     vi.useFakeTimers()
     vi.stubGlobal('navigator', {
       connection: { effectiveType: '4g', saveData: true },
+    })
+    const fetchMock = vi.fn<typeof fetch>(() =>
+      Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const cache = new ModelCache()
+    const coordinator = new IdlePreloadCoordinator({
+      idleDelayMs: 2_000,
+      modelCache: cache,
+      targets,
+    })
+
+    coordinator.scheduleAfterCommit('triceratops')
+    await vi.advanceTimersByTimeAsync(2_000)
+    await vi.runAllTimersAsync()
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(cache.get('/mammoth.glb')).toBeNull()
+    expect(cache.get('/stegosaurus.glb')).toBeNull()
+
+    coordinator.destroy()
+  })
+
+  it('keeps image previews but skips models on a slow connection', async () => {
+    vi.useFakeTimers()
+    vi.stubGlobal('navigator', {
+      connection: { effectiveType: '2g', saveData: false },
     })
     const fetchMock = vi.fn<typeof fetch>(() =>
       Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
@@ -125,6 +167,36 @@ describe('IdlePreloadCoordinator', () => {
     ])
     expect(cache.get('/mammoth.glb')).toBeNull()
     expect(cache.get('/stegosaurus.glb')).toBeNull()
+
+    coordinator.destroy()
+  })
+
+  it('still preloads adjacent models on a 3g connection', async () => {
+    vi.useFakeTimers()
+    vi.stubGlobal('navigator', {
+      connection: { effectiveType: '3g', saveData: false },
+    })
+    const fetchMock = vi.fn<typeof fetch>(() =>
+      Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const cache = new ModelCache()
+    const coordinator = new IdlePreloadCoordinator({
+      idleDelayMs: 2_000,
+      modelCache: cache,
+      targets,
+    })
+
+    coordinator.scheduleAfterCommit('triceratops')
+    await vi.advanceTimersByTimeAsync(2_000)
+    await vi.runAllTimersAsync()
+
+    expect(fetchMock.mock.calls.slice(0, 2).map(([url]) => url)).toEqual([
+      '/mammoth.glb',
+      '/stegosaurus.glb',
+    ])
+    expect(cache.get('/mammoth.glb')).not.toBeNull()
+    expect(cache.get('/stegosaurus.glb')).not.toBeNull()
 
     coordinator.destroy()
   })

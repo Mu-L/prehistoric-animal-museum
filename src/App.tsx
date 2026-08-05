@@ -48,6 +48,7 @@ import {
 import type { DisplayableAnimalPackage } from './review/types'
 import {
   AnimalLoadCoordinator,
+  IdlePreloadCoordinator,
   type AnimalLoadSnapshot,
   type AnimalLoadContext,
 } from './state'
@@ -60,6 +61,8 @@ import {
 } from './viewer/ViewerController'
 import { ModelCache } from './viewer/model-cache'
 import { createViewerModelDescriptor } from './viewer/create-viewer-model-descriptor'
+import { selectModelPreviewProfile } from './viewer/model-preview-profiles'
+import { modelPreviewFor } from './viewer/responsive-model-stills'
 
 interface RuntimeAnimal {
   readonly id: string
@@ -104,9 +107,13 @@ interface ModelDataNotice {
 interface ModelLoadingProgress {
   readonly animalId: string
   readonly loadedBytes: number
+  readonly phase: 'checking-cache' | 'downloading' | 'preparing'
   readonly requestToken: number
+  readonly source: ModelLoadProgress['source'] | null
   readonly totalBytes: number
 }
+
+const LARGE_MODEL_NOTICE_DELAY_MS = 600
 
 function SceneBackground({
   animal,
@@ -515,9 +522,37 @@ export function App() {
   )
   const initialAnimal = useMemo(() => readInitialAnimal(animals), [animals])
   const modelCache = useMemo(() => new ModelCache(), [])
+  const idlePreloadTargets = useMemo(
+    () =>
+      animals.map((animal) => ({
+        id: animal.id,
+        imageUrls: () => {
+          const portrait = window.matchMedia('(orientation: portrait)').matches
+          const previewProfile = selectModelPreviewProfile(
+            (media) => window.matchMedia(media).matches,
+          )
+          const preview = modelPreviewFor(
+            animal.id,
+            previewProfile.fileName,
+          )
+          return [
+            portrait
+              ? animal.assets.backgroundPortrait
+              : animal.assets.backgroundLandscape,
+            preview ??
+              (previewProfile.height > previewProfile.width
+                ? animal.assets.posterPortrait
+                : animal.assets.poster),
+          ]
+        },
+        modelUrl: animal.assets.model,
+      })),
+    [animals],
+  )
 
   const viewerControllerRef = useRef<ViewerController | null>(null)
   const coordinatorRef = useRef<AnimalLoadCoordinator<LoadedRuntimeAnimal> | null>(null)
+  const idlePreloadCoordinatorRef = useRef<IdlePreloadCoordinator | null>(null)
   const attemptsRef = useRef(new Map<string, number>())
   const activeAnimalRef = useRef(initialAnimal)
   const backgroundTimerRef = useRef<number | null>(null)
@@ -532,6 +567,8 @@ export function App() {
     readonly y: number
   } | null>(null)
   const modelDataNoticeTimerRef = useRef<number | null>(null)
+  const largeModelNoticeDelayTimerRef = useRef<number | null>(null)
+  const networkTransferRequestTokenRef = useRef<number | null>(null)
   const modelDataNoticeKindRef =
     useRef<ModelDataNotice['kind'] | null>(null)
   const modelDataNoticeLifecycleRef = useRef(0)
@@ -613,6 +650,51 @@ export function App() {
     }, notice.kind === 'first-entry' ? 8_000 : 5_500)
   }, [])
 
+  const clearLargeModelNotice = useCallback(() => {
+    if (largeModelNoticeDelayTimerRef.current !== null) {
+      window.clearTimeout(largeModelNoticeDelayTimerRef.current)
+      largeModelNoticeDelayTimerRef.current = null
+    }
+    networkTransferRequestTokenRef.current = null
+    if (modelDataNoticeKindRef.current === 'large-model') {
+      dismissModelDataNotice()
+    }
+  }, [dismissModelDataNotice])
+
+  const scheduleLargeModelNotice = useCallback(
+    (animal: RuntimeAnimal, requestToken: number) => {
+      if (
+        !isLargeModel(animal.assets.modelBytes) ||
+        modelDataNoticeKindRef.current === 'first-entry'
+      ) {
+        return
+      }
+      if (networkTransferRequestTokenRef.current === requestToken) {
+        return
+      }
+      networkTransferRequestTokenRef.current = requestToken
+      largeModelNoticeDelayTimerRef.current = window.setTimeout(() => {
+        largeModelNoticeDelayTimerRef.current = null
+        const snapshot = coordinatorRef.current?.getSnapshot()
+        if (
+          networkTransferRequestTokenRef.current !== requestToken ||
+          snapshot?.phase !== 'loading' ||
+          snapshot.requestToken !== requestToken ||
+          modelDataNoticeKindRef.current === 'first-entry'
+        ) {
+          return
+        }
+        presentModelDataNotice({
+          kind: 'large-model',
+          message: `${animal.name}的 3D 模型约 ${formatModelSize(
+            animal.assets.modelBytes,
+          )}，第一次下载的数据量较大，加载可能会久一点。`,
+        })
+      }, LARGE_MODEL_NOTICE_DELAY_MS)
+    },
+    [presentModelDataNotice],
+  )
+
   useEffect(() => {
     const lifecycle = ++narrationLifecycleRef.current
     return () => {
@@ -639,6 +721,11 @@ export function App() {
             window.clearTimeout(modelDataNoticeTimerRef.current)
             modelDataNoticeTimerRef.current = null
           }
+          if (largeModelNoticeDelayTimerRef.current !== null) {
+            window.clearTimeout(largeModelNoticeDelayTimerRef.current)
+            largeModelNoticeDelayTimerRef.current = null
+          }
+          networkTransferRequestTokenRef.current = null
           modelDataNoticeKindRef.current = null
         }
       })
@@ -697,6 +784,30 @@ export function App() {
   }, [])
 
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        idlePreloadCoordinatorRef.current?.cancelAll()
+        return
+      }
+
+      const loadCoordinator = coordinatorRef.current
+      const idlePreloadCoordinator = idlePreloadCoordinatorRef.current
+      const snapshot = loadCoordinator?.getSnapshot()
+      if (
+        idlePreloadCoordinator &&
+        snapshot?.phase === 'idle' &&
+        snapshot.readyAnimalId
+      ) {
+        idlePreloadCoordinator.scheduleAfterCommit(snapshot.readyAnimalId)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
+  useEffect(() => {
     narration.commit({
       animalId: initialAnimal.id,
       source: initialAnimal.assets.narration,
@@ -714,6 +825,7 @@ export function App() {
     }
     setModelReady(false)
     setModelLoadingProgress(null)
+    clearLargeModelNotice()
     setViewerFailure(failure.message)
     viewerRequiresRemountRef.current =
       failure.kind === 'webgl-unavailable' || failure.kind === 'context-lost'
@@ -722,6 +834,8 @@ export function App() {
     if (failure.kind === 'context-lost') {
       coordinatorRef.current?.destroy()
       coordinatorRef.current = null
+      idlePreloadCoordinatorRef.current?.destroy()
+      idlePreloadCoordinatorRef.current = null
     }
     if (fatalViewerFailure) {
       setLoadSnapshot((snapshot) => ({
@@ -736,7 +850,7 @@ export function App() {
     setLiveMessage(
       `三维展台暂时不可用，已经换成${activeAnimalRef.current.name}的静态模型图。`,
     )
-  }, [])
+  }, [clearLargeModelNotice])
 
   const handleControllerReady = useCallback((controller: ViewerController | null) => {
     viewerControllerRef.current = controller
@@ -794,15 +908,25 @@ export function App() {
     const controller = viewerController
     coordinatorRef.current?.destroy()
     coordinatorRef.current = null
+    idlePreloadCoordinatorRef.current?.destroy()
+    idlePreloadCoordinatorRef.current = null
 
     if (!controller) {
       return
     }
 
+    const idlePreloadCoordinator = new IdlePreloadCoordinator({
+      modelCache,
+      targets: idlePreloadTargets,
+    })
+    idlePreloadCoordinatorRef.current = idlePreloadCoordinator
+
     const coordinator = new AnimalLoadCoordinator<LoadedRuntimeAnimal>({
       initialReadyAnimalId: null,
       initialRequestToken: requestTokenRef.current,
       load: async (animalId, context: AnimalLoadContext) => {
+        idlePreloadCoordinator.cancelAll()
+        clearLargeModelNotice()
         const animal = animalIndex.get(animalId)
         if (!animal) {
           throw new Error(`没有找到动物 ${animalId}。`)
@@ -831,27 +955,44 @@ export function App() {
             return
           }
           const totalBytes = progress.totalBytes ?? animal.assets.modelBytes
+          const phase =
+            progress.source !== 'network' ||
+            (progress.totalBytes !== null &&
+              progress.loadedBytes >= progress.totalBytes)
+              ? 'preparing'
+              : 'downloading'
           const percent = Math.min(
-            100,
+            phase === 'downloading' ? 99 : 100,
             Math.floor((progress.loadedBytes / totalBytes) * 100),
           )
-          const progressKey = `${context.requestToken}:${percent}`
+          const progressKey = `${context.requestToken}:${progress.source}:${phase}:${percent}`
           if (lastReportedModelProgressRef.current === progressKey) {
             return
           }
           lastReportedModelProgressRef.current = progressKey
+          if (phase === 'downloading') {
+            scheduleLargeModelNotice(animal, context.requestToken)
+          } else if (
+            networkTransferRequestTokenRef.current === context.requestToken
+          ) {
+            clearLargeModelNotice()
+          }
           setModelLoadingProgress({
             animalId,
             loadedBytes: progress.loadedBytes,
+            phase,
             requestToken: context.requestToken,
+            source: progress.source,
             totalBytes,
           })
         }
-        lastReportedModelProgressRef.current = `${context.requestToken}:0`
+        lastReportedModelProgressRef.current = `${context.requestToken}:checking-cache`
         setModelLoadingProgress({
           animalId,
           loadedBytes: 0,
+          phase: 'checking-cache',
           requestToken: context.requestToken,
+          source: null,
           totalBytes: animal.assets.modelBytes,
         })
         const selectedBackground = window.matchMedia(
@@ -963,6 +1104,7 @@ export function App() {
           animalId: animal.id,
           source: animal.assets.narration,
         })
+        idlePreloadCoordinator.scheduleAfterCommit(animal.id)
         setLiveMessage(`${animal.name}已经来到展台。`)
       },
       dispose: ({ staged }) => {
@@ -979,6 +1121,7 @@ export function App() {
       requestTokenRef.current = Math.max(requestTokenRef.current, snapshot.requestToken)
       setLoadSnapshot(snapshot)
       if (snapshot.phase === 'failed' && snapshot.failure) {
+        clearLargeModelNotice()
         setModelLoadingProgress(null)
         const failedAnimal = animalIndex.get(snapshot.failure.animalId)
         setLiveMessage(
@@ -991,33 +1134,51 @@ export function App() {
     return () => {
       unsubscribe()
       coordinator.destroy()
+      idlePreloadCoordinator.destroy()
       if (coordinatorRef.current === coordinator) {
         coordinatorRef.current = null
+      }
+      if (idlePreloadCoordinatorRef.current === idlePreloadCoordinator) {
+        idlePreloadCoordinatorRef.current = null
       }
     }
   }, [
     animalIndex,
+    clearLargeModelNotice,
+    idlePreloadTargets,
     modelCache,
     narration,
+    scheduleLargeModelNotice,
     viewerController,
   ])
 
   useEffect(() => {
-    const readyAnimalId = loadSnapshot.readyAnimalId
-    if (!readyAnimalId) {
+    const followRequestedAnimal =
+      loadSnapshot.phase === 'loading' || loadSnapshot.phase === 'failed'
+    const railAnimalId =
+      followRequestedAnimal
+        ? loadSnapshot.requestedAnimalId
+        : loadSnapshot.readyAnimalId
+    if (!railAnimalId) {
       return
     }
     const selectedCard = railRef.current?.querySelector<HTMLElement>(
-      `[data-animal-id="${readyAnimalId}"]`,
+      `[data-animal-id="${railAnimalId}"]`,
     )
     selectedCard?.scrollIntoView?.({
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ? 'auto'
-        : 'smooth',
+      behavior:
+        followRequestedAnimal ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'auto'
+          : 'smooth',
       block: 'nearest',
       inline: 'center',
     })
-  }, [loadSnapshot.readyAnimalId])
+  }, [
+    loadSnapshot.phase,
+    loadSnapshot.readyAnimalId,
+    loadSnapshot.requestedAnimalId,
+  ])
 
   const exitFocusMode = useCallback(() => {
     focusPointerRef.current = null
@@ -1060,29 +1221,23 @@ export function App() {
     if (!coordinator) {
       return
     }
-    const requestedAnimal = animalIndex.get(animalId)
+    const snapshot = coordinator.getSnapshot()
     if (
-      requestedAnimal &&
-      requestedAnimal.id !== activeAnimalRef.current.id &&
-      window.matchMedia(NARROW_TOUCH_MEDIA_QUERY).matches &&
-      modelDataNoticeKindRef.current !== 'first-entry'
+      (snapshot.phase === 'idle' && snapshot.readyAnimalId === animalId) ||
+      (snapshot.phase === 'loading' &&
+        snapshot.requestedAnimalId === animalId)
     ) {
-      if (isLargeModel(requestedAnimal.assets.modelBytes)) {
-        presentModelDataNotice({
-          kind: 'large-model',
-          message: `${requestedAnimal.name}的 3D 模型约 ${formatModelSize(
-            requestedAnimal.assets.modelBytes,
-          )}，加载可能会久一点。`,
-        })
-      } else if (modelDataNoticeKindRef.current === 'large-model') {
-        dismissModelDataNotice()
-      }
+      return
     }
+    idlePreloadCoordinatorRef.current?.cancelAll()
+    clearLargeModelNotice()
     setLiveMessage('正在准备新的动物展台。')
     void coordinator.request(animalId)
   }
 
   const retryAnimal = () => {
+    idlePreloadCoordinatorRef.current?.cancelAll()
+    clearLargeModelNotice()
     setLiveMessage('正在重新准备展台。')
     const coordinator = coordinatorRef.current
     if (viewerRequiresRemountRef.current) {
@@ -1103,12 +1258,22 @@ export function App() {
     }
   }
 
-  const currentIndex = Math.max(
-    animals.findIndex((animal) => animal.id === (loadSnapshot.readyAnimalId ?? activeAnimal.id)),
-    0,
-  )
-  const previousAnimal = animals[(currentIndex - 1 + animals.length) % animals.length] ?? activeAnimal
-  const nextAnimal = animals[(currentIndex + 1) % animals.length] ?? activeAnimal
+  const requestAdjacentAnimal = (offset: -1 | 1) => {
+    const snapshot = coordinatorRef.current?.getSnapshot()
+    const anchorAnimalId =
+      snapshot?.requestedAnimalId ??
+      snapshot?.readyAnimalId ??
+      activeAnimalRef.current.id
+    const anchorIndex = Math.max(
+      animals.findIndex((animal) => animal.id === anchorAnimalId),
+      0,
+    )
+    const target =
+      animals[(anchorIndex + offset + animals.length) % animals.length]
+    if (target) {
+      requestAnimal(target.id)
+    }
+  }
   const initialModelFailure =
     !modelReady && loadSnapshot.phase === 'failed'
       ? '它暂时没准备好，再点一次试试。'
@@ -1187,14 +1352,21 @@ export function App() {
     !modelReady &&
     loadSnapshot.readyAnimalId === null &&
     loadSnapshot.phase === 'loading'
+  const currentModelLoadingProgress =
+    modelLoadingProgress?.requestToken === loadSnapshot.requestToken
+      ? modelLoadingProgress
+      : null
+  const loadingPhase =
+    currentModelLoadingProgress?.phase ??
+    (loadSnapshot.phase === 'loading' ? 'checking-cache' : null)
   const loadingPercent =
-    modelLoadingProgress?.requestToken === loadSnapshot.requestToken &&
-    modelLoadingProgress.totalBytes > 0
+    currentModelLoadingProgress?.phase === 'downloading' &&
+    currentModelLoadingProgress.totalBytes > 0
       ? Math.min(
-          100,
+          99,
           Math.floor(
-            (modelLoadingProgress.loadedBytes /
-              modelLoadingProgress.totalBytes) *
+            (currentModelLoadingProgress.loadedBytes /
+              currentModelLoadingProgress.totalBytes) *
               100,
           ),
         )
@@ -1360,6 +1532,7 @@ export function App() {
           initialLoading={initialLoading}
           key={`viewer-${viewerRetryKey}`}
           label={activeAnimal.name}
+          loadingPhase={loadingPhase}
           loadingPercent={loadingPercent}
           modelCache={modelCache}
           modelReady={modelReady}
@@ -1420,7 +1593,7 @@ export function App() {
             className="animal-step animal-step--previous"
             icon={ChevronLeft}
             label="上一只动物"
-            onClick={() => requestAnimal(previousAnimal.id)}
+            onClick={() => requestAdjacentAnimal(-1)}
           />
           <div className="animal-rail" ref={railRef} role="list">
             {animals.map((animal) => {
@@ -1485,9 +1658,11 @@ export function App() {
                     !initialLoading &&
                     loadSnapshot.showDelayedLabel ? (
                       <span className="card-status">
-                        {loadingPercent === null
-                          ? '正在请它出来…'
-                          : `准备中 · ${loadingPercent}%`}
+                        {loadingPhase === 'preparing'
+                          ? '正在打开…'
+                          : loadingPercent === null
+                            ? '正在请它出来…'
+                            : `下载中 · ${loadingPercent}%`}
                       </span>
                     ) : null}
                     {failed ? <span className="card-status">点我再试</span> : null}
@@ -1506,7 +1681,7 @@ export function App() {
             className="animal-step animal-step--next"
             icon={ChevronRight}
             label="下一只动物"
-            onClick={() => requestAnimal(nextAnimal.id)}
+            onClick={() => requestAdjacentAnimal(1)}
           />
         </section>
       ) : null}
@@ -1550,6 +1725,7 @@ export function App() {
             ? loadSnapshot.requestedAnimalId
             : null
         }
+        loadingPhase={loadingPhase}
         loadingPercent={loadingPercent}
         onClose={() => setCollectionOpen(false)}
         onSelect={(animalId) => {

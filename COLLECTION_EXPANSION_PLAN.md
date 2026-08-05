@@ -143,9 +143,9 @@ increase the card count.
 The encoded GLB optimization target/hard ceiling is 12/20 MiB. The dependent
 complete-animal-package target/hard ceiling is 14/23 MiB. Geometry, draw-call,
 bone, image/audio, texture-dimension, decoded-texture-memory, collection, and
-real-phone gates remain unchanged. A model strictly above 8 MiB is allowed to
-proceed inside those gates, but narrow touch-first layouts identify its
-approximate encoded size in a non-blocking switch notice. The first mobile
+real-phone gates remain unchanged. A model strictly above 6 MiB is allowed to
+proceed inside those gates, but the interface identifies its approximate
+encoded size in a non-blocking switch notice. The first mobile
 visit also receives a remembered data/Wi-Fi reminder.
 
 ## 4. Completed second review wave and release additions

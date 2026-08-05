@@ -48,13 +48,84 @@ export interface ViewerFailure {
 export interface ModelLoadProgress {
   readonly fromCache: boolean
   readonly loadedBytes: number
+  readonly source: ModelLoadSource
   readonly totalBytes: number | null
+}
+
+export type ModelLoadSource = 'memory-cache' | 'http-cache' | 'network'
+
+interface ModelResponse {
+  readonly response: Response
+  readonly source: Exclude<ModelLoadSource, 'memory-cache'>
+}
+
+interface ModelResourceTiming {
+  readonly decodedBodySize: number
+  readonly encodedBodySize: number
+  readonly startTime: number
+  readonly transferSize: number
+}
+
+export function classifyModelResourceTiming(
+  entries: readonly ModelResourceTiming[],
+  requestStartedAt: number,
+): Exclude<ModelLoadSource, 'memory-cache'> {
+  let timing: ModelResourceTiming | undefined
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index]
+    if (entry && entry.startTime >= requestStartedAt - 1) {
+      timing = entry
+      break
+    }
+  }
+  return timing &&
+    timing.transferSize === 0 &&
+    (timing.encodedBodySize > 0 || timing.decodedBodySize > 0)
+    ? 'http-cache'
+    : 'network'
+}
+
+function readCompletedModelSource(
+  modelUrl: string,
+  requestStartedAt: number,
+): Exclude<ModelLoadSource, 'memory-cache'> {
+  try {
+    const resolvedUrl = new URL(modelUrl, window.location.href).href
+    const entries = performance
+      .getEntriesByName(resolvedUrl, 'resource')
+      .map((entry) => entry as PerformanceResourceTiming)
+    return classifyModelResourceTiming(entries, requestStartedAt)
+  } catch {
+    return 'network'
+  }
+}
+
+/**
+ * Uses one ordinary fetch so the browser can satisfy it from its HTTP cache.
+ * A cache-only probe creates a misleading failed request in DevTools on every
+ * cold miss before the successful transfer begins.
+ */
+export async function requestModelResponse(
+  modelUrl: string,
+  signal?: AbortSignal,
+  onSource?: (source: Exclude<ModelLoadSource, 'memory-cache'>) => void,
+): Promise<ModelResponse> {
+  onSource?.('network')
+  const response = await fetch(modelUrl, {
+    priority: 'high',
+    ...(signal ? { signal } : {}),
+  })
+  if (!response.ok) {
+    throw new Error(`模型请求失败（${response.status}）。`)
+  }
+  return { response, source: 'network' }
 }
 
 export async function readModelResponseBuffer(
   response: Response,
   signal?: AbortSignal,
   onProgress?: (progress: ModelLoadProgress) => void,
+  source: Exclude<ModelLoadSource, 'memory-cache'> = 'network',
 ): Promise<ArrayBuffer> {
   const contentLength = Number(response.headers.get('content-length'))
   const totalBytes =
@@ -66,8 +137,9 @@ export async function readModelResponseBuffer(
     const buffer = await response.arrayBuffer()
     signal?.throwIfAborted()
     onProgress?.({
-      fromCache: false,
+      fromCache: source !== 'network',
       loadedBytes: buffer.byteLength,
+      source,
       totalBytes: totalBytes ?? buffer.byteLength,
     })
     return buffer
@@ -86,8 +158,9 @@ export async function readModelResponseBuffer(
     chunks.push(value)
     loadedBytes += value.byteLength
     onProgress({
-      fromCache: false,
+      fromCache: source !== 'network',
       loadedBytes,
+      source,
       totalBytes,
     })
   }
@@ -101,8 +174,9 @@ export async function readModelResponseBuffer(
   }
   if (totalBytes === null) {
     onProgress({
-      fromCache: false,
+      fromCache: source !== 'network',
       loadedBytes,
+      source,
       totalBytes: loadedBytes,
     })
   }
@@ -119,6 +193,7 @@ export interface ViewerControllerOptions {
 export interface StagedViewerModel {
   readonly animalId: string
   readonly descriptor: ViewerModelDescriptor
+  readonly loadSource: ModelLoadSource
   readonly group: Group
   readonly modelRoot: Group
   readonly bounds: Box3
@@ -378,7 +453,6 @@ export class ViewerController {
   private readonly sceneAccentLight = new DirectionalLight('#ffd6a0', 0.55)
   private readonly cameraLightTarget = new Group()
   private readonly cameraLightingPose = createCameraRelativeLightingPose()
-  private readonly loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
   private readonly resizeObserver: ResizeObserver
   private readonly reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   private readonly handleReducedMotionChange = () => {
@@ -497,28 +571,57 @@ export class ViewerController {
     onProgress?: (progress: ModelLoadProgress) => void,
   ): Promise<StagedViewerModel> {
     try {
+      let loadSource: ModelLoadSource = 'memory-cache'
       let buffer = this.options.modelCache?.get(descriptor.modelUrl) ?? null
       if (buffer === null) {
-        const response = await fetch(descriptor.modelUrl, {
-          priority: 'high',
-          ...(signal ? { signal } : {}),
-        })
-        if (!response.ok) {
-          throw new Error(`模型请求失败（${response.status}）。`)
-        }
-        buffer = await readModelResponseBuffer(response, signal, onProgress)
+        const requestStartedAt = performance.now()
+        const { response, source } = await requestModelResponse(
+          descriptor.modelUrl,
+          signal,
+          (pendingSource) => {
+            onProgress?.({
+              fromCache: pendingSource !== 'network',
+              loadedBytes: 0,
+              source: pendingSource,
+              totalBytes: null,
+            })
+          },
+        )
+        buffer = await readModelResponseBuffer(
+          response,
+          signal,
+          onProgress,
+          source,
+        )
         signal?.throwIfAborted()
+        loadSource = readCompletedModelSource(
+          descriptor.modelUrl,
+          requestStartedAt,
+        )
+        if (loadSource === 'http-cache') {
+          onProgress?.({
+            fromCache: true,
+            loadedBytes: buffer.byteLength,
+            source: loadSource,
+            totalBytes: buffer.byteLength,
+          })
+        }
         this.options.modelCache?.set(descriptor.modelUrl, buffer)
       } else {
         onProgress?.({
           fromCache: true,
           loadedBytes: buffer.byteLength,
+          source: 'memory-cache',
           totalBytes: buffer.byteLength,
         })
       }
       signal?.throwIfAborted()
       const resourceBase = new URL('.', new URL(descriptor.modelUrl, window.location.href)).href
-      const gltf = await this.loader.parseAsync(buffer, resourceBase)
+      // Each request gets its own loader. Rapid selections can leave an older
+      // parse finishing after its AbortSignal fires; isolating loader state
+      // keeps that stale work from affecting the latest requested model.
+      const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
+      const gltf = await loader.parseAsync(buffer, resourceBase)
       if (signal?.aborted) {
         disposeObject3D(gltf.scene)
         signal.throwIfAborted()
@@ -594,10 +697,14 @@ export class ViewerController {
         descriptor,
         disposed: false,
         group,
+        loadSource,
         mixer,
         modelRoot,
       }
     } catch (cause) {
+      if (signal?.aborted) {
+        signal.throwIfAborted()
+      }
       if (cause instanceof DOMException && cause.name === 'AbortError') {
         throw cause
       }
@@ -630,7 +737,8 @@ export class ViewerController {
       `${staged.descriptor.label}三维模型，可拖动旋转并缩放`,
     )
     this.renderer.domElement.setAttribute('aria-hidden', 'false')
-    if (previous) {
+    this.renderer.domElement.dataset.modelLoadSource = staged.loadSource
+    if (previous && staged.loadSource === 'network') {
       this.initialPoseHoldUntil = 0
       staged.group.visible = false
       this.transition = {
@@ -643,6 +751,16 @@ export class ViewerController {
       this.setTransitionOpacity(1)
       this.renderer.domElement.dataset.transitioning = 'true'
       this.renderer.domElement.dataset.transitionPhase = 'outgoing'
+    } else if (previous) {
+      this.initialPoseHoldUntil = 0
+      this.applyPresentationSettings(staged)
+      this.reset()
+      this.disposeStagedModel(previous)
+      this.clearTransitionOpacity()
+      this.renderer.domElement.dataset.transitioning = 'false'
+      this.renderer.domElement.dataset.transitionPhase = 'idle'
+      this.updateCameraLighting()
+      this.renderer.render(this.scene, this.camera)
     } else {
       this.applyPresentationSettings(staged)
       this.reset()

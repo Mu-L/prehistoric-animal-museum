@@ -75,6 +75,7 @@ vi.mock('../src/viewer/ViewerController', () => {
       onProgress?: (progress: {
         readonly fromCache: boolean
         readonly loadedBytes: number
+        readonly source: 'memory-cache' | 'http-cache' | 'network'
         readonly totalBytes: number | null
       }) => void,
     ): Promise<unknown> {
@@ -356,10 +357,27 @@ describe('App', () => {
     )
   })
 
-  it('shows the poster and progress treatment while loading, preserves it on failure, and retries', async () => {
+  it('shows download and model-opening phases, preserves the poster on failure, and retries', async () => {
     vi.useFakeTimers()
     const staged = deferred<ReturnType<typeof stagedModel>>()
-    viewerMock.stageModel.mockImplementation(() => staged.promise)
+    let reportProgress:
+      | ((progress: {
+          readonly fromCache: boolean
+          readonly loadedBytes: number
+          readonly source: 'memory-cache' | 'http-cache' | 'network'
+          readonly totalBytes: number | null
+        }) => void)
+      | undefined
+    viewerMock.stageModel.mockImplementation(
+      (
+        _descriptor: MockDescriptor,
+        _signal: AbortSignal | undefined,
+        onProgress: typeof reportProgress,
+      ) => {
+        reportProgress = onProgress
+        return staged.promise
+      },
+    )
 
     render(<App />)
     await act(async () => {
@@ -370,14 +388,39 @@ describe('App', () => {
     const focusButton = screen.getByRole('button', { name: '专注看模型' })
     expect(card).toHaveAttribute('data-loading', 'true')
     expect(screen.queryByText('正在请它出来…')).not.toBeInTheDocument()
-    expect(screen.getByText('正在准备 3D 模型 · 0%')).toBeVisible()
+    expect(screen.getByText('正在查找 3D 模型…')).toBeVisible()
     expect(screen.getByRole('progressbar', { name: '3D 模型加载进度' }))
-      .toHaveAttribute('value', '0')
+      .not.toHaveAttribute('value')
     expect(document.querySelector('.stage-loading')).toBeVisible()
     expect(focusButton).toBeDisabled()
     expect(
       screen.getByAltText('剑龙的透明背景静态模型图'),
     ).toBeVisible()
+
+    act(() => {
+      reportProgress?.({
+        fromCache: false,
+        loadedBytes: 40,
+        source: 'network',
+        totalBytes: 100,
+      })
+    })
+    expect(screen.getByText('正在下载 3D 模型 · 40%')).toBeVisible()
+    expect(screen.getByRole('progressbar', { name: '3D 模型加载进度' }))
+      .toHaveAttribute('value', '40')
+
+    act(() => {
+      reportProgress?.({
+        fromCache: false,
+        loadedBytes: 100,
+        source: 'network',
+        totalBytes: 100,
+      })
+    })
+    expect(screen.getByText('正在打开 3D 模型…')).toBeVisible()
+    expect(screen.getByRole('progressbar', { name: '3D 模型加载进度' }))
+      .not.toHaveAttribute('value')
+    expect(screen.queryByText(/3D 模型 · 100%/)).not.toBeInTheDocument()
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(299)
@@ -420,9 +463,11 @@ describe('App', () => {
     expect(focusButton).toBeEnabled()
   })
 
-  it('does not preload adjacent models while the visitor is idle', async () => {
+  it('preloads the next then previous animal after the visitor is idle', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn()
+    const fetchMock = vi.fn<typeof fetch>(() =>
+      Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
+    )
     vi.stubGlobal('fetch', fetchMock)
     render(<App />)
     await act(async () => {
@@ -437,9 +482,101 @@ describe('App', () => {
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2_000)
-      await vi.advanceTimersToNextTimerAsync()
+      await vi.runAllTimersAsync()
     })
-    expect(fetchMock).not.toHaveBeenCalled()
+    const urls = fetchMock.mock.calls.map(([url]) =>
+      typeof url === 'string'
+        ? url
+        : url instanceof URL
+          ? url.href
+          : url.url,
+    )
+    expect(urls).toHaveLength(6)
+    expect(urls[0]).toContain('pteranodon/model/model.glb')
+    expect(urls[1]).toContain('mosasaurus/model/model.glb')
+    expect(
+      urls.slice(2, 4).every((url) => url.includes('pteranodon')),
+    ).toBe(true)
+    expect(urls.slice(4).every((url) => url.includes('mosasaurus'))).toBe(true)
+    for (const [url, init] of fetchMock.mock.calls) {
+      const requestUrl =
+        typeof url === 'string'
+          ? url
+          : url instanceof URL
+            ? url.href
+            : url.url
+      expect(init).toMatchObject({
+        priority: requestUrl.includes('model.glb') ? 'auto' : 'low',
+      })
+    }
+  })
+
+  it('restarts adjacent preloading after the visitor returns to the tab', async () => {
+    vi.useFakeTimers()
+    let visibilityState: DocumentVisibilityState = 'visible'
+    const originalVisibilityState = Object.getOwnPropertyDescriptor(
+      document,
+      'visibilityState',
+    )
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => visibilityState,
+    })
+    const fetchMock = vi.fn<typeof fetch>(() =>
+      Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    try {
+      render(<App />)
+      await act(async () => {
+        await Promise.resolve()
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+      expect(document.getElementById('museum-experience')).toHaveAttribute(
+        'data-ready-animal-id',
+        'stegosaurus',
+      )
+
+      visibilityState = 'hidden'
+      document.dispatchEvent(new Event('visibilitychange'))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000)
+      })
+      expect(fetchMock).not.toHaveBeenCalled()
+
+      visibilityState = 'visible'
+      document.dispatchEvent(new Event('visibilitychange'))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1_999)
+      })
+      expect(fetchMock).not.toHaveBeenCalled()
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1)
+        await vi.runAllTimersAsync()
+      })
+      const urls = fetchMock.mock.calls.map(([url]) =>
+        typeof url === 'string'
+          ? url
+          : url instanceof URL
+            ? url.href
+            : url.url,
+      )
+      expect(urls[0]).toContain('pteranodon/model/model.glb')
+      expect(urls[1]).toContain('mosasaurus/model/model.glb')
+    } finally {
+      if (originalVisibilityState) {
+        Object.defineProperty(
+          document,
+          'visibilityState',
+          originalVisibilityState,
+        )
+      } else {
+        Reflect.deleteProperty(document, 'visibilityState')
+      }
+    }
   })
 
   it('preserves unrelated query parameters and the hash when committing an animal', async () => {
@@ -487,6 +624,87 @@ describe('App', () => {
         Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
       }
     }
+  })
+
+  it('centers a distant full-collection selection while it loads and when it fails', async () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'scrollIntoView',
+    )
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    })
+    const pending = deferred<ReturnType<typeof stagedModel>>()
+
+    try {
+      await renderReadyApp()
+      scrollIntoView.mockClear()
+      viewerMock.stageModel.mockImplementationOnce(() => pending.promise)
+
+      await userEvent.click(
+        screen.getByRole('button', { name: '打开全馆图鉴' }),
+      )
+      const dialog = screen.getByRole('dialog', { name: '全馆图鉴' })
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: '前往沧龙展台' }),
+      )
+
+      const requestedCard = screen.getByRole('button', { name: '查看沧龙' })
+      await waitFor(() => {
+        expect(requestedCard).toHaveAttribute('data-loading', 'true')
+        expect(scrollIntoView).toHaveBeenCalled()
+      })
+      expect(scrollIntoView.mock.contexts.at(-1)).toBe(requestedCard)
+      expect(requestedCard).not.toHaveFocus()
+
+      await act(async () => {
+        pending.reject(new Error('mock distant selection failure'))
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+
+      await waitFor(() => {
+        expect(requestedCard).toHaveAttribute('data-failed', 'true')
+      })
+      expect(scrollIntoView.mock.contexts.at(-1)).toBe(requestedCard)
+      expect(screen.getByText('点我再试')).toBeVisible()
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          'scrollIntoView',
+          originalScrollIntoView,
+        )
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
+      }
+    }
+  })
+
+  it('uses the latest requested animal as the anchor for rapid next clicks', async () => {
+    await renderReadyApp()
+    viewerMock.stageModel.mockClear()
+    viewerMock.stageModel.mockImplementation(
+      () => new Promise<never>(() => undefined),
+    )
+
+    const nextButton = screen.getByRole('button', { name: '下一只动物' })
+    fireEvent.click(nextButton)
+    fireEvent.click(nextButton)
+
+    await waitFor(() => {
+      expect(document.getElementById('museum-experience')).toHaveAttribute(
+        'data-requested-animal-id',
+        'pachycephalosaurus',
+      )
+    })
+    expect(
+      viewerMock.stageModel.mock.calls.map(
+        ([descriptor]) => (descriptor as MockDescriptor).id,
+      ),
+    ).toEqual(['pteranodon', 'pachycephalosaurus'])
   })
 
   it('keeps content and controls available with a poster when WebGL is unavailable', async () => {

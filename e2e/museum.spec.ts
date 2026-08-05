@@ -73,6 +73,58 @@ async function expectInsideViewport(
   )
 }
 
+interface ModelTransitionProbe {
+  readonly opacities: number[]
+  readonly states: string[]
+}
+
+async function installModelTransitionProbe(page: Page): Promise<void> {
+  await page.evaluate(`(() => {
+    const canvas = document.querySelector('.viewer-canvas')
+    const host = document.querySelector('.viewer-host')
+    if (!(canvas instanceof HTMLElement) || !(host instanceof HTMLElement)) {
+      throw new Error('Viewer transition surfaces are missing')
+    }
+    const probe = {
+      opacities: [],
+      states: [canvas.dataset.transitioning ?? '']
+    }
+    Object.defineProperty(window, '__cachedModelTransitionProbe', {
+      configurable: true,
+      value: probe
+    })
+    const inspect = () => {
+      const state = canvas.dataset.transitioning ?? ''
+      if (probe.states.at(-1) !== state) {
+        probe.states.push(state)
+      }
+      const opacity = Number.parseFloat(
+        host.style.getPropertyValue('--model-transition-opacity')
+      )
+      if (Number.isFinite(opacity)) {
+        probe.opacities.push(opacity)
+      }
+    }
+    new MutationObserver(inspect).observe(canvas, {
+      attributes: true,
+      attributeFilter: ['data-transitioning']
+    })
+    new MutationObserver(inspect).observe(host, {
+      attributes: true,
+      attributeFilter: ['style']
+    })
+    inspect()
+  })()`)
+}
+
+async function readModelTransitionProbe(
+  page: Page,
+): Promise<ModelTransitionProbe> {
+  return page.evaluate<ModelTransitionProbe>(
+    `window.__cachedModelTransitionProbe`,
+  )
+}
+
 test('loads from the nested static base with Chinese semantics and accessible tooltips', async ({
   page,
 }) => {
@@ -160,6 +212,214 @@ test('eagerly loads every thumbnail in the complete museum index', async ({
     .toBe(true)
 })
 
+test('preloads only the adjacent model binaries after the quiet-period gate', async ({
+  page,
+}) => {
+  const failedModelUrls: string[] = []
+  const modelUrls = new Set<string>()
+  let modelRequestCount = 0
+  page.on('request', (request) => {
+    const url = new URL(request.url())
+    if (url.pathname.endsWith('.glb')) {
+      modelUrls.add(url.pathname)
+      modelRequestCount += 1
+    }
+  })
+  page.on('requestfailed', (request) => {
+    const url = new URL(request.url())
+    if (url.pathname.endsWith('.glb')) {
+      failedModelUrls.push(url.pathname)
+    }
+  })
+
+  await openMuseum(page)
+  await expect
+    .poll(() => modelUrls.size, { timeout: 10_000 })
+    .toBe(3)
+  await page.waitForTimeout(1_000)
+  expect(modelUrls.size).toBe(3)
+  expect(failedModelUrls).toEqual([])
+
+  const requestsBeforeAdjacentSelection = modelRequestCount
+  await page.getByRole('button', { name: '查看无齿翼龙' }).click()
+  await expect(page.locator('#museum-experience')).toHaveAttribute(
+    'data-ready-animal-id',
+    'pteranodon',
+    { timeout: 10_000 },
+  )
+  expect(modelRequestCount).toBe(requestsBeforeAdjacentSelection)
+  expect(failedModelUrls).toEqual([])
+})
+
+test('shows an adjacent in-memory model without fading the WebGL canvas', async ({
+  page,
+}) => {
+  const finishedModelUrls = new Set<string>()
+  page.on('requestfinished', (request) => {
+    const url = new URL(request.url())
+    if (url.pathname.endsWith('.glb')) {
+      finishedModelUrls.add(url.pathname)
+    }
+  })
+
+  const museum = await openMuseum(page)
+  await expect
+    .poll(() => finishedModelUrls.size, { timeout: 10_000 })
+    .toBe(3)
+  await installModelTransitionProbe(page)
+
+  await page.getByRole('button', { name: '查看无齿翼龙' }).click()
+  await expect(museum).toHaveAttribute(
+    'data-ready-animal-id',
+    'pteranodon',
+    { timeout: 10_000 },
+  )
+  await page.waitForTimeout(700)
+
+  const probe = await readModelTransitionProbe(page)
+  expect(probe.states).not.toContain('true')
+  expect(probe.opacities.every((opacity) => opacity >= 0.999)).toBe(true)
+})
+
+test('shows a browser-cached model without fading after a hard refresh', async ({
+  page,
+}) => {
+  const finishedModelUrls = new Set<string>()
+  page.on('requestfinished', (request) => {
+    const url = new URL(request.url())
+    if (url.pathname.endsWith('.glb')) {
+      finishedModelUrls.add(url.pathname)
+    }
+  })
+
+  await openMuseum(page)
+  await expect
+    .poll(() => finishedModelUrls.size, { timeout: 10_000 })
+    .toBe(3)
+  await page.reload()
+  const museum = page.locator('#museum-experience')
+  await expect(museum).toHaveAttribute(
+    'data-ready-animal-id',
+    'stegosaurus',
+    { timeout: 20_000 },
+  )
+  await installModelTransitionProbe(page)
+
+  await page.getByRole('button', { name: '查看无齿翼龙' }).click()
+  await expect(museum).toHaveAttribute(
+    'data-ready-animal-id',
+    'pteranodon',
+    { timeout: 10_000 },
+  )
+  await expect(page.locator('.viewer-canvas')).toHaveAttribute(
+    'data-model-load-source',
+    'http-cache',
+  )
+  await page.waitForTimeout(700)
+
+  const probe = await readModelTransitionProbe(page)
+  expect(probe.states).not.toContain('true')
+  expect(probe.opacities.every((opacity) => opacity >= 0.999)).toBe(true)
+})
+
+test('does not leak an unhandled error during rapid cached animal switching', async ({
+  page,
+}) => {
+  const browserErrors: string[] = []
+  const finishedModelUrls = new Set<string>()
+  page.on('requestfinished', (request) => {
+    const url = new URL(request.url())
+    if (url.pathname.endsWith('.glb')) {
+      finishedModelUrls.add(url.pathname)
+    }
+  })
+  page.on('pageerror', (error) => {
+    browserErrors.push(error.stack ?? error.message)
+  })
+  page.on('console', (message) => {
+    if (
+      message.type() === 'error' &&
+      message.text().includes('Cannot read properties of undefined')
+    ) {
+      browserErrors.push(message.text())
+    }
+  })
+
+  const museum = await openMuseum(page)
+  await expect
+    .poll(() => finishedModelUrls.size, { timeout: 10_000 })
+    .toBe(3)
+  await page.evaluate(`(async () => {
+    const buttons = Array.from(document.querySelectorAll('button'))
+    const next = buttons.find(
+      (button) => button.getAttribute('aria-label') === '下一只动物'
+    )
+    const previous = buttons.find(
+      (button) => button.getAttribute('aria-label') === '上一只动物'
+    )
+    if (!(next instanceof HTMLButtonElement) ||
+        !(previous instanceof HTMLButtonElement)) {
+      throw new Error('Adjacent-animal buttons are missing')
+    }
+    for (let index = 0; index < 12; index += 1) {
+      ;(index % 2 === 0 ? next : previous).click()
+      await new Promise((resolve) => window.setTimeout(resolve, 90))
+    }
+  })()`)
+
+  await expect(museum).toHaveAttribute('data-requested-animal-id', 'stegosaurus')
+  await page.waitForTimeout(3_000)
+  expect(browserErrors).toEqual([])
+})
+
+test('keeps a distant full-museum selection and its feedback inside the visible rail', async ({
+  page,
+}) => {
+  const viewport = { width: 390, height: 844 }
+  await page.setViewportSize(viewport)
+  const museum = await openMuseum(page, '?fixtures=1')
+
+  await page.getByRole('button', { name: '打开全馆图鉴' }).click()
+  let dialog = page.getByRole('dialog', { name: '全馆图鉴' })
+  await dialog.getByRole('button', { name: '前往慢慢龙展台' }).click()
+
+  const slowCard = page.locator(
+    '.animal-card[data-animal-id="fixture-slow"]',
+  )
+  await expect(museum).toHaveAttribute(
+    'data-requested-animal-id',
+    'fixture-slow',
+  )
+  await expect(slowCard).toHaveAttribute('data-loading', 'true')
+  await expect(slowCard.locator('.card-status')).toBeVisible()
+  await expect(slowCard.locator('.card-status')).toContainText(
+    /正在请它出来|下载中|正在打开/,
+  )
+  await expectInsideViewport(slowCard, viewport)
+  expect(await slowCard.evaluate((card) => document.activeElement === card)).toBe(
+    false,
+  )
+
+  await expect(museum).toHaveAttribute(
+    'data-ready-animal-id',
+    'fixture-slow',
+    { timeout: 20_000 },
+  )
+  await page.getByRole('button', { name: '打开全馆图鉴' }).click()
+  dialog = page.getByRole('dialog', { name: '全馆图鉴' })
+  await dialog.getByRole('button', { name: '前往再试龙展台' }).click()
+
+  const retryCard = page.locator(
+    '.animal-card[data-animal-id="fixture-retry"]',
+  )
+  await expect(retryCard).toHaveAttribute('data-failed', 'true')
+  await expect(retryCard.getByText('点我再试')).toBeVisible()
+  await expectInsideViewport(retryCard, viewport)
+  expect(
+    await retryCard.evaluate((card) => document.activeElement === card),
+  ).toBe(false)
+})
+
 test('pauses focus-mode rotation for four idle seconds after a drag', async ({
   page,
 }) => {
@@ -205,7 +465,7 @@ test('shows a distinct stage loader while the first animal is arriving', async (
   ).toBeVisible()
   const initialLoaderBox = await loader.boundingBox()
   await expect(
-    page.getByText(/正在准备 3D 模型 · \d+%/),
+    page.getByText(/正在下载 3D 模型 · \d+%/),
   ).toBeVisible({ timeout: 1_000 })
   await page.waitForTimeout(350)
   const progressingLoaderBox = await loader.boundingBox()
@@ -788,7 +1048,7 @@ test('honors reduced motion for loading and viewer startup', async ({
   }
 })
 
-test('gives narrow touch layouts one calm data reminder and large-model notices', async ({
+test('keeps the narrow-touch data reminder and shows uncached large-model advice', async ({
   browser,
 }, testInfo) => {
   const baseURL = testInfo.project.use.baseURL
@@ -831,17 +1091,19 @@ test('gives narrow touch layouts one calm data reminder and large-model notices'
     await expect(notice).toHaveCount(0)
 
     await page.getByRole('button', { name: '查看慢慢龙' }).click()
+    await expect(notice).toHaveAttribute('data-notice-kind', 'large-model', {
+      timeout: 5_000,
+    })
+    await expect(notice).toContainText(
+      '慢慢龙的 3D 模型约 9.0 MiB，第一次下载的数据量较大，加载可能会久一点',
+    )
     await expect(
       page.locator('#museum-experience'),
     ).toHaveAttribute('data-ready-animal-id', 'fixture-slow', {
       timeout: 20_000,
     })
-    await expect(notice).toHaveAttribute('data-notice-kind', 'large-model')
-    await expect(notice).toContainText(
-      '慢慢龙的 3D 模型约 9.0 MiB，加载可能会久一点',
-    )
+    await expect(notice).toHaveCount(0)
 
-    await page.getByRole('button', { name: '关闭模型流量提示' }).click()
     await page.getByRole('button', { name: '查看快快龙' }).click()
     await expect(
       page.locator('#museum-experience'),
@@ -850,16 +1112,63 @@ test('gives narrow touch layouts one calm data reminder and large-model notices'
     })
     await expect(notice).toHaveCount(0)
 
-    await page.reload()
+    await page.getByRole('button', { name: '查看慢慢龙' }).click()
     await expect(
       page.locator('#museum-experience'),
-    ).toHaveAttribute('data-ready-animal-id', 'fixture-fast', {
+    ).toHaveAttribute('data-ready-animal-id', 'fixture-slow', {
+      timeout: 20_000,
+    })
+    await expect(notice).toHaveCount(0)
+
+    await page.reload()
+    await page.waitForTimeout(1_500)
+    await expect(notice).toHaveCount(0)
+    await expect(
+      page.locator('#museum-experience'),
+    ).toHaveAttribute('data-ready-animal-id', 'fixture-slow', {
       timeout: 20_000,
     })
     await expect(notice).toHaveCount(0)
   } finally {
     await context.close()
   }
+})
+
+test('shows an uncached large-model notice on desktop and suppresses it from memory cache', async ({
+  page,
+}) => {
+  await openMuseum(page, '?fixtures=1')
+  const museum = page.locator('#museum-experience')
+  const notice = page.locator('.model-data-notice')
+  await expect(notice).toHaveCount(0)
+
+  await page.getByRole('button', { name: '查看慢慢龙' }).click()
+  await expect(notice).toHaveAttribute('data-notice-kind', 'large-model', {
+    timeout: 5_000,
+  })
+  await expect(notice).toContainText(
+    '慢慢龙的 3D 模型约 9.0 MiB，第一次下载的数据量较大，加载可能会久一点',
+  )
+  await expect(museum).toHaveAttribute(
+    'data-ready-animal-id',
+    'fixture-slow',
+    { timeout: 20_000 },
+  )
+  await expect(notice).toHaveCount(0)
+
+  await page.getByRole('button', { name: '查看快快龙' }).click()
+  await expect(museum).toHaveAttribute(
+    'data-ready-animal-id',
+    'fixture-fast',
+    { timeout: 20_000 },
+  )
+  await page.getByRole('button', { name: '查看慢慢龙' }).click()
+  await expect(museum).toHaveAttribute(
+    'data-ready-animal-id',
+    'fixture-slow',
+    { timeout: 20_000 },
+  )
+  await expect(notice).toHaveCount(0)
 })
 
 for (const width of [768, 1023]) {

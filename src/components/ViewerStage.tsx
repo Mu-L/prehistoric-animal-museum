@@ -14,6 +14,7 @@ interface ViewerStageProps {
   failureMessage: string | null
   initialLoading: boolean
   label: string
+  loadingPhase: 'checking-cache' | 'downloading' | 'preparing' | null
   loadingPercent: number | null
   modelCache: ModelCache
   modelReady: boolean
@@ -34,6 +35,7 @@ export function ViewerStage({
   failureMessage,
   initialLoading,
   label,
+  loadingPhase,
   loadingPercent,
   modelCache,
   modelReady,
@@ -210,15 +212,21 @@ export function ViewerStage({
                 <Footprints size={30} strokeWidth={2} />
               </span>
               <strong>
-                {loadingPercent === null
-                  ? '正在请第一位朋友出来……'
-                  : `正在准备 3D 模型 · ${loadingPercent}%`}
+                {loadingPhase === 'preparing'
+                  ? '正在打开 3D 模型…'
+                  : loadingPhase === 'downloading'
+                    ? loadingPercent === null
+                      ? '正在下载 3D 模型…'
+                      : `正在下载 3D 模型 · ${loadingPercent}%`
+                    : loadingPhase === 'checking-cache'
+                      ? '正在查找 3D 模型…'
+                      : '正在请第一位朋友出来……'}
               </strong>
               <progress
                 aria-label="3D 模型加载进度"
                 className="model-load-progress"
                 max={100}
-                {...(loadingPercent === null
+                {...(loadingPhase !== 'downloading' || loadingPercent === null
                   ? {}
                   : { value: loadingPercent })}
               />
