@@ -15,6 +15,7 @@ import {
   useCallback,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
   useEffect,
   useId,
   useMemo,
@@ -107,6 +108,7 @@ interface ModelDataNotice {
 interface ModelLoadingProgress {
   readonly animalId: string
   readonly loadedBytes: number
+  readonly percent: number | null
   readonly phase: 'checking-cache' | 'downloading' | 'preparing'
   readonly requestToken: number
   readonly source: ModelLoadProgress['source'] | null
@@ -114,6 +116,16 @@ interface ModelLoadingProgress {
 }
 
 const LARGE_MODEL_NOTICE_DELAY_MS = 600
+const MODEL_PROGRESS_STEP = 5
+const NARRATION_IDLE_PRELOAD_DELAY_MS = 2_000
+
+interface WindowWithIdleCallback {
+  readonly requestIdleCallback?: (
+    callback: () => void,
+    options?: { readonly timeout: number },
+  ) => number
+  readonly cancelIdleCallback?: (handle: number) => void
+}
 
 function SceneBackground({
   animal,
@@ -138,6 +150,8 @@ function SceneBackground({
       <source media="(orientation: portrait)" srcSet={animal.assets.backgroundPortrait} />
       <img
         alt=""
+        decoding="async"
+        fetchPriority={phase === 'solo' ? 'high' : 'auto'}
         onError={() => onFailure?.(animal.id)}
         onLoad={(event) => {
           const image = event.currentTarget
@@ -153,6 +167,62 @@ function SceneBackground({
         src={animal.assets.backgroundLandscape}
       />
     </picture>
+  )
+}
+
+function RailThumbnail({
+  priority,
+  rootRef,
+  src,
+}: {
+  readonly priority: boolean
+  readonly rootRef: RefObject<HTMLDivElement | null>
+  readonly src: string
+}) {
+  const imageRef = useRef<HTMLImageElement>(null)
+  const [shouldLoad, setShouldLoad] = useState(
+    () => priority || typeof IntersectionObserver === 'undefined',
+  )
+  const loadImage = priority || shouldLoad
+
+  useEffect(() => {
+    if (loadImage) {
+      return
+    }
+    const image = imageRef.current
+    const root = rootRef.current
+    if (!image || !root || typeof IntersectionObserver === 'undefined') {
+      setShouldLoad(true)
+      return
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoad(true)
+          observer.disconnect()
+        }
+      },
+      {
+        root,
+        rootMargin: '0px 180px',
+        threshold: 0.01,
+      },
+    )
+    observer.observe(image)
+    return () => {
+      observer.disconnect()
+    }
+  }, [loadImage, rootRef])
+
+  return (
+    <img
+      alt=""
+      decoding="async"
+      fetchPriority="low"
+      loading="lazy"
+      ref={imageRef}
+      src={loadImage ? src : undefined}
+    />
   )
 }
 
@@ -558,7 +628,6 @@ export function App() {
   const backgroundTimerRef = useRef<number | null>(null)
   const visibleBackgroundRef = useRef(initialAnimal)
   const initialPresentationPendingRef = useRef(true)
-  const preloadLifecycleAbortRef = useRef(new AbortController())
   const preloadedImagesRef = useRef(new Map<string, HTMLImageElement>())
   const focusPointerRef = useRef<{
     readonly pointerId: number
@@ -768,14 +837,11 @@ export function App() {
   }, [presentModelDataNotice])
 
   useEffect(() => {
-    const preloadLifecycle = new AbortController()
     const preloadedImages = preloadedImagesRef.current
-    preloadLifecycleAbortRef.current = preloadLifecycle
     return () => {
       if (backgroundTimerRef.current !== null) {
         window.clearTimeout(backgroundTimerRef.current)
       }
-      preloadLifecycle.abort()
       for (const image of preloadedImages.values()) {
         image.src = ''
       }
@@ -813,6 +879,87 @@ export function App() {
       source: initialAnimal.assets.narration,
     })
   }, [initialAnimal, narration])
+
+  useEffect(() => {
+    if (
+      !modelReady ||
+      loadSnapshot.phase !== 'idle' ||
+      loadSnapshot.readyAnimalId !== activeAnimal.id ||
+      narrationSnapshot.animalId !== activeAnimal.id ||
+      narrationSnapshot.availability !== 'available'
+    ) {
+      return
+    }
+
+    const idleWindow = window as typeof window & WindowWithIdleCallback
+    let delayTimer: number | null = null
+    let idleHandle: number | null = null
+    const cancelScheduledWork = () => {
+      if (delayTimer !== null) {
+        window.clearTimeout(delayTimer)
+        delayTimer = null
+      }
+      if (idleHandle !== null) {
+        idleWindow.cancelIdleCallback?.(idleHandle)
+        idleHandle = null
+      }
+    }
+    const prepareIfStillCurrent = () => {
+      idleHandle = null
+      const currentLoad = coordinatorRef.current?.getSnapshot()
+      const currentNarration = narration.getSnapshot()
+      if (
+        document.visibilityState !== 'hidden' &&
+        currentLoad?.phase === 'idle' &&
+        currentLoad.readyAnimalId === activeAnimal.id &&
+        currentNarration.animalId === activeAnimal.id
+      ) {
+        narration.prepare()
+      }
+    }
+    const schedule = () => {
+      cancelScheduledWork()
+      if (document.visibilityState === 'hidden') {
+        return
+      }
+      delayTimer = window.setTimeout(() => {
+        delayTimer = null
+        if (document.visibilityState === 'hidden') {
+          return
+        }
+        if (idleWindow.requestIdleCallback) {
+          idleHandle = idleWindow.requestIdleCallback(
+            prepareIfStillCurrent,
+            { timeout: 1_000 },
+          )
+        } else {
+          prepareIfStillCurrent()
+        }
+      }, NARRATION_IDLE_PRELOAD_DELAY_MS)
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        cancelScheduledWork()
+      } else {
+        schedule()
+      }
+    }
+
+    schedule()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      cancelScheduledWork()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [
+    activeAnimal.id,
+    loadSnapshot.phase,
+    loadSnapshot.readyAnimalId,
+    modelReady,
+    narration,
+    narrationSnapshot.animalId,
+    narrationSnapshot.availability,
+  ])
 
   const handleViewerFailure = useCallback((failure: ViewerFailure) => {
     if (failure.kind === 'animation') {
@@ -916,6 +1063,7 @@ export function App() {
     }
 
     const idlePreloadCoordinator = new IdlePreloadCoordinator({
+      isImageInMemory: (url) => preloadedImagesRef.current.has(url),
       modelCache,
       targets: idlePreloadTargets,
     })
@@ -961,11 +1109,15 @@ export function App() {
               progress.loadedBytes >= progress.totalBytes)
               ? 'preparing'
               : 'downloading'
-          const percent = Math.min(
+          const rawPercent = Math.min(
             phase === 'downloading' ? 99 : 100,
             Math.floor((progress.loadedBytes / totalBytes) * 100),
           )
-          const progressKey = `${context.requestToken}:${progress.source}:${phase}:${percent}`
+          const percent =
+            phase === 'downloading'
+              ? Math.floor(rawPercent / MODEL_PROGRESS_STEP) * MODEL_PROGRESS_STEP
+              : null
+          const progressKey = `${context.requestToken}:${progress.source}:${phase}:${percent ?? 'done'}`
           if (lastReportedModelProgressRef.current === progressKey) {
             return
           }
@@ -980,6 +1132,7 @@ export function App() {
           setModelLoadingProgress({
             animalId,
             loadedBytes: progress.loadedBytes,
+            percent,
             phase,
             requestToken: context.requestToken,
             source: progress.source,
@@ -990,6 +1143,7 @@ export function App() {
         setModelLoadingProgress({
           animalId,
           loadedBytes: 0,
+          percent: null,
           phase: 'checking-cache',
           requestToken: context.requestToken,
           source: null,
@@ -1017,35 +1171,6 @@ export function App() {
                   context.signal,
                   'high',
                 )
-        const selectedPoster = window.matchMedia(
-          '(orientation: portrait)',
-        ).matches
-          ? animal.assets.posterPortrait
-          : animal.assets.poster
-        const cachedPoster = preloadedImagesRef.current.get(selectedPoster)
-        const posterLifecycleSignal =
-          preloadLifecycleAbortRef.current.signal
-        const posterPromise =
-          import.meta.env.MODE === 'test'
-            ? Promise.resolve<HTMLImageElement | null>(null)
-            : cachedPoster
-              ? Promise.resolve(cachedPoster)
-              : preloadImageAsset(
-                  selectedPoster,
-                  posterLifecycleSignal,
-                  'low',
-                )
-
-        void posterPromise.then(
-          (image) => {
-            if (image && !posterLifecycleSignal.aborted) {
-              preloadedImagesRef.current.set(selectedPoster, image)
-            }
-          },
-          () => {
-            // The poster is a failure fallback, not a switching prerequisite.
-          },
-        )
         const [modelResult, backgroundResult] = await Promise.allSettled([
           modelPromise,
           backgroundPromise,
@@ -1360,16 +1485,8 @@ export function App() {
     currentModelLoadingProgress?.phase ??
     (loadSnapshot.phase === 'loading' ? 'checking-cache' : null)
   const loadingPercent =
-    currentModelLoadingProgress?.phase === 'downloading' &&
-    currentModelLoadingProgress.totalBytes > 0
-      ? Math.min(
-          99,
-          Math.floor(
-            (currentModelLoadingProgress.loadedBytes /
-              currentModelLoadingProgress.totalBytes) *
-              100,
-          ),
-        )
+    currentModelLoadingProgress?.phase === 'downloading'
+      ? currentModelLoadingProgress.percent
       : null
   const interfaceStyle = {
     '--animal-accent': activeAnimal.accent,
@@ -1636,10 +1753,12 @@ export function App() {
                     type="button"
                   >
                     <span className="thumbnail-frame">
-                      <img
-                        alt=""
-                        decoding="async"
-                        loading="lazy"
+                      <RailThumbnail
+                        priority={
+                          animal.id === activeAnimal.id ||
+                          animal.id === loadSnapshot.requestedAnimalId
+                        }
+                        rootRef={railRef}
                         src={animal.assets.thumbnail}
                       />
                       {localReviewMode && animal.review ? (

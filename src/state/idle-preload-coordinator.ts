@@ -10,6 +10,7 @@ export interface IdlePreloadTarget {
 
 export interface IdlePreloadCoordinatorOptions {
   readonly idleDelayMs?: number
+  readonly isImageInMemory?: (url: string) => boolean
   readonly modelCache: ModelCache
   readonly targets: readonly IdlePreloadTarget[]
 }
@@ -24,14 +25,10 @@ interface NavigatorWithConnection extends Navigator {
 }
 
 type PreloadTask =
-  | {
-      readonly kind: 'image'
-      readonly url: string
-    }
-  | {
-      readonly kind: 'models'
-      readonly urls: readonly string[]
-    }
+  {
+    readonly kind: 'image' | 'model'
+    readonly url: string
+  }
 
 type OptionalPreloadPolicy = 'all' | 'images-only' | 'none'
 
@@ -40,7 +37,7 @@ function readOptionalPreloadPolicy(): OptionalPreloadPolicy {
   if (connection?.saveData === true) {
     return 'none'
   }
-  return ['slow-2g', '2g'].includes(connection?.effectiveType ?? '')
+  return ['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '')
     ? 'images-only'
     : 'all'
 }
@@ -71,10 +68,11 @@ function adjacentTargets(
 /**
  * Starts optional adjacent-asset work only after a committed presentation has
  * remained selected for the configured delay. Every task is cancellable and
- * model work uses normal browser priority while follow-up images stay low.
+ * each adjacent animal is completed in order at low browser priority.
  */
 export class IdlePreloadCoordinator {
   private readonly idleDelayMs: number
+  private readonly isImageInMemory: (url: string) => boolean
   private readonly modelCache: ModelCache
   private readonly targets: readonly IdlePreloadTarget[]
   private activeController: AbortController | null = null
@@ -89,6 +87,7 @@ export class IdlePreloadCoordinator {
     if (!Number.isFinite(this.idleDelayMs) || this.idleDelayMs < 0) {
       throw new RangeError('idleDelayMs must be a non-negative number')
     }
+    this.isImageInMemory = options.isImageInMemory ?? (() => false)
     this.modelCache = options.modelCache
     this.targets = options.targets
   }
@@ -141,27 +140,11 @@ export class IdlePreloadCoordinator {
     const tasks: PreloadTask[] = []
     const targets = adjacentTargets(this.targets, animalId)
 
-    // Model transfer dominates the perceived switching delay. Start both
-    // adjacent requests as soon as the quiet-period gate opens. Waiting for the
-    // first model to finish can starve the second low-priority request for tens
-    // of seconds while the animated page is still fetching other assets.
-    if (policy === 'all') {
-      const modelUrls: string[] = []
-      for (const target of targets) {
-        if (
-          !seenUrls.has(target.modelUrl) &&
-          this.modelCache.get(target.modelUrl) === null
-        ) {
-          seenUrls.add(target.modelUrl)
-          modelUrls.push(target.modelUrl)
-        }
-      }
-      if (modelUrls.length > 0) {
-        tasks.push({ kind: 'models', urls: modelUrls })
-      }
-    }
-
     for (const target of targets) {
+      if (policy === 'all' && !seenUrls.has(target.modelUrl)) {
+        seenUrls.add(target.modelUrl)
+        tasks.push({ kind: 'model', url: target.modelUrl })
+      }
       const imageUrls =
         typeof target.imageUrls === 'function'
           ? target.imageUrls()
@@ -207,15 +190,7 @@ export class IdlePreloadCoordinator {
     generation: number,
   ): Promise<void> {
     try {
-      if (task.kind === 'models') {
-        await Promise.allSettled(
-          task.urls.map((url) =>
-            this.preloadAsset('model', url, controller, generation),
-          ),
-        )
-      } else {
-        await this.preloadAsset('image', task.url, controller, generation)
-      }
+      await this.preloadAsset(task.kind, task.url, controller, generation)
     } catch {
       // Adjacent preloading is optional. A later explicit selection performs
       // a fresh, user-visible load and reports any real failure.
@@ -236,8 +211,17 @@ export class IdlePreloadCoordinator {
     controller: AbortController,
     generation: number,
   ): Promise<void> {
+    // ModelCache covers the current tab's decoded-transfer buffer. On a miss,
+    // a normal fetch lets the browser's HTTP cache satisfy the request before
+    // any network transfer is attempted.
+    if (kind === 'model' && this.modelCache.get(url) !== null) {
+      return
+    }
+    if (kind === 'image' && this.isImageInMemory(url)) {
+      return
+    }
     const response = await fetch(url, {
-      priority: kind === 'model' ? 'auto' : 'low',
+      priority: 'low',
       signal: controller.signal,
     })
     if (!response.ok) {

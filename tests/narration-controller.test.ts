@@ -95,9 +95,13 @@ describe('NarrationController', () => {
       animalId: 'stegosaurus',
       source: '/audio/stegosaurus.mp3',
     })
-    const media = harness.media[0]!
 
+    expect(harness.sources).toEqual([])
+    expect(harness.controller.prepare()).toBe(true)
+    expect(harness.controller.prepare()).toBe(true)
+    const media = harness.media[0]!
     expect(harness.sources).toEqual(['/audio/stegosaurus.mp3'])
+    expect(harness.createMedia).toHaveBeenCalledTimes(1)
     expect(media.play).not.toHaveBeenCalled()
     expect(harness.controller.getSnapshot().playback).toBe('stopped')
     expect(getNarrationControlLabel(harness.controller.getSnapshot())).toBe(
@@ -131,6 +135,7 @@ describe('NarrationController', () => {
       animalId: 'stegosaurus',
       source: '/audio/stegosaurus.mp3',
     })
+    harness.controller.prepare()
     const media = harness.media[0]!
     const playDeferred = deferred<void>()
     media.play.mockReturnValueOnce(playDeferred.promise)
@@ -152,6 +157,7 @@ describe('NarrationController', () => {
       animalId: 'stegosaurus',
       source: '/audio/stegosaurus.mp3',
     })
+    harness.controller.prepare()
     const oldMedia = harness.media[0]!
     const oldPlay = deferred<void>()
     oldMedia.play.mockReturnValueOnce(oldPlay.promise)
@@ -162,6 +168,8 @@ describe('NarrationController', () => {
       animalId: 'triceratops',
       source: '/audio/triceratops.mp3',
     })
+    expect(harness.media).toHaveLength(1)
+    harness.controller.prepare()
     const newMedia = harness.media[1]!
 
     expect(oldMedia.pause).toHaveBeenCalledTimes(1)
@@ -188,6 +196,7 @@ describe('NarrationController', () => {
       animalId: 'stegosaurus',
       source: '/audio/stegosaurus.mp3',
     })
+    harness.controller.prepare()
     const oldMedia = harness.media[0]!
     oldMedia.currentTime = 5
 
@@ -215,6 +224,7 @@ describe('NarrationController', () => {
       animalId: 'stegosaurus',
       source: '/audio/broken.mp3',
     })
+    harness.controller.prepare()
     const media = harness.media[0]!
     media.play.mockRejectedValueOnce(decodeFailure)
 
@@ -243,6 +253,7 @@ describe('NarrationController', () => {
       animalId: 'stegosaurus',
       source: '/audio/broken-immediately.mp3',
     })
+    harness.controller.prepare()
     const media = harness.media[0]!
     const decodeFailure = new Error('synchronous decode failure')
     media.play.mockImplementationOnce(() => {
@@ -267,12 +278,14 @@ describe('NarrationController', () => {
       animalId: 'stegosaurus',
       source: '/audio/first.mp3',
     })
+    harness.controller.prepare()
     const first = harness.media[0]!
 
     harness.controller.commit({
       animalId: 'triceratops',
       source: '/audio/second.mp3',
     })
+    harness.controller.prepare()
     const second = harness.media[1]!
     first.error = new Error('stale decode error')
     first.emit('error')
@@ -296,6 +309,7 @@ describe('NarrationController', () => {
       animalId: 'stegosaurus',
       source: '/audio/stegosaurus.mp3',
     })
+    harness.controller.prepare()
     const media = harness.media[0]!
     media.currentTime = 12
     media.emit('ended')
@@ -311,5 +325,21 @@ describe('NarrationController', () => {
     expect(() => harness.controller.play()).toThrow(
       'NarrationController has been destroyed',
     )
+  })
+
+  it('creates and plays media immediately when clicked before idle preparation', async () => {
+    const harness = createHarness()
+    harness.controller.commit({
+      animalId: 'stegosaurus',
+      source: '/audio/stegosaurus.mp3',
+    })
+
+    expect(harness.createMedia).not.toHaveBeenCalled()
+    await expect(harness.controller.play()).resolves.toEqual({
+      status: 'playing',
+    })
+
+    expect(harness.createMedia).toHaveBeenCalledTimes(1)
+    expect(harness.media[0]?.play).toHaveBeenCalledTimes(1)
   })
 })

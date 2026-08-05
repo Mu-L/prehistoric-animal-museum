@@ -38,7 +38,10 @@ await writeFile(
   `/museum/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-/museum/*
+/museum/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/museum/index.html
   Cache-Control: public, max-age=0, must-revalidate
 
 /*

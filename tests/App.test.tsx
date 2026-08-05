@@ -412,6 +412,26 @@ describe('App', () => {
     act(() => {
       reportProgress?.({
         fromCache: false,
+        loadedBytes: 44,
+        source: 'network',
+        totalBytes: 100,
+      })
+    })
+    expect(screen.getByText('正在下载 3D 模型 · 40%')).toBeVisible()
+
+    act(() => {
+      reportProgress?.({
+        fromCache: false,
+        loadedBytes: 45,
+        source: 'network',
+        totalBytes: 100,
+      })
+    })
+    expect(screen.getByText('正在下载 3D 模型 · 45%')).toBeVisible()
+
+    act(() => {
+      reportProgress?.({
+        fromCache: false,
         loadedBytes: 100,
         source: 'network',
         totalBytes: 100,
@@ -493,22 +513,114 @@ describe('App', () => {
     )
     expect(urls).toHaveLength(6)
     expect(urls[0]).toContain('pteranodon/model/model.glb')
-    expect(urls[1]).toContain('mosasaurus/model/model.glb')
     expect(
-      urls.slice(2, 4).every((url) => url.includes('pteranodon')),
+      urls.slice(1, 3).every((url) => url.includes('pteranodon')),
     ).toBe(true)
+    expect(urls[3]).toContain('mosasaurus/model/model.glb')
     expect(urls.slice(4).every((url) => url.includes('mosasaurus'))).toBe(true)
-    for (const [url, init] of fetchMock.mock.calls) {
-      const requestUrl =
-        typeof url === 'string'
-          ? url
-          : url instanceof URL
-            ? url.href
-            : url.url
-      expect(init).toMatchObject({
-        priority: requestUrl.includes('model.glb') ? 'auto' : 'low',
-      })
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(init).toMatchObject({ priority: 'low' })
     }
+  })
+
+  it('creates narration media only after the ready exhibit stays idle', async () => {
+    vi.useFakeTimers()
+    const audio = document.createElement('audio')
+    const AudioMock = vi.fn(function AudioMock() {
+      return audio
+    })
+    vi.stubGlobal('Audio', AudioMock)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(() =>
+        Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
+      ),
+    )
+
+    render(<App />)
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    expect(document.getElementById('museum-experience')).toHaveAttribute(
+      'data-ready-animal-id',
+      'stegosaurus',
+    )
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_999)
+    })
+    expect(AudioMock).not.toHaveBeenCalled()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    expect(AudioMock).toHaveBeenCalledTimes(1)
+    expect(audio.autoplay).toBe(false)
+    expect(audio.preload).toBe('auto')
+  })
+
+  it('defers offscreen rail thumbnails until they approach the viewport', async () => {
+    const observations: Array<{
+      readonly callback: IntersectionObserverCallback
+      readonly observer: IntersectionObserver
+      target: Element | null
+    }> = []
+    const IntersectionObserverMock = vi.fn(function IntersectionObserverMock(
+      callback: IntersectionObserverCallback,
+    ) {
+      const observation = {
+        callback,
+        observer: null as unknown as IntersectionObserver,
+        target: null as Element | null,
+      }
+      const observer = {
+        disconnect: vi.fn(),
+        observe: vi.fn((target: Element) => {
+          observation.target = target
+        }),
+        root: null,
+        rootMargin: '0px 180px',
+        takeRecords: () => [],
+        thresholds: [0.01],
+        unobserve: vi.fn(),
+      } as unknown as IntersectionObserver
+      observation.observer = observer
+      observations.push(observation)
+      return observer
+    })
+    vi.stubGlobal('IntersectionObserver', IntersectionObserverMock)
+
+    await renderReadyApp()
+
+    const thumbnails = Array.from(
+      document.querySelectorAll<HTMLImageElement>(
+        '.animal-rail .thumbnail-frame img',
+      ),
+    )
+    expect(thumbnails).toHaveLength(18)
+    expect(thumbnails.filter((image) => image.hasAttribute('src'))).toHaveLength(
+      1,
+    )
+
+    act(() => {
+      for (const observation of observations) {
+        if (!observation.target) {
+          continue
+        }
+        observation.callback(
+          [
+            {
+              isIntersecting: true,
+              target: observation.target,
+            } as IntersectionObserverEntry,
+          ],
+          observation.observer,
+        )
+      }
+    })
+    expect(thumbnails.every((image) => image.hasAttribute('src'))).toBe(true)
   })
 
   it('restarts adjacent preloading after the visitor returns to the tab', async () => {
@@ -565,7 +677,10 @@ describe('App', () => {
             : url.url,
       )
       expect(urls[0]).toContain('pteranodon/model/model.glb')
-      expect(urls[1]).toContain('mosasaurus/model/model.glb')
+      expect(urls.slice(0, 3).every((url) => url.includes('pteranodon'))).toBe(
+        true,
+      )
+      expect(urls[3]).toContain('mosasaurus/model/model.glb')
     } finally {
       if (originalVisibilityState) {
         Object.defineProperty(

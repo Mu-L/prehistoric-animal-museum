@@ -26,10 +26,16 @@ describe('IdlePreloadCoordinator', () => {
     vi.useRealTimers()
   })
 
-  it('waits for the committed animal to stay idle before starting both adjacent models', async () => {
+  it('waits for the committed animal, then fully preloads next before previous', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn<typeof fetch>(() =>
-      Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
+    let resolveNextModel!: (response: Response) => void
+    const nextModel = new Promise<Response>((resolve) => {
+      resolveNextModel = resolve
+    })
+    const fetchMock = vi.fn<typeof fetch>((url) =>
+      url === '/mammoth.glb'
+        ? nextModel
+        : Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
     )
     vi.stubGlobal('fetch', fetchMock)
     const cache = new ModelCache()
@@ -45,30 +51,52 @@ describe('IdlePreloadCoordinator', () => {
     expect(fetchMock).not.toHaveBeenCalled()
 
     await vi.advanceTimersByTimeAsync(1)
-    expect(fetchMock.mock.calls.slice(0, 2).map(([url]) => url)).toEqual([
-      '/mammoth.glb',
-      '/stegosaurus.glb',
-    ])
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(['/mammoth.glb'])
+
+    resolveNextModel(new Response(new ArrayBuffer(8), { status: 200 }))
     await vi.runAllTimersAsync()
 
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       '/mammoth.glb',
-      '/stegosaurus.glb',
       '/mammoth-background.webp',
+      '/stegosaurus.glb',
       '/stegosaurus-background.webp',
     ])
-    for (const [url, init] of fetchMock.mock.calls) {
-      const requestUrl =
-        typeof url === 'string'
-          ? url
-          : url instanceof URL
-            ? url.href
-            : url.url
-      expect(init).toMatchObject({
-        priority: requestUrl.endsWith('.glb') ? 'auto' : 'low',
-      })
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(init).toMatchObject({ priority: 'low' })
+      expect(init?.cache).not.toBe('no-store')
+      expect(init?.cache).not.toBe('reload')
     }
     expect(cache.get('/mammoth.glb')).not.toBeNull()
+    expect(cache.get('/stegosaurus.glb')).not.toBeNull()
+
+    coordinator.destroy()
+  })
+
+  it('checks app memory caches before relying on the browser cache', async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi.fn<typeof fetch>(() =>
+      Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 })),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const cache = new ModelCache()
+    cache.set('/mammoth.glb', new ArrayBuffer(16))
+    const coordinator = new IdlePreloadCoordinator({
+      idleDelayMs: 2_000,
+      isImageInMemory: (url) => url === '/mammoth-background.webp',
+      modelCache: cache,
+      targets,
+    })
+
+    coordinator.scheduleAfterCommit('triceratops')
+    await vi.advanceTimersByTimeAsync(2_000)
+    await vi.runAllTimersAsync()
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/stegosaurus.glb',
+      '/stegosaurus-background.webp',
+    ])
+    expect(cache.get('/mammoth.glb')?.byteLength).toBe(16)
     expect(cache.get('/stegosaurus.glb')).not.toBeNull()
 
     coordinator.destroy()
@@ -101,7 +129,7 @@ describe('IdlePreloadCoordinator', () => {
     coordinator.scheduleAfterCommit('triceratops')
     await vi.advanceTimersByTimeAsync(2_000)
     await vi.advanceTimersToNextTimerAsync()
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(preloadSignals.every((signal) => !signal.aborted)).toBe(true)
 
     coordinator.cancelAll()
@@ -109,7 +137,7 @@ describe('IdlePreloadCoordinator', () => {
     expect(preloadSignals.every((signal) => signal.aborted)).toBe(true)
     await Promise.resolve()
     await vi.runAllTimersAsync()
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
 
     coordinator.destroy()
   })
@@ -171,7 +199,7 @@ describe('IdlePreloadCoordinator', () => {
     coordinator.destroy()
   })
 
-  it('still preloads adjacent models on a 3g connection', async () => {
+  it('keeps image previews but skips models on a 3g connection', async () => {
     vi.useFakeTimers()
     vi.stubGlobal('navigator', {
       connection: { effectiveType: '3g', saveData: false },
@@ -191,12 +219,12 @@ describe('IdlePreloadCoordinator', () => {
     await vi.advanceTimersByTimeAsync(2_000)
     await vi.runAllTimersAsync()
 
-    expect(fetchMock.mock.calls.slice(0, 2).map(([url]) => url)).toEqual([
-      '/mammoth.glb',
-      '/stegosaurus.glb',
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/mammoth-background.webp',
+      '/stegosaurus-background.webp',
     ])
-    expect(cache.get('/mammoth.glb')).not.toBeNull()
-    expect(cache.get('/stegosaurus.glb')).not.toBeNull()
+    expect(cache.get('/mammoth.glb')).toBeNull()
+    expect(cache.get('/stegosaurus.glb')).toBeNull()
 
     coordinator.destroy()
   })

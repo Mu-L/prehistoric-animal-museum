@@ -61,7 +61,7 @@ type Listener = () => void
 function createBrowserMedia(source: string): NarrationMedia {
   const audio = new Audio(source)
   audio.autoplay = false
-  audio.preload = 'metadata'
+  audio.preload = 'auto'
   return audio
 }
 
@@ -86,8 +86,9 @@ export function getNarrationControlLabel(snapshot: NarrationSnapshot): string {
 }
 
 /**
- * Owns one committed animal's narration element. Committing a track never
- * starts playback; only an explicit `play` or `toggle` call can do that.
+ * Owns one committed animal's narration element. Committing a track does not
+ * create media or start playback. Idle `prepare` may fetch it, while only an
+ * explicit `play` or `toggle` call can start sound.
  */
 export class NarrationController {
   readonly getSnapshot = (): NarrationSnapshot => this.snapshot
@@ -127,7 +128,7 @@ export class NarrationController {
   commit(track: NarrationTrack): void {
     this.assertUsable()
     this.releaseMedia()
-    const generation = ++this.generation
+    ++this.generation
     ++this.operation
     this.activePlay = null
 
@@ -143,31 +144,6 @@ export class NarrationController {
       return
     }
 
-    let media: NarrationMedia
-    try {
-      media = this.createMedia(source, track.animalId)
-    } catch (error: unknown) {
-      const normalizedError = normalizeError(error)
-      this.setSnapshot({
-        animalId: track.animalId,
-        source,
-        availability: 'undecodable',
-        playback: 'stopped',
-        error: normalizedError,
-      })
-      return
-    }
-
-    const ended = () => {
-      this.handleEnded(media, generation)
-    }
-    const error = () => {
-      this.handleMediaError(media, generation)
-    }
-    media.addEventListener('ended', ended)
-    media.addEventListener('error', error)
-    this.mediaListeners = { media, generation, ended, error }
-
     this.setSnapshot({
       animalId: track.animalId,
       source,
@@ -175,6 +151,15 @@ export class NarrationController {
       playback: 'stopped',
       error: null,
     })
+  }
+
+  /**
+   * Create the committed track's media element without playing it. Calling
+   * this repeatedly is safe, so idle work and a user click can race.
+   */
+  prepare(): boolean {
+    this.assertUsable()
+    return this.ensureMedia() !== null
   }
 
   /**
@@ -188,11 +173,8 @@ export class NarrationController {
       return existingPlay.promise
     }
 
-    const listeners = this.mediaListeners
-    if (
-      listeners === null ||
-      this.snapshot.availability !== 'available'
-    ) {
+    const listeners = this.ensureMedia()
+    if (listeners === null) {
       return Promise.resolve({
         status: 'unavailable',
         availability:
@@ -334,6 +316,41 @@ export class NarrationController {
       ...this.snapshot,
       playback: 'stopped',
     })
+  }
+
+  private ensureMedia(): MediaListeners | null {
+    if (this.mediaListeners !== null) {
+      return this.mediaListeners
+    }
+    const { animalId, availability, source } = this.snapshot
+    if (availability !== 'available' || animalId === null || source === null) {
+      return null
+    }
+
+    const generation = this.generation
+    let media: NarrationMedia
+    try {
+      media = this.createMedia(source, animalId)
+    } catch (error: unknown) {
+      this.setSnapshot({
+        ...this.snapshot,
+        availability: 'undecodable',
+        playback: 'stopped',
+        error: normalizeError(error),
+      })
+      return null
+    }
+
+    const ended = () => {
+      this.handleEnded(media, generation)
+    }
+    const error = () => {
+      this.handleMediaError(media, generation)
+    }
+    media.addEventListener('ended', ended)
+    media.addEventListener('error', error)
+    this.mediaListeners = { media, generation, ended, error }
+    return this.mediaListeners
   }
 
   private handleMediaError(

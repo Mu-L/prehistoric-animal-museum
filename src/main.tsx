@@ -1,7 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import '@fontsource-variable/noto-sans-sc'
-import '@fontsource/zcool-kuaile/chinese-simplified.css'
+import '@fontsource/zcool-kuaile'
 import { App } from './App'
 import './styles.css'
 

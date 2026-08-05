@@ -194,7 +194,7 @@ export function ViewerStage({
             <picture aria-hidden="true" className="model-still">
               <img
                 alt={`${label}的透明背景静态模型图`}
-                decoding="sync"
+                decoding="async"
                 fetchPriority="high"
                 src={previewUrl}
               />
