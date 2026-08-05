@@ -1,70 +1,51 @@
-/// <reference types="node" />
-
-import { createHash } from 'node:crypto'
-import { readdir, readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
-
-import sharp from 'sharp'
 import {
   MODEL_PREVIEW_CONTRACT_VERSION,
   MODEL_PREVIEW_MANIFEST_FILE,
   modelPreviewProfiles,
-  type ModelPreviewManifest,
+  selectModelPreviewProfile,
 } from '../src/viewer/model-preview-profiles'
 
-describe('transparent model stills', () => {
-  it('keeps every generated preview transparent and bound to its manifest', async () => {
-    const animalRoot = resolve('src/content/animals')
-    const animalIds = (await readdir(animalRoot, { withFileTypes: true }))
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
+// Keep Vitest focused on the fast, in-memory contract. The production build
+// runs scripts/validate-model-previews.ts for the full 108-image decode,
+// transparency, dimension, source-signature, and manifest audit.
+describe('model preview contract', () => {
+  it('keeps the shared profile catalog stable and unambiguous', () => {
+    expect(MODEL_PREVIEW_CONTRACT_VERSION).toBe(1)
+    expect(MODEL_PREVIEW_MANIFEST_FILE).toBe(
+      'model-preview.manifest.json',
+    )
+    expect(modelPreviewProfiles).toHaveLength(6)
+    expect(new Set(modelPreviewProfiles.map(({ key }) => key)).size).toBe(
+      modelPreviewProfiles.length,
+    )
+    expect(
+      new Set(modelPreviewProfiles.map(({ fileName }) => fileName)).size,
+    ).toBe(modelPreviewProfiles.length)
 
-    expect(animalIds).toHaveLength(18)
-
-    for (const animalId of animalIds) {
-      const imageDirectory = resolve(animalRoot, animalId, 'images')
-      const manifest = JSON.parse(
-        await readFile(
-          resolve(imageDirectory, MODEL_PREVIEW_MANIFEST_FILE),
-          'utf8',
-        ),
-      ) as ModelPreviewManifest
-      expect(manifest.animalId).toBe(animalId)
-      expect(manifest.contractVersion).toBe(MODEL_PREVIEW_CONTRACT_VERSION)
-      expect(manifest.target).toBe('production')
-
-      for (const profile of modelPreviewProfiles) {
-        const previewPath = resolve(imageDirectory, profile.fileName)
-        const preview = await readFile(previewPath)
-        const image = sharp(preview)
-        const metadata = await image.metadata()
-        const alpha = await image.ensureAlpha().extractChannel('alpha').stats()
-        const alphaChannel = alpha.channels[0]!
-
-        expect(metadata.width, `${animalId}/${profile.fileName}`).toBe(
-          profile.width,
-        )
-        expect(metadata.height, `${animalId}/${profile.fileName}`).toBe(
-          profile.height,
-        )
-        expect(metadata.hasAlpha, `${animalId}/${profile.fileName}`).toBe(true)
-        expect(alphaChannel.min, `${animalId}/${profile.fileName}`).toBe(0)
-        expect(
-          alphaChannel.max,
-          `${animalId}/${profile.fileName}`,
-        ).toBeGreaterThan(100)
-        expect(
-          alphaChannel.mean,
-          `${animalId}/${profile.fileName}`,
-        ).toBeLessThan(120)
-        expect(manifest.profiles[profile.key]).toMatchObject({
-          bytes: preview.byteLength,
-          fileName: profile.fileName,
-          height: profile.height,
-          sha256: createHash('sha256').update(preview).digest('hex'),
-          width: profile.width,
-        })
-      }
+    for (const profile of modelPreviewProfiles) {
+      expect(profile.fileName).toMatch(/^preview-[a-z-]+\.webp$/)
+      expect(profile.width).toBeGreaterThan(0)
+      expect(profile.height).toBeGreaterThan(0)
+      expect(profile.referenceWidth).toBeGreaterThan(0)
+      expect(profile.referenceHeight).toBeGreaterThan(0)
     }
+  })
+
+  it('selects the first matching profile and uses desktop standard as fallback', () => {
+    const phoneTall = selectModelPreviewProfile(
+      (media) => media === modelPreviewProfiles[3].media,
+    )
+    expect(phoneTall.key).toBe('phonePortraitTall')
+
+    const firstOfSeveralMatches = selectModelPreviewProfile(
+      (media) =>
+        media === modelPreviewProfiles[0].media ||
+        media === modelPreviewProfiles[5].media,
+    )
+    expect(firstOfSeveralMatches.key).toBe('landscapeCompact')
+
+    expect(selectModelPreviewProfile(() => false).key).toBe(
+      'desktopStandard',
+    )
   })
 })
