@@ -35,10 +35,11 @@ export const provenance = [
     license: modelLicense,
     runtime: {
       sha256:
-        '514e673525173134279604efe592e9c5079e916e8e2be0d729701bbb650adae1',
-      bytes: 6_819_152,
+        '2f1564c1f3f07e41ddb21b1f190621baba2ea5ea9c97c36cd89256ff60bddcea',
+      bytes: 3_884_968,
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Downloaded as the converted GLB with 1K textures.',
       'Converted legacy specular/glossiness materials to metallic/roughness.',
       'Cleared zero-weight joint indices.',
@@ -114,27 +115,53 @@ export const provenance = [
     kind: 'poster',
     source: {
       type: 'derived',
-      title: 'Stegosaurus model fallback poster',
-      generatedOn: '2026-07-29',
-      inputAssetPaths: [
-        'model/model.glb',
-        'backgrounds/landscape.webp',
-      ],
+      title: 'Stegosaurus transparent model still',
+      generatedOn: '2026-08-05',
+      inputAssetPaths: ['model/model.glb'],
       method:
-        'Captured the accepted 1440 × 900 runtime presentation with the corrected horizon, cropped the 960 × 540 model stage, then encoded with cwebp quality 84 effort 6.',
+        'Rendered the deterministic first animation frame at the normal 1200 × 675 landscape runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow.',
     },
     license: modelLicense,
     runtime: {
       sha256:
-        'f578ce537cd857c008b34262287663fc306f1bd68f5df46700cba74e8f8977bb',
-      bytes: 94_458,
+        '93838fb6e2f8cb857f47184b21e6c1ad181cea69890c577ed9ab1e64345ace81',
+      bytes: 112_482,
     },
     modifications: [
-      'Composited the accepted runtime model presentation with the project-generated landscape.',
-      'Exported a 960 × 540 WebP fallback without text, controls, or labels.',
+      'Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.',
+      'Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.',
     ],
     attribution:
-      'Poster includes “PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; scene art generated for this project.',
+      '“PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.',
+    redistributionAllowed: true,
+    evidencePaths: [
+      'provenance/LICENSES/model-license.txt',
+      'provenance/LICENSES/derived-images.txt',
+    ],
+  },
+  {
+    assetPath: 'images/poster-portrait.webp',
+    kind: 'poster',
+    source: {
+      type: 'derived',
+      title: 'Stegosaurus transparent portrait model still',
+      generatedOn: '2026-08-05',
+      inputAssetPaths: ['model/model.glb'],
+      method:
+        'Rendered the deterministic first animation frame at the normal 390 × 844 portrait runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow.',
+    },
+    license: modelLicense,
+    runtime: {
+      sha256:
+        '512caefd3317382cb020dd1ce4fbf57573b6f7a6965f032d59bea0f3f024417b',
+      bytes: 27_998,
+    },
+    modifications: [
+      'Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.',
+      'Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.',
+    ],
+    attribution:
+      '“PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.',
     redistributionAllowed: true,
     evidencePaths: [
       'provenance/LICENSES/model-license.txt',

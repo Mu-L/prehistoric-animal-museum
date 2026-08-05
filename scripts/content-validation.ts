@@ -51,6 +51,7 @@ export interface ImageDimensions {
 const canonicalVisualAssetPaths = [
   'model/model.glb',
   'images/poster.webp',
+  'images/poster-portrait.webp',
   'images/thumbnail.webp',
   'backgrounds/landscape.webp',
   'backgrounds/portrait.webp',
@@ -70,6 +71,10 @@ const assetLimits = {
     ceiling: MODEL_GLB_HARD_CEILING_BYTES,
   },
   'images/poster.webp': {
+    target: 250 * KIBIBYTE,
+    ceiling: 500 * KIBIBYTE,
+  },
+  'images/poster-portrait.webp': {
     target: 250 * KIBIBYTE,
     ceiling: 500 * KIBIBYTE,
   },
@@ -788,6 +793,7 @@ async function validatePublishedPackage(
     ['backgrounds/landscape.webp', 16 / 9],
     ['backgrounds/portrait.webp', 9 / 16],
     ['images/poster.webp', 16 / 9],
+    ['images/poster-portrait.webp', 390 / 844],
   ] as const
   for (const [relativePath, expectedRatio] of imageExpectations) {
     const absolutePath = join(directoryPath, relativePath)

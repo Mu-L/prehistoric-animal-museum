@@ -29,6 +29,7 @@ export const animal = {
     model: reviewAssetUrl('tupandactylus', 'model.glb'),
     modelBytes: 4_149_232,
     poster: reviewAssetUrl('tupandactylus', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('tupandactylus', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('tupandactylus', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('tupandactylus', 'background-landscape'),

@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         '6d2dee6ffe15e8ea30a87d71a466c14db68220c97f1bed6a8800532196a64705',
     },
     runtime: {
-      bytes: 9_538_404,
+      bytes: 6_298_928,
       sha256:
-        'd98e26321f43323f3d38603d432357cb51e18054688c0d191ab1c06e586117a8',
+        '372ae0f56c6d93442c83dbadbe4cbceb3cb926aee61b178d3da558ac676853ef',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Normalized and repacked the self-contained 1K-texture GLB.',
       'Lifted the Body base-colour texture midtones with a 0.80 luminance gamma and a maximum 1.50 channel scale after a second owner review; mouth, normal, roughness, and other PBR textures were left unchanged.',
       'Re-encoded the adjusted 1K Body base-colour texture as high-quality 4:4:4 JPEG.',
@@ -52,9 +53,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 133_788,
+    bytes: 50_890,
     sha256:
-      '2195ab73f3e711eece9c8e114a1ce15da266941ba748e7faa8ef43280111dde9',
+      'cbce8194764c1bbc5d519600d46a03d8a7959092316834c713e3966367dd52e9',
+  },
+  posterPortrait: {
+    bytes: 13_880,
+    sha256:
+      '4064ae7a5b0a32a8610d3da2040e3befe0ad9a6a39c29b0dab9c234d1f89bdaa',
   },
   thumbnail: {
     bytes: 46_364,

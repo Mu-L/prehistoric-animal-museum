@@ -4,6 +4,7 @@ import { stat } from 'node:fs/promises'
 
 import { localReviewAssetFiles } from '../scripts/review-assets'
 import { mainAnimals } from '../src/content/catalog'
+import { modelPreviewProfiles } from '../src/viewer/model-preview-profiles'
 import {
   buildLocalReviewCatalog,
   localReviewAnimals,
@@ -192,6 +193,11 @@ describe('local collection review catalog', () => {
       expect(localReviewAssetFiles.get(`${routePrefix}/poster.webp`)).toContain(
         `/src/content/animals/${animalId}/images/poster.webp`,
       )
+      expect(
+        localReviewAssetFiles.get(`${routePrefix}/poster-portrait.webp`),
+      ).toContain(
+        `/src/content/animals/${animalId}/images/poster-portrait.webp`,
+      )
       const thumbnailPath = localReviewAssetFiles.get(
         `${routePrefix}/thumbnail.webp`,
       )
@@ -200,6 +206,22 @@ describe('local collection review catalog', () => {
           ? '/assets/candidates/apatosaurus-sketchfab-fecabec8-2026-08/revision-v1/output/thumbnail.webp'
           : `/src/content/animals/${animalId}/images/thumbnail.webp`,
       )
+    }
+  })
+
+  it('serves shared-profile first-frame previews for every review model', () => {
+    for (const animal of localReviewAnimals) {
+      const animalId = animal.id
+      const routePrefix = `/__museum-review-assets/${animalId}`
+      const expectedPathFragment =
+        `/assets/review-generated/model-previews/${animalId}/`
+
+      for (const { fileName } of modelPreviewProfiles) {
+        const route = `${routePrefix}/${fileName}`
+        expect(localReviewAssetFiles.get(route)).toContain(
+          `${expectedPathFragment}${fileName}`,
+        )
+      }
     }
   })
 
@@ -513,7 +535,7 @@ describe('local collection review catalog', () => {
     expect(promoted.map(({ id }) => id)).toEqual(promotedIds)
     for (const animal of promoted) {
       expect(animal.status).toBe('published')
-      expect(animal.provenance).toHaveLength(6)
+      expect(animal.provenance).toHaveLength(7)
       expect(
         animal.provenance.find(({ assetPath }) => assetPath === 'model/model.glb')
           ?.source,

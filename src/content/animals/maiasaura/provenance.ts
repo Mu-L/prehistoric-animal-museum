@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         'd9d33b82d3dbfb2b813dcd09f63644bae7d28523e16a0ae8d867638a84a1dfa5',
     },
     runtime: {
-      bytes: 2_379_688,
+      bytes: 1_454_384,
       sha256:
-        '160336c4d22f9ff8ea3b2885664862817dab28da21a10db390c46ec663fc1e1b',
+        '31dca5fff3c4c361153385ac6e603c8f6916c26576bb4b8bae4db4f735b6fd27',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Normalized and repacked the self-contained GLB while retaining the source 87-bone rig.',
       'Replaced the cyan-orange toy-like colour treatment with a project-authored warm brown back, pale underside, dark dorsal markings, multiscale mottling, higher roughness, and a clearer skin normal surface.',
       'Authored an eight-second in-place Idle at 24 frames per second with visibly increased torso, head, neck, forelimb, and full-tail motion while retaining stable four-foot contact.',
@@ -48,9 +49,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 137_848,
+    bytes: 44_594,
     sha256:
-      'c42118866446377c1aa7b7f8e913c610fa2ecd90fc2bfad60e3d7906d08793fa',
+      'e1299d0ff814fa351a168766d85603c0d826f12ffd67d992ed43af12c309b727',
+  },
+  posterPortrait: {
+    bytes: 14_376,
+    sha256:
+      '6e98b0707b8d4760a1f905f944469ea8511d7c8b8f881c449544e36e09447411',
   },
   thumbnail: {
     bytes: 39_876,

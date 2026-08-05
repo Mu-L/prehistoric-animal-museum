@@ -35,6 +35,10 @@ export const animal = {
     model: reviewAssetUrl('rhamphorhynchus', 'model.glb'),
     modelBytes: 5_627_724,
     poster: reviewAssetUrl('rhamphorhynchus', 'poster.webp'),
+    posterPortrait: reviewAssetUrl(
+      'rhamphorhynchus',
+      'poster-portrait.webp',
+    ),
     thumbnail: reviewAssetUrl('rhamphorhynchus', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('rhamphorhynchus', 'background-landscape'),

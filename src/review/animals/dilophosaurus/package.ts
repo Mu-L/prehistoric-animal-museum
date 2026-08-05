@@ -41,6 +41,7 @@ export const animal = {
     model: reviewAssetUrl('dilophosaurus', 'model.glb'),
     modelBytes: 12_396_544,
     poster: reviewAssetUrl('dilophosaurus', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('dilophosaurus', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('dilophosaurus', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('dilophosaurus', 'background-landscape'),

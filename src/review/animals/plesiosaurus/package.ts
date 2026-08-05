@@ -36,8 +36,9 @@ export const animal = {
   provenance: [],
   assets: {
     model: reviewAssetUrl('plesiosaurus', 'model.glb'),
-    modelBytes: 9_255_684,
+    modelBytes: 2_519_664,
     poster: reviewAssetUrl('plesiosaurus', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('plesiosaurus', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('plesiosaurus', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('plesiosaurus', 'background-landscape'),

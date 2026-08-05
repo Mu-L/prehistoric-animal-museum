@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         '56fe092e5b769fde877805e484fc4f077ac1e51ab31f6d0b34b0560857e5f94d',
     },
     runtime: {
-      bytes: 9_255_684,
+      bytes: 2_519_664,
       sha256:
-        '3273d197a1119a0b9c12acdf53435b166b45ab1c4341709eaebd3dd0cbf9cce6',
+        '4edc54ab21f61eb7b5e38c3b5d87a1816621547a9e7fde33cfdf3efd93b788a8',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Retained the source hierarchy and display scale while repacking the model as a self-contained runtime GLB.',
       'Applied a desaturated matte aquatic material treatment and added restrained eye sockets, amber irises, dark pupils, and small catchlights to the existing texture atlas.',
       'Authored four project morph targets that relax the permanently up-curved neck, add a head-to-shoulder elliptical neck motion, and move all four flippers independently.',
@@ -49,9 +50,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 37_610,
+    bytes: 57_298,
     sha256:
-      '59b0fa88da7566904db1fbc5ceb2424fcbbcc26b79fce9310e09ce90d2f7b307',
+      '33fa574cf2f476706dd77137dcff9edac0b1e816f6f075241bd02e4dc2b1f529',
+  },
+  posterPortrait: {
+    bytes: 17_824,
+    sha256:
+      'e1a5604b3ebe56f005ee4c4fa92041639667850a6a42f940442732b48d578d66',
   },
   thumbnail: {
     bytes: 10_240,

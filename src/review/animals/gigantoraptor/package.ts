@@ -29,8 +29,9 @@ export const animal = {
   provenance: [],
   assets: {
     model: reviewAssetUrl('gigantoraptor', 'model.glb'),
-    modelBytes: 4_246_968,
+    modelBytes: 1_333_576,
     poster: reviewAssetUrl('gigantoraptor', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('gigantoraptor', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('gigantoraptor', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('gigantoraptor', 'background-landscape'),

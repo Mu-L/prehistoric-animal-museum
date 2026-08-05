@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         'e578fe3b1589464526077f33fba1570cf2fc101c354082235f0aaa68dd8cdff4',
     },
     runtime: {
-      bytes: 248_844,
+      bytes: 129_936,
       sha256:
-        'b6a5957240770e61f91022189a8e95c65a0548313f59ecaba0b431c31e47dffa',
+        '2ac86e4a499a10d02e6ded5667a69a06c70f5371d624a31bef3abcb64dd53253',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Retained the source skinned hierarchy, repacked the GLB, and applied a desaturated non-metallic matte aquatic material treatment.',
       'Replaced the source mouth-focused action with a project-authored eight-second in-place full-body swimming Idle at 24 frames per second.',
       'Kept the four head-chain joints nearly stable at approximately 0.15–0.30 degrees while increasing the travelling propulsion wave from roughly 1.2 degrees at the tail root to 8.5 degrees at the tail tip.',
@@ -48,9 +49,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 44_034,
+    bytes: 39_262,
     sha256:
-      'bdec8c589eaaf437e8ac734e54cfb576443ae2bb1d5d4f26b3753989f7696993',
+      '0f0c4cfd1ec6c6ee6f2f0b43afd7f98361932d6c6cdcf1b7edf80fec34b08ca1',
+  },
+  posterPortrait: {
+    bytes: 10_740,
+    sha256:
+      '94db35be0a98cedecec69515a6f000634fccaf8d3c15ed07a4a2b6b4dc6719e7',
   },
   thumbnail: {
     bytes: 12_814,

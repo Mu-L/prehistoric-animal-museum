@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test'
+import sharp from 'sharp'
+import { modelPreviewProfiles } from '../src/viewer/model-preview-profiles'
 
 const reviewAnimals = [
   { id: 'stegosaurus', name: '剑龙', narrationReady: true },
@@ -20,6 +22,195 @@ const reviewAnimals = [
   { id: 'dilophosaurus', name: '双冠龙', narrationReady: true },
   { id: 'mosasaurus', name: '沧龙', narrationReady: true },
 ] as const
+
+const firstFrameViewports = modelPreviewProfiles.map((profile) => ({
+  fileName: profile.fileName,
+  height: profile.referenceHeight,
+  key: profile.key,
+  width: profile.referenceWidth,
+}))
+
+async function alphaMaskMismatchRatio(
+  firstPng: Buffer,
+  secondPng: Buffer,
+): Promise<{
+  readonly geometryDelta: number
+  readonly mismatchRatio: number
+}> {
+  const [first, second] = await Promise.all([
+    sharp(firstPng).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    sharp(secondPng).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+  ])
+  expect(first.info.width).toBe(second.info.width)
+  expect(first.info.height).toBe(second.info.height)
+  let union = 0
+  let mismatch = 0
+  const firstGeometry = {
+    count: 0,
+    maxX: 0,
+    maxY: 0,
+    minX: first.info.width,
+    minY: first.info.height,
+    sumX: 0,
+    sumY: 0,
+  }
+  const secondGeometry = { ...firstGeometry }
+  for (let offset = 3; offset < first.data.length; offset += 4) {
+    const firstVisible = (first.data[offset] ?? 0) > 24
+    const secondVisible = (second.data[offset] ?? 0) > 24
+    const pixelIndex = (offset - 3) / 4
+    const x = pixelIndex % first.info.width
+    const y = Math.floor(pixelIndex / first.info.width)
+    for (const [visible, geometry] of [
+      [firstVisible, firstGeometry],
+      [secondVisible, secondGeometry],
+    ] as const) {
+      if (!visible) continue
+      geometry.count += 1
+      geometry.minX = Math.min(geometry.minX, x)
+      geometry.maxX = Math.max(geometry.maxX, x)
+      geometry.minY = Math.min(geometry.minY, y)
+      geometry.maxY = Math.max(geometry.maxY, y)
+      geometry.sumX += x
+      geometry.sumY += y
+    }
+    if (firstVisible || secondVisible) {
+      union += 1
+    }
+    if (firstVisible !== secondVisible) {
+      mismatch += 1
+    }
+  }
+  const normalizedGeometry = (
+    geometry: typeof firstGeometry,
+  ): readonly number[] => [
+    geometry.minX / first.info.width,
+    geometry.maxX / first.info.width,
+    geometry.minY / first.info.height,
+    geometry.maxY / first.info.height,
+    geometry.sumX / Math.max(geometry.count, 1) / first.info.width,
+    geometry.sumY / Math.max(geometry.count, 1) / first.info.height,
+  ]
+  const firstNormalized = normalizedGeometry(firstGeometry)
+  const secondNormalized = normalizedGeometry(secondGeometry)
+  return {
+    geometryDelta: Math.max(
+      ...firstNormalized.map((value, index) =>
+        Math.abs(value - (secondNormalized[index] ?? value)),
+      ),
+    ),
+    mismatchRatio: mismatch / Math.max(union, 1),
+  }
+}
+
+test('keeps every animal static preview aligned with its deterministic WebGL frame', async ({
+  page,
+  request,
+}) => {
+  test.setTimeout(360_000)
+  for (const [animalIndex, { id: animalId }] of reviewAnimals.entries()) {
+    const viewportProfile =
+      firstFrameViewports[animalIndex % firstFrameViewports.length]
+    let releaseModel: () => void = () => {}
+    const modelGate = new Promise<void>((resolve) => {
+      releaseModel = resolve
+    })
+    const modelPattern = `**/__museum-review-assets/${animalId}/model.glb`
+    await page.route(modelPattern, async (route) => {
+      await modelGate
+      await route.continue()
+    })
+
+    await page.setViewportSize({
+      height: viewportProfile.height,
+      width: viewportProfile.width,
+    })
+    await page.goto(`/?animal=${animalId}`, { waitUntil: 'domcontentloaded' })
+    const still = page.locator('.model-still img')
+    await expect(still).toBeVisible()
+    await expect(page.locator('.model-viewport')).toHaveAttribute(
+      'data-preview-profile',
+      viewportProfile.key,
+    )
+    await expect
+      .poll(async () => {
+        const currentSource = await page.evaluate<string>(
+          `document.querySelector('.model-still img')?.currentSrc ?? ''`,
+        )
+        return currentSource ? new URL(currentSource).pathname : ''
+      })
+      .toBe(
+        `/__museum-review-assets/${animalId}/${viewportProfile.fileName}`,
+      )
+    await page.addStyleTag({
+      content: `
+        html,
+        body,
+        #root,
+        .museum-experience,
+        .stage-panel,
+        .viewer-stage,
+        .model-viewport,
+        .viewer-host {
+          background: transparent !important;
+        }
+
+        .museum-experience > :not(.stage-panel),
+        .stage-panel > :not(.viewer-stage),
+        .model-viewport > :not(.model-still):not(.viewer-host) {
+          visibility: hidden !important;
+        }
+
+      `,
+    })
+    const viewport = page.locator('.model-viewport')
+    const staticFrame = await viewport.screenshot({
+      animations: 'disabled',
+      omitBackground: true,
+      type: 'png',
+    })
+
+    releaseModel()
+    await expect(page.locator('#museum-experience')).toHaveAttribute(
+      'data-ready-animal-id',
+      animalId,
+      { timeout: 30_000 },
+    )
+    const frozenAtFirstFrame = await page.evaluate<boolean>(
+      `document.querySelector('.viewer-canvas')?.__museumReviewSetAnimationTime?.(0) ?? false`,
+    )
+    expect(frozenAtFirstFrame).toBe(true)
+    await expect(still).toHaveCount(0)
+    await page.waitForTimeout(180)
+    const webglFrame = await viewport.screenshot({
+      animations: 'disabled',
+      omitBackground: true,
+      type: 'png',
+    })
+    const continuity = await alphaMaskMismatchRatio(staticFrame, webglFrame)
+    expect(
+      continuity.geometryDelta,
+      `${animalId}/${viewportProfile.key} geometry`,
+    ).toBeLessThan(0.006)
+    expect(
+      continuity.mismatchRatio,
+      `${animalId}/${viewportProfile.key} silhouette`,
+    ).toBeLessThan(0.06)
+
+    const manifestResponse = await request.get(
+      `/__museum-review-assets/${animalId}/model-preview.manifest.json`,
+    )
+    expect(manifestResponse.ok()).toBe(true)
+    const manifest = (await manifestResponse.json()) as {
+      readonly presentationSignature: string
+    }
+    await expect(page.locator('.viewer-canvas')).toHaveAttribute(
+      'data-preview-presentation-signature',
+      manifest.presentationSignature,
+    )
+    await page.unroute(modelPattern)
+  }
+})
 
 test('reviews every visual presentation and keeps narration user-triggered', async ({
   page,
@@ -55,20 +246,17 @@ test('reviews every visual presentation and keeps narration user-triggered', asy
   await expect(museum).toHaveAttribute('data-ready-animal-id', 'stegosaurus', {
     timeout: 20_000,
   })
-  await expect
-    .poll(() =>
-      requestedReviewAssets.has(
-        `/__museum-review-assets/${reviewAnimals[1].id}/background-landscape`,
-      ),
-    )
-    .toBe(true)
-  await expect
-    .poll(() =>
-      requestedReviewAssets.has(
-        `/__museum-review-assets/${reviewAnimals[1].id}/poster.webp`,
-      ),
-    )
-    .toBe(true)
+  await page.waitForTimeout(350)
+  expect(
+    requestedReviewAssets.has(
+      `/__museum-review-assets/${reviewAnimals[1].id}/background-landscape`,
+    ),
+  ).toBe(false)
+  expect(
+    requestedReviewAssets.has(
+      `/__museum-review-assets/${reviewAnimals[1].id}/poster.webp`,
+    ),
+  ).toBe(false)
   const initialNarrationButton = page.getByRole('button', {
     name: '听它的介绍',
   })

@@ -35,6 +35,10 @@ export const animal = {
     model: reviewAssetUrl('pachycephalosaurus', 'model.glb'),
     modelBytes: 8_310_424,
     poster: reviewAssetUrl('pachycephalosaurus', 'poster.webp'),
+    posterPortrait: reviewAssetUrl(
+      'pachycephalosaurus',
+      'poster-portrait.webp',
+    ),
     thumbnail: reviewAssetUrl('pachycephalosaurus', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl(

@@ -1,0 +1,55 @@
+{
+  "animalId": "tyrannosaurus-rex",
+  "contractVersion": 1,
+  "generatedAt": "2026-08-05T02:32:16.189Z",
+  "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.9},\"presentation\":{\"cameraLightScale\":1.3,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.12,\"portrait\":0.12},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.42,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.12,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
+  "profiles": {
+    "landscapeCompact": {
+      "bytes": 117038,
+      "fileName": "preview-landscape-compact.webp",
+      "height": 650,
+      "sha256": "22256ff1717219cfef71df8e66c70fcb5d9ef402ef91eecc01ec9224e5cfb102",
+      "width": 1250
+    },
+    "desktopWide": {
+      "bytes": 127064,
+      "fileName": "preview-desktop-wide.webp",
+      "height": 800,
+      "sha256": "185e55509cae1b671c24a4f3acbb1f9e00dfc4ca528e2d9339ada9876bd15593",
+      "width": 1200
+    },
+    "phonePortraitCompact": {
+      "bytes": 62460,
+      "fileName": "preview-phone-compact.webp",
+      "height": 1000,
+      "sha256": "80314e29f3092da4e7e13ca07de7923c3c37be69b99c969dd6d4a4c7a1711a21",
+      "width": 875
+    },
+    "phonePortraitTall": {
+      "bytes": 44278,
+      "fileName": "preview-phone-tall.webp",
+      "height": 1000,
+      "sha256": "29fa1c7995af17ff993373cfd288cdeefd94d7ebf4218e9a3709035524d53dfe",
+      "width": 640
+    },
+    "tabletPortrait": {
+      "bytes": 82112,
+      "fileName": "preview-tablet-portrait.webp",
+      "height": 960,
+      "sha256": "965166dd0975f905534e228bc84169946b4b11da093912e55543c93549834267",
+      "width": 900
+    },
+    "desktopStandard": {
+      "bytes": 137486,
+      "fileName": "preview-desktop-standard.webp",
+      "height": 960,
+      "sha256": "e3666ecfe1c7ef0e288823cd00cb3568c91dcc2f25d20a939fbc1ea4286bf78c",
+      "width": 1200
+    }
+  },
+  "sourceModel": {
+    "bytes": 6298928,
+    "sha256": "372ae0f56c6d93442c83dbadbe4cbceb3cb926aee61b178d3da558ac676853ef"
+  },
+  "target": "production"
+}

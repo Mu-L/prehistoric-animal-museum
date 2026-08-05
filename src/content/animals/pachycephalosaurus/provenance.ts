@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         '4ded387365fb9005dc07516658b982001e6e5c2794d5211bd9885dd12d6ddefd',
     },
     runtime: {
-      bytes: 8_310_424,
+      bytes: 4_079_428,
       sha256:
-        'ce3990fd6260a1743bccf0768a74c6f4aa79a41309f11fb1285635dbd0a88c92',
+        'ac3539e1119aed28af89296f92f1bae02f0f5a796323bd1738f91c6b069dda48',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Converted legacy material data to metallic/roughness.',
       'Cleared zero-weight joint indices and retained the presentation-safe Idle clip.',
       'Deduplicated, pruned, repacked, validated, and reviewed the derivative.',
@@ -47,9 +48,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 103_818,
+    bytes: 83_738,
     sha256:
-      '8af0f8ff4ec557084ea0427af5000683eee3f46c3ee232ef14d68a31456a5dec',
+      '7344dbe2798e99e158a5aed5b38ce5038d619f689da0c550fda1b600eb49a2c7',
+  },
+  posterPortrait: {
+    bytes: 25_622,
+    sha256:
+      'b2cfb7fdf43c532716ae609546db17a0c1c250128cacd2396a97c0a70b249b36',
   },
   thumbnail: {
     bytes: 22_934,

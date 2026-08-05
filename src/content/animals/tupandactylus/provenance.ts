@@ -19,10 +19,11 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 4149232,
-      "sha256": "bbd3af05a14b4bfc29a4e2226244951362c406b433d5ee93a752d0412b3efbc5"
+      "bytes": 1216972,
+      "sha256": "e2c232534c909899d266fb75e1787117d7e17396d677a82e1a63a0872f2f385e"
     },
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -103,13 +104,12 @@ export const provenance = [
     "kind": "poster",
     "source": {
       "type": "derived",
-      "title": "古神翼龙 model fallback poster",
-      "generatedOn": "2026-08-01",
+      "title": "古神翼龙 transparent model still",
+      "generatedOn": "2026-08-05",
       "inputAssetPaths": [
-        "model/model.glb",
-        "backgrounds/landscape.webp"
+        "model/model.glb"
       ],
-      "method": "Deterministic crop from the accepted desktop review screenshot and measured model bounds."
+      "method": "Rendered the deterministic first animation frame at the normal 1200 × 675 landscape runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow."
     },
     "license": {
       "spdx": "CC-BY-4.0",
@@ -117,14 +117,47 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 45166,
-      "sha256": "b1d5c735eef8e2a07181ac7a9bda674e722ae7fcfd55807db4681aabc14b2aba"
+      "bytes": 46006,
+      "sha256": "41f1447307173eb5db19d4de22d55409e70af5b482e73654a74ef7b9cc93b8b6"
     },
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ],
-    "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "redistributionAllowed": true,
+    "evidencePaths": [
+      "provenance/LICENSES/model-license.txt",
+      "provenance/LICENSES/model-source.txt",
+      "provenance/LICENSES/derived-images.txt"
+    ]
+  },
+  {
+    "assetPath": "images/poster-portrait.webp",
+    "kind": "poster",
+    "source": {
+      "type": "derived",
+      "title": "古神翼龙 transparent portrait model still",
+      "generatedOn": "2026-08-05",
+      "inputAssetPaths": [
+        "model/model.glb"
+      ],
+      "method": "Rendered the deterministic first animation frame at the normal 390 × 844 portrait runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow."
+    },
+    "license": {
+      "spdx": "CC-BY-4.0",
+      "name": "Creative Commons Attribution 4.0 International",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "runtime": {
+      "bytes": 26126,
+      "sha256": "25ecd95f3157248de2e1e2e79548603fa1c79ca3fa80fc29729d4b1e6fd07a38"
+    },
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ],
+    "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "redistributionAllowed": true,
     "evidencePaths": [
       "provenance/LICENSES/model-license.txt",

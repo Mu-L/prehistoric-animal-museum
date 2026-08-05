@@ -19,10 +19,11 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 8876228,
-      "sha256": "5cf59610b1a98189c28e737833817adb1c3f6b7ed9338045b0ddbc515954dcdf"
+      "bytes": 3591444,
+      "sha256": "ef283def4b17e92122442c8cfb617dce7abecf0bdc1962dc2ff1f18835e7a58c"
     },
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -102,13 +103,12 @@ export const provenance = [
     "kind": "poster",
     "source": {
       "type": "derived",
-      "title": "胄甲龙 model fallback poster",
-      "generatedOn": "2026-07-31",
+      "title": "胄甲龙 transparent model still",
+      "generatedOn": "2026-08-05",
       "inputAssetPaths": [
-        "model/model.glb",
-        "backgrounds/landscape.webp"
+        "model/model.glb"
       ],
-      "method": "Deterministic crop from the accepted desktop review screenshot and measured model bounds."
+      "method": "Rendered the deterministic first animation frame at the normal 1200 × 675 landscape runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow."
     },
     "license": {
       "spdx": "CC-BY-4.0",
@@ -116,14 +116,47 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 45018,
-      "sha256": "16c89c8e1c8304cbe8a6565de6d4a0ca12367ffe71568be8b76a0be95c5d239a"
+      "bytes": 59128,
+      "sha256": "9aec380ff5e37d85fca6c784ab8c305a032b8ef8e81f04ab897a8b5a1e682dd6"
     },
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ],
-    "attribution": "“Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "redistributionAllowed": true,
+    "evidencePaths": [
+      "provenance/LICENSES/model-license.txt",
+      "provenance/LICENSES/model-source.txt",
+      "provenance/LICENSES/derived-images.txt"
+    ]
+  },
+  {
+    "assetPath": "images/poster-portrait.webp",
+    "kind": "poster",
+    "source": {
+      "type": "derived",
+      "title": "胄甲龙 transparent portrait model still",
+      "generatedOn": "2026-08-05",
+      "inputAssetPaths": [
+        "model/model.glb"
+      ],
+      "method": "Rendered the deterministic first animation frame at the normal 390 × 844 portrait runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow."
+    },
+    "license": {
+      "spdx": "CC-BY-4.0",
+      "name": "Creative Commons Attribution 4.0 International",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "runtime": {
+      "bytes": 16328,
+      "sha256": "6a2c51e29d879ab86d269fd70094fcdbcbf2c4c99a9ae602359bcb72e0b5ff52"
+    },
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ],
+    "attribution": "“Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "redistributionAllowed": true,
     "evidencePaths": [
       "provenance/LICENSES/model-license.txt",

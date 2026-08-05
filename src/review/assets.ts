@@ -1,3 +1,8 @@
+import {
+  modelPreviewProfiles,
+  type ModelPreviewFileName,
+} from '../viewer/model-preview-profiles'
+
 export type LocalReviewAnimalId =
   | 'stegosaurus'
   | 'pachycephalosaurus'
@@ -26,7 +31,14 @@ export function reviewAssetUrl(
     | 'background-portrait'
     | 'narration.mp3'
     | 'poster.webp'
-    | 'thumbnail.webp',
+    | 'poster-portrait.webp'
+    | 'thumbnail.webp'
+    | 'model-preview.manifest.json'
+    | ModelPreviewFileName,
 ): string {
   return `/__museum-review-assets/${animalId}/${fileName}`
 }
+
+export const reviewModelPreviewFileNames = modelPreviewProfiles.map(
+  ({ fileName }) => fileName,
+)

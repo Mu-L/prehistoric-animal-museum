@@ -57,16 +57,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 迷惑龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `aac7fd266e93e474de94487d86ed8716d5f95ab76efaa2f4a114ec37b4713f8e`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 迷惑龙 model fallback poster, derived on 2026-07-30
+- Source: 迷惑龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `d2f4a44be36d2b09f7f51ac050f905081a59aad5d4add0fd0715d8197c5db252`
+- Attribution: “Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `ee877b1e83278f1fae323cd9367f11e3d15a19062228391b20a26a61a222f9ac`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -83,8 +93,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Apatosaurus Dinosaur](https://sketchfab.com/3d-models/apatosaurus-dinosaur-9c63e4fd2a9842e9882f21b015a8e4a9) by XML-AL16_EMMILIA..
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `a3eac8a5b16f0175dc5a994550caf89d41f58feaf4be34a49c9fa37e5fbc2e74`
+- Runtime SHA-256: `ee2e53ec8a6d375388d7674cea0396536937cc024d1b24790ba7cefd0d87d010`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Removed the presentation ground and stone rim.
   - Applied the reviewed reversible light silhouette restyle v1.
   - Added the reviewed project-authored olive-brown material v2 while preserving geometry and UVs.
@@ -127,16 +138,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Sharp deterministic cover resize and WebP encoding
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 双冠龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `53283b075602b9cea80d6e130feeeeacf1090b92e3850e13ad7ec67fd69c8ee5`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 双冠龙 model fallback poster, derived on 2026-07-31
+- Source: 双冠龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `084d1a5a4e6e2dbd3d3029920bee8aa850059c7cf48ae8964d12d66ba60be28e`
+- Attribution: “Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `2b7ae2057db6d81697a6894a38fb57e6ccd691d53d3ec9537259f89fe46324d6`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -153,8 +174,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Dilophosaurus](https://sketchfab.com/3d-models/dilophosaurus-d09b3aa874db4e1cbf29a14797ca351f) by Marcel Schanz
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `f11121b6be84e11fb39ad77ff32d5a445c8d626548b09c50a2c4633f66a2e7a7`
+- Runtime SHA-256: `51b895d460d1fc73103e92a632c4aea22e025ee468ab2a011474711711f965f6`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.
   - Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.
   - Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.
@@ -192,16 +214,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 巨盗龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `65f2bf3b10f3d20577b44fc0e0a0822816e190b074ee3cdfbd2e7bf7d1ef5324`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 巨盗龙 model fallback poster, derived on 2026-07-29
+- Source: 巨盗龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `3bc4fdd9bc7c51a245d587c49b3aa5ef484a84aaa7d6636e8a457c622876ff18`
+- Attribution: “Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `dea94a7fa22d9d52f20d4649b766ca18e48ce8027148d3e5f44c6b2beefe1272`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -218,8 +250,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Gigantoraptor](https://sketchfab.com/3d-models/gigantoraptor-e51509d66d464104aef1b72c298a40cf) by seth the yutyrannus
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `44804b2c7ce75ffe7e24809ced163c48bde972c8be1026ee4d00f2321239356c`
+- Runtime SHA-256: `26b137edc63f38defdf04d85903a30ad7817c83c5b3d5f5626a1fb2e6f216c0e`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Cleared zero-weight joint indices, deduplicated, pruned, and repacked the GLB.
   - Authored a 6.5-second in-place museum Idle in Blender 5.2 using the existing 79-bone rig; after two local visual reviews, retained body, tail, and jaw motion at 225% of the authored base while increasing head and neck motion to 450% and both arms to 500%.
   - Injected 29 rotation-only channels for the torso, neck, head, jaw, arms, and tail into the normalized base GLB while preserving its original mesh and skin hierarchy.
@@ -257,16 +290,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 鱼龙类 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `dc089ed3580fc58f7811d0854840120faa981965161fbc5b69141e12753244c3`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 鱼龙类 model fallback poster, derived on 2026-07-30
+- Source: 鱼龙类 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `c2eb3d165f7049a37e346b6fbb76469ba1139cfd4168e183019b93c5fc87b7bf`
+- Attribution: “ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `ae9eb1b51fa836bf8e3c0628e609a1b6b82674d38e7a4b405956f9560d131260`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -283,8 +326,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [ichthyosaur](https://sketchfab.com/3d-models/ichthyosaur-dffbc77b634a408f91dd5f68df4cc94f) by pro_alba
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `7aa203b310bbfd5a9a1cc6db0ebeb57514923e664a63c10c94820ecebbb45485`
+- Runtime SHA-256: `ec57d74faea3f4de14cae1bb639dbc027d9d734bc55ea6d48ce0c72164fba0de`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Normalized the source GLB and retained the gentle swimming Idle clip.
   - Added the reviewed project-authored 1K irregular slate-grey material v2.
   - Added a project-authored v3 aquatic skin surface with a subtly detailed 1K base colour, 512-pixel dermal normal map, and 512-pixel matte roughness variation; the detail uses fine irregular grain, shallow longitudinal folds, and pores without fish scales or a glossy plastic finish.
@@ -323,16 +367,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 慈母龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Maiasaura With Rig” by Dino Dan, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `6e98b0707b8d4760a1f905f944469ea8511d7c8b8f881c449544e36e09447411`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 慈母龙 model fallback poster, derived on 2026-07-31
+- Source: 慈母龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Maiasaura With Rig” by Dino Dan, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `c42118866446377c1aa7b7f8e913c610fa2ecd90fc2bfad60e3d7906d08793fa`
+- Attribution: “Maiasaura With Rig” by Dino Dan, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `e1299d0ff814fa351a168766d85603c0d826f12ffd67d992ed43af12c309b727`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -349,8 +403,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Maiasaura With Rig](https://sketchfab.com/3d-models/maiasaura-with-rig-3da9f211ae304bd0afd1d15a290eabbd) by Dino Dan
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Maiasaura With Rig” by Dino Dan, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `160336c4d22f9ff8ea3b2885664862817dab28da21a10db390c46ec663fc1e1b`
+- Runtime SHA-256: `31dca5fff3c4c361153385ac6e603c8f6916c26576bb4b8bae4db4f735b6fd27`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Normalized and repacked the self-contained GLB while retaining the source 87-bone rig.
   - Replaced the cyan-orange toy-like colour treatment with a project-authored warm brown back, pale underside, dark dorsal markings, multiscale mottling, higher roughness, and a clearer skin normal surface.
   - Authored an eight-second in-place Idle at 24 frames per second with visibly increased torso, head, neck, forelimb, and full-tail motion while retaining stable four-foot contact.
@@ -387,16 +442,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 长毛猛犸象 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `60535ab5da8eeef84e24fd72eace080c929809a53210ac2d2ba8c0b030d1f82a`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 长毛猛犸象 model fallback poster, derived on 2026-07-30
+- Source: 长毛猛犸象 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `62e8e71e1fd1b981ba5b7b4a2ac9f7a4f7c64dbd5f190428482010901c300094`
+- Attribution: “3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `d542ad735c863ba82de7c05c2a34210182459d9e0c6e3a54166cdc6a83165fb5`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -413,8 +478,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [3D High-poly Baby Woolly Mammoth](https://sketchfab.com/3d-models/3d-high-poly-baby-woolly-mammoth-fce1c86ccedf47a5b9627098be6719d5) by SDPM Esare
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `35e2dba618e3b915f73abd6a965243c4cec6c60ba753be65af816debb48adb01`
+- Runtime SHA-256: `623a62621f1c6f2955fd3fe6442be8dfd34cdc94064e1bbb0c5e43e8970a1ece`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Used the original creator’s CC BY 4.0 source rather than the submitted CC BY-NC-SA derivative.
   - Normalized and repacked the self-contained 1K-texture GLB.
   - Built a project-authored 8-bone Blender armature with deterministic head, body, four-leg, and two-bone tail weights.
@@ -453,16 +519,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 巨齿鲨 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `94db35be0a98cedecec69515a6f000634fccaf8d3c15ed07a4a2b6b4dc6719e7`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 巨齿鲨 model fallback poster, derived on 2026-07-31
+- Source: 巨齿鲨 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `bdec8c589eaaf437e8ac734e54cfb576443ae2bb1d5d4f26b3753989f7696993`
+- Attribution: “Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `0f0c4cfd1ec6c6ee6f2f0b43afd7f98361932d6c6cdcf1b7edf80fec34b08ca1`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -479,8 +555,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Otodus Megalodon updated animations](https://sketchfab.com/3d-models/otodus-megalodon-updated-animations-7e65b8c51251440e9aca8385f286714f) by CanYuTsai
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `b6a5957240770e61f91022189a8e95c65a0548313f59ecaba0b431c31e47dffa`
+- Runtime SHA-256: `2ac86e4a499a10d02e6ded5667a69a06c70f5371d624a31bef3abcb64dd53253`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Retained the source skinned hierarchy, repacked the GLB, and applied a desaturated non-metallic matte aquatic material treatment.
   - Replaced the source mouth-focused action with a project-authored eight-second in-place full-body swimming Idle at 24 frames per second.
   - Kept the four head-chain joints nearly stable at approximately 0.15–0.30 degrees while increasing the travelling propulsion wave from roughly 1.2 degrees at the tail root to 8.5 degrees at the tail tip.
@@ -517,16 +594,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Sharp deterministic cover resize and WebP encoding
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 巨脉蜻蜓 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `d98362503064cd026fc99b18810226aa7b380e60e2c6f6954ba41570a7c00b22`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 巨脉蜻蜓 model fallback poster, derived on 2026-08-01
+- Source: 巨脉蜻蜓 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `52e522500a266872b912082e5d58bf3d4eca0fb6fba2e55b67ec6d0bff0b06a1`
+- Attribution: “Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `d29b4aa11ede8a174e266c6d3c9e12ef4739e3ef45073b3fe0fc719c3b8cbb87`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -543,8 +630,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Meganeura Dinoraul but it is a bit accurate](https://sketchfab.com/3d-models/meganeura-dinoraul-but-it-is-a-bit-accurate-1aaab4a72fbc42b4901d5f1dde12a281) by Nobilis the Palaeovespa (@nobilishornet)
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `4fbebc819c8d5d9429ea4286f69b43e642b63e549a74bade2513253da8ca4ac3`
+- Runtime SHA-256: `4e388ade5b32132cc60054fa51dc7ac0fe48372efafaf4c57732697b3874589b`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.
   - Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.
   - Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.
@@ -581,16 +669,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Sharp deterministic cover resize and WebP encoding
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 沧龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `a773531c06597c4bda9b370608b1b0361cffdf5afa4a71347268c9e2e5f2ec23`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 沧龙 model fallback poster, derived on 2026-07-31
+- Source: 沧龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `8bc662cfa62c0badfcbd88076cbf5063daf8e0316ec9eef57d9d9004a13f2d68`
+- Attribution: “Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `f694a13c3682d2061977bdd5527f55f21cae3038842cdebd5948025d2c132746`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -607,8 +705,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Mosasaurus](https://sketchfab.com/3d-models/mosasaurus-fe0c25c4ed4e4d4aa05312121e2f68df) by Lukiethewesly13
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `f83f490f0244fb4dcc9e0860b54216f26ab9144900ef19e3adb8692e769bed68`
+- Runtime SHA-256: `5071da06a8a12bf0e3396d84bd3bfd86a3f9f378f322cda53bd69cc3541aa47d`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.
   - Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.
   - Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.
@@ -646,16 +745,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 肿头龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “PBR Pachycephalasaurus Animated” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `b2cfb7fdf43c532716ae609546db17a0c1c250128cacd2396a97c0a70b249b36`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 肿头龙 model fallback poster, derived on 2026-07-29
+- Source: 肿头龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “PBR Pachycephalasaurus Animated” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `8af0f8ff4ec557084ea0427af5000683eee3f46c3ee232ef14d68a31456a5dec`
+- Attribution: “PBR Pachycephalasaurus Animated” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `7344dbe2798e99e158a5aed5b38ce5038d619f689da0c550fda1b600eb49a2c7`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -672,8 +781,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [PBR Pachycephalasaurus Animated](https://sketchfab.com/3d-models/pbr-pachycephalasaurus-animated-6eea5cee4afa4730bf75c6329a43e56d) by Ferocious Industries
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “PBR Pachycephalasaurus Animated” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `ce3990fd6260a1743bccf0768a74c6f4aa79a41309f11fb1285635dbd0a88c92`
+- Runtime SHA-256: `ac3539e1119aed28af89296f92f1bae02f0f5a796323bd1738f91c6b069dda48`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Converted legacy material data to metallic/roughness.
   - Cleared zero-weight joint indices and retained the presentation-safe Idle clip.
   - Deduplicated, pruned, repacked, validated, and reviewed the derivative.
@@ -709,16 +819,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 蛇颈龙类 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `e1a5604b3ebe56f005ee4c4fa92041639667850a6a42f940442732b48d578d66`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 蛇颈龙类 model fallback poster, derived on 2026-07-31
+- Source: 蛇颈龙类 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `59b0fa88da7566904db1fbc5ceb2424fcbbcc26b79fce9310e09ce90d2f7b307`
+- Attribution: “Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `33fa574cf2f476706dd77137dcff9edac0b1e816f6f075241bd02e4dc2b1f529`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -735,8 +855,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Plesiosaure](https://sketchfab.com/3d-models/plesiosaure-2f59d503e0754c9d9e157a90ed415c38) by leo kerjean
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `3273d197a1119a0b9c12acdf53435b166b45ab1c4341709eaebd3dd0cbf9cce6`
+- Runtime SHA-256: `4edc54ab21f61eb7b5e38c3b5d87a1816621547a9e7fde33cfdf3efd93b788a8`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Retained the source hierarchy and display scale while repacking the model as a self-contained runtime GLB.
   - Applied a desaturated matte aquatic material treatment and added restrained eye sockets, amber irises, dark pupils, and small catchlights to the existing texture atlas.
   - Authored four project morph targets that relax the permanently up-curved neck, add a head-to-shoulder elliptical neck motion, and move all four flippers independently.
@@ -774,16 +895,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 无齿翼龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `3d22a12522c1147698b66e66f55531d7778bee69ff8e1412abb41de62c3e7c68`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 无齿翼龙 model fallback poster, derived on 2026-07-29
+- Source: 无齿翼龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `ccf0761ae4106bd6d69f28e2777ef01aecb4789cff2b1296e81cd017efa7b67f`
+- Attribution: “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `a7de4a01c75ca4e565dc2bbdba4f2bebd64a6d1e114c66c41bc85c9db8f1c574`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -800,8 +931,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Pteranodon (Animated)](https://sketchfab.com/3d-models/pteranodon-animated-7d7683df41d1405283f160e81a5dff1b) by Chistodrako._. / Oscar López Riviello
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `086892bd31143e06329a4d21f8d675c799412b164d37f86327ba3c391fa04594`
+- Runtime SHA-256: `abcde65b2ea29c6ae86d8232a5e1a604b05099deb34cebfb30495aff53f61af1`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Converted legacy material data and cleared zero-weight joint indices.
   - Used Blender 5.2 to transfer the source flying action onto the normalized runtime rig, rebase the root to the museum rest origin, and reduce its translation to 3.5%.
   - Retained the repaired in-place flight loop as the single Idle clip.
@@ -838,16 +970,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Sharp deterministic cover resize and WebP encoding
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 喙嘴翼龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `7c213881b97eff917d5d0f4a31c659b40e9446fe5d1c24156326a3cddc857ab8`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 喙嘴翼龙 model fallback poster, derived on 2026-08-01
+- Source: 喙嘴翼龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `07b0336ff6542d4a061555f4ad5fd36f64f8050f3970912cef30dd277ee05691`
+- Attribution: “Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `e0e930d6fd2c1305ca7206054fe9780931797d04861e184f7bfb49c2ba048a58`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -864,8 +1006,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Low-poly Rhamphorhynchus idle](https://sketchfab.com/3d-models/low-poly-rhamphorhynchus-idle-c1e35c7ac4374c778f78025717694675) by Robear (@xiaorobear)
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `4c2ded260f523f559afc188808c9cfc095e82e4172ea1d794b3367b3f7e4287a`
+- Runtime SHA-256: `16b5ab37ac44e177c3e12c229e6f0b27fab669c3d6e74e5b5bdf54ed3a68a935`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.
   - Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.
   - Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.
@@ -902,16 +1045,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Sharp deterministic cover resize and WebP encoding
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 胄甲龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `6a2c51e29d879ab86d269fd70094fcdbcbf2c4c99a9ae602359bcb72e0b5ff52`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 胄甲龙 model fallback poster, derived on 2026-07-31
+- Source: 胄甲龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `16c89c8e1c8304cbe8a6565de6d4a0ca12367ffe71568be8b76a0be95c5d239a`
+- Attribution: “Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `9aec380ff5e37d85fca6c784ab8c305a032b8ef8e81f04ab897a8b5a1e682dd6`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -928,8 +1081,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Animated Sauropelta (Free)](https://sketchfab.com/3d-models/animated-sauropelta-free-c6373f12f3954facb8d5fe48055c9161) by Anees Animates
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `5cf59610b1a98189c28e737833817adb1c3f6b7ed9338045b0ddbc515954dcdf`
+- Runtime SHA-256: `ef283def4b17e92122442c8cfb617dce7abecf0bdc1962dc2ff1f18835e7a58c`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.
   - Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.
   - Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.
@@ -966,16 +1120,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the selected 941 × 1672 PNG candidate to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint, filter, or colour overlay.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: Stegosaurus transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `512caefd3317382cb020dd1ce4fbf57573b6f7a6965f032d59bea0f3f024417b`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: Stegosaurus model fallback poster, derived on 2026-07-29
+- Source: Stegosaurus transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: Poster includes “PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; scene art generated for this project.
-- Runtime SHA-256: `f578ce537cd857c008b34262287663fc306f1bd68f5df46700cba74e8f8977bb`
+- Attribution: “PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `93838fb6e2f8cb857f47184b21e6c1ad181cea69890c577ed9ab1e64345ace81`
 - Modifications:
-  - Composited the accepted runtime model presentation with the project-generated landscape.
-  - Exported a 960 × 540 WebP fallback without text, controls, or labels.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -992,8 +1156,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [PBR Stegasaurus (Animated)](https://sketchfab.com/3d-models/pbr-stegasaurus-animated-ec254ea1554941fe8a131f62db0faf3d) by Ferocious Industries
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `514e673525173134279604efe592e9c5079e916e8e2be0d729701bbb650adae1`
+- Runtime SHA-256: `2f1564c1f3f07e41ddb21b1f190621baba2ea5ea9c97c36cd89256ff60bddcea`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Downloaded as the converted GLB with 1K textures.
   - Converted legacy specular/glossiness materials to metallic/roughness.
   - Cleared zero-weight joint indices.
@@ -1031,16 +1196,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 三角龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `bb4d9d99916de0328dd706d40bb8eac0f7c2ba991c577e4e7e08792a303b2700`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 三角龙 model fallback poster, derived on 2026-07-30
+- Source: 三角龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `cdac7674892c94f6e5d24fe500b030c7bbae712f2d0de644e446a19d68f2a9da`
+- Attribution: “Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `e1e40c7eb807ad374b9a822101c93b7f088f72e2f17cebbd3a53b61ad124bf8b`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -1057,8 +1232,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Triceratops dinosaur](https://sketchfab.com/3d-models/triceratops-dinosaur-87527079bad44917ab1b98a456b46c7e) by wojciechmiedziocha
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `b41ec3c7a48a0c40376280bdb972b7a78f3f54545839909276ee81fdf54218a1`
+- Runtime SHA-256: `e51eeb1c3b9c890cdef1f78c65a74179f2da6d4ed899b32e8833b87d2777cf33`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Normalized and repacked the self-contained 1K-texture GLB.
   - Built a project-authored 10-bone Blender armature and deterministic skin weights, including stationary four-leg bones.
   - Authored an eight-second in-place Idle with an approximately 11-degree side-to-side head turn, a subtle nod, and a progressive distal tail wave while the tail root remains stationary over the hips.
@@ -1096,16 +1272,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Sharp deterministic cover resize and WebP encoding
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 古神翼龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `25ecd95f3157248de2e1e2e79548603fa1c79ca3fa80fc29729d4b1e6fd07a38`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 古神翼龙 model fallback poster, derived on 2026-08-01
+- Source: 古神翼龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `b1d5c735eef8e2a07181ac7a9bda674e722ae7fcfd55807db4681aabc14b2aba`
+- Attribution: “Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `41f1447307173eb5db19d4de22d55409e70af5b482e73654a74ef7b9cc93b8b6`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -1122,8 +1308,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Tupandactylus](https://sketchfab.com/3d-models/tupandactylus-4ea8f4466c2c4e61bc57c12af296d43a) by Paleo Modelist (@victory_)
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `bbd3af05a14b4bfc29a4e2226244951362c406b433d5ee93a752d0412b3efbc5`
+- Runtime SHA-256: `e2c232534c909899d266fb75e1787117d7e17396d677a82e1a63a0872f2f385e`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.
   - Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.
   - Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.
@@ -1161,16 +1348,26 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 霸王龙 transparent portrait model still, derived on 2026-08-05
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `4064ae7a5b0a32a8610d3da2040e3befe0ad9a6a39c29b0dab9c234d1f89bdaa`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 霸王龙 model fallback poster, derived on 2026-07-30
+- Source: 霸王龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `2195ab73f3e711eece9c8e114a1ce15da266941ba748e7faa8ef43280111dde9`
+- Attribution: “Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `cbce8194764c1bbc5d519600d46a03d8a7959092316834c713e3966367dd52e9`
 - Modifications:
-  - Composited the accepted runtime model presentation with the reviewed landscape.
-  - Exported without text, controls, labels, logos, or watermarks.
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
@@ -1187,8 +1384,9 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Tyrant King - Tyrannosaurus](https://sketchfab.com/3d-models/tyrant-king-tyrannosaurus-6465a297fa784598adc49f6e0042d449) by Marcel Schanz
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `d98e26321f43323f3d38603d432357cb51e18054688c0d191ab1c06e586117a8`
+- Runtime SHA-256: `372ae0f56c6d93442c83dbadbe4cbceb3cb926aee61b178d3da558ac676853ef`
 - Modifications:
+  - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Normalized and repacked the self-contained 1K-texture GLB.
   - Lifted the Body base-colour texture midtones with a 0.80 luminance gamma and a maximum 1.50 channel scale after a second owner review; mouth, normal, roughness, and other PBR textures were left unchanged.
   - Re-encoded the adjusted 1K Body base-colour texture as high-quality 4:4:4 JPEG.

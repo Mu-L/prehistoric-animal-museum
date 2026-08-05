@@ -1,10 +1,23 @@
 import { access, readFile, stat } from 'node:fs/promises'
 
+import sharp from 'sharp'
+
+import {
+  modelPreviewProfiles,
+} from '../src/viewer/model-preview-profiles'
 import { inspectGlb, inspectWebp } from './content-validation'
 import { localReviewAssetFiles } from './review-assets'
 
 const errors: string[] = []
 let totalBytes = 0
+const modelStillDimensions = new Map<string, readonly [number, number]>([
+  ['poster.webp', [1200, 675]],
+  ['poster-portrait.webp', [390, 844]],
+  ...modelPreviewProfiles.map(
+    ({ fileName, height, width }) =>
+      [fileName, [width, height] as const] as const,
+  ),
+])
 
 for (const [route, absolutePath] of localReviewAssetFiles) {
   try {
@@ -17,16 +30,53 @@ for (const [route, absolutePath] of localReviewAssetFiles) {
     }
 
     const buffer = await readFile(absolutePath)
+    const fileName = route.slice(route.lastIndexOf('/') + 1)
+    const expectedModelStillDimensions = modelStillDimensions.get(fileName)
     if (route.endsWith('/model.glb')) {
       const inspection = inspectGlb(buffer)
       if (inspection.externalUris.length > 0) {
         errors.push(`${route} 仍引用外部 GLTF 资源。`)
       }
+    } else if (
+      expectedModelStillDimensions &&
+      fileName.startsWith('preview-')
+    ) {
+      const dimensions = inspectWebp(buffer)
+      if (
+        dimensions.width !== expectedModelStillDimensions[0] ||
+        dimensions.height !== expectedModelStillDimensions[1]
+      ) {
+        errors.push(
+          `${route} 应为 ${expectedModelStillDimensions[0]}×${expectedModelStillDimensions[1]}，实际为 ${dimensions.width}×${dimensions.height}。`,
+        )
+      }
+      const metadata = await sharp(buffer).metadata()
+      const alpha = await sharp(buffer)
+        .ensureAlpha()
+        .extractChannel('alpha')
+        .stats()
+      const alphaChannel = alpha.channels[0]
+      if (!metadata.hasAlpha || !alphaChannel || alphaChannel.min !== 0) {
+        errors.push(`${route} 必须保留透明背景。`)
+      } else if (alphaChannel.max <= 100 || alphaChannel.mean >= 120) {
+        errors.push(`${route} 没有可用的透明模型轮廓。`)
+      }
+    } else if (route.endsWith('/poster-portrait.webp')) {
+      const dimensions = inspectWebp(buffer)
+      if (dimensions.width !== 390 || dimensions.height !== 844) {
+        errors.push(
+          `${route} 应为 390×844，实际为 ${dimensions.width}×${dimensions.height}。`,
+        )
+      }
     } else if (route.endsWith('/poster.webp')) {
       const dimensions = inspectWebp(buffer)
-      if (dimensions.width !== 960 || dimensions.height !== 540) {
+      const isLegacyReviewSize =
+        dimensions.width === 960 && dimensions.height === 540
+      const isRuntimeSize =
+        dimensions.width === 1200 && dimensions.height === 675
+      if (!isLegacyReviewSize && !isRuntimeSize) {
         errors.push(
-          `${route} 应为 960×540，实际为 ${dimensions.width}×${dimensions.height}。`,
+          `${route} 应为 960×540 或 1200×675，实际为 ${dimensions.width}×${dimensions.height}。`,
         )
       }
     } else if (route.endsWith('/thumbnail.webp')) {

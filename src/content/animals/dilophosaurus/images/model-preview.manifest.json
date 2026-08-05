@@ -1,0 +1,55 @@
+{
+  "animalId": "dilophosaurus",
+  "contractVersion": 1,
+  "generatedAt": "2026-08-05T02:29:29.447Z",
+  "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":1},\"presentation\":{\"cameraLightScale\":1,\"horizontalOffset\":{\"landscape\":-0.03,\"portrait\":0},\"initialYawDegrees\":180,\"preciseBounds\":true,\"safeAreaPadding\":{\"landscape\":0.14,\"portrait\":0.16},\"shadow\":{\"depthOffset\":0,\"depthScale\":1.15,\"horizontalOffset\":-0.45,\"opacity\":0.58,\"scale\":0.38,\"yOffset\":0},\"toneMappingExposure\":1.05,\"verticalOffset\":{\"landscape\":0.1,\"portrait\":0.08}}}",
+  "profiles": {
+    "landscapeCompact": {
+      "bytes": 72742,
+      "fileName": "preview-landscape-compact.webp",
+      "height": 650,
+      "sha256": "d34d9adca99371e1a2348604d0257d395ce390223b4ec0b9fc0c5cdd9ee986ad",
+      "width": 1250
+    },
+    "desktopWide": {
+      "bytes": 76934,
+      "fileName": "preview-desktop-wide.webp",
+      "height": 800,
+      "sha256": "458ce77bc30ee652908453468ab4ee80756307f19009cccd91db18a61569be85",
+      "width": 1200
+    },
+    "phonePortraitCompact": {
+      "bytes": 37690,
+      "fileName": "preview-phone-compact.webp",
+      "height": 1000,
+      "sha256": "69c895849ccaf2825f6887e6faad6a8dbb11df68cec1a2d9a969d51d4696e4a2",
+      "width": 875
+    },
+    "phonePortraitTall": {
+      "bytes": 25752,
+      "fileName": "preview-phone-tall.webp",
+      "height": 1000,
+      "sha256": "895a0a1b58a40bd08ae2bae6e49394857b003ec6c43c98dbc776af6352ae3424",
+      "width": 640
+    },
+    "tabletPortrait": {
+      "bytes": 46250,
+      "fileName": "preview-tablet-portrait.webp",
+      "height": 960,
+      "sha256": "7ab3242eb7723fe7207e4e2af693d18166eb1e7bf5db6177310b58580b201c83",
+      "width": 900
+    },
+    "desktopStandard": {
+      "bytes": 80636,
+      "fileName": "preview-desktop-standard.webp",
+      "height": 960,
+      "sha256": "8550228edd5d5f6596e082544f70e91873f122e44bc8328c22e7ba8a896d9c83",
+      "width": 1200
+    }
+  },
+  "sourceModel": {
+    "bytes": 7467036,
+    "sha256": "51b895d460d1fc73103e92a632c4aea22e025ee468ab2a011474711711f965f6"
+  },
+  "target": "production"
+}

@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         '3ad3b375aecc4646fe776bd83f7cd916e4cadad7dd0f7a4e2a6aac4f1a76f531',
     },
     runtime: {
-      bytes: 4_246_968,
+      bytes: 1_333_576,
       sha256:
-        '44804b2c7ce75ffe7e24809ced163c48bde972c8be1026ee4d00f2321239356c',
+        '26b137edc63f38defdf04d85903a30ad7817c83c5b3d5f5626a1fb2e6f216c0e',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Cleared zero-weight joint indices, deduplicated, pruned, and repacked the GLB.',
       'Authored a 6.5-second in-place museum Idle in Blender 5.2 using the existing 79-bone rig; after two local visual reviews, retained body, tail, and jaw motion at 225% of the authored base while increasing head and neck motion to 450% and both arms to 500%.',
       'Injected 29 rotation-only channels for the torso, neck, head, jaw, arms, and tail into the normalized base GLB while preserving its original mesh and skin hierarchy.',
@@ -49,9 +50,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 72_796,
+    bytes: 59_750,
     sha256:
-      '3bc4fdd9bc7c51a245d587c49b3aa5ef484a84aaa7d6636e8a457c622876ff18',
+      'dea94a7fa22d9d52f20d4649b766ca18e48ce8027148d3e5f44c6b2beefe1272',
+  },
+  posterPortrait: {
+    bytes: 22_098,
+    sha256:
+      '65f2bf3b10f3d20577b44fc0e0a0822816e190b074ee3cdfbd2e7bf7d1ef5324',
   },
   thumbnail: {
     bytes: 17_634,

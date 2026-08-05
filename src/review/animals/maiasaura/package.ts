@@ -40,8 +40,9 @@ export const animal = {
   provenance: [],
   assets: {
     model: reviewAssetUrl('maiasaura', 'model.glb'),
-    modelBytes: 2_379_688,
+    modelBytes: 1_454_384,
     poster: reviewAssetUrl('maiasaura', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('maiasaura', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('maiasaura', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('maiasaura', 'background-landscape'),

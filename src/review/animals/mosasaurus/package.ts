@@ -34,6 +34,7 @@ export const animal = {
     model: reviewAssetUrl('mosasaurus', 'model.glb'),
     modelBytes: 5_525_476,
     poster: reviewAssetUrl('mosasaurus', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('mosasaurus', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('mosasaurus', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('mosasaurus', 'background-landscape'),

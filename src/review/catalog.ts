@@ -30,6 +30,7 @@ const reviewedStegosaurus = {
     ...stegosaurus.assets,
     model: reviewAssetUrl('stegosaurus', 'model.glb'),
     poster: reviewAssetUrl('stegosaurus', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('stegosaurus', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('stegosaurus', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('stegosaurus', 'background-landscape'),

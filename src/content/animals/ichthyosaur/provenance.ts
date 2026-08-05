@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         '6df622c0a988c9fc3c7323c5c827990c12c111a0c4e5fa159df9026340d624db',
     },
     runtime: {
-      bytes: 1_520_344,
+      bytes: 814_000,
       sha256:
-        '7aa203b310bbfd5a9a1cc6db0ebeb57514923e664a63c10c94820ecebbb45485',
+        'ec57d74faea3f4de14cae1bb639dbc027d9d734bc55ea6d48ce0c72164fba0de',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Normalized the source GLB and retained the gentle swimming Idle clip.',
       'Added the reviewed project-authored 1K irregular slate-grey material v2.',
       'Added a project-authored v3 aquatic skin surface with a subtly detailed 1K base colour, 512-pixel dermal normal map, and 512-pixel matte roughness variation; the detail uses fine irregular grain, shallow longitudinal folds, and pores without fish scales or a glossy plastic finish.',
@@ -50,9 +51,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 40_188,
+    bytes: 41_064,
     sha256:
-      'c2eb3d165f7049a37e346b6fbb76469ba1139cfd4168e183019b93c5fc87b7bf',
+      'ae9eb1b51fa836bf8e3c0628e609a1b6b82674d38e7a4b405956f9560d131260',
+  },
+  posterPortrait: {
+    bytes: 14_642,
+    sha256:
+      'dc089ed3580fc58f7811d0854840120faa981965161fbc5b69141e12753244c3',
   },
   thumbnail: {
     bytes: 17_520,

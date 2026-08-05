@@ -58,6 +58,9 @@ function reviewContentType(fileName: string): string {
   if (fileName.endsWith('.webp')) {
     return 'image/webp'
   }
+  if (fileName.endsWith('.json')) {
+    return 'application/json; charset=utf-8'
+  }
   return 'application/octet-stream'
 }
 

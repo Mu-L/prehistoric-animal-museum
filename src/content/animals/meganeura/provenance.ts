@@ -19,10 +19,11 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 5695048,
-      "sha256": "4fbebc819c8d5d9429ea4286f69b43e642b63e549a74bade2513253da8ca4ac3"
+      "bytes": 1915624,
+      "sha256": "4e388ade5b32132cc60054fa51dc7ac0fe48372efafaf4c57732697b3874589b"
     },
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -102,13 +103,12 @@ export const provenance = [
     "kind": "poster",
     "source": {
       "type": "derived",
-      "title": "巨脉蜻蜓 model fallback poster",
-      "generatedOn": "2026-08-01",
+      "title": "巨脉蜻蜓 transparent model still",
+      "generatedOn": "2026-08-05",
       "inputAssetPaths": [
-        "model/model.glb",
-        "backgrounds/landscape.webp"
+        "model/model.glb"
       ],
-      "method": "Deterministic crop from the accepted desktop review screenshot and measured model bounds."
+      "method": "Rendered the deterministic first animation frame at the normal 1200 × 675 landscape runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow."
     },
     "license": {
       "spdx": "CC-BY-4.0",
@@ -116,14 +116,47 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 66864,
-      "sha256": "52e522500a266872b912082e5d58bf3d4eca0fb6fba2e55b67ec6d0bff0b06a1"
+      "bytes": 83682,
+      "sha256": "d29b4aa11ede8a174e266c6d3c9e12ef4739e3ef45073b3fe0fc719c3b8cbb87"
     },
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ],
-    "attribution": "“Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "redistributionAllowed": true,
+    "evidencePaths": [
+      "provenance/LICENSES/model-license.txt",
+      "provenance/LICENSES/model-source.txt",
+      "provenance/LICENSES/derived-images.txt"
+    ]
+  },
+  {
+    "assetPath": "images/poster-portrait.webp",
+    "kind": "poster",
+    "source": {
+      "type": "derived",
+      "title": "巨脉蜻蜓 transparent portrait model still",
+      "generatedOn": "2026-08-05",
+      "inputAssetPaths": [
+        "model/model.glb"
+      ],
+      "method": "Rendered the deterministic first animation frame at the normal 390 × 844 portrait runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow."
+    },
+    "license": {
+      "spdx": "CC-BY-4.0",
+      "name": "Creative Commons Attribution 4.0 International",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "runtime": {
+      "bytes": 25908,
+      "sha256": "d98362503064cd026fc99b18810226aa7b380e60e2c6f6954ba41570a7c00b22"
+    },
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ],
+    "attribution": "“Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "redistributionAllowed": true,
     "evidencePaths": [
       "provenance/LICENSES/model-license.txt",

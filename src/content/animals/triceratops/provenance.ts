@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         '4ba06e329788e30c166b22edb1a92f68c6220aafa891d7fbdaca577e34c49460',
     },
     runtime: {
-      bytes: 4_433_888,
+      bytes: 3_178_460,
       sha256:
-        'b41ec3c7a48a0c40376280bdb972b7a78f3f54545839909276ee81fdf54218a1',
+        'e51eeb1c3b9c890cdef1f78c65a74179f2da6d4ed899b32e8833b87d2777cf33',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Normalized and repacked the self-contained 1K-texture GLB.',
       'Built a project-authored 10-bone Blender armature and deterministic skin weights, including stationary four-leg bones.',
       'Authored an eight-second in-place Idle with an approximately 11-degree side-to-side head turn, a subtle nod, and a progressive distal tail wave while the tail root remains stationary over the hips.',
@@ -49,9 +50,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 94_028,
+    bytes: 87_148,
     sha256:
-      'cdac7674892c94f6e5d24fe500b030c7bbae712f2d0de644e446a19d68f2a9da',
+      'e1e40c7eb807ad374b9a822101c93b7f088f72e2f17cebbd3a53b61ad124bf8b',
+  },
+  posterPortrait: {
+    bytes: 24_436,
+    sha256:
+      'bb4d9d99916de0328dd706d40bb8eac0f7c2ba991c577e4e7e08792a303b2700',
   },
   thumbnail: {
     bytes: 22_452,

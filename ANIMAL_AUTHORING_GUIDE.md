@@ -17,7 +17,10 @@ src/content/animals/<animal-id>/
   provenance.ts
   model/model.glb
   images/poster.webp
+  images/poster-portrait.webp
   images/thumbnail.webp
+  images/preview-*.webp
+  images/model-preview.manifest.json
   backgrounds/landscape.webp
   backgrounds/portrait.webp
   audio/narration.zh-CN.mp3
@@ -111,7 +114,7 @@ Water and flying exhibits usually use `shadow: 'none'`. Add exposure,
 camera-light, offset, or portrait padding only after checking all five required
 viewports.
 
-## 5. Scene, poster, and thumbnail
+## 5. Scene, generated model previews, poster, and thumbnail
 
 Landscape and portrait backgrounds are separate compositions, not runtime
 crops. Keep the central model area quiet and do not bake animals, text, UI,
@@ -125,6 +128,21 @@ readable square thumbnail. Current ceilings are:
 
 The poster and thumbnail must show the same model, material, pose direction,
 and scene as the published package.
+
+The transparent images used while WebGL loads are generated artifacts, not
+animal-authored layout. After the GLB and `presentation` values are final, run:
+
+```sh
+npm run generate:model-previews -- <animal-id>
+npm run validate:model-previews
+```
+
+The generator automatically produces every shared landscape and portrait
+profile plus a manifest containing the source-model hash and presentation
+signature. Do not add per-animal media queries, CSS offsets, or hand-cropped
+loading images. A model or presentation change intentionally makes the build
+fail until this command is rerun. For owner-only candidates, use
+`npm run generate:review-model-previews -- <animal-id>` instead.
 
 ## 6. Narration
 
@@ -208,6 +226,7 @@ npm run lint
 npm run typecheck
 npm test -- --run
 npm run validate:content
+npm run validate:model-previews
 npm run build
 npm run test:e2e
 ```

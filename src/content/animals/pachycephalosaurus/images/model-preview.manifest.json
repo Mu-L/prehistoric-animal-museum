@@ -1,0 +1,55 @@
+{
+  "animalId": "pachycephalosaurus",
+  "contractVersion": 1,
+  "generatedAt": "2026-08-05T02:30:48.395Z",
+  "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.8},\"presentation\":{\"cameraLightScale\":1,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.1,\"portrait\":0.1},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.6,\"scale\":0.6,\"yOffset\":0},\"toneMappingExposure\":1,\"verticalOffset\":{\"landscape\":0.05,\"portrait\":0.07}}}",
+  "profiles": {
+    "landscapeCompact": {
+      "bytes": 128530,
+      "fileName": "preview-landscape-compact.webp",
+      "height": 650,
+      "sha256": "81b9d684bf4d2d44c6444d0c73a83ae61568264f8187a7ecfa341a43c37a5b02",
+      "width": 1250
+    },
+    "desktopWide": {
+      "bytes": 192150,
+      "fileName": "preview-desktop-wide.webp",
+      "height": 800,
+      "sha256": "5302d85ddd30efde389384822c67288d144587a995e165e8d29f582d1de0ea71",
+      "width": 1200
+    },
+    "phonePortraitCompact": {
+      "bytes": 105592,
+      "fileName": "preview-phone-compact.webp",
+      "height": 1000,
+      "sha256": "ac44400301abb68d0714fe97354a9cc67d2cadbf05a11256593ad34868135fea",
+      "width": 875
+    },
+    "phonePortraitTall": {
+      "bytes": 74676,
+      "fileName": "preview-phone-tall.webp",
+      "height": 1000,
+      "sha256": "4ffcb58e9b663c17bde56c2f47602e86e36f45305c0496be22e1acf0a9abac6b",
+      "width": 640
+    },
+    "tabletPortrait": {
+      "bytes": 131550,
+      "fileName": "preview-tablet-portrait.webp",
+      "height": 960,
+      "sha256": "59d82dd98312099897fbf078b3fe8740e6d9ab28b9930d23bddfb3f46fc61784",
+      "width": 900
+    },
+    "desktopStandard": {
+      "bytes": 207030,
+      "fileName": "preview-desktop-standard.webp",
+      "height": 960,
+      "sha256": "e8cf8b952d989b9e28cd9977a4013a217b5e0fbb05a04d0a4e155fa9cea8be9e",
+      "width": 1200
+    }
+  },
+  "sourceModel": {
+    "bytes": 4079428,
+    "sha256": "ac3539e1119aed28af89296f92f1bae02f0f5a796323bd1738f91c6b069dda48"
+  },
+  "target": "production"
+}

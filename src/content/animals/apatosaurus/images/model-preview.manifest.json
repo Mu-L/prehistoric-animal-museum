@@ -1,0 +1,55 @@
+{
+  "animalId": "apatosaurus",
+  "contractVersion": 1,
+  "generatedAt": "2026-08-05T02:29:17.417Z",
+  "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.9},\"presentation\":{\"cameraLightScale\":1.3,\"horizontalOffset\":{\"landscape\":-0.08,\"portrait\":0},\"initialYawDegrees\":0,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.12,\"portrait\":0.12},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.54,\"scale\":0.7,\"yOffset\":0},\"toneMappingExposure\":1.35,\"verticalOffset\":{\"landscape\":0.025,\"portrait\":0.04}}}",
+  "profiles": {
+    "landscapeCompact": {
+      "bytes": 80498,
+      "fileName": "preview-landscape-compact.webp",
+      "height": 650,
+      "sha256": "69ea6ce243dd2cd37d927f22cbd655534ed7e05f673d409ba1777572bf894bed",
+      "width": 1250
+    },
+    "desktopWide": {
+      "bytes": 87476,
+      "fileName": "preview-desktop-wide.webp",
+      "height": 800,
+      "sha256": "9fef6b2bfcf3c424a9c7222763014488b42dcc6508cd1c5f27ee224887fd4f08",
+      "width": 1200
+    },
+    "phonePortraitCompact": {
+      "bytes": 47820,
+      "fileName": "preview-phone-compact.webp",
+      "height": 1000,
+      "sha256": "3180ee5c94a7ff6c209ad9d0c8389411ab2a4c6049b5b6b62daa0912f7d93447",
+      "width": 875
+    },
+    "phonePortraitTall": {
+      "bytes": 33996,
+      "fileName": "preview-phone-tall.webp",
+      "height": 1000,
+      "sha256": "38461c6197e3b926107b364ea02b6ba07d5823f5c8385aa53634071859b321ed",
+      "width": 640
+    },
+    "tabletPortrait": {
+      "bytes": 58352,
+      "fileName": "preview-tablet-portrait.webp",
+      "height": 960,
+      "sha256": "4b0443595d3b818824a3fb491dc96d2e324c280e90c9c8281de5f650d363be14",
+      "width": 900
+    },
+    "desktopStandard": {
+      "bytes": 91614,
+      "fileName": "preview-desktop-standard.webp",
+      "height": 960,
+      "sha256": "e2666b3424d6d81f222a018cd640622fe1d00c95f32b21ba1a6b923e3b2fd62e",
+      "width": 1200
+    }
+  },
+  "sourceModel": {
+    "bytes": 2942260,
+    "sha256": "ee2e53ec8a6d375388d7674cea0396536937cc024d1b24790ba7cefd0d87d010"
+  },
+  "target": "production"
+}

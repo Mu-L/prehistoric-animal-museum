@@ -19,10 +19,11 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 12396544,
-      "sha256": "f11121b6be84e11fb39ad77ff32d5a445c8d626548b09c50a2c4633f66a2e7a7"
+      "bytes": 7467036,
+      "sha256": "51b895d460d1fc73103e92a632c4aea22e025ee468ab2a011474711711f965f6"
     },
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -103,13 +104,12 @@ export const provenance = [
     "kind": "poster",
     "source": {
       "type": "derived",
-      "title": "双冠龙 model fallback poster",
-      "generatedOn": "2026-07-31",
+      "title": "双冠龙 transparent model still",
+      "generatedOn": "2026-08-05",
       "inputAssetPaths": [
-        "model/model.glb",
-        "backgrounds/landscape.webp"
+        "model/model.glb"
       ],
-      "method": "Deterministic crop from the accepted desktop review screenshot and measured model bounds."
+      "method": "Rendered the deterministic first animation frame at the normal 1200 × 675 landscape runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow."
     },
     "license": {
       "spdx": "CC-BY-4.0",
@@ -117,14 +117,47 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 47110,
-      "sha256": "084d1a5a4e6e2dbd3d3029920bee8aa850059c7cf48ae8964d12d66ba60be28e"
+      "bytes": 31452,
+      "sha256": "2b7ae2057db6d81697a6894a38fb57e6ccd691d53d3ec9537259f89fe46324d6"
     },
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ],
-    "attribution": "“Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "redistributionAllowed": true,
+    "evidencePaths": [
+      "provenance/LICENSES/model-license.txt",
+      "provenance/LICENSES/model-source.txt",
+      "provenance/LICENSES/derived-images.txt"
+    ]
+  },
+  {
+    "assetPath": "images/poster-portrait.webp",
+    "kind": "poster",
+    "source": {
+      "type": "derived",
+      "title": "双冠龙 transparent portrait model still",
+      "generatedOn": "2026-08-05",
+      "inputAssetPaths": [
+        "model/model.glb"
+      ],
+      "method": "Rendered the deterministic first animation frame at the normal 390 × 844 portrait runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow."
+    },
+    "license": {
+      "spdx": "CC-BY-4.0",
+      "name": "Creative Commons Attribution 4.0 International",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "runtime": {
+      "bytes": 8132,
+      "sha256": "53283b075602b9cea80d6e130feeeeacf1090b92e3850e13ad7ec67fd69c8ee5"
+    },
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ],
+    "attribution": "“Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "redistributionAllowed": true,
     "evidencePaths": [
       "provenance/LICENSES/model-license.txt",

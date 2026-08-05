@@ -19,10 +19,11 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 5627724,
-      "sha256": "4c2ded260f523f559afc188808c9cfc095e82e4172ea1d794b3367b3f7e4287a"
+      "bytes": 2398216,
+      "sha256": "16b5ab37ac44e177c3e12c229e6f0b27fab669c3d6e74e5b5bdf54ed3a68a935"
     },
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -102,13 +103,12 @@ export const provenance = [
     "kind": "poster",
     "source": {
       "type": "derived",
-      "title": "喙嘴翼龙 model fallback poster",
-      "generatedOn": "2026-08-01",
+      "title": "喙嘴翼龙 transparent model still",
+      "generatedOn": "2026-08-05",
       "inputAssetPaths": [
-        "model/model.glb",
-        "backgrounds/landscape.webp"
+        "model/model.glb"
       ],
-      "method": "Deterministic crop from the accepted desktop review screenshot and measured model bounds."
+      "method": "Rendered the deterministic first animation frame at the normal 1200 × 675 landscape runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow."
     },
     "license": {
       "spdx": "CC-BY-4.0",
@@ -116,14 +116,47 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 20796,
-      "sha256": "07b0336ff6542d4a061555f4ad5fd36f64f8050f3970912cef30dd277ee05691"
+      "bytes": 21166,
+      "sha256": "e0e930d6fd2c1305ca7206054fe9780931797d04861e184f7bfb49c2ba048a58"
     },
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ],
-    "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "redistributionAllowed": true,
+    "evidencePaths": [
+      "provenance/LICENSES/model-license.txt",
+      "provenance/LICENSES/model-source.txt",
+      "provenance/LICENSES/derived-images.txt"
+    ]
+  },
+  {
+    "assetPath": "images/poster-portrait.webp",
+    "kind": "poster",
+    "source": {
+      "type": "derived",
+      "title": "喙嘴翼龙 transparent portrait model still",
+      "generatedOn": "2026-08-05",
+      "inputAssetPaths": [
+        "model/model.glb"
+      ],
+      "method": "Rendered the deterministic first animation frame at the normal 390 × 844 portrait runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow."
+    },
+    "license": {
+      "spdx": "CC-BY-4.0",
+      "name": "Creative Commons Attribution 4.0 International",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "runtime": {
+      "bytes": 7180,
+      "sha256": "7c213881b97eff917d5d0f4a31c659b40e9446fe5d1c24156326a3cddc857ab8"
+    },
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ],
+    "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "redistributionAllowed": true,
     "evidencePaths": [
       "provenance/LICENSES/model-license.txt",

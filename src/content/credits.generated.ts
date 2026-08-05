@@ -48,18 +48,33 @@ export const credits = [
     ]
   },
   {
+    "id": "apatosaurus:images/poster-portrait.webp",
+    "animalId": "apatosaurus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "迷惑龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "apatosaurus:images/poster.webp",
     "animalId": "apatosaurus",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "迷惑龙 model fallback poster",
+    "sourceTitle": "迷惑龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -89,6 +104,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/apatosaurus-dinosaur-9c63e4fd2a9842e9882f21b015a8e4a9",
     "attribution": "“Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Removed the presentation ground and stone rim.",
       "Applied the reviewed reversible light silhouette restyle v1.",
       "Added the reviewed project-authored olive-brown material v2 while preserving geometry and UVs.",
@@ -147,18 +163,33 @@ export const credits = [
     ]
   },
   {
+    "id": "dilophosaurus:images/poster-portrait.webp",
+    "animalId": "dilophosaurus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "双冠龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "dilophosaurus:images/poster.webp",
     "animalId": "dilophosaurus",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "双冠龙 model fallback poster",
+    "sourceTitle": "双冠龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -188,6 +219,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/dilophosaurus-d09b3aa874db4e1cbf29a14797ca351f",
     "attribution": "“Dilophosaurus” by Marcel Schanz, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -241,18 +273,33 @@ export const credits = [
     ]
   },
   {
+    "id": "gigantoraptor:images/poster-portrait.webp",
+    "animalId": "gigantoraptor",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "巨盗龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "gigantoraptor:images/poster.webp",
     "animalId": "gigantoraptor",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "巨盗龙 model fallback poster",
+    "sourceTitle": "巨盗龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -282,6 +329,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/gigantoraptor-e51509d66d464104aef1b72c298a40cf",
     "attribution": "“Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Cleared zero-weight joint indices, deduplicated, pruned, and repacked the GLB.",
       "Authored a 6.5-second in-place museum Idle in Blender 5.2 using the existing 79-bone rig; after two local visual reviews, retained body, tail, and jaw motion at 225% of the authored base while increasing head and neck motion to 450% and both arms to 500%.",
       "Injected 29 rotation-only channels for the torso, neck, head, jaw, arms, and tail into the normalized base GLB while preserving its original mesh and skin hierarchy.",
@@ -335,18 +383,33 @@ export const credits = [
     ]
   },
   {
+    "id": "ichthyosaur:images/poster-portrait.webp",
+    "animalId": "ichthyosaur",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "鱼龙类 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "ichthyosaur:images/poster.webp",
     "animalId": "ichthyosaur",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "鱼龙类 model fallback poster",
+    "sourceTitle": "鱼龙类 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -376,6 +439,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/ichthyosaur-dffbc77b634a408f91dd5f68df4cc94f",
     "attribution": "“ichthyosaur” by pro_alba, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Normalized the source GLB and retained the gentle swimming Idle clip.",
       "Added the reviewed project-authored 1K irregular slate-grey material v2.",
       "Added a project-authored v3 aquatic skin surface with a subtly detailed 1K base colour, 512-pixel dermal normal map, and 512-pixel matte roughness variation; the detail uses fine irregular grain, shallow longitudinal folds, and pores without fish scales or a glossy plastic finish.",
@@ -430,18 +494,33 @@ export const credits = [
     ]
   },
   {
+    "id": "maiasaura:images/poster-portrait.webp",
+    "animalId": "maiasaura",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "慈母龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Maiasaura With Rig” by Dino Dan, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "maiasaura:images/poster.webp",
     "animalId": "maiasaura",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "慈母龙 model fallback poster",
+    "sourceTitle": "慈母龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Maiasaura With Rig” by Dino Dan, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Maiasaura With Rig” by Dino Dan, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -471,6 +550,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/maiasaura-with-rig-3da9f211ae304bd0afd1d15a290eabbd",
     "attribution": "“Maiasaura With Rig” by Dino Dan, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Normalized and repacked the self-contained GLB while retaining the source 87-bone rig.",
       "Replaced the cyan-orange toy-like colour treatment with a project-authored warm brown back, pale underside, dark dorsal markings, multiscale mottling, higher roughness, and a clearer skin normal surface.",
       "Authored an eight-second in-place Idle at 24 frames per second with visibly increased torso, head, neck, forelimb, and full-tail motion while retaining stable four-foot contact.",
@@ -523,18 +603,33 @@ export const credits = [
     ]
   },
   {
+    "id": "mammoth:images/poster-portrait.webp",
+    "animalId": "mammoth",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "长毛猛犸象 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "mammoth:images/poster.webp",
     "animalId": "mammoth",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "长毛猛犸象 model fallback poster",
+    "sourceTitle": "长毛猛犸象 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -564,6 +659,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/3d-high-poly-baby-woolly-mammoth-fce1c86ccedf47a5b9627098be6719d5",
     "attribution": "“3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Used the original creator’s CC BY 4.0 source rather than the submitted CC BY-NC-SA derivative.",
       "Normalized and repacked the self-contained 1K-texture GLB.",
       "Built a project-authored 8-bone Blender armature with deterministic head, body, four-leg, and two-bone tail weights.",
@@ -618,18 +714,33 @@ export const credits = [
     ]
   },
   {
+    "id": "megalodon:images/poster-portrait.webp",
+    "animalId": "megalodon",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "巨齿鲨 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "megalodon:images/poster.webp",
     "animalId": "megalodon",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "巨齿鲨 model fallback poster",
+    "sourceTitle": "巨齿鲨 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -659,6 +770,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/otodus-megalodon-updated-animations-7e65b8c51251440e9aca8385f286714f",
     "attribution": "“Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Retained the source skinned hierarchy, repacked the GLB, and applied a desaturated non-metallic matte aquatic material treatment.",
       "Replaced the source mouth-focused action with a project-authored eight-second in-place full-body swimming Idle at 24 frames per second.",
       "Kept the four head-chain joints nearly stable at approximately 0.15–0.30 degrees while increasing the travelling propulsion wave from roughly 1.2 degrees at the tail root to 8.5 degrees at the tail tip.",
@@ -711,18 +823,33 @@ export const credits = [
     ]
   },
   {
+    "id": "meganeura:images/poster-portrait.webp",
+    "animalId": "meganeura",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "巨脉蜻蜓 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "meganeura:images/poster.webp",
     "animalId": "meganeura",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "巨脉蜻蜓 model fallback poster",
+    "sourceTitle": "巨脉蜻蜓 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -752,6 +879,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/meganeura-dinoraul-but-it-is-a-bit-accurate-1aaab4a72fbc42b4901d5f1dde12a281",
     "attribution": "“Meganeura Dinoraul but it is a bit accurate” by Nobilis the Palaeovespa (@nobilishornet), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -804,18 +932,33 @@ export const credits = [
     ]
   },
   {
+    "id": "mosasaurus:images/poster-portrait.webp",
+    "animalId": "mosasaurus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "沧龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "mosasaurus:images/poster.webp",
     "animalId": "mosasaurus",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "沧龙 model fallback poster",
+    "sourceTitle": "沧龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -845,6 +988,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/mosasaurus-fe0c25c4ed4e4d4aa05312121e2f68df",
     "attribution": "“Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -898,18 +1042,33 @@ export const credits = [
     ]
   },
   {
+    "id": "pachycephalosaurus:images/poster-portrait.webp",
+    "animalId": "pachycephalosaurus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "肿头龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“PBR Pachycephalasaurus Animated” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "pachycephalosaurus:images/poster.webp",
     "animalId": "pachycephalosaurus",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "肿头龙 model fallback poster",
+    "sourceTitle": "肿头龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“PBR Pachycephalasaurus Animated” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“PBR Pachycephalasaurus Animated” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -939,6 +1098,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/pbr-pachycephalasaurus-animated-6eea5cee4afa4730bf75c6329a43e56d",
     "attribution": "“PBR Pachycephalasaurus Animated” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Converted legacy material data to metallic/roughness.",
       "Cleared zero-weight joint indices and retained the presentation-safe Idle clip.",
       "Deduplicated, pruned, repacked, validated, and reviewed the derivative."
@@ -990,18 +1150,33 @@ export const credits = [
     ]
   },
   {
+    "id": "plesiosaurus:images/poster-portrait.webp",
+    "animalId": "plesiosaurus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "蛇颈龙类 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "plesiosaurus:images/poster.webp",
     "animalId": "plesiosaurus",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "蛇颈龙类 model fallback poster",
+    "sourceTitle": "蛇颈龙类 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1031,6 +1206,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/plesiosaure-2f59d503e0754c9d9e157a90ed415c38",
     "attribution": "“Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Retained the source hierarchy and display scale while repacking the model as a self-contained runtime GLB.",
       "Applied a desaturated matte aquatic material treatment and added restrained eye sockets, amber irises, dark pupils, and small catchlights to the existing texture atlas.",
       "Authored four project morph targets that relax the permanently up-curved neck, add a head-to-shoulder elliptical neck motion, and move all four flippers independently.",
@@ -1084,18 +1260,33 @@ export const credits = [
     ]
   },
   {
+    "id": "pteranodon:images/poster-portrait.webp",
+    "animalId": "pteranodon",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "无齿翼龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "pteranodon:images/poster.webp",
     "animalId": "pteranodon",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "无齿翼龙 model fallback poster",
+    "sourceTitle": "无齿翼龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1125,6 +1316,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/pteranodon-animated-7d7683df41d1405283f160e81a5dff1b",
     "attribution": "“Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Converted legacy material data and cleared zero-weight joint indices.",
       "Used Blender 5.2 to transfer the source flying action onto the normalized runtime rig, rebase the root to the museum rest origin, and reduce its translation to 3.5%.",
       "Retained the repaired in-place flight loop as the single Idle clip.",
@@ -1177,18 +1369,33 @@ export const credits = [
     ]
   },
   {
+    "id": "rhamphorhynchus:images/poster-portrait.webp",
+    "animalId": "rhamphorhynchus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "喙嘴翼龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "rhamphorhynchus:images/poster.webp",
     "animalId": "rhamphorhynchus",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "喙嘴翼龙 model fallback poster",
+    "sourceTitle": "喙嘴翼龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1218,6 +1425,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/low-poly-rhamphorhynchus-idle-c1e35c7ac4374c778f78025717694675",
     "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -1270,18 +1478,33 @@ export const credits = [
     ]
   },
   {
+    "id": "sauropelta:images/poster-portrait.webp",
+    "animalId": "sauropelta",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "胄甲龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "sauropelta:images/poster.webp",
     "animalId": "sauropelta",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "胄甲龙 model fallback poster",
+    "sourceTitle": "胄甲龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1311,6 +1534,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/animated-sauropelta-free-c6373f12f3954facb8d5fe48055c9161",
     "attribution": "“Animated Sauropelta (Free)” by Anees Animates, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -1363,18 +1587,33 @@ export const credits = [
     ]
   },
   {
+    "id": "stegosaurus:images/poster-portrait.webp",
+    "animalId": "stegosaurus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "Stegosaurus transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "stegosaurus:images/poster.webp",
     "animalId": "stegosaurus",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "Stegosaurus model fallback poster",
+    "sourceTitle": "Stegosaurus transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "Poster includes “PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; scene art generated for this project.",
+    "attribution": "“PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the project-generated landscape.",
-      "Exported a 960 × 540 WebP fallback without text, controls, or labels."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1404,6 +1643,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/pbr-stegasaurus-animated-ec254ea1554941fe8a131f62db0faf3d",
     "attribution": "“PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Downloaded as the converted GLB with 1K textures.",
       "Converted legacy specular/glossiness materials to metallic/roughness.",
       "Cleared zero-weight joint indices.",
@@ -1457,18 +1697,33 @@ export const credits = [
     ]
   },
   {
+    "id": "triceratops:images/poster-portrait.webp",
+    "animalId": "triceratops",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "三角龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "triceratops:images/poster.webp",
     "animalId": "triceratops",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "三角龙 model fallback poster",
+    "sourceTitle": "三角龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1498,6 +1753,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/triceratops-dinosaur-87527079bad44917ab1b98a456b46c7e",
     "attribution": "“Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Normalized and repacked the self-contained 1K-texture GLB.",
       "Built a project-authored 10-bone Blender armature and deterministic skin weights, including stationary four-leg bones.",
       "Authored an eight-second in-place Idle with an approximately 11-degree side-to-side head turn, a subtle nod, and a progressive distal tail wave while the tail root remains stationary over the hips.",
@@ -1551,18 +1807,33 @@ export const credits = [
     ]
   },
   {
+    "id": "tupandactylus:images/poster-portrait.webp",
+    "animalId": "tupandactylus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "古神翼龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "tupandactylus:images/poster.webp",
     "animalId": "tupandactylus",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "古神翼龙 model fallback poster",
+    "sourceTitle": "古神翼龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1592,6 +1863,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/tupandactylus-4ea8f4466c2c4e61bc57c12af296d43a",
     "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
@@ -1645,18 +1917,33 @@ export const credits = [
     ]
   },
   {
+    "id": "tyrannosaurus-rex:images/poster-portrait.webp",
+    "animalId": "tyrannosaurus-rex",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "霸王龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
     "id": "tyrannosaurus-rex:images/poster.webp",
     "animalId": "tyrannosaurus-rex",
     "assetPath": "images/poster.webp",
     "assetKind": "poster",
-    "sourceTitle": "霸王龙 model fallback poster",
+    "sourceTitle": "霸王龙 transparent model still",
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
-      "Composited the accepted runtime model presentation with the reviewed landscape.",
-      "Exported without text, controls, labels, logos, or watermarks."
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1686,6 +1973,7 @@ export const credits = [
     "sourceUrl": "https://sketchfab.com/3d-models/tyrant-king-tyrannosaurus-6465a297fa784598adc49f6e0042d449",
     "attribution": "“Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
+      "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Normalized and repacked the self-contained 1K-texture GLB.",
       "Lifted the Body base-colour texture midtones with a 0.80 luminance gamma and a maximum 1.50 channel scale after a second owner review; mouth, normal, roughness, and other PBR textures were left unchanged.",
       "Re-encoded the adjusted 1K Body base-colour texture as high-quality 4:4:4 JPEG.",

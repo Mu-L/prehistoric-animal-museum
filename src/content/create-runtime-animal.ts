@@ -9,6 +9,7 @@ export interface PublishedAnimalAssetUrls {
   readonly model: string
   readonly narration: string
   readonly poster: string
+  readonly posterPortrait: string
   readonly thumbnail: string
 }
 
@@ -29,6 +30,7 @@ export function createRuntimeAnimal(
       model: urls.model,
       modelBytes: modelRecord.runtime.bytes,
       poster: urls.poster,
+      posterPortrait: urls.posterPortrait,
       thumbnail: urls.thumbnail,
       backgrounds: {
         landscape: urls.backgroundLandscape,

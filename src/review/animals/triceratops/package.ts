@@ -31,8 +31,9 @@ export const animal = {
   provenance: [],
   assets: {
     model: reviewAssetUrl('triceratops', 'model.glb'),
-    modelBytes: 4_433_888,
+    modelBytes: 3_178_460,
     poster: reviewAssetUrl('triceratops', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('triceratops', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('triceratops', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('triceratops', 'background-landscape'),

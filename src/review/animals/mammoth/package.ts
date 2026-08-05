@@ -31,8 +31,9 @@ export const animal = {
   provenance: [],
   assets: {
     model: reviewAssetUrl('mammoth', 'model.glb'),
-    modelBytes: 3_251_408,
+    modelBytes: 1_198_456,
     poster: reviewAssetUrl('mammoth', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('mammoth', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('mammoth', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('mammoth', 'background-landscape'),

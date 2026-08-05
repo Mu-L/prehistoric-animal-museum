@@ -31,8 +31,9 @@ export const animal = {
   provenance: [],
   assets: {
     model: reviewAssetUrl('pteranodon', 'model.glb'),
-    modelBytes: 5_972_396,
+    modelBytes: 3_819_812,
     poster: reviewAssetUrl('pteranodon', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('pteranodon', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('pteranodon', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('pteranodon', 'background-landscape'),

@@ -1,0 +1,55 @@
+{
+  "animalId": "megalodon",
+  "contractVersion": 1,
+  "generatedAt": "2026-08-05T02:30:17.153Z",
+  "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":1},\"presentation\":{\"cameraLightScale\":2.1,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":true,\"safeAreaPadding\":{\"landscape\":0.12,\"portrait\":0.16},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.34,\"verticalOffset\":{\"landscape\":0.04,\"portrait\":0.04}}}",
+  "profiles": {
+    "landscapeCompact": {
+      "bytes": 80552,
+      "fileName": "preview-landscape-compact.webp",
+      "height": 650,
+      "sha256": "de3b08a9332ffdba1d316d6248823cfef0d0a31d80bfe0ca5f459e5781f4bfb6",
+      "width": 1250
+    },
+    "desktopWide": {
+      "bytes": 88710,
+      "fileName": "preview-desktop-wide.webp",
+      "height": 800,
+      "sha256": "f2d1ac391888aad70aef764f8561af2c4985d53de5ad316a43132b674fee3226",
+      "width": 1200
+    },
+    "phonePortraitCompact": {
+      "bytes": 43408,
+      "fileName": "preview-phone-compact.webp",
+      "height": 1000,
+      "sha256": "0040c505dc15094b176fa526227912fdb0dac6f99dc0134c17da13810a70c408",
+      "width": 875
+    },
+    "phonePortraitTall": {
+      "bytes": 31974,
+      "fileName": "preview-phone-tall.webp",
+      "height": 1000,
+      "sha256": "d2eaa98acbd426d979535421114299ade05389d032a5cbf83f14fb87b8d4ed82",
+      "width": 640
+    },
+    "tabletPortrait": {
+      "bytes": 52356,
+      "fileName": "preview-tablet-portrait.webp",
+      "height": 960,
+      "sha256": "96389e6af379cad44245a090d16cf226cc5b2a61b054d1f0aa493544707aa596",
+      "width": 900
+    },
+    "desktopStandard": {
+      "bytes": 93926,
+      "fileName": "preview-desktop-standard.webp",
+      "height": 960,
+      "sha256": "c967df36c21d7808d8315a79496f02b8cd36196a15a496d3a2fec16d389e7497",
+      "width": 1200
+    }
+  },
+  "sourceModel": {
+    "bytes": 129936,
+    "sha256": "2ac86e4a499a10d02e6ded5667a69a06c70f5371d624a31bef3abcb64dd53253"
+  },
+  "target": "production"
+}

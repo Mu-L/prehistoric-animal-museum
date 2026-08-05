@@ -38,6 +38,7 @@ export const animal = {
     model: reviewAssetUrl('apatosaurus', 'model.glb'),
     modelBytes: 6_222_396,
     poster: reviewAssetUrl('apatosaurus', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('apatosaurus', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('apatosaurus', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('apatosaurus', 'background-landscape'),

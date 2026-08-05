@@ -162,10 +162,17 @@ test('shows a distinct stage loader while the first animal is arriving', async (
   const loader = page.locator('.stage-loading')
 
   await expect(loader).toBeVisible()
-  await expect(page.locator('.model-poster')).toHaveCount(0)
+  await expect(page.locator('.model-still')).toBeVisible()
   await expect(
-    page.getByText('正在请第一位朋友出来……'),
+    page.getByRole('progressbar', { name: '3D 模型加载进度' }),
+  ).toBeVisible()
+  const initialLoaderBox = await loader.boundingBox()
+  await expect(
+    page.getByText(/正在准备 3D 模型 · \d+%/),
   ).toBeVisible({ timeout: 1_000 })
+  await page.waitForTimeout(350)
+  const progressingLoaderBox = await loader.boundingBox()
+  expect(progressingLoaderBox?.height).toBe(initialLoaderBox?.height)
   await expect(museum).toHaveAttribute(
     'data-ready-animal-id',
     'stegosaurus',
@@ -298,62 +305,45 @@ test('switches the bounded CSS atmosphere with the committed exhibit', async ({
   await expect(page.locator('.underwater-atmosphere')).toHaveCount(0)
 })
 
-test('refits when the composition frame changes without a viewport resize', async ({
+test('keeps the preview and WebGL inside the same responsive model viewport', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await openMuseum(page)
 
   const canvas = page.locator('.viewer-canvas')
-  const frame = page.locator('.viewer-composition-frame')
-  const stage = page.getByTestId('model-stage')
-  const stageBefore = await stage.boundingBox()
-  const frameBefore = await frame.boundingBox()
-  expect(stageBefore).not.toBeNull()
-  expect(frameBefore).not.toBeNull()
-
-  await page.evaluate(`(() => {
-    const element = document.querySelector('.viewer-composition-frame')
-    if (element) {
-      element.setAttribute(
-        'style',
-        'position: fixed; inset: auto; top: 200px; left: 20px; width: 200px; height: 200px;'
-      )
+  const viewport = page.locator('.model-viewport')
+  const fittedGeometry = async () => {
+    const box = await viewport.boundingBox()
+    return {
+      height: Math.round(box?.height ?? 0),
+      profile: await viewport.getAttribute('data-preview-profile'),
+      rendererHeight: Number(
+        await canvas.getAttribute('data-composition-height'),
+      ),
+      rendererWidth: Number(
+        await canvas.getAttribute('data-composition-width'),
+      ),
+      width: Math.round(box?.width ?? 0),
     }
-  })()`)
+  }
 
+  await expect.poll(fittedGeometry).toMatchObject({
+    profile: 'phonePortraitTall',
+    rendererHeight: expect.any(Number),
+    rendererWidth: expect.any(Number),
+  })
+  let geometry = await fittedGeometry()
+  expect(geometry.rendererWidth).toBe(geometry.width)
+  expect(geometry.rendererHeight).toBe(geometry.height)
+
+  await page.setViewportSize({ width: 844, height: 390 })
   await expect
-    .poll(async () => {
-      const frameBox = await frame.boundingBox()
-      return {
-        measured: Math.round(frameBox?.width ?? 0),
-        fitted: Number(await canvas.getAttribute('data-composition-width')),
-      }
-    })
-    .toEqual({ measured: 200, fitted: 200 })
-
-  const stageAfter = await stage.boundingBox()
-  expect(stageAfter?.width).toBeCloseTo(stageBefore?.width ?? 0, 0)
-  expect(stageAfter?.height).toBeCloseTo(stageBefore?.height ?? 0, 0)
-
-  await page.evaluate(`(() => {
-    document
-      .querySelector('.viewer-composition-frame')
-      ?.removeAttribute('style')
-  })()`)
-
-  await expect
-    .poll(async () => {
-      const frameBox = await frame.boundingBox()
-      return {
-        measured: Math.round(frameBox?.width ?? 0),
-        fitted: Number(await canvas.getAttribute('data-composition-width')),
-      }
-    })
-    .toEqual({
-      measured: Math.round(frameBefore?.width ?? 0),
-      fitted: Math.round(frameBefore?.width ?? 0),
-    })
+    .poll(async () => (await fittedGeometry()).profile)
+    .toBe('landscapeCompact')
+  geometry = await fittedGeometry()
+  expect(geometry.rendererWidth).toBe(geometry.width)
+  expect(geometry.rendererHeight).toBe(geometry.height)
 })
 
 test('reveals the local loading label after 300 ms while preserving the ready animal', async ({
@@ -401,7 +391,7 @@ test('keeps the fast selection when an uncancellable slow result arrives later',
       outgoingAppeared: false,
       outgoingPreservedInitial: false,
       outgoingRemoved: false,
-      coverOpacities: [],
+      modelOpacities: [],
       viewerStates: [],
       transitionPhases: []
     }
@@ -434,13 +424,13 @@ test('keeps the fast selection when an uncancellable slow result arrives later',
       if (phase && probe.transitionPhases.at(-1) !== phase) {
         probe.transitionPhases.push(phase)
       }
-      const cover = Number.parseFloat(
+      const modelOpacity = Number.parseFloat(
         document
           .querySelector('.viewer-host')
-          ?.style.getPropertyValue('--model-transition-cover') ?? ''
+          ?.style.getPropertyValue('--model-transition-opacity') ?? ''
       )
-      if (Number.isFinite(cover)) {
-        probe.coverOpacities.push(cover)
+      if (Number.isFinite(modelOpacity)) {
+        probe.modelOpacities.push(modelOpacity)
       }
     }
     new MutationObserver((records) => {
@@ -489,7 +479,7 @@ test('keeps the fast selection when an uncancellable slow result arrives later',
       '.scene-background:not(.scene-background--outgoing) img',
     ),
   ).toHaveAttribute('src', /#fixture-fast$/)
-  await expect(page.locator('.model-poster')).toHaveCount(0)
+  await expect(page.locator('.model-still')).toHaveCount(0)
   await expect
     .poll(() =>
       page.evaluate<boolean>(
@@ -513,7 +503,7 @@ test('keeps the fast selection when an uncancellable slow result arrives later',
     outgoingAppeared: boolean
     outgoingPreservedInitial: boolean
     outgoingRemoved: boolean
-    coverOpacities: number[]
+    modelOpacities: number[]
     transitionPhases: string[]
     viewerStates: string[]
   }>(`window.__museumTransitionProbe`)
@@ -525,7 +515,27 @@ test('keeps the fast selection when an uncancellable slow result arrives later',
   expect(transitionProbe.transitionPhases).toContain('outgoing')
   expect(transitionProbe.transitionPhases).toContain('incoming')
   expect(transitionProbe.transitionPhases.at(-1)).toBe('idle')
-  expect(Math.max(...transitionProbe.coverOpacities)).toBeGreaterThan(0.9)
+  expect(Math.min(...transitionProbe.modelOpacities)).toBeLessThan(0.1)
+  expect(Math.max(...transitionProbe.modelOpacities)).toBeGreaterThan(0.9)
+  const transitionOverlay = await page.evaluate<{
+    backdropFilter: string
+    backgroundImage: string
+    content: string
+  }>(`(() => {
+    const host = document.querySelector('.viewer-host')
+    if (!(host instanceof HTMLElement)) {
+      throw new Error('Viewer host is missing')
+    }
+    const style = getComputedStyle(host, '::after')
+    return {
+      backdropFilter: style.backdropFilter,
+      backgroundImage: style.backgroundImage,
+      content: style.content
+    }
+  })()`)
+  expect(transitionOverlay.content).toBe('none')
+  expect(transitionOverlay.backgroundImage).toBe('none')
+  expect(transitionOverlay.backdropFilter).toBe('none')
   await expect(museum).toHaveAttribute('data-ready-animal-id', 'fixture-fast')
   await expect(museum).toHaveAttribute('data-requested-animal-id', 'fixture-fast')
   await expect(page.getByRole('heading', { name: '快快龙' })).toBeVisible()
@@ -550,7 +560,7 @@ test('keeps the ready presentation on failure and retries with a fresh token', a
   await expect(retryCard).toHaveAccessibleName(
     '查看再试龙，加载失败，点击重试',
   )
-  await expect(page.getByRole('status')).toContainText(
+  await expect(page.locator('p[role="status"]')).toContainText(
     '再试龙暂时没准备好，可以点击它的卡片重试。',
   )
   await expect(museum).toHaveAttribute('data-ready-animal-id', 'stegosaurus')
@@ -591,11 +601,11 @@ test('shows the poster for an initial model failure and succeeds on explicit ret
     waitForModel: false,
   })
 
-  await expect(page.getByText('今天先看看它的照片吧')).toBeVisible()
+  await expect(page.getByText('今天先看看它的静态模型吧')).toBeVisible()
   await expect(
     page.getByText('它暂时没准备好，再点一次试试。'),
   ).toBeVisible()
-  await expect(page.getByAltText('剑龙的展示照片')).toBeVisible()
+  await expect(page.getByAltText('剑龙的透明背景静态模型图')).toBeVisible()
   await expect(
     page.getByRole('button', { name: '专注看模型' }),
   ).toBeDisabled()
@@ -611,7 +621,7 @@ test('shows the poster for an initial model failure and succeeds on explicit ret
   expect(Number(await museum.getAttribute('data-request-token'))).toBeGreaterThan(
     failedToken,
   )
-  await expect(page.getByText('今天先看看它的照片吧')).toHaveCount(0)
+  await expect(page.getByText('今天先看看它的静态模型吧')).toHaveCount(0)
   await expect(
     page.getByRole('button', { name: '专注看模型' }),
   ).toBeEnabled()
@@ -636,11 +646,11 @@ test('keeps content, navigation, narration state, and parent facts in WebGL fall
   })
 
   await expect(museum).toHaveAttribute('data-ready-animal-id', 'stegosaurus')
-  await expect(page.getByText('今天先看看它的照片吧')).toBeVisible()
+  await expect(page.getByText('今天先看看它的静态模型吧')).toBeVisible()
   await expect(
     page.getByText('这个浏览器现在不能显示 3D 模型。'),
   ).toBeVisible()
-  await expect(page.getByAltText('剑龙的展示照片')).toBeVisible()
+  await expect(page.getByAltText('剑龙的透明背景静态模型图')).toBeVisible()
   await expect(
     page.getByRole('button', { name: '听它的介绍' }),
   ).toBeEnabled()
@@ -650,8 +660,8 @@ test('keeps content, navigation, narration state, and parent facts in WebGL fall
   await expect(page.getByRole('region', { name: '动物选择' })).toBeVisible()
 
   await page.getByRole('button', { name: '重新加载模型' }).click()
-  await expect(page.getByText('今天先看看它的照片吧')).toBeVisible()
-  await expect(page.getByAltText('剑龙的展示照片')).toBeVisible()
+  await expect(page.getByText('今天先看看它的静态模型吧')).toBeVisible()
+  await expect(page.getByAltText('剑龙的透明背景静态模型图')).toBeVisible()
   await expect(
     page.getByRole('button', { name: '专注看模型' }),
   ).toBeDisabled()
@@ -843,14 +853,71 @@ test('preserves the committed animal and switches the picture source after orien
 })
 
 const requiredViewports = [
-  { name: 'phone-360x640', width: 360, height: 640 },
-  { name: 'phone-390x844', width: 390, height: 844 },
-  { name: 'compact-tablet-767x1024', width: 767, height: 1024 },
-  { name: 'phone-landscape-844x390', width: 844, height: 390 },
-  { name: 'tablet-768x1024', width: 768, height: 1024 },
-  { name: 'tablet-1023x1365', width: 1023, height: 1365 },
-  { name: 'desktop-1440x900', width: 1440, height: 900 },
+  { name: 'phone-360x640', poster: 'preview-phone-compact', width: 360, height: 640 },
+  { name: 'phone-390x844', poster: 'preview-phone-tall', width: 390, height: 844 },
+  { name: 'compact-tablet-767x1024', poster: 'preview-tablet-portrait', width: 767, height: 1024 },
+  { name: 'phone-landscape-844x390', poster: 'preview-landscape-compact', width: 844, height: 390 },
+  { name: 'desktop-wide-1280x720', poster: 'preview-desktop-wide', width: 1280, height: 720 },
+  { name: 'tablet-768x1024', poster: 'preview-tablet-portrait', width: 768, height: 1024 },
+  { name: 'tablet-1023x1365', poster: 'preview-tablet-portrait', width: 1023, height: 1365 },
+  { name: 'desktop-1366x768', poster: 'preview-desktop-wide', width: 1366, height: 768 },
+  { name: 'desktop-1440x900', poster: 'preview-desktop-standard', width: 1440, height: 900 },
+  { name: 'desktop-1885x1329', poster: 'preview-desktop-standard', width: 1885, height: 1329 },
 ] as const
+
+test.describe('responsive first-model reveal', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  for (const viewport of requiredViewports) {
+    test(`${viewport.name} crossfades its matching first-frame still into WebGL`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({
+        width: viewport.width,
+        height: viewport.height,
+      })
+      await page.route('**/*.glb', async (route) => {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 700)
+        })
+        await route.continue()
+      })
+
+      const museum = await openMuseum(page, '', { waitForModel: false })
+      const loader = page.locator('.stage-loading')
+      const viewerHost = page.locator('.viewer-host')
+
+      await expect(loader).toBeVisible()
+      await expect(page.locator('.model-still')).toBeVisible()
+      await expect
+        .poll(() =>
+          page
+            .locator('.model-still img')
+            .evaluate((image) => Reflect.get(image, 'currentSrc') as string),
+        )
+        .toContain(viewport.poster)
+      await expect(viewerHost).toHaveCSS('opacity', '1')
+      const initialLoaderBox = await loader.boundingBox()
+      await page.waitForTimeout(320)
+      const delayedLoaderBox = await loader.boundingBox()
+      expect(delayedLoaderBox?.height).toBe(initialLoaderBox?.height)
+
+      await expect(museum).toHaveAttribute(
+        'data-ready-animal-id',
+        'stegosaurus',
+        { timeout: 20_000 },
+      )
+      await expect(page.locator('.viewer-canvas')).toHaveAttribute(
+        'data-first-frame-rendered',
+        'true',
+      )
+      await expect(loader).toHaveCount(0)
+      await expect(page.locator('.model-still')).toHaveCount(0)
+      await expect(viewerHost).toHaveCSS('opacity', '1')
+      await expectNoHorizontalOverflow(page)
+    })
+  }
+})
 
 test.describe('required responsive viewports', () => {
   test.describe.configure({ mode: 'serial' })
@@ -886,29 +953,39 @@ test.describe('required responsive viewports', () => {
 
       const stage = page.getByTestId('model-stage')
       const stageBox = await stage.boundingBox()
+      const modelViewportBox = await page
+        .locator('.model-viewport')
+        .boundingBox()
       expect(stageBox).not.toBeNull()
-      expect(stageBox?.x).toBeCloseTo(0, 0)
-      expect(stageBox?.y).toBeCloseTo(0, 0)
-      expect(stageBox?.width).toBeCloseTo(viewport.width, 0)
-      expect(stageBox?.height).toBeCloseTo(viewport.height, 0)
+      expect(modelViewportBox).not.toBeNull()
       const canvasBox = await page.locator('.viewer-canvas').boundingBox()
-      expect(canvasBox?.x).toBeCloseTo(0, 0)
-      expect(canvasBox?.y).toBeCloseTo(0, 0)
-      expect(canvasBox?.width).toBeCloseTo(viewport.width, 0)
-      expect(canvasBox?.height).toBeCloseTo(viewport.height, 0)
-
-      if (viewport.width >= 1024 && viewport.width > viewport.height) {
-        const storyBox = await page.locator('.story-panel').boundingBox()
-        const compositionLeft = Number(
-          await page
-            .locator('.viewer-canvas')
-            .getAttribute('data-composition-left'),
-        )
-        expect(storyBox).not.toBeNull()
-        expect(compositionLeft).toBeGreaterThanOrEqual(
-          (storyBox?.x ?? 0) + (storyBox?.width ?? 0) - 1,
-        )
-      }
+      expect(canvasBox).not.toBeNull()
+      expect(canvasBox?.x).toBeCloseTo(modelViewportBox?.x ?? 0, 0)
+      expect(canvasBox?.y).toBeCloseTo(modelViewportBox?.y ?? 0, 0)
+      expect(canvasBox?.width).toBeCloseTo(
+        modelViewportBox?.width ?? 0,
+        0,
+      )
+      expect(canvasBox?.height).toBeCloseTo(
+        modelViewportBox?.height ?? 0,
+        0,
+      )
+      expect(modelViewportBox?.x ?? -1).toBeGreaterThanOrEqual(
+        (stageBox?.x ?? 0) - 1,
+      )
+      expect(modelViewportBox?.y ?? -1).toBeGreaterThanOrEqual(
+        (stageBox?.y ?? 0) - 1,
+      )
+      expect(
+        (modelViewportBox?.x ?? 0) + (modelViewportBox?.width ?? 0),
+      ).toBeLessThanOrEqual(
+        (stageBox?.x ?? 0) + (stageBox?.width ?? 0) + 1,
+      )
+      expect(
+        (modelViewportBox?.y ?? 0) + (modelViewportBox?.height ?? 0),
+      ).toBeLessThanOrEqual(
+        (stageBox?.y ?? 0) + (stageBox?.height ?? 0) + 1,
+      )
 
       const intro = page.locator('.child-intro')
       await expect(intro).toBeVisible()
@@ -1064,16 +1141,11 @@ test.describe('required responsive viewports', () => {
         expect(stageActionsBox?.width ?? 0).toBeGreaterThan(
           stageActionsBox?.height ?? Number.POSITIVE_INFINITY,
         )
-        const compositionTop = Number(
-          await page
-            .locator('.viewer-canvas')
-            .getAttribute('data-composition-top'),
-        )
         expect(stageActionsBox?.y ?? -1).toBeGreaterThanOrEqual(
-          compositionTop - 1,
+          (modelViewportBox?.y ?? 0) - 2,
         )
         expect(stageActionsBox?.y ?? Number.POSITIVE_INFINITY).toBeLessThan(
-          compositionTop + 80,
+          (modelViewportBox?.y ?? 0) + 80,
         )
       }
 

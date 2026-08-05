@@ -48,17 +48,18 @@ import {
 import type { DisplayableAnimalPackage } from './review/types'
 import {
   AnimalLoadCoordinator,
-  IdlePreloadCoordinator,
   type AnimalLoadSnapshot,
   type AnimalLoadContext,
 } from './state'
 import {
+  type ModelLoadProgress,
   type StagedViewerModel,
   type ViewerController,
   type ViewerFailure,
   type ViewerModelDescriptor,
 } from './viewer/ViewerController'
 import { ModelCache } from './viewer/model-cache'
+import { createViewerModelDescriptor } from './viewer/create-viewer-model-descriptor'
 
 interface RuntimeAnimal {
   readonly id: string
@@ -76,6 +77,7 @@ interface RuntimeAnimal {
     readonly model: string
     readonly modelBytes: number
     readonly poster: string
+    readonly posterPortrait: string
     readonly thumbnail: string
     readonly backgroundLandscape: string
     readonly backgroundPortrait: string
@@ -97,6 +99,13 @@ interface LoadedRuntimeAnimal {
 interface ModelDataNotice {
   readonly kind: 'first-entry' | 'large-model'
   readonly message: string
+}
+
+interface ModelLoadingProgress {
+  readonly animalId: string
+  readonly loadedBytes: number
+  readonly requestToken: number
+  readonly totalBytes: number
 }
 
 function SceneBackground({
@@ -244,73 +253,17 @@ function toRuntimeAnimal(animal: DisplayableAnimalPackage): RuntimeAnimal {
       model: animal.assets.model,
       modelBytes: animal.assets.modelBytes,
       poster: animal.assets.poster,
+      posterPortrait: animal.assets.posterPortrait ?? animal.assets.poster,
       thumbnail: animal.assets.thumbnail,
       backgroundLandscape: animal.assets.backgrounds.landscape,
       backgroundPortrait: animal.assets.backgrounds.portrait,
       narration: narration.status === 'ready' ? narration.url : null,
     },
-    viewer: {
-      id: animal.id,
-      label: content.name,
-      modelUrl: animal.assets.model,
-      presentation: {
-        ...(animal.presentation.cameraLightScale === undefined
-          ? {}
-          : {
-              cameraLightScale: animal.presentation.cameraLightScale,
-            }),
-        initialYawDegrees: animal.presentation.initialYawDegrees,
-        horizontalOffset: {
-          landscape:
-            animal.presentation.landscapeHorizontalOffset ?? 0,
-          portrait: animal.presentation.portraitHorizontalOffset ?? 0,
-        },
-        verticalOffset: {
-          landscape: animal.presentation.landscapeVerticalOffset ?? 0,
-          portrait: animal.presentation.portraitVerticalOffset ?? 0,
-        },
-        safeAreaPadding: {
-          landscape: animal.presentation.safeAreaPadding,
-          portrait: Math.max(
-            animal.presentation.portraitSafeAreaPadding ??
-              animal.presentation.safeAreaPadding,
-            0.1,
-          ),
-        },
-        preciseBounds: animal.presentation.preciseBounds ?? false,
-        shadow: {
-          depthOffset: animal.presentation.shadowDepthOffset ?? 0,
-          ...(animal.presentation.shadowDepthScale === undefined
-            ? {}
-            : {
-                depthScale: animal.presentation.shadowDepthScale,
-              }),
-          horizontalOffset:
-            animal.presentation.shadowHorizontalOffset ?? 0,
-          opacity:
-            animal.presentation.shadow === 'ground'
-              ? (animal.presentation.shadowOpacity ?? 0.42)
-              : 0,
-          scale: animal.presentation.shadowScale ?? 0.62,
-          yOffset: animal.presentation.shadowYOffset ?? 0,
-        },
-        ...(animal.presentation.toneMappingExposure === undefined
-          ? {}
-          : {
-              toneMappingExposure:
-                animal.presentation.toneMappingExposure,
-            }),
-      },
-      ...(animal.animation
-        ? {
-            animation: {
-              clip: animal.animation.clip,
-              loop: animal.animation.loop,
-              speed: animal.animation.speed,
-            },
-          }
-        : {}),
-    },
+    viewer: createViewerModelDescriptor(
+      animal,
+      content.name,
+      animal.assets.model,
+    ),
   }
 }
 
@@ -377,6 +330,7 @@ function makeE2EFixtures(base: RuntimeAnimal): RuntimeAnimal[] {
         backgroundLandscape: markAsset(base.assets.backgroundLandscape),
         backgroundPortrait: markAsset(base.assets.backgroundPortrait),
         poster: markAsset(base.assets.poster),
+        posterPortrait: markAsset(base.assets.posterPortrait),
         thumbnail: markAsset(base.assets.thumbnail),
       },
       viewer: {
@@ -559,26 +513,11 @@ export function App() {
     () => new Map(animals.map((animal) => [animal.id, animal])),
     [animals],
   )
-  const idlePreloadTargets = useMemo(
-    () =>
-      animals.map((animal) => ({
-        id: animal.id,
-        imageUrls: [
-          animal.assets.backgroundLandscape,
-          animal.assets.backgroundPortrait,
-          animal.assets.poster,
-        ],
-        modelUrl: animal.viewer.modelUrl,
-      })),
-    [animals],
-  )
   const initialAnimal = useMemo(() => readInitialAnimal(animals), [animals])
   const modelCache = useMemo(() => new ModelCache(), [])
 
   const viewerControllerRef = useRef<ViewerController | null>(null)
   const coordinatorRef = useRef<AnimalLoadCoordinator<LoadedRuntimeAnimal> | null>(null)
-  const idlePreloadCoordinatorRef =
-    useRef<IdlePreloadCoordinator | null>(null)
   const attemptsRef = useRef(new Map<string, number>())
   const activeAnimalRef = useRef(initialAnimal)
   const backgroundTimerRef = useRef<number | null>(null)
@@ -597,11 +536,11 @@ export function App() {
     useRef<ModelDataNotice['kind'] | null>(null)
   const modelDataNoticeLifecycleRef = useRef(0)
   const narrationLifecycleRef = useRef(0)
+  const lastReportedModelProgressRef = useRef('')
   const requestTokenRef = useRef(0)
   const viewerRequiresRemountRef = useRef(false)
   const drawerTriggerRef = useRef<HTMLButtonElement>(null)
   const collectionTriggerRef = useRef<HTMLButtonElement>(null)
-  const compositionFrameRef = useRef<HTMLDivElement>(null)
   const focusTriggerRef = useRef<HTMLButtonElement>(null)
   const focusExitRef = useRef<HTMLButtonElement>(null)
   const railRef = useRef<HTMLDivElement>(null)
@@ -617,6 +556,8 @@ export function App() {
     requestedAnimalId: initialAnimal.id,
   }))
   const [modelReady, setModelReady] = useState(false)
+  const [modelLoadingProgress, setModelLoadingProgress] =
+    useState<ModelLoadingProgress | null>(null)
   const [viewerFailure, setViewerFailure] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collectionOpen, setCollectionOpen] = useState(false)
@@ -772,6 +713,7 @@ export function App() {
       return
     }
     setModelReady(false)
+    setModelLoadingProgress(null)
     setViewerFailure(failure.message)
     viewerRequiresRemountRef.current =
       failure.kind === 'webgl-unavailable' || failure.kind === 'context-lost'
@@ -780,8 +722,6 @@ export function App() {
     if (failure.kind === 'context-lost') {
       coordinatorRef.current?.destroy()
       coordinatorRef.current = null
-      idlePreloadCoordinatorRef.current?.destroy()
-      idlePreloadCoordinatorRef.current = null
     }
     if (fatalViewerFailure) {
       setLoadSnapshot((snapshot) => ({
@@ -794,7 +734,7 @@ export function App() {
       }))
     }
     setLiveMessage(
-      `三维展台暂时不可用，已经换成${activeAnimalRef.current.name}照片。`,
+      `三维展台暂时不可用，已经换成${activeAnimalRef.current.name}的静态模型图。`,
     )
   }, [])
 
@@ -805,6 +745,13 @@ export function App() {
       viewerRequiresRemountRef.current = false
       setViewerFailure(null)
     }
+  }, [])
+
+  const handleFirstFrameRendered = useCallback((animalId: string) => {
+    if (animalId !== activeAnimalRef.current.id) {
+      return
+    }
+    setModelReady(true)
   }, [])
 
   const handleBackgroundReady = useCallback((animalId: string) => {
@@ -847,18 +794,11 @@ export function App() {
     const controller = viewerController
     coordinatorRef.current?.destroy()
     coordinatorRef.current = null
-    idlePreloadCoordinatorRef.current?.destroy()
-    idlePreloadCoordinatorRef.current = null
 
     if (!controller) {
       return
     }
 
-    const idlePreloadCoordinator = new IdlePreloadCoordinator({
-      modelCache,
-      targets: idlePreloadTargets,
-    })
-    idlePreloadCoordinatorRef.current = idlePreloadCoordinator
     const coordinator = new AnimalLoadCoordinator<LoadedRuntimeAnimal>({
       initialReadyAnimalId: null,
       initialRequestToken: requestTokenRef.current,
@@ -886,6 +826,34 @@ export function App() {
         }
         const shouldHoldInitial = initialPresentationPendingRef.current
         const startedAt = performance.now()
+        const reportModelProgress = (progress: ModelLoadProgress) => {
+          if (context.signal.aborted) {
+            return
+          }
+          const totalBytes = progress.totalBytes ?? animal.assets.modelBytes
+          const percent = Math.min(
+            100,
+            Math.floor((progress.loadedBytes / totalBytes) * 100),
+          )
+          const progressKey = `${context.requestToken}:${percent}`
+          if (lastReportedModelProgressRef.current === progressKey) {
+            return
+          }
+          lastReportedModelProgressRef.current = progressKey
+          setModelLoadingProgress({
+            animalId,
+            loadedBytes: progress.loadedBytes,
+            requestToken: context.requestToken,
+            totalBytes,
+          })
+        }
+        lastReportedModelProgressRef.current = `${context.requestToken}:0`
+        setModelLoadingProgress({
+          animalId,
+          loadedBytes: 0,
+          requestToken: context.requestToken,
+          totalBytes: animal.assets.modelBytes,
+        })
         const selectedBackground = window.matchMedia(
           '(orientation: portrait)',
         ).matches
@@ -894,6 +862,7 @@ export function App() {
         const modelPromise = controller.stageModel(
           animal.viewer,
           ignoreAbort ? undefined : context.signal,
+          reportModelProgress,
         )
         const cachedBackground =
           preloadedImagesRef.current.get(selectedBackground)
@@ -907,9 +876,12 @@ export function App() {
                   context.signal,
                   'high',
                 )
-        const cachedPoster = preloadedImagesRef.current.get(
-          animal.assets.poster,
-        )
+        const selectedPoster = window.matchMedia(
+          '(orientation: portrait)',
+        ).matches
+          ? animal.assets.posterPortrait
+          : animal.assets.poster
+        const cachedPoster = preloadedImagesRef.current.get(selectedPoster)
         const posterLifecycleSignal =
           preloadLifecycleAbortRef.current.signal
         const posterPromise =
@@ -918,7 +890,7 @@ export function App() {
             : cachedPoster
               ? Promise.resolve(cachedPoster)
               : preloadImageAsset(
-                  animal.assets.poster,
+                  selectedPoster,
                   posterLifecycleSignal,
                   'low',
                 )
@@ -926,7 +898,7 @@ export function App() {
         void posterPromise.then(
           (image) => {
             if (image && !posterLifecycleSignal.aborted) {
-              preloadedImagesRef.current.set(animal.assets.poster, image)
+              preloadedImagesRef.current.set(selectedPoster, image)
             }
           },
           () => {
@@ -966,6 +938,7 @@ export function App() {
         return { animal, staged }
       },
       commit: ({ animal, staged }) => {
+        const isInitialCommit = initialPresentationPendingRef.current
         controller.commitModel(staged)
         const previousAnimal = activeAnimalRef.current
         if (previousAnimal.id !== animal.id) {
@@ -981,7 +954,9 @@ export function App() {
         initialPresentationPendingRef.current = false
         activeAnimalRef.current = animal
         setActiveAnimalId(animal.id)
-        setModelReady(true)
+        if (!isInitialCommit) {
+          setModelLoadingProgress(null)
+        }
         setViewerFailure(null)
         replaceAnimalUrl(animal.id)
         narration.commit({
@@ -989,7 +964,6 @@ export function App() {
           source: animal.assets.narration,
         })
         setLiveMessage(`${animal.name}已经来到展台。`)
-        idlePreloadCoordinator.scheduleAfterCommit(animal.id)
       },
       dispose: ({ staged }) => {
         controller.disposeStagedModel(staged)
@@ -1005,6 +979,7 @@ export function App() {
       requestTokenRef.current = Math.max(requestTokenRef.current, snapshot.requestToken)
       setLoadSnapshot(snapshot)
       if (snapshot.phase === 'failed' && snapshot.failure) {
+        setModelLoadingProgress(null)
         const failedAnimal = animalIndex.get(snapshot.failure.animalId)
         setLiveMessage(
           `${failedAnimal?.name ?? '这只动物'}暂时没准备好，可以点击它的卡片重试。`,
@@ -1016,19 +991,12 @@ export function App() {
     return () => {
       unsubscribe()
       coordinator.destroy()
-      idlePreloadCoordinator.destroy()
       if (coordinatorRef.current === coordinator) {
         coordinatorRef.current = null
-      }
-      if (
-        idlePreloadCoordinatorRef.current === idlePreloadCoordinator
-      ) {
-        idlePreloadCoordinatorRef.current = null
       }
     }
   }, [
     animalIndex,
-    idlePreloadTargets,
     modelCache,
     narration,
     viewerController,
@@ -1088,7 +1056,6 @@ export function App() {
   }, [focusMode])
 
   const requestAnimal = (animalId: string) => {
-    idlePreloadCoordinatorRef.current?.cancelAll()
     const coordinator = coordinatorRef.current
     if (!coordinator) {
       return
@@ -1116,7 +1083,6 @@ export function App() {
   }
 
   const retryAnimal = () => {
-    idlePreloadCoordinatorRef.current?.cancelAll()
     setLiveMessage('正在重新准备展台。')
     const coordinator = coordinatorRef.current
     if (viewerRequiresRemountRef.current) {
@@ -1221,6 +1187,18 @@ export function App() {
     !modelReady &&
     loadSnapshot.readyAnimalId === null &&
     loadSnapshot.phase === 'loading'
+  const loadingPercent =
+    modelLoadingProgress?.requestToken === loadSnapshot.requestToken &&
+    modelLoadingProgress.totalBytes > 0
+      ? Math.min(
+          100,
+          Math.floor(
+            (modelLoadingProgress.loadedBytes /
+              modelLoadingProgress.totalBytes) *
+              100,
+          ),
+        )
+      : null
   const interfaceStyle = {
     '--animal-accent': activeAnimal.accent,
     '--animal-accent-soft': activeAnimal.accentSoft,
@@ -1258,12 +1236,6 @@ export function App() {
         key={`atmosphere-${activeAnimal.id}`}
         kind={activeAnimal.atmosphere}
       />
-      <div
-        aria-hidden="true"
-        className="viewer-composition-frame"
-        ref={compositionFrameRef}
-      />
-
       {!focusMode ? (
         <section aria-hidden={overlayOpen} className="story-panel" inert={overlayOpen}>
           <div className="story-card">
@@ -1383,20 +1355,20 @@ export function App() {
         onPointerUpCapture={handleFocusPointerUp}
       >
         <ViewerStage
-          compositionFrameRef={compositionFrameRef}
+          animalId={activeAnimal.id}
           failureMessage={initialModelFailure}
           initialLoading={initialLoading}
           key={`viewer-${viewerRetryKey}`}
           label={activeAnimal.name}
+          loadingPercent={loadingPercent}
           modelCache={modelCache}
           modelReady={modelReady}
           onControllerReady={handleControllerReady}
+          onFirstFrameRendered={handleFirstFrameRendered}
           onRetry={retryAnimal}
           onViewerFailure={handleViewerFailure}
           posterUrl={activeAnimal.assets.poster}
-          showLoadingLabel={
-            initialLoading && loadSnapshot.showDelayedLabel
-          }
+          posterPortraitUrl={activeAnimal.assets.posterPortrait}
         />
         {!focusMode ? (
           <div aria-hidden={overlayOpen} className="stage-actions" inert={overlayOpen}>
@@ -1491,7 +1463,12 @@ export function App() {
                     type="button"
                   >
                     <span className="thumbnail-frame">
-                      <img alt="" src={animal.assets.thumbnail} />
+                      <img
+                        alt=""
+                        decoding="async"
+                        loading="lazy"
+                        src={animal.assets.thumbnail}
+                      />
                       {localReviewMode && animal.review ? (
                         <span
                           aria-hidden="true"
@@ -1507,7 +1484,11 @@ export function App() {
                     {loading &&
                     !initialLoading &&
                     loadSnapshot.showDelayedLabel ? (
-                      <span className="card-status">正在请它出来…</span>
+                      <span className="card-status">
+                        {loadingPercent === null
+                          ? '正在请它出来…'
+                          : `准备中 · ${loadingPercent}%`}
+                      </span>
                     ) : null}
                     {failed ? <span className="card-status">点我再试</span> : null}
                     {!failed &&
@@ -1569,6 +1550,7 @@ export function App() {
             ? loadSnapshot.requestedAnimalId
             : null
         }
+        loadingPercent={loadingPercent}
         onClose={() => setCollectionOpen(false)}
         onSelect={(animalId) => {
           setCollectionOpen(false)

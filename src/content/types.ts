@@ -131,6 +131,7 @@ export interface AnimalAnimation {
 export type CanonicalRuntimeAssetPath =
   | 'model/model.glb'
   | 'images/poster.webp'
+  | 'images/poster-portrait.webp'
   | 'images/thumbnail.webp'
   | 'backgrounds/landscape.webp'
   | 'backgrounds/portrait.webp'
@@ -243,6 +244,7 @@ export interface PublishedAnimalAssets {
   /** Exact encoded byte length of the runtime GLB at `model`. */
   readonly modelBytes: number
   readonly poster: string
+  readonly posterPortrait?: string
   readonly thumbnail: string
   readonly backgrounds: {
     readonly landscape: string

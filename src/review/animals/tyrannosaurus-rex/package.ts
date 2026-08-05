@@ -31,8 +31,12 @@ export const animal = {
   provenance: [],
   assets: {
     model: reviewAssetUrl('tyrannosaurus-rex', 'model.glb'),
-    modelBytes: 9_538_404,
+    modelBytes: 6_298_928,
     poster: reviewAssetUrl('tyrannosaurus-rex', 'poster.webp'),
+    posterPortrait: reviewAssetUrl(
+      'tyrannosaurus-rex',
+      'poster-portrait.webp',
+    ),
     thumbnail: reviewAssetUrl('tyrannosaurus-rex', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl(

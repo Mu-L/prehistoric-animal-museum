@@ -1,6 +1,10 @@
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
+import {
+  MODEL_PREVIEW_MANIFEST_FILE,
+  modelPreviewProfiles,
+} from '../src/viewer/model-preview-profiles'
 import type { LocalReviewAnimalId } from '../src/review/assets'
 
 export const localReviewAssetPrefix = '/__museum-review-assets'
@@ -285,9 +289,7 @@ const reviewAnimalFiles: Readonly<
     thumbnail: productionAnimalAsset('megalodon', 'images/thumbnail.webp'),
   },
   sauropelta: {
-    model: repositoryFile(
-      'assets/candidates/animal-onboarding-2026-07-31/sauropelta/output/model.glb',
-    ),
+    model: productionAnimalAsset('sauropelta', 'model/model.glb'),
     backgroundLandscape: repositoryFile(
       'assets/candidates/animal-onboarding-2026-07-31/sauropelta/output/background-landscape.webp',
     ),
@@ -305,9 +307,7 @@ const reviewAnimalFiles: Readonly<
     ),
   },
   dilophosaurus: {
-    model: repositoryFile(
-      'assets/candidates/animal-onboarding-2026-07-31/dilophosaurus/output/model.glb',
-    ),
+    model: productionAnimalAsset('dilophosaurus', 'model/model.glb'),
     backgroundLandscape: repositoryFile(
       'assets/candidates/animal-onboarding-2026-07-31/dilophosaurus/output/background-landscape.webp',
     ),
@@ -325,9 +325,7 @@ const reviewAnimalFiles: Readonly<
     ),
   },
   mosasaurus: {
-    model: repositoryFile(
-      'assets/candidates/animal-onboarding-2026-07-31/mosasaurus/output/model.glb',
-    ),
+    model: productionAnimalAsset('mosasaurus', 'model/model.glb'),
     backgroundLandscape: repositoryFile(
       'assets/candidates/animal-onboarding-2026-07-31/mosasaurus/output/background-landscape.webp',
     ),
@@ -345,9 +343,7 @@ const reviewAnimalFiles: Readonly<
     ),
   },
   rhamphorhynchus: {
-    model: repositoryFile(
-      'assets/candidates/animal-onboarding-2026-07-31/rhamphorhynchus/output/model.glb',
-    ),
+    model: productionAnimalAsset('rhamphorhynchus', 'model/model.glb'),
     backgroundLandscape: repositoryFile(
       'assets/candidates/animal-onboarding-2026-07-31/rhamphorhynchus/output/background-landscape.webp',
     ),
@@ -365,9 +361,7 @@ const reviewAnimalFiles: Readonly<
     ),
   },
   tupandactylus: {
-    model: repositoryFile(
-      'assets/candidates/animal-onboarding-2026-08-01/tupandactylus/output/model.glb',
-    ),
+    model: productionAnimalAsset('tupandactylus', 'model/model.glb'),
     backgroundLandscape: repositoryFile(
       'assets/candidates/animal-onboarding-2026-08-01/tupandactylus/output/background-landscape.webp',
     ),
@@ -385,9 +379,7 @@ const reviewAnimalFiles: Readonly<
     ),
   },
   meganeura: {
-    model: repositoryFile(
-      'assets/candidates/animal-onboarding-2026-08-01/meganeura/output/model.glb',
-    ),
+    model: productionAnimalAsset('meganeura', 'model/model.glb'),
     backgroundLandscape: repositoryFile(
       'assets/candidates/animal-onboarding-2026-08-01/meganeura/output/background-landscape.webp',
     ),
@@ -408,12 +400,31 @@ const reviewAnimalFiles: Readonly<
 
 const routeFilePairs = Object.entries(reviewAnimalFiles).flatMap(
   ([animalId, files]) => {
+    const modelPreviewDirectory = repositoryFile(
+      `assets/review-generated/model-previews/${animalId}`,
+    )
+    const posterPortrait = productionAnimalAsset(
+      animalId as LocalReviewAnimalId,
+      'images/poster-portrait.webp',
+    )
+    const modelPreviewFiles = [
+      ...modelPreviewProfiles.map(
+        ({ fileName }) =>
+          [fileName, resolve(modelPreviewDirectory, fileName)] as const,
+      ),
+      [
+        MODEL_PREVIEW_MANIFEST_FILE,
+        resolve(modelPreviewDirectory, MODEL_PREVIEW_MANIFEST_FILE),
+      ] as const,
+    ]
     const filePairs = [
       ['model.glb', files.model],
       ['background-landscape', files.backgroundLandscape],
       ['background-portrait', files.backgroundPortrait],
       ['poster.webp', files.poster],
+      ['poster-portrait.webp', posterPortrait],
       ['thumbnail.webp', files.thumbnail],
+      ...modelPreviewFiles,
       ...(files.narration === undefined
         ? []
         : ([['narration.mp3', files.narration]] as const)),

@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         '11c34610b39fd9d0e8a7faa5a8c135e86f0cf68798cb4a32efa26e72f66f4c90',
     },
     runtime: {
-      bytes: 5_175_128,
+      bytes: 2_942_260,
       sha256:
-        'a3eac8a5b16f0175dc5a994550caf89d41f58feaf4be34a49c9fa37e5fbc2e74',
+        'ee2e53ec8a6d375388d7674cea0396536937cc024d1b24790ba7cefd0d87d010',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Removed the presentation ground and stone rim.',
       'Applied the reviewed reversible light silhouette restyle v1.',
       'Added the reviewed project-authored olive-brown material v2 while preserving geometry and UVs.',
@@ -54,9 +55,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 63_584,
+    bytes: 34_178,
     sha256:
-      'd2f4a44be36d2b09f7f51ac050f905081a59aad5d4add0fd0715d8197c5db252',
+      'ee877b1e83278f1fae323cd9367f11e3d15a19062228391b20a26a61a222f9ac',
+  },
+  posterPortrait: {
+    bytes: 10_390,
+    sha256:
+      'aac7fd266e93e474de94487d86ed8716d5f95ab76efaa2f4a114ec37b4713f8e',
   },
   thumbnail: {
     bytes: 29_026,

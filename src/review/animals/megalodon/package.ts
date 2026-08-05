@@ -37,8 +37,9 @@ export const animal = {
   provenance: [],
   assets: {
     model: reviewAssetUrl('megalodon', 'model.glb'),
-    modelBytes: 248_844,
+    modelBytes: 129_936,
     poster: reviewAssetUrl('megalodon', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('megalodon', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('megalodon', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('megalodon', 'background-landscape'),

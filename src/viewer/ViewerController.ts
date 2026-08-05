@@ -24,13 +24,17 @@ import {
 } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import {
   computeCameraFit,
-  computeCompositionFieldOfView,
   computeCompositionViewOffset,
 } from './camera-fit'
 import { disposeObject3D } from './dispose'
 import type { ModelCache } from './model-cache'
+import { createModelPreviewPresentationSignature } from './model-preview-contract'
+import type { ViewerModelDescriptor } from './viewer-model-descriptor'
+
+export type { ViewerModelDescriptor } from './viewer-model-descriptor'
 
 export type ViewerFailureKind = 'webgl-unavailable' | 'context-lost' | 'model-load' | 'animation'
 
@@ -40,45 +44,71 @@ export interface ViewerFailure {
   cause?: unknown
 }
 
-export interface ViewerModelDescriptor {
-  id: string
-  label: string
-  modelUrl: string
-  presentation: {
-    cameraLightScale?: number
-    initialYawDegrees: number
-    horizontalOffset?: {
-      landscape: number
-      portrait: number
-    }
-    verticalOffset?: {
-      landscape: number
-      portrait: number
-    }
-    safeAreaPadding: {
-      landscape: number
-      portrait: number
-    }
-    preciseBounds?: boolean
-    shadow: {
-      depthOffset?: number
-      depthScale?: number
-      horizontalOffset?: number
-      opacity: number
-      scale: number
-      yOffset?: number
-    }
-    toneMappingExposure?: number
+export interface ModelLoadProgress {
+  readonly fromCache: boolean
+  readonly loadedBytes: number
+  readonly totalBytes: number | null
+}
+
+export async function readModelResponseBuffer(
+  response: Response,
+  signal?: AbortSignal,
+  onProgress?: (progress: ModelLoadProgress) => void,
+): Promise<ArrayBuffer> {
+  const contentLength = Number(response.headers.get('content-length'))
+  const totalBytes =
+    Number.isSafeInteger(contentLength) && contentLength > 0
+      ? contentLength
+      : null
+
+  if (!response.body || !onProgress) {
+    const buffer = await response.arrayBuffer()
+    signal?.throwIfAborted()
+    onProgress?.({
+      fromCache: false,
+      loadedBytes: buffer.byteLength,
+      totalBytes: totalBytes ?? buffer.byteLength,
+    })
+    return buffer
   }
-  animation?: {
-    clip: string
-    loop: 'repeat' | 'once'
-    speed: number
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let loadedBytes = 0
+
+  while (true) {
+    signal?.throwIfAborted()
+    const { done, value } = await reader.read()
+    if (done) {
+      break
+    }
+    chunks.push(value)
+    loadedBytes += value.byteLength
+    onProgress({
+      fromCache: false,
+      loadedBytes,
+      totalBytes,
+    })
   }
+
+  signal?.throwIfAborted()
+  const combined = new Uint8Array(loadedBytes)
+  let offset = 0
+  for (const chunk of chunks) {
+    combined.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  if (totalBytes === null) {
+    onProgress({
+      fromCache: false,
+      loadedBytes,
+      totalBytes: loadedBytes,
+    })
+  }
+  return combined.buffer
 }
 
 export interface ViewerControllerOptions {
-  compositionFrame?: HTMLElement | null
   modelCache?: ModelCache
   onFailure?: (failure: ViewerFailure) => void
   onModelReady?: (animalId: string) => void
@@ -119,14 +149,15 @@ const DEFAULT_TONE_MAPPING_EXPOSURE = 1.08
 const CAMERA_KEY_INTENSITY = 2.15
 const CAMERA_FILL_INTENSITY = 0.72
 const MODEL_TRANSITION_CAMERA_SWITCH = 0.42
+const INITIAL_STILL_CROSSFADE_MS = 420
 
 export interface ModelTransitionFrame {
   /**
-   * Opacity of the soft stage veil. It reaches full strength exactly while
-   * the shared camera is refitted, so a large difference in animal size never
-   * appears as a one-frame jump.
+   * Opacity of the composited WebGL canvas. It reaches zero exactly while the
+   * shared camera is refitted, so the scene background stays untouched and a
+   * large difference in animal size never appears as a one-frame jump.
    */
-  readonly coverOpacity: number
+  readonly modelOpacity: number
   readonly phase: 'outgoing' | 'incoming'
 }
 
@@ -135,9 +166,9 @@ function smoothStep(progress: number): number {
 }
 
 /**
- * Raises a soft stage veil before fitting the shared camera to the new model,
- * then lowers it again. The animals themselves stay fully opaque, avoiding
- * the noisy transparency artifacts produced by fading layered GLTF materials.
+ * Fades the already-composited WebGL canvas before fitting the shared camera
+ * to the new model, then fades it back in. Individual GLTF materials remain
+ * fully opaque and the exhibit background never receives a rectangular veil.
  */
 export function computeModelTransitionFrame(
   progress: number,
@@ -145,20 +176,18 @@ export function computeModelTransitionFrame(
   const clampedProgress = Math.min(Math.max(progress, 0), 1)
   if (clampedProgress < MODEL_TRANSITION_CAMERA_SWITCH) {
     return {
-      coverOpacity: smoothStep(
-        clampedProgress / MODEL_TRANSITION_CAMERA_SWITCH,
-      ),
+      modelOpacity:
+        1 -
+        smoothStep(clampedProgress / MODEL_TRANSITION_CAMERA_SWITCH),
       phase: 'outgoing',
     }
   }
 
   return {
-    coverOpacity:
-      1 -
-      smoothStep(
-        (clampedProgress - MODEL_TRANSITION_CAMERA_SWITCH) /
-          (1 - MODEL_TRANSITION_CAMERA_SWITCH),
-      ),
+    modelOpacity: smoothStep(
+      (clampedProgress - MODEL_TRANSITION_CAMERA_SWITCH) /
+        (1 - MODEL_TRANSITION_CAMERA_SWITCH),
+    ),
     phase: 'incoming',
   }
 }
@@ -347,7 +376,7 @@ export class ViewerController {
   private readonly sceneAccentLight = new DirectionalLight('#ffd6a0', 0.55)
   private readonly cameraLightTarget = new Group()
   private readonly cameraLightingPose = createCameraRelativeLightingPose()
-  private readonly loader = new GLTFLoader()
+  private readonly loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
   private readonly resizeObserver: ResizeObserver
   private readonly reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   private readonly handleReducedMotionChange = () => {
@@ -379,10 +408,12 @@ export class ViewerController {
   private destroyed = false
   private reducedMotion = this.reducedMotionQuery.matches
   private resumeRotationAt = 0
+  private initialPoseHoldUntil = 0
   private reviewAnimationTime: number | null = null
   private lastFrameTime = performance.now()
   private transition: ModelTransition | null = null
   private compositionFitFrame: number | null = null
+  private firstFrameConfirmationFrame: number | null = null
 
   constructor(
     private readonly container: HTMLElement,
@@ -448,12 +479,6 @@ export class ViewerController {
       this.resize()
     })
     this.resizeObserver.observe(this.container)
-    if (
-      this.options.compositionFrame &&
-      this.options.compositionFrame !== this.container
-    ) {
-      this.resizeObserver.observe(this.options.compositionFrame)
-    }
     this.resize()
     this.startLoop()
   }
@@ -461,6 +486,7 @@ export class ViewerController {
   async stageModel(
     descriptor: ViewerModelDescriptor,
     signal?: AbortSignal,
+    onProgress?: (progress: ModelLoadProgress) => void,
   ): Promise<StagedViewerModel> {
     try {
       let buffer = this.options.modelCache?.get(descriptor.modelUrl) ?? null
@@ -472,9 +498,15 @@ export class ViewerController {
         if (!response.ok) {
           throw new Error(`模型请求失败（${response.status}）。`)
         }
-        buffer = await response.arrayBuffer()
+        buffer = await readModelResponseBuffer(response, signal, onProgress)
         signal?.throwIfAborted()
         this.options.modelCache?.set(descriptor.modelUrl, buffer)
+      } else {
+        onProgress?.({
+          fromCache: true,
+          loadedBytes: buffer.byteLength,
+          totalBytes: buffer.byteLength,
+        })
       }
       signal?.throwIfAborted()
       const resourceBase = new URL('.', new URL(descriptor.modelUrl, window.location.href)).href
@@ -576,8 +608,8 @@ export class ViewerController {
       return
     }
 
-    // A new choice can arrive while the former choice is still behind the
-    // rising veil. Do not complete that older transition here: doing so fits its hidden
+    // A new choice can arrive while the former choice is still fading out.
+    // Do not complete that older transition here: doing so fits its hidden
     // incoming model and makes the still-visible outgoing animal jump in size.
     // Instead, retain whichever model is actually visible as the next
     // transition's outgoing model.
@@ -591,6 +623,7 @@ export class ViewerController {
     )
     this.renderer.domElement.setAttribute('aria-hidden', 'false')
     if (previous) {
+      this.initialPoseHoldUntil = 0
       staged.group.visible = false
       this.transition = {
         cameraSwitched: false,
@@ -599,16 +632,22 @@ export class ViewerController {
         outgoing: previous,
         startedAt: performance.now(),
       }
-      this.setTransitionCover(0)
+      this.setTransitionOpacity(1)
       this.renderer.domElement.dataset.transitioning = 'true'
       this.renderer.domElement.dataset.transitionPhase = 'outgoing'
     } else {
       this.applyPresentationSettings(staged)
       this.reset()
+      this.initialPoseHoldUntil =
+        performance.now() + INITIAL_STILL_CROSSFADE_MS
+      this.controls.autoRotate = false
+      this.renderer.domElement.dataset.autoRotate = 'false'
+      this.updateCameraLighting()
+      this.renderer.render(this.scene, this.camera)
+      this.confirmInitialFrame(staged.animalId)
       this.renderer.domElement.dataset.transitioning = 'false'
       this.renderer.domElement.dataset.transitionPhase = 'idle'
     }
-    this.options.onModelReady?.(staged.animalId)
   }
 
   disposeStagedModel(staged: StagedViewerModel): void {
@@ -644,21 +683,30 @@ export class ViewerController {
   /**
    * Freezes the active clip at an exact time for deterministic local-review
    * screenshots. Passing null resumes normal playback. ViewerStage only
-   * exposes this hook in Vite's local `review` mode.
+   * exposes this hook in Vite's local `review` and `model-still` modes.
    */
   setReviewAnimationTime(timeSeconds: number | null): boolean {
-    if (import.meta.env.MODE !== 'review') {
+    if (
+      import.meta.env.MODE !== 'review' &&
+      import.meta.env.MODE !== 'model-still'
+    ) {
       return false
     }
     const current = this.current
-    if (!current?.action || !current.mixer) {
+    if (!current) {
       return false
     }
     if (timeSeconds === null) {
       this.reviewAnimationTime = null
       delete this.renderer.domElement.dataset.reviewAnimationTime
-      current.mixer.timeScale = 1
-      current.action.paused = false
+      if (current.mixer && current.action) {
+        current.mixer.timeScale = 1
+        current.action.paused = false
+      }
+      this.resumeRotationAt = this.reducedMotion
+        ? Number.POSITIVE_INFINITY
+        : 0
+      this.updateAutoRotation(performance.now())
       this.renderer.domElement.dataset.animationPaused = 'false'
       return true
     }
@@ -667,12 +715,19 @@ export class ViewerController {
     }
     this.reviewAnimationTime = timeSeconds
     this.renderer.domElement.dataset.reviewAnimationTime = String(timeSeconds)
-    current.mixer.timeScale = 1
-    current.action.paused = false
-    current.action.reset().play()
-    current.mixer.setTime(timeSeconds)
-    current.action.paused = true
-    current.mixer.timeScale = 0
+    this.resumeRotationAt = Number.POSITIVE_INFINITY
+    this.controls.autoRotate = false
+    this.renderer.domElement.dataset.autoRotate = 'false'
+    resetStagedModelPose(current)
+    this.fitCurrentModel()
+    if (current.mixer && current.action) {
+      current.mixer.timeScale = 1
+      current.action.paused = false
+      current.action.reset().play()
+      current.mixer.setTime(timeSeconds)
+      current.action.paused = true
+      current.mixer.timeScale = 0
+    }
     current.modelRoot.updateMatrixWorld(true)
     this.renderer.domElement.dataset.animationPaused = 'true'
     return true
@@ -716,6 +771,10 @@ export class ViewerController {
       window.cancelAnimationFrame(this.compositionFitFrame)
       this.compositionFitFrame = null
     }
+    if (this.firstFrameConfirmationFrame !== null) {
+      window.cancelAnimationFrame(this.firstFrameConfirmationFrame)
+      this.firstFrameConfirmationFrame = null
+    }
     this.resizeObserver.disconnect()
     this.reducedMotionQuery.removeEventListener('change', this.handleReducedMotionChange)
     this.controls.removeEventListener('start', this.handleControlStart)
@@ -724,7 +783,7 @@ export class ViewerController {
     this.renderer.domElement.removeEventListener('webglcontextlost', this.handleContextLost)
     const outgoing = this.transition?.outgoing ?? null
     this.transition = null
-    this.clearTransitionCover()
+    this.clearTransitionOpacity()
     if (outgoing && outgoing !== this.current) {
       this.disposeStagedModel(outgoing)
     }
@@ -757,44 +816,10 @@ export class ViewerController {
     this.controls.update()
     const containerWidth = Math.max(this.container.clientWidth, 1)
     const containerHeight = Math.max(this.container.clientHeight, 1)
-    const containerBounds = this.container.getBoundingClientRect()
-    const frameBounds = this.options.compositionFrame?.getBoundingClientRect()
-    const frameLeft = frameBounds
-      ? MathUtils.clamp(
-          frameBounds.left - containerBounds.left,
-          0,
-          containerWidth - 1,
-        )
-      : 0
-    const frameTop = frameBounds
-      ? MathUtils.clamp(
-          frameBounds.top - containerBounds.top,
-          0,
-          containerHeight - 1,
-        )
-      : 0
-    const frameRight = frameBounds
-      ? MathUtils.clamp(
-          frameBounds.right - containerBounds.left,
-          frameLeft + 1,
-          containerWidth,
-        )
-      : containerWidth
-    const frameBottom = frameBounds
-      ? MathUtils.clamp(
-          frameBounds.bottom - containerBounds.top,
-          frameTop + 1,
-          containerHeight,
-        )
-      : containerHeight
-    const compositionWidth = frameRight - frameLeft
-    const compositionHeight = frameBottom - frameTop
-    this.renderer.domElement.dataset.compositionLeft = String(
-      Math.round(frameLeft),
-    )
-    this.renderer.domElement.dataset.compositionTop = String(
-      Math.round(frameTop),
-    )
+    const compositionWidth = containerWidth
+    const compositionHeight = containerHeight
+    this.renderer.domElement.dataset.compositionLeft = '0'
+    this.renderer.domElement.dataset.compositionTop = '0'
     this.renderer.domElement.dataset.compositionWidth = String(
       Math.round(compositionWidth),
     )
@@ -811,15 +836,10 @@ export class ViewerController {
     const configuredVerticalOffset = isPortrait
       ? (current.descriptor.presentation.verticalOffset?.portrait ?? 0)
       : (current.descriptor.presentation.verticalOffset?.landscape ?? 0)
-    const compositionFieldOfView = computeCompositionFieldOfView(
-      this.camera.fov,
-      containerHeight,
-      compositionHeight,
-    )
     const fit = computeCameraFit({
       aspect: compositionWidth / compositionHeight,
       bounds: current.bounds,
-      fieldOfViewDegrees: compositionFieldOfView,
+      fieldOfViewDegrees: this.camera.fov,
       paddingFraction: configuredPadding,
     })
     this.camera.near = fit.near
@@ -827,8 +847,8 @@ export class ViewerController {
     this.camera.position.copy(fit.position)
     const viewOffset = computeCompositionViewOffset({
       compositionHeight,
-      compositionLeft: frameLeft,
-      compositionTop: frameTop,
+      compositionLeft: 0,
+      compositionTop: 0,
       compositionWidth,
       horizontalOffsetFraction: configuredHorizontalOffset,
       verticalOffsetFraction: configuredVerticalOffset,
@@ -839,6 +859,8 @@ export class ViewerController {
       String(configuredHorizontalOffset)
     this.renderer.domElement.dataset.compositionVerticalOffset =
       String(configuredVerticalOffset)
+    this.renderer.domElement.dataset.previewPresentationSignature =
+      createModelPreviewPresentationSignature(current.descriptor)
     this.camera.setViewOffset(
       containerWidth,
       containerHeight,
@@ -854,6 +876,21 @@ export class ViewerController {
     this.controls.update()
     this.controls.enableDamping = previousDamping
     this.controls.autoRotate = previousAutoRotate
+  }
+
+  private confirmInitialFrame(animalId: string): void {
+    if (this.firstFrameConfirmationFrame !== null) {
+      window.cancelAnimationFrame(this.firstFrameConfirmationFrame)
+    }
+    this.firstFrameConfirmationFrame = window.requestAnimationFrame(() => {
+      this.firstFrameConfirmationFrame = window.requestAnimationFrame(() => {
+        this.firstFrameConfirmationFrame = null
+        if (!this.destroyed && this.current?.animalId === animalId) {
+          this.renderer.domElement.dataset.firstFrameRendered = 'true'
+          this.options.onModelReady?.(animalId)
+        }
+      })
+    })
   }
 
   private applyPresentationSettings(staged: StagedViewerModel): void {
@@ -902,7 +939,7 @@ export class ViewerController {
     this.switchTransitionCamera(transition)
     this.transition = null
     this.disposeStagedModel(transition.outgoing)
-    this.clearTransitionCover()
+    this.clearTransitionOpacity()
     this.renderer.domElement.dataset.transitioning = 'false'
     this.renderer.domElement.dataset.transitionPhase = 'idle'
   }
@@ -925,7 +962,7 @@ export class ViewerController {
       transition.outgoing.group.visible = true
       this.current = transition.outgoing
     }
-    this.clearTransitionCover()
+    this.clearTransitionOpacity()
     this.renderer.domElement.dataset.transitioning = 'false'
     this.renderer.domElement.dataset.transitionPhase = 'idle'
   }
@@ -955,21 +992,21 @@ export class ViewerController {
     if (frame.phase === 'incoming') {
       this.switchTransitionCamera(transition)
     }
-    this.setTransitionCover(frame.coverOpacity)
+    this.setTransitionOpacity(frame.modelOpacity)
     if (linearProgress >= 1) {
       this.finishTransition()
     }
   }
 
-  private setTransitionCover(opacity: number): void {
+  private setTransitionOpacity(opacity: number): void {
     this.container.style.setProperty(
-      '--model-transition-cover',
+      '--model-transition-opacity',
       String(Math.min(Math.max(opacity, 0), 1)),
     )
   }
 
-  private clearTransitionCover(): void {
-    this.container.style.removeProperty('--model-transition-cover')
+  private clearTransitionOpacity(): void {
+    this.container.style.removeProperty('--model-transition-opacity')
   }
 
   private startLoop(): void {
@@ -984,10 +1021,18 @@ export class ViewerController {
           ? requestedReviewTime
           : null
       }
-      this.updateAutoRotation(time)
+      const holdingInitialPose = time < this.initialPoseHoldUntil
+      if (holdingInitialPose) {
+        this.controls.autoRotate = false
+        this.renderer.domElement.dataset.autoRotate = 'false'
+      } else {
+        this.updateAutoRotation(time)
+      }
       if (this.current?.mixer && this.current.action) {
         if (this.reviewAnimationTime === null) {
-          this.current.mixer.update(deltaSeconds)
+          if (!holdingInitialPose) {
+            this.current.mixer.update(deltaSeconds)
+          }
         } else {
           this.current.mixer.timeScale = 1
           this.current.action.paused = false

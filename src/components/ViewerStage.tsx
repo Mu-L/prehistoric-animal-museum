@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Footprints } from 'lucide-react'
 import {
   ViewerController,
@@ -6,19 +6,23 @@ import {
   type ViewerFailure,
 } from '../viewer/ViewerController'
 import type { ModelCache } from '../viewer/model-cache'
+import { modelPreviewFor } from '../viewer/responsive-model-stills'
+import { useModelPreviewProfile } from '../viewer/use-model-preview-profile'
 
 interface ViewerStageProps {
-  compositionFrameRef: RefObject<HTMLElement | null>
+  animalId: string
   failureMessage: string | null
   initialLoading: boolean
   label: string
+  loadingPercent: number | null
   modelCache: ModelCache
   modelReady: boolean
   onControllerReady: (controller: ViewerController | null) => void
+  onFirstFrameRendered: (animalId: string) => void
   onRetry: () => void
   onViewerFailure: (failure: ViewerFailure) => void
   posterUrl: string
-  showLoadingLabel: boolean
+  posterPortraitUrl: string
 }
 
 type ReviewCanvas = HTMLCanvasElement & {
@@ -26,19 +30,81 @@ type ReviewCanvas = HTMLCanvasElement & {
 }
 
 export function ViewerStage({
-  compositionFrameRef,
+  animalId,
   failureMessage,
   initialLoading,
   label,
+  loadingPercent,
   modelCache,
   modelReady,
   onControllerReady,
+  onFirstFrameRendered,
   onRetry,
   onViewerFailure,
   posterUrl,
-  showLoadingLabel,
+  posterPortraitUrl,
 }: ViewerStageProps) {
+  const stageRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [initialOverlayMounted, setInitialOverlayMounted] = useState(true)
+  const [viewportSize, setViewportSize] = useState<{
+    readonly height: number
+    readonly width: number
+  } | null>(null)
+  const previewProfile = useModelPreviewProfile()
+  const previewUrl =
+    modelPreviewFor(animalId, previewProfile.fileName) ??
+    (previewProfile.height > previewProfile.width
+      ? posterPortraitUrl
+      : posterUrl)
+
+  useLayoutEffect(() => {
+    const stage = stageRef.current
+    if (!stage) {
+      return
+    }
+    const update = () => {
+      const availableWidth = Math.max(stage.clientWidth, 1)
+      const availableHeight = Math.max(stage.clientHeight, 1)
+      const aspect = previewProfile.width / previewProfile.height
+      const width = Math.min(availableWidth, availableHeight * aspect)
+      const height = width / aspect
+      setViewportSize((current) => {
+        if (
+          current &&
+          Math.abs(current.width - width) < 0.5 &&
+          Math.abs(current.height - height) < 0.5
+        ) {
+          return current
+        }
+        return { height, width }
+      })
+    }
+    update()
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', update)
+      return () => {
+        window.removeEventListener('resize', update)
+      }
+    }
+    const observer = new ResizeObserver(update)
+    observer.observe(stage)
+    return () => {
+      observer.disconnect()
+    }
+  }, [previewProfile.height, previewProfile.width])
+
+  useEffect(() => {
+    if (!modelReady) {
+      return
+    }
+    const timeout = window.setTimeout(() => {
+      setInitialOverlayMounted(false)
+    }, 420)
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [modelReady])
 
   useEffect(() => {
     const container = containerRef.current
@@ -50,9 +116,9 @@ export function ViewerStage({
     let controller: ViewerController
     try {
       controller = new ViewerController(container, {
-        compositionFrame: compositionFrameRef.current,
         modelCache,
         onFailure: onViewerFailure,
+        onModelReady: onFirstFrameRendered,
       })
     } catch (error) {
       if (!(error instanceof ViewerUnavailableError)) {
@@ -65,7 +131,10 @@ export function ViewerStage({
     const reviewCanvas = container.querySelector<ReviewCanvas>(
       '.viewer-canvas',
     )
-    if (import.meta.env.MODE === 'review') {
+    if (
+      import.meta.env.MODE === 'review' ||
+      import.meta.env.MODE === 'model-still'
+    ) {
       if (reviewCanvas) {
         reviewCanvas.__museumReviewSetAnimationTime = (time) =>
           controller.setReviewAnimationTime(time)
@@ -79,55 +148,93 @@ export function ViewerStage({
       onControllerReady(null)
       controller.destroy()
     }
-  }, [compositionFrameRef, modelCache, onControllerReady, onViewerFailure])
+  }, [
+    modelCache,
+    onControllerReady,
+    onFirstFrameRendered,
+    onViewerFailure,
+  ])
+
+  const revealPhase = failureMessage
+    ? 'failure'
+    : modelReady
+      ? 'exiting'
+      : 'loading'
+  const showModelStill = initialOverlayMounted || Boolean(failureMessage)
 
   return (
     <div
       className="viewer-stage"
       data-initial-loading={initialLoading}
       data-model-ready={modelReady}
+      data-reveal-phase={revealPhase}
+      ref={stageRef}
     >
-      {failureMessage && !modelReady ? (
-        <img
-          alt={`${label}的展示照片`}
-          className="model-poster"
-          src={posterUrl}
-        />
-      ) : null}
-      <div className="viewer-host" ref={containerRef} />
-      {initialLoading && !failureMessage ? (
-        <div
-          aria-atomic="true"
-          aria-live="polite"
-          className="stage-loading"
-          data-show-label={showLoadingLabel}
-          role="status"
-        >
-          <span aria-hidden="true" className="fossil-loader">
-            <span className="fossil-loader__ring" />
-            <Footprints size={30} strokeWidth={2} />
-          </span>
-          {showLoadingLabel ? (
-            <strong>正在请第一位朋友出来……</strong>
-          ) : (
-            <span className="sr-only">正在准备三维动物模型。</span>
-          )}
-        </div>
-      ) : null}
-      {modelReady ? (
-        <p aria-hidden="true" className="model-gesture-hint">
-          拖动旋转，滚动或双指缩放
-        </p>
-      ) : null}
-      {failureMessage ? (
-        <div className="model-fallback" role="status">
-          <strong>今天先看看它的照片吧</strong>
-          <span>{failureMessage}</span>
-          <button className="friendly-button friendly-button--small" onClick={onRetry} type="button">
-            重新加载模型
-          </button>
-        </div>
-      ) : null}
+      <div
+        className="model-viewport"
+        data-preview-profile={previewProfile.key}
+        style={{
+          height: viewportSize?.height ?? 1,
+          visibility: viewportSize ? 'visible' : 'hidden',
+          width: viewportSize?.width ?? 1,
+        }}
+      >
+        {showModelStill ? (
+          <picture aria-hidden="true" className="model-still">
+            <img
+              alt={`${label}的透明背景静态模型图`}
+              decoding="sync"
+              fetchPriority="high"
+              src={previewUrl}
+            />
+          </picture>
+        ) : null}
+        <div className="viewer-host" ref={containerRef} />
+        {initialOverlayMounted && !failureMessage ? (
+          <div
+            aria-atomic="true"
+            aria-live="polite"
+            className="stage-loading"
+            role="status"
+          >
+            <span aria-hidden="true" className="fossil-loader">
+              <span className="fossil-loader__ring" />
+              <Footprints size={30} strokeWidth={2} />
+            </span>
+            <strong>
+              {loadingPercent === null
+                ? '正在请第一位朋友出来……'
+                : `正在准备 3D 模型 · ${loadingPercent}%`}
+            </strong>
+            <progress
+              aria-label="3D 模型加载进度"
+              className="model-load-progress"
+              max={100}
+              {...(loadingPercent === null
+                ? {}
+                : { value: loadingPercent })}
+            />
+          </div>
+        ) : null}
+        {modelReady ? (
+          <p aria-hidden="true" className="model-gesture-hint">
+            拖动旋转，滚动或双指缩放
+          </p>
+        ) : null}
+        {failureMessage ? (
+          <div className="model-fallback" role="status">
+            <strong>今天先看看它的静态模型吧</strong>
+            <span>{failureMessage}</span>
+            <button
+              className="friendly-button friendly-button--small"
+              onClick={onRetry}
+              type="button"
+            >
+              重新加载模型
+            </button>
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

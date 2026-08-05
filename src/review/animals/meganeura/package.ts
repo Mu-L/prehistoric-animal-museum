@@ -29,6 +29,7 @@ export const animal = {
     model: reviewAssetUrl('meganeura', 'model.glb'),
     modelBytes: 5_695_048,
     poster: reviewAssetUrl('meganeura', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('meganeura', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('meganeura', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('meganeura', 'background-landscape'),

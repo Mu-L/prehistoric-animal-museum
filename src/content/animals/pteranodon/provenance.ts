@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         '2a28d2d47b2fd85d5beffdee24c44a58541edefa40f5edc439270e55e38c44bf',
     },
     runtime: {
-      bytes: 5_972_396,
+      bytes: 3_819_812,
       sha256:
-        '086892bd31143e06329a4d21f8d675c799412b164d37f86327ba3c391fa04594',
+        'abcde65b2ea29c6ae86d8232a5e1a604b05099deb34cebfb30495aff53f61af1',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Converted legacy material data and cleared zero-weight joint indices.',
       'Used Blender 5.2 to transfer the source flying action onto the normalized runtime rig, rebase the root to the museum rest origin, and reduce its translation to 3.5%.',
       'Retained the repaired in-place flight loop as the single Idle clip.',
@@ -48,9 +49,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 10_198,
+    bytes: 11_250,
     sha256:
-      'ccf0761ae4106bd6d69f28e2777ef01aecb4789cff2b1296e81cd017efa7b67f',
+      'a7de4a01c75ca4e565dc2bbdba4f2bebd64a6d1e114c66c41bc85c9db8f1c574',
+  },
+  posterPortrait: {
+    bytes: 3_834,
+    sha256:
+      '3d22a12522c1147698b66e66f55531d7778bee69ff8e1412abb41de62c3e7c68',
   },
   thumbnail: {
     bytes: 3_056,

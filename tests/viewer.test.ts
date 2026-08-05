@@ -29,10 +29,44 @@ import {
   computeModelTransitionFrame,
   computeModelBounds,
   createCameraRelativeLightingPose,
+  readModelResponseBuffer,
   resetStagedModelPose,
   updateCameraRelativeLightingPose,
   type ViewerModelDescriptor,
 } from '../src/viewer/ViewerController'
+
+describe('model response loading', () => {
+  it('reports streamed bytes and reassembles the exact model buffer', async () => {
+    const progress: Array<{
+      readonly loadedBytes: number
+      readonly totalBytes: number | null
+    }> = []
+    const response = new Response(
+      new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(Uint8Array.from([1, 2]))
+          controller.enqueue(Uint8Array.from([3, 4, 5]))
+          controller.close()
+        },
+      }),
+      { headers: { 'content-length': '5' } },
+    )
+
+    const buffer = await readModelResponseBuffer(
+      response,
+      undefined,
+      ({ loadedBytes, totalBytes }) => {
+        progress.push({ loadedBytes, totalBytes })
+      },
+    )
+
+    expect(Array.from(new Uint8Array(buffer))).toEqual([1, 2, 3, 4, 5])
+    expect(progress).toEqual([
+      { loadedBytes: 2, totalBytes: 5 },
+      { loadedBytes: 5, totalBytes: 5 },
+    ])
+  })
+})
 
 const stegosaurusDescriptor = {
   id: 'stegosaurus',
@@ -153,7 +187,7 @@ describe('model bounds and contact shadow', () => {
 })
 
 describe('model transition framing', () => {
-  it('fully raises the stage veil while the camera switches to the incoming fit', () => {
+  it('fully fades the composed canvas while the camera switches to the incoming fit', () => {
     const start = computeModelTransitionFrame(0)
     const outgoingFade = computeModelTransitionFrame(0.21)
     const cameraSwitch = computeModelTransitionFrame(0.42)
@@ -161,31 +195,31 @@ describe('model transition framing', () => {
     const end = computeModelTransitionFrame(1)
 
     expect(start).toEqual({
-      coverOpacity: 0,
+      modelOpacity: 1,
       phase: 'outgoing',
     })
     expect(outgoingFade.phase).toBe('outgoing')
-    expect(outgoingFade.coverOpacity).toBeGreaterThan(0)
-    expect(outgoingFade.coverOpacity).toBeLessThan(1)
+    expect(outgoingFade.modelOpacity).toBeGreaterThan(0)
+    expect(outgoingFade.modelOpacity).toBeLessThan(1)
     expect(cameraSwitch).toEqual({
-      coverOpacity: 1,
+      modelOpacity: 0,
       phase: 'incoming',
     })
     expect(incomingFade.phase).toBe('incoming')
-    expect(incomingFade.coverOpacity).toBeGreaterThan(0)
-    expect(incomingFade.coverOpacity).toBeLessThan(1)
+    expect(incomingFade.modelOpacity).toBeGreaterThan(0)
+    expect(incomingFade.modelOpacity).toBeLessThan(1)
     expect(end).toEqual({
-      coverOpacity: 0,
+      modelOpacity: 1,
       phase: 'incoming',
     })
   })
 
-  it('clamps transition progress to a valid veil opacity', () => {
+  it('clamps transition progress to a valid canvas opacity', () => {
     for (const progress of [-1, 0, 0.2, 0.419, 0.42, 0.8, 1, 2]) {
       const frame = computeModelTransitionFrame(progress)
 
-      expect(frame.coverOpacity).toBeGreaterThanOrEqual(0)
-      expect(frame.coverOpacity).toBeLessThanOrEqual(1)
+      expect(frame.modelOpacity).toBeGreaterThanOrEqual(0)
+      expect(frame.modelOpacity).toBeLessThanOrEqual(1)
     }
   })
 })

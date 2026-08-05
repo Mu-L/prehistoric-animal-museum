@@ -8,6 +8,8 @@ export default tseslint.config(
   {
     ignores: [
       'dist',
+      'dist-model-still',
+      'cloudflare-dist',
       'coverage',
       'playwright-report',
       'test-results',

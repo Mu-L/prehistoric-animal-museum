@@ -17,11 +17,12 @@ export const provenance = createPublishedAssetProvenance({
         '8f46db6e2ba44c109fdc115506e1048212a876b51060930d0e20a8bd9f472aea',
     },
     runtime: {
-      bytes: 3_251_408,
+      bytes: 1_198_456,
       sha256:
-        '35e2dba618e3b915f73abd6a965243c4cec6c60ba753be65af816debb48adb01',
+        '623a62621f1c6f2955fd3fe6442be8dfd34cdc94064e1bbb0c5e43e8970a1ece',
     },
     modifications: [
+      'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
       'Used the original creator’s CC BY 4.0 source rather than the submitted CC BY-NC-SA derivative.',
       'Normalized and repacked the self-contained 1K-texture GLB.',
       'Built a project-authored 8-bone Blender armature with deterministic head, body, four-leg, and two-bone tail weights.',
@@ -50,9 +51,14 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 95_872,
+    bytes: 81_384,
     sha256:
-      '62e8e71e1fd1b981ba5b7b4a2ac9f7a4f7c64dbd5f190428482010901c300094',
+      'd542ad735c863ba82de7c05c2a34210182459d9e0c6e3a54166cdc6a83165fb5',
+  },
+  posterPortrait: {
+    bytes: 29_570,
+    sha256:
+      '60535ab5da8eeef84e24fd72eace080c929809a53210ac2d2ba8c0b030d1f82a',
   },
   thumbnail: {
     bytes: 29_822,

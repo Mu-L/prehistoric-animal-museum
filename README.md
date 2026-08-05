@@ -107,6 +107,7 @@ npm run lint
 npm run typecheck
 npm test -- --run
 npm run validate:content
+npm run validate:model-previews
 npm run build
 npm run test:e2e
 ```
@@ -117,6 +118,11 @@ If the ignored candidate assets are available locally, the dedicated review mode
 npm run review
 npm run test:review
 ```
+
+Transparent first-frame previews are derived automatically from each GLB and
+its semantic `presentation` settings. After adding or changing an animal, run
+`npm run generate:model-previews -- <animal-id>`; no animal-specific responsive
+CSS or manual preview crop is part of the workflow.
 
 ### Propose a new animal
 

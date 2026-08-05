@@ -35,6 +35,7 @@ export const animal = {
     model: reviewAssetUrl('ichthyosaur', 'model.glb'),
     modelBytes: 10_709_576,
     poster: reviewAssetUrl('ichthyosaur', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('ichthyosaur', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('ichthyosaur', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('ichthyosaur', 'background-landscape'),

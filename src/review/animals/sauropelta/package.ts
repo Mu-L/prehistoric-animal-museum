@@ -36,6 +36,7 @@ export const animal = {
     model: reviewAssetUrl('sauropelta', 'model.glb'),
     modelBytes: 8_876_228,
     poster: reviewAssetUrl('sauropelta', 'poster.webp'),
+    posterPortrait: reviewAssetUrl('sauropelta', 'poster-portrait.webp'),
     thumbnail: reviewAssetUrl('sauropelta', 'thumbnail.webp'),
     backgrounds: {
       landscape: reviewAssetUrl('sauropelta', 'background-landscape'),

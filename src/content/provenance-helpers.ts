@@ -263,6 +263,7 @@ export interface PublishedAssetProvenanceInput {
     }
   }
   readonly poster: RuntimeFile
+  readonly posterPortrait: RuntimeFile
   readonly thumbnail: RuntimeFile
   readonly derivedImagesGeneratedOn?: IsoDate
   readonly narration: RuntimeFile & {
@@ -367,22 +368,43 @@ export function createPublishedAssetProvenance(
       kind: 'poster',
       source: {
         type: 'derived',
-        title: `${input.animalName} model fallback poster`,
-        generatedOn: input.derivedImagesGeneratedOn ?? '2026-07-28',
-        inputAssetPaths: [
-          'model/model.glb',
-          'backgrounds/landscape.webp',
-        ],
+        title: `${input.animalName} transparent model still`,
+        generatedOn: '2026-08-05',
+        inputAssetPaths: ['model/model.glb'],
         method:
-          'Captured the accepted 1440 × 900 runtime presentation and encoded a 960 × 540 WebP fallback.',
+          'Rendered the deterministic first animation frame at the normal 1200 × 675 landscape runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow.',
       },
       license: modelLicense,
       runtime: input.poster,
       modifications: [
-        'Composited the accepted runtime model presentation with the reviewed landscape.',
-        'Exported without text, controls, labels, logos, or watermarks.',
+        'Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.',
+        'Encoded as lossless WebP without text, controls, labels, logos, or watermarks.',
       ],
-      attribution: `${modelAttribution} Scene art generated for this project.`,
+      attribution: modelAttribution,
+      redistributionAllowed: true,
+      evidencePaths: [
+        ...modelEvidence,
+        'provenance/LICENSES/derived-images.txt',
+      ],
+    },
+    {
+      assetPath: 'images/poster-portrait.webp',
+      kind: 'poster',
+      source: {
+        type: 'derived',
+        title: `${input.animalName} transparent portrait model still`,
+        generatedOn: '2026-08-05',
+        inputAssetPaths: ['model/model.glb'],
+        method:
+          'Rendered the deterministic first animation frame at the normal 390 × 844 portrait runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow.',
+      },
+      license: modelLicense,
+      runtime: input.posterPortrait,
+      modifications: [
+        'Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.',
+        'Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.',
+      ],
+      attribution: modelAttribution,
       redistributionAllowed: true,
       evidencePaths: [
         ...modelEvidence,

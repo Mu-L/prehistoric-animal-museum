@@ -25,6 +25,7 @@ interface MockViewerOptions {
     readonly kind: 'context-lost' | 'webgl-unavailable'
     readonly message: string
   }) => void
+  readonly onModelReady?: (animalId: string) => void
 }
 
 const viewerMock = vi.hoisted(() => ({
@@ -53,7 +54,10 @@ vi.mock('../src/viewer/ViewerController', () => {
   }
 
   class ViewerController {
+    private readonly options: MockViewerOptions
+
     constructor(_container: HTMLElement, options: MockViewerOptions = {}) {
+      this.options = options
       viewerMock.constructorCount += 1
       if (options.onFailure) {
         viewerMock.failureHandlers.push(options.onFailure)
@@ -68,13 +72,23 @@ vi.mock('../src/viewer/ViewerController', () => {
     stageModel(
       descriptor: MockDescriptor,
       signal?: AbortSignal,
+      onProgress?: (progress: {
+        readonly fromCache: boolean
+        readonly loadedBytes: number
+        readonly totalBytes: number | null
+      }) => void,
     ): Promise<unknown> {
-      const result = viewerMock.stageModel(descriptor, signal) as unknown
+      const result = viewerMock.stageModel(
+        descriptor,
+        signal,
+        onProgress,
+      ) as unknown
       return Promise.resolve(result)
     }
 
     commitModel(staged: unknown): void {
       viewerMock.commitModel(staged)
+      this.options.onModelReady?.((staged as { animalId: string }).animalId)
     }
 
     disposeStagedModel(staged: unknown): void {
@@ -339,7 +353,7 @@ describe('App', () => {
     )
   })
 
-  it('shows the loading label only after 300 ms, reveals the poster on failure, and retries', async () => {
+  it('shows the poster and progress treatment while loading, preserves it on failure, and retries', async () => {
     vi.useFakeTimers()
     const staged = deferred<ReturnType<typeof stagedModel>>()
     viewerMock.stageModel.mockImplementation(() => staged.promise)
@@ -353,14 +367,14 @@ describe('App', () => {
     const focusButton = screen.getByRole('button', { name: '专注看模型' })
     expect(card).toHaveAttribute('data-loading', 'true')
     expect(screen.queryByText('正在请它出来…')).not.toBeInTheDocument()
-    expect(
-      screen.queryByText('正在请第一位朋友出来……'),
-    ).not.toBeInTheDocument()
+    expect(screen.getByText('正在准备 3D 模型 · 0%')).toBeVisible()
+    expect(screen.getByRole('progressbar', { name: '3D 模型加载进度' }))
+      .toHaveAttribute('value', '0')
     expect(document.querySelector('.stage-loading')).toBeVisible()
     expect(focusButton).toBeDisabled()
     expect(
-      screen.queryByAltText('剑龙的展示照片'),
-    ).not.toBeInTheDocument()
+      screen.getByAltText('剑龙的透明背景静态模型图'),
+    ).toBeVisible()
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(299)
@@ -369,7 +383,6 @@ describe('App', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1)
     })
-    expect(screen.getByText('正在请第一位朋友出来……')).toBeVisible()
     expect(screen.queryByText('正在请它出来…')).not.toBeInTheDocument()
 
     const loadFailure = new Error('mock model failure')
@@ -386,7 +399,7 @@ describe('App', () => {
     expect(
       screen.getByRole('button', { name: '重新加载模型' }),
     ).toBeVisible()
-    expect(screen.getByAltText('剑龙的展示照片')).toBeVisible()
+    expect(screen.getByAltText('剑龙的透明背景静态模型图')).toBeVisible()
     expect(document.querySelector('.stage-loading')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: '剑龙' })).toBeVisible()
     expect(screen.getByRole('button', { name: '听它的介绍' })).toBeEnabled()
@@ -404,20 +417,9 @@ describe('App', () => {
     expect(focusButton).toBeEnabled()
   })
 
-  it('aborts adjacent idle preloading before starting a user selection', async () => {
+  it('does not preload adjacent models while the visitor is idle', async () => {
     vi.useFakeTimers()
-    let idleSignal: AbortSignal | undefined
-    const fetchMock = vi.fn(
-      (_url: string | URL | Request, init?: RequestInit) =>
-        new Promise<Response>((_resolve, reject) => {
-          idleSignal = init?.signal ?? undefined
-          idleSignal?.addEventListener(
-            'abort',
-            () => reject(new DOMException('aborted', 'AbortError')),
-            { once: true },
-          )
-        }),
-    )
+    const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
     render(<App />)
     await act(async () => {
@@ -434,12 +436,7 @@ describe('App', () => {
       await vi.advanceTimersByTimeAsync(2_000)
       await vi.advanceTimersToNextTimerAsync()
     })
-    expect(fetchMock).toHaveBeenCalledOnce()
-    expect(idleSignal?.aborted).toBe(false)
-
-    fireEvent.click(screen.getByRole('button', { name: '下一只动物' }))
-
-    expect(idleSignal?.aborted).toBe(true)
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('preserves unrelated query parameters and the hash when committing an animal', async () => {
@@ -494,10 +491,10 @@ describe('App', () => {
     render(<App />)
 
     expect(
-      await screen.findByText('今天先看看它的照片吧'),
+      await screen.findByText('今天先看看它的静态模型吧'),
     ).toBeVisible()
     expect(screen.getByText('这个浏览器现在不能显示 3D 模型。')).toBeVisible()
-    expect(screen.getByAltText('剑龙的展示照片')).toBeVisible()
+    expect(screen.getByAltText('剑龙的透明背景静态模型图')).toBeVisible()
     expect(screen.getByRole('heading', { name: '剑龙' })).toBeVisible()
     expect(screen.getByRole('button', { name: '听它的介绍' })).toBeEnabled()
     expect(screen.getByRole('button', { name: '专注看模型' })).toBeDisabled()
@@ -514,7 +511,7 @@ describe('App', () => {
       )
     })
     expect(
-      screen.queryByText('今天先看看它的照片吧'),
+      screen.queryByText('今天先看看它的静态模型吧'),
     ).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '专注看模型' })).toBeEnabled()
 
@@ -542,9 +539,9 @@ describe('App', () => {
       })
     })
 
-    expect(screen.getByText('今天先看看它的照片吧')).toBeVisible()
+    expect(screen.getByText('今天先看看它的静态模型吧')).toBeVisible()
     expect(screen.getByText('WebGL 绘图环境暂时不可用。')).toBeVisible()
-    expect(screen.getByAltText('剑龙的展示照片')).toBeVisible()
+    expect(screen.getByAltText('剑龙的透明背景静态模型图')).toBeVisible()
     expect(screen.getByRole('heading', { name: '剑龙' })).toBeVisible()
     expect(screen.getByRole('button', { name: '听它的介绍' })).toBeEnabled()
     expect(screen.getByRole('button', { name: '专注看模型' })).toBeDisabled()
@@ -564,7 +561,7 @@ describe('App', () => {
 
     expect(viewerMock.destroy).toHaveBeenCalled()
     expect(
-      screen.queryByText('今天先看看它的照片吧'),
+      screen.queryByText('今天先看看它的静态模型吧'),
     ).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '专注看模型' })).toBeEnabled()
   })
@@ -590,7 +587,7 @@ describe('App', () => {
         message: 'WebGL 绘图环境暂时不可用。',
       })
     })
-    expect(screen.getByText('今天先看看它的照片吧')).toBeVisible()
+    expect(screen.getByText('今天先看看它的静态模型吧')).toBeVisible()
 
     await act(async () => {
       staged.resolve(stagedModel({ id: 'stegosaurus' }))
@@ -601,7 +598,7 @@ describe('App', () => {
     await waitFor(() => {
       expect(viewerMock.disposeStagedModel).toHaveBeenCalledOnce()
     })
-    expect(screen.getByText('今天先看看它的照片吧')).toBeVisible()
+    expect(screen.getByText('今天先看看它的静态模型吧')).toBeVisible()
 
     configureSuccessfulViewer()
     await userEvent.click(
@@ -609,7 +606,7 @@ describe('App', () => {
     )
     await waitFor(() => {
       expect(museum).toHaveAttribute('data-ready-animal-id', 'stegosaurus')
-      expect(screen.queryByText('今天先看看它的照片吧')).not.toBeInTheDocument()
+      expect(screen.queryByText('今天先看看它的静态模型吧')).not.toBeInTheDocument()
     })
     expect(Number(museum?.getAttribute('data-request-token'))).toBeGreaterThan(
       failedToken,
