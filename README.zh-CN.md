@@ -126,8 +126,6 @@ npm run test:review
 
 贡献者保留自己原创贡献的著作权，提交贡献不代表把版权转让给项目方。代码贡献采用 AGPL-3.0-only；原创动物文案、旁白、背景和类似内容贡献采用 CC BY-NC-SA 4.0，并保留贡献者署名。提交 Pull Request 前请阅读[贡献指南](CONTRIBUTING.md)。
 
-进一步的实现背景见[公开实现计划](PUBLIC_IMPLEMENTATION_PLAN.md)、[馆藏扩展计划](COLLECTION_EXPANSION_PLAN.md)和[开发进度记录](docs/development-progress.md)。
-
 ## 开源代码、非商业共享内容、品牌独立保护
 
 这个仓库采用分层许可：

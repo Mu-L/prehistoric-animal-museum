@@ -132,8 +132,6 @@ Start with the [animal authoring guide](ANIMAL_AUTHORING_GUIDE.md). When working
 
 Contributors keep the copyright in their original work; contributing does not transfer it to the project owner. Code contributions use AGPL-3.0-only, while original animal copy, narration, backgrounds, and similar content contributions use CC BY-NC-SA 4.0 with attribution preserved. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
-Further implementation context is available in the [public implementation plan](PUBLIC_IMPLEMENTATION_PLAN.md), [collection expansion plan](COLLECTION_EXPANSION_PLAN.md), and [development progress log](docs/development-progress.md).
-
 ## Open-source code, noncommercial shared content, protected brand
 
 This is a mixed-license repository:
