@@ -62,8 +62,8 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Asset type: poster
 - Source: 迷惑龙 transparent portrait model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `aac7fd266e93e474de94487d86ed8716d5f95ab76efaa2f4a114ec37b4713f8e`
+- Attribution: “Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `a63885f1e8ffde809a84d285e62518190d3bed699b0cbe4ad4744b9204282150`
 - Modifications:
   - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
   - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
@@ -72,40 +72,35 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Asset type: poster
 - Source: 迷惑龙 transparent model still, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `ee877b1e83278f1fae323cd9367f11e3d15a19062228391b20a26a61a222f9ac`
+- Attribution: “Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `0f48f330cc86e1214dbbf61172666c7c7f0902b2572a01faaa32ed19caa3b422`
 - Modifications:
   - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
   - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 迷惑龙 collection thumbnail, derived on 2026-07-30
+- Source: 迷惑龙 collection thumbnail, derived on 2026-08-05
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `e053e50ea967fe692bac12372861d41044428d6039c14af4303a12012494d784`
+- Attribution: “Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
+- Runtime SHA-256: `905e57b6204e47d5486e25c1862b4d9a4c1fb3786dc19743b0a12ec5f3e7dc80`
 - Modifications:
   - Selected a card-size crop that keeps the animal readable.
   - Exported without embedded text, controls, labels, logos, or watermarks.
 ### `model/model.glb`
 
 - Asset type: model
-- Source: [Apatosaurus Dinosaur](https://sketchfab.com/3d-models/apatosaurus-dinosaur-9c63e4fd2a9842e9882f21b015a8e4a9) by XML-AL16_EMMILIA..
+- Source: [Apatosaurus](https://sketchfab.com/3d-models/apatosaurus-fecabec8e4ef42ef98b5480dbf50c57d) by toro ardido modelos 3d
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `ee2e53ec8a6d375388d7674cea0396536937cc024d1b24790ba7cefd0d87d010`
+- Attribution: “Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `9d9f151933a33ae5824eb7532e16a7416b012b9ffff154aca2957ad37a2a540a`
 - Modifications:
   - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
-  - Removed the presentation ground and stone rim.
-  - Applied the reviewed reversible light silhouette restyle v1.
-  - Added the reviewed project-authored olive-brown material v2 while preserving geometry and UVs.
-  - Desaturated the green cast and shifted the existing 1K body base colour toward a dusty grey-brown olive while preserving mottling, roughness, normal detail, geometry, and UVs.
-  - Added paired project-authored amber-brown eyes with dark pupils and restrained catchlights.
-  - Built a project-authored 15-bone Blender armature with shoulder and hip transition weights repaired to keep the body closed during the full motion.
-  - Repaired the front-leg and mid-belly junction after close-up owner review by matching the upper-leg weights to the stationary shoulder bridge before the neck begins to bend.
-  - Layered irregular broad folds, broken secondary wrinkles, fine pebbled grain, and pores over the retained authored normal map, with restrained matching base-colour relief so the skin detail remains visible in museum lighting.
-  - Authored an eight-second in-place feeding Idle that raises and lowers the head through four neck bones while the distal tail responds vertically and with a small lateral sway; the spine and tail root remain stationary to protect the skin junctions.
-  - Normalized the Blender export to one closed-loop Idle clip with eight rotation-only channels, then repacked, validator-checked, and reviewed the derivative in the shared museum viewer.
+  - Removed the source 127-bone rig and its inert animation, then welded 792 exactly coincident vertices at a 1e-7 threshold while preserving the UV corner data.
+  - Preserved the accepted source base colour and authored new 1K ORM and tangent-space normal maps with deterministic multiscale skin relief.
+  - Normalized the animal to a 3.2-unit total length with canonical transforms, centred horizontal bounds, and all four feet resting on the ground plane.
+  - Authored one eight-second in-place morph-target Idle at 24 frames per second; all feet and lower limbs remain fixed, the loop closes exactly, and the head and open mouth move as one rigid region.
+  - Verified zero foot drift, ground penetration, seam separation, new BVH overlap, collapsed triangles, and flipped triangles, then validator-checked and reviewed the derivative in the shared museum viewer.
 ## 双冠龙 (`dilophosaurus`)
 
 ### `audio/narration.zh-CN.mp3`

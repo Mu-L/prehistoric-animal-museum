@@ -56,7 +56,7 @@ export const credits = [
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "attribution": "“Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
       "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
       "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
@@ -71,7 +71,7 @@ export const credits = [
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "attribution": "“Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
       "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
       "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
@@ -86,7 +86,7 @@ export const credits = [
     "author": "Prehistoric Animal Museum",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "“Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "attribution": "“Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
     "modifications": [
       "Selected a card-size crop that keeps the animal readable.",
       "Exported without embedded text, controls, labels, logos, or watermarks."
@@ -97,24 +97,19 @@ export const credits = [
     "animalId": "apatosaurus",
     "assetPath": "model/model.glb",
     "assetKind": "model",
-    "sourceTitle": "Apatosaurus Dinosaur",
-    "author": "XML-AL16_EMMILIA..",
+    "sourceTitle": "Apatosaurus",
+    "author": "toro ardido modelos 3d",
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "sourceUrl": "https://sketchfab.com/3d-models/apatosaurus-dinosaur-9c63e4fd2a9842e9882f21b015a8e4a9",
-    "attribution": "“Apatosaurus Dinosaur” by XML-AL16_EMMILIA.., CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "sourceUrl": "https://sketchfab.com/3d-models/apatosaurus-fecabec8e4ef42ef98b5480dbf50c57d",
+    "attribution": "“Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum.",
     "modifications": [
       "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
-      "Removed the presentation ground and stone rim.",
-      "Applied the reviewed reversible light silhouette restyle v1.",
-      "Added the reviewed project-authored olive-brown material v2 while preserving geometry and UVs.",
-      "Desaturated the green cast and shifted the existing 1K body base colour toward a dusty grey-brown olive while preserving mottling, roughness, normal detail, geometry, and UVs.",
-      "Added paired project-authored amber-brown eyes with dark pupils and restrained catchlights.",
-      "Built a project-authored 15-bone Blender armature with shoulder and hip transition weights repaired to keep the body closed during the full motion.",
-      "Repaired the front-leg and mid-belly junction after close-up owner review by matching the upper-leg weights to the stationary shoulder bridge before the neck begins to bend.",
-      "Layered irregular broad folds, broken secondary wrinkles, fine pebbled grain, and pores over the retained authored normal map, with restrained matching base-colour relief so the skin detail remains visible in museum lighting.",
-      "Authored an eight-second in-place feeding Idle that raises and lowers the head through four neck bones while the distal tail responds vertically and with a small lateral sway; the spine and tail root remain stationary to protect the skin junctions.",
-      "Normalized the Blender export to one closed-loop Idle clip with eight rotation-only channels, then repacked, validator-checked, and reviewed the derivative in the shared museum viewer."
+      "Removed the source 127-bone rig and its inert animation, then welded 792 exactly coincident vertices at a 1e-7 threshold while preserving the UV corner data.",
+      "Preserved the accepted source base colour and authored new 1K ORM and tangent-space normal maps with deterministic multiscale skin relief.",
+      "Normalized the animal to a 3.2-unit total length with canonical transforms, centred horizontal bounds, and all four feet resting on the ground plane.",
+      "Authored one eight-second in-place morph-target Idle at 24 frames per second; all feet and lower limbs remain fixed, the loop closes exactly, and the head and open mouth move as one rigid region.",
+      "Verified zero foot drift, ground penetration, seam separation, new BVH overlap, collapsed triangles, and flipped triangles, then validator-checked and reviewed the derivative in the shared museum viewer."
     ]
   },
   {

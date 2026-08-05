@@ -1,16 +1,14 @@
-Poster and thumbnail derivation record
-======================================
+Poster, preview and thumbnail derivation record
+===============================================
 
-Generated: 2026-07-30
+Generated: 2026-08-05
 
-The poster is a browser-rendered presentation of the repaired rigged
-Apatosaurus over its horizon-corrected Morrison floodplain. It captures the
-live feeding Idle near the raised-head pose, with the packed grey-brown
-wrinkled skin, visible eyes, and repaired front-leg/mid-belly overlap. The 1440 x 900
-production application was cropped at x=460,y=120 to a 960 x 540 poster
-without text or controls. A 700 x 700 model-stage crop at x=460,y=80 was
-resized to 320 x 320 for the collection thumbnail.
+The transparent poster pair and six shared responsive preview profiles were
+rendered from the deterministic first frame of the accepted replacement
+Apatosaurus in the shared museum viewer. They preserve transparent pixels
+outside the model and contain no text, controls, logos or watermarks.
 
-The model attribution and CC BY 4.0 terms in model-license.txt continue to
-apply to both images. The background was generated specifically for this
-project; its generation record is retained in background-generation.txt.
+The collection thumbnail was rendered from the same accepted model in its
+plains exhibit background, then cropped for card readability. The model
+attribution and CC BY 4.0 terms in model-license.txt continue to apply to all
+derived images; the project background retains its separately recorded terms.

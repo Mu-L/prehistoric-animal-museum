@@ -1,75 +1,18 @@
-# Apatosaurus candidate credit
+Model source record
+===================
 
-## Required attribution
+- Downloaded: 2026-08-04
+- Source title: Apatosaurus
+- Creator: toro ardido modelos 3d
+- Source URL: https://sketchfab.com/3d-models/apatosaurus-fecabec8e4ef42ef98b5480dbf50c57d
+- License shown by source page: Creative Commons Attribution 4.0 International
+- License URL: https://creativecommons.org/licenses/by/4.0/
+- Rights confirmation: on 2026-08-05 the product owner confirmed that the
+  source publisher holds the required source rights and authorized public
+  promotion of the reviewed derivative.
+- Preserved source archive size: 10,558,696 bytes
+- Preserved source archive SHA-256: 0c87a0892d859b42693c3558b8194047f4003fb164235154199ad9bdd5c07eb1
 
-“[Apatosaurus Dinosaur](https://sketchfab.com/3d-models/apatosaurus-dinosaur-9c63e4fd2a9842e9882f21b015a8e4a9)” by
-[XML-AL16_EMMILIA..](https://sketchfab.com/XML-AL16_EMMILIA..), licensed
-under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-
-Downloaded from Sketchfab on 2026-07-28 as the converted GLB with 2K
-textures.
-
-## Current archive changes
-
-- The untouched downloaded bytes are preserved in `original-glb/`, with their
-  SHA-256 recorded in `provenance.json`.
-- `normalized-glb/apatosaurus-dinosaur-static.glb` is a technical
-  normalization derivative. It has no retained animation, and its presentation
-  ground and stone rim have not yet been removed.
-- `blender/apatosaurus-restyle-work.blend` keeps the complete imported scene as
-  a hidden source reference. Its separate work object excludes the presentation
-  ground and stone rim, welds coincident attribute-seam positions, recalculates
-  normals, bakes its transform, centres it, and places it on Blender `Z=0`.
-- `restyle-v1/apatosaurus-light-restyle-v1.blend` adds a reversible light
-  silhouette shape key while retaining both the complete source reference and
-  the unchanged prepared body.
-- `restyle-v1/apatosaurus-light-restyle-v1-body.glb` is a flattened, body-only
-  v1 candidate. Its head/neck transitions, neck base, shoulder, hip, tail root,
-  lower-leg taper, and foot length were adjusted. Its original UVs and body
-  material are preserved; no rig or animation was added.
-- `restyle-v2-material/apatosaurus-material-v2-body.glb` is a material-only,
-  body-only derivative of that unchanged v1 geometry. It retains the original
-  UV layout and part of the authored map information, while shifting the
-  palette to warm olive-brown and yellow-ochre, adding deterministic
-  low-contrast mottling, matte roughness variation, and subtle wrinkle/micro
-  normal detail. Its three body maps are 1K; no rig or animation was added.
-- The published museum derivative further desaturates the green cast into a
-  dusty grey-brown olive, adds paired amber-brown eyes, and adds a
-  project-authored 15-bone Blender armature with repaired shoulder/hip
-  transition weights. A second close-up pass matches the front-leg tops to a
-  stationary shoulder bridge. A subsequent skin-detail pass layers irregular
-  broad folds, broken secondary wrinkles, fine pebbled grain, and pores over
-  the retained normal map, with restrained matching relief in the base colour.
-  Its eight-second feeding Idle raises and lowers the head through four neck
-  bones while the distal tail responds vertically. The final GLB retains one
-  `Idle` clip with eight rotation-only channels.
-- Nothing in this candidate directory is approved for runtime use.
-
-## Exact v1 change notice
-
-Modified from “Apatosaurus Dinosaur” by XML-AL16_EMMILIA..: presentation ground
-and stone rim excluded; head and neck transitions, neck base,
-shoulder/hip/tail-root mass, and leg/foot contours adjusted. Original UVs and
-body material preserved. No rig or animation added.
-
-Update this notice again if a later published derivative makes further changes.
-
-## Exact material v2 change notice
-
-Material-only v2 over the unchanged light-restyle-v1 body: original UV layout
-and map information retained; body palette shifted to restrained olive-brown
-with a yellow-ochre underside; deterministic irregular dark mottling, matte
-roughness variation, and subtle wrinkle/micro-skin normal detail added.
-Geometry, rig, and animation unchanged.
-
-## Exact rigged Idle and material v3 change notice
-
-Rigged museum derivative over the unchanged light-restyle-v1 geometry:
-material-v2 maps retained while the base-colour green cast was desaturated
-toward dusty grey-brown olive; paired project-authored eyes added; 15-bone
-armature and deterministic skin weights added and shoulder/hip transitions
-repaired; front-leg/mid-belly overlap matched to a stationary shoulder bridge;
-irregular broad folds, broken wrinkles, pebble grain, and pore detail layered
-over the retained normal map with subtle matching base-colour relief;
-eight-second in-place feeding Idle authored and normalized to eight
-rotation-only channels. Four feet remain stationary. Validator errors: zero.
+The source archive is retained unchanged in the private intake area. The
+tracked runtime derivative preserves attribution and records all project
+modifications in the package provenance.

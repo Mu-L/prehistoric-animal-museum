@@ -430,11 +430,11 @@ describe('local collection review catalog', () => {
     expect(apatosaurus?.presentation.landscapeHorizontalOffset).toBe(0.01)
     expect(apatosaurus?.assets.modelBytes).toBe(6_222_396)
     expect(apatosaurus?.review?.status).toBe(
-      '新迷惑龙模型、Idle 与小图已通过本地评审',
+      '新迷惑龙模型、Idle 与静态图已晋升生产',
     )
     expect(apatosaurus?.review?.note).toContain('真实法线微表面')
     expect(apatosaurus?.review?.note).toContain('四脚与下肢固定')
-    expect(apatosaurus?.review?.note).toContain('不代表 production-approved')
+    expect(apatosaurus?.review?.note).toContain('生产目录已安装')
     expect(apatosaurus?.review?.modelCredit?.sourceUrl).toContain(
       'fecabec8e4ef42ef98b5480dbf50c57d',
     )

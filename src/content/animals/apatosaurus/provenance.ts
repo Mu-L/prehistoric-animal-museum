@@ -8,34 +8,29 @@ export const provenance = createPublishedAssetProvenance({
   animalName: zhCN.name,
   model: {
     source: {
-      title: 'Apatosaurus Dinosaur',
-      author: 'XML-AL16_EMMILIA..',
-      url: 'https://sketchfab.com/3d-models/apatosaurus-dinosaur-9c63e4fd2a9842e9882f21b015a8e4a9',
-      accessedOn: '2026-07-28',
-      bytes: 6_274_036,
+      title: 'Apatosaurus',
+      author: 'toro ardido modelos 3d',
+      url: 'https://sketchfab.com/3d-models/apatosaurus-fecabec8e4ef42ef98b5480dbf50c57d',
+      accessedOn: '2026-08-04',
+      bytes: 10_558_696,
       sha256:
-        '11c34610b39fd9d0e8a7faa5a8c135e86f0cf68798cb4a32efa26e72f66f4c90',
+        '0c87a0892d859b42693c3558b8194047f4003fb164235154199ad9bdd5c07eb1',
     },
     runtime: {
-      bytes: 2_942_260,
+      bytes: 3_513_136,
       sha256:
-        'ee2e53ec8a6d375388d7674cea0396536937cc024d1b24790ba7cefd0d87d010',
+        '9d9f151933a33ae5824eb7532e16a7416b012b9ffff154aca2957ad37a2a540a',
     },
     modifications: [
       'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
-      'Removed the presentation ground and stone rim.',
-      'Applied the reviewed reversible light silhouette restyle v1.',
-      'Added the reviewed project-authored olive-brown material v2 while preserving geometry and UVs.',
-      'Desaturated the green cast and shifted the existing 1K body base colour toward a dusty grey-brown olive while preserving mottling, roughness, normal detail, geometry, and UVs.',
-      'Added paired project-authored amber-brown eyes with dark pupils and restrained catchlights.',
-      'Built a project-authored 15-bone Blender armature with shoulder and hip transition weights repaired to keep the body closed during the full motion.',
-      'Repaired the front-leg and mid-belly junction after close-up owner review by matching the upper-leg weights to the stationary shoulder bridge before the neck begins to bend.',
-      'Layered irregular broad folds, broken secondary wrinkles, fine pebbled grain, and pores over the retained authored normal map, with restrained matching base-colour relief so the skin detail remains visible in museum lighting.',
-      'Authored an eight-second in-place feeding Idle that raises and lowers the head through four neck bones while the distal tail responds vertically and with a small lateral sway; the spine and tail root remain stationary to protect the skin junctions.',
-      'Normalized the Blender export to one closed-loop Idle clip with eight rotation-only channels, then repacked, validator-checked, and reviewed the derivative in the shared museum viewer.',
+      'Removed the source 127-bone rig and its inert animation, then welded 792 exactly coincident vertices at a 1e-7 threshold while preserving the UV corner data.',
+      'Preserved the accepted source base colour and authored new 1K ORM and tangent-space normal maps with deterministic multiscale skin relief.',
+      'Normalized the animal to a 3.2-unit total length with canonical transforms, centred horizontal bounds, and all four feet resting on the ground plane.',
+      'Authored one eight-second in-place morph-target Idle at 24 frames per second; all feet and lower limbs remain fixed, the loop closes exactly, and the head and open mouth move as one rigid region.',
+      'Verified zero foot drift, ground penetration, seam separation, new BVH overlap, collapsed triangles, and flipped triangles, then validator-checked and reviewed the derivative in the shared museum viewer.',
     ],
   },
-  derivedImagesGeneratedOn: '2026-07-30',
+  derivedImagesGeneratedOn: '2026-08-05',
   backgrounds: {
     landscape: {
       source: reviewedBackgroundSources.apatosaurus.landscape,
@@ -55,19 +50,19 @@ export const provenance = createPublishedAssetProvenance({
     },
   },
   poster: {
-    bytes: 34_178,
+    bytes: 35_888,
     sha256:
-      'ee877b1e83278f1fae323cd9367f11e3d15a19062228391b20a26a61a222f9ac',
+      '0f48f330cc86e1214dbbf61172666c7c7f0902b2572a01faaa32ed19caa3b422',
   },
   posterPortrait: {
-    bytes: 10_390,
+    bytes: 10_528,
     sha256:
-      'aac7fd266e93e474de94487d86ed8716d5f95ab76efaa2f4a114ec37b4713f8e',
+      'a63885f1e8ffde809a84d285e62518190d3bed699b0cbe4ad4744b9204282150',
   },
   thumbnail: {
-    bytes: 29_026,
+    bytes: 13_988,
     sha256:
-      'e053e50ea967fe692bac12372861d41044428d6039c14af4303a12012494d784',
+      '905e57b6204e47d5486e25c1862b4d9a4c1fb3786dc19743b0a12ec5f3e7dc80',
   },
   narration: {
     generatedOn: '2026-07-28',

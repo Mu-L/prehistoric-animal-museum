@@ -12,7 +12,7 @@ export const animalDefinition = {
   presentation: {
     cameraLightScale: 1.3,
     initialYawDegrees: 0,
-    landscapeHorizontalOffset: -0.08,
+    landscapeHorizontalOffset: 0.01,
     landscapeVerticalOffset: 0.025,
     portraitVerticalOffset: 0.04,
     safeAreaPadding: 0.12,
