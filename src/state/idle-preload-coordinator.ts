@@ -37,7 +37,7 @@ function readOptionalPreloadPolicy(): OptionalPreloadPolicy {
   if (connection?.saveData === true) {
     return 'none'
   }
-  return ['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '')
+  return ['slow-2g', '2g'].includes(connection?.effectiveType ?? '')
     ? 'images-only'
     : 'all'
 }

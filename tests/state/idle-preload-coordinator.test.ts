@@ -199,7 +199,7 @@ describe('IdlePreloadCoordinator', () => {
     coordinator.destroy()
   })
 
-  it('keeps image previews but skips models on a 3g connection', async () => {
+  it('preloads adjacent models and images on a 3g connection', async () => {
     vi.useFakeTimers()
     vi.stubGlobal('navigator', {
       connection: { effectiveType: '3g', saveData: false },
@@ -220,11 +220,13 @@ describe('IdlePreloadCoordinator', () => {
     await vi.runAllTimersAsync()
 
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/mammoth.glb',
       '/mammoth-background.webp',
+      '/stegosaurus.glb',
       '/stegosaurus-background.webp',
     ])
-    expect(cache.get('/mammoth.glb')).toBeNull()
-    expect(cache.get('/stegosaurus.glb')).toBeNull()
+    expect(cache.get('/mammoth.glb')).not.toBeNull()
+    expect(cache.get('/stegosaurus.glb')).not.toBeNull()
 
     coordinator.destroy()
   })
