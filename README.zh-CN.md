@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://s010s.github.io/prehistoric-animal-museum/">进入在线博物馆 →</a></strong>
+  <strong><a href="https://leon-made-this.work/museum">进入在线博物馆 →</a></strong>
   · <a href="README.md">English</a>
   · <strong>简体中文</strong>
 </p>
