@@ -231,6 +231,7 @@ test('opens the creator story in the left drawer and keeps source links distinct
 test('offers a GitHub Star after 60 seconds without leaving the museum tab', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 1280, height: 720 })
   await page.addInitScript(`(() => {
     const nativeSetTimeout = window.setTimeout.bind(window)
     window.setTimeout = (handler, timeout = 0, ...args) =>
@@ -248,6 +249,16 @@ test('offers a GitHub Star after 60 seconds without leaving the museum tab', asy
     'href',
     'https://github.com/s010s/prehistoric-animal-museum',
   )
+  const promptBox = await prompt.boundingBox()
+  const navigationBox = await page.locator('.animal-navigation').boundingBox()
+  expect(promptBox).not.toBeNull()
+  expect(navigationBox).not.toBeNull()
+  expect(
+    Math.abs(
+      (promptBox?.x ?? 0) + (promptBox?.width ?? 0) / 2 -
+        ((navigationBox?.x ?? 0) + (navigationBox?.width ?? 0) / 2),
+    ),
+  ).toBeLessThanOrEqual(1)
 
   await prompt.getByRole('button', { name: '暂时不用' }).click()
   await expect(prompt).toHaveCount(0)
@@ -688,7 +699,7 @@ test('switches the bounded CSS atmosphere with the committed exhibit', async ({
   await expect(page.locator('.underwater-atmosphere')).toHaveCount(0)
 })
 
-test('fits the preview frame inside a larger WebGL zoom canvas', async ({
+test('uses a full-screen WebGL zoom canvas around the shared preview frame', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 })
@@ -704,11 +715,21 @@ test('fits the preview frame inside a larger WebGL zoom canvas', async ({
     return {
       canvasHeight: Math.round(canvasBox?.height ?? 0),
       canvasWidth: Math.round(canvasBox?.width ?? 0),
+      canvasX: Math.round(canvasBox?.x ?? 0),
+      canvasY: Math.round(canvasBox?.y ?? 0),
       frameHeight: Math.round(frameBox?.height ?? 0),
       frameWidth: Math.round(frameBox?.width ?? 0),
+      frameX: Math.round(frameBox?.x ?? 0),
+      frameY: Math.round(frameBox?.y ?? 0),
       profile: await viewport.getAttribute('data-preview-profile'),
       rendererHeight: Number(
         await canvas.getAttribute('data-composition-height'),
+      ),
+      rendererLeft: Number(
+        await canvas.getAttribute('data-composition-left'),
+      ),
+      rendererTop: Number(
+        await canvas.getAttribute('data-composition-top'),
       ),
       rendererWidth: Number(
         await canvas.getAttribute('data-composition-width'),
@@ -724,8 +745,14 @@ test('fits the preview frame inside a larger WebGL zoom canvas', async ({
     rendererWidth: expect.any(Number),
   })
   let geometry = await fittedGeometry()
+  expect(geometry.canvasX).toBe(0)
+  expect(geometry.canvasY).toBe(0)
+  expect(geometry.canvasWidth).toBe(390)
+  expect(geometry.canvasHeight).toBe(844)
   expect(geometry.rendererWidth).toBe(geometry.frameWidth)
   expect(geometry.rendererHeight).toBe(geometry.frameHeight)
+  expect(geometry.rendererLeft).toBe(geometry.frameX - geometry.canvasX)
+  expect(geometry.rendererTop).toBe(geometry.frameY - geometry.canvasY)
   expect(geometry.canvasWidth).toBe(geometry.viewportWidth)
   expect(geometry.canvasHeight).toBe(geometry.viewportHeight)
 
@@ -734,8 +761,14 @@ test('fits the preview frame inside a larger WebGL zoom canvas', async ({
     .poll(async () => (await fittedGeometry()).profile)
     .toBe('phonePortraitTall')
   geometry = await fittedGeometry()
+  expect(geometry.canvasX).toBe(0)
+  expect(geometry.canvasY).toBe(0)
+  expect(geometry.canvasWidth).toBe(390)
+  expect(geometry.canvasHeight).toBe(750)
   expect(geometry.rendererWidth).toBe(geometry.frameWidth)
   expect(geometry.rendererHeight).toBe(geometry.frameHeight)
+  expect(geometry.rendererLeft).toBe(geometry.frameX - geometry.canvasX)
+  expect(geometry.rendererTop).toBe(geometry.frameY - geometry.canvasY)
   expect(geometry.canvasWidth).toBe(geometry.viewportWidth)
   expect(geometry.canvasHeight).toBe(geometry.viewportHeight)
   expect(geometry.canvasWidth).toBeGreaterThan(geometry.frameWidth)
@@ -745,8 +778,14 @@ test('fits the preview frame inside a larger WebGL zoom canvas', async ({
     .poll(async () => (await fittedGeometry()).profile)
     .toBe('landscapeCompact')
   geometry = await fittedGeometry()
+  expect(geometry.canvasX).toBe(0)
+  expect(geometry.canvasY).toBe(0)
+  expect(geometry.canvasWidth).toBe(844)
+  expect(geometry.canvasHeight).toBe(390)
   expect(geometry.rendererWidth).toBe(geometry.frameWidth)
   expect(geometry.rendererHeight).toBe(geometry.frameHeight)
+  expect(geometry.rendererLeft).toBe(geometry.frameX - geometry.canvasX)
+  expect(geometry.rendererTop).toBe(geometry.frameY - geometry.canvasY)
   expect(geometry.canvasWidth).toBe(geometry.viewportWidth)
   expect(geometry.canvasHeight).toBe(geometry.viewportHeight)
 })
@@ -1319,6 +1358,129 @@ const requiredViewports = [
   { name: 'desktop-1885x1329', poster: 'preview-desktop-standard', width: 1885, height: 1329 },
 ] as const
 
+test('mobile portrait grows the story card around a three-line animal introduction', async ({
+  page,
+}) => {
+  const viewport = { width: 400, height: 704 }
+  await page.setViewportSize(viewport)
+  const response = await page.goto('.?animal=plesiosaurus')
+  expect(response?.ok()).toBe(true)
+
+  await expect(page.getByRole('heading', { name: '蛇颈龙类' })).toBeVisible()
+  await expect(
+    page.getByText(
+      '看看它的长颈和四只鳍，四只鳍会像水下的翅膀一样一起划水。',
+      { exact: true },
+    ),
+  ).toBeVisible()
+  await page.evaluate(() => document.fonts.ready.then(() => undefined))
+
+  const layout = await page.evaluate<{
+    cardClientHeight: number
+    cardScrollHeight: number
+    cardTop: number
+    cardBottom: number
+    introTop: number
+    introBottom: number
+    lineCount: number
+    stageHeight: number
+    navigationBottom: number
+  }>(`(() => {
+    const card = document.querySelector('.story-card')
+    const intro = document.querySelector('.child-intro > span')
+    const stage = document.querySelector('[data-testid="model-stage"]')
+    const navigation = document.querySelector('.animal-navigation')
+    if (
+      !(card instanceof HTMLElement) ||
+      !(intro instanceof HTMLElement) ||
+      !(stage instanceof HTMLElement) ||
+      !(navigation instanceof HTMLElement)
+    ) {
+      throw new Error('The responsive museum layout is incomplete.')
+    }
+    const cardBox = card.getBoundingClientRect()
+    const introBox = intro.getBoundingClientRect()
+    const stageBox = stage.getBoundingClientRect()
+    const navigationBox = navigation.getBoundingClientRect()
+    const range = document.createRange()
+    range.selectNodeContents(intro)
+    const lineTops = new Set(
+      Array.from(range.getClientRects()).map((rect) => Math.round(rect.top)),
+    )
+    return {
+      cardClientHeight: card.clientHeight,
+      cardScrollHeight: card.scrollHeight,
+      cardTop: cardBox.top,
+      cardBottom: cardBox.bottom,
+      introTop: introBox.top,
+      introBottom: introBox.bottom,
+      lineCount: lineTops.size,
+      stageHeight: stageBox.height,
+      navigationBottom: navigationBox.bottom,
+    }
+  })()`)
+
+  expect(layout.lineCount).toBeGreaterThanOrEqual(3)
+  expect(layout.cardClientHeight).toBeGreaterThan(106)
+  expect(layout.cardScrollHeight).toBeLessThanOrEqual(
+    layout.cardClientHeight + 1,
+  )
+  expect(layout.introTop).toBeGreaterThanOrEqual(layout.cardTop)
+  expect(layout.introBottom).toBeLessThanOrEqual(layout.cardBottom + 1)
+  expect(layout.stageHeight).toBeGreaterThan(240)
+  expect(layout.navigationBottom).toBeLessThanOrEqual(viewport.height + 1)
+  await expectNoHorizontalOverflow(page)
+})
+
+test('mobile portrait keeps a five-character animal name aligned with its introduction', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 400, height: 704 })
+  const response = await page.goto('.?animal=mammoth')
+  expect(response?.ok()).toBe(true)
+
+  await expect(page.getByRole('heading', { name: '长毛猛犸象' })).toBeVisible()
+  await page.evaluate(() => document.fonts.ready.then(() => undefined))
+
+  const layout = await page.evaluate<{
+    cardClientHeight: number
+    cardScrollHeight: number
+    introTop: number
+    titleLineCount: number
+    titleTop: number
+  }>(`(() => {
+    const card = document.querySelector('.story-card')
+    const intro = document.querySelector('.child-intro > span')
+    const title = document.querySelector('h1')
+    if (
+      !(card instanceof HTMLElement) ||
+      !(intro instanceof HTMLElement) ||
+      !(title instanceof HTMLElement)
+    ) {
+      throw new Error('The responsive mammoth card is incomplete.')
+    }
+    const range = document.createRange()
+    range.selectNodeContents(title)
+    const titleLineTops = new Set(
+      Array.from(range.getClientRects()).map((rect) => Math.round(rect.top)),
+    )
+    return {
+      cardClientHeight: card.clientHeight,
+      cardScrollHeight: card.scrollHeight,
+      introTop: intro.getBoundingClientRect().top,
+      titleLineCount: titleLineTops.size,
+      titleTop: title.getBoundingClientRect().top,
+    }
+  })()`)
+
+  expect(layout.titleLineCount).toBe(1)
+  expect(Math.abs(layout.titleTop - layout.introTop)).toBeLessThanOrEqual(1)
+  expect(layout.cardScrollHeight).toBeLessThanOrEqual(
+    layout.cardClientHeight + 1,
+  )
+  await expectNoHorizontalOverflow(page)
+})
+
 test.describe('responsive first-model reveal', () => {
   test.describe.configure({ mode: 'serial' })
 
@@ -1342,7 +1504,9 @@ test.describe('responsive first-model reveal', () => {
       const viewerHost = page.locator('.viewer-host')
 
       await expect(loader).toBeVisible()
-      await expect(page.locator('.model-still')).toBeVisible()
+      const modelStill = page.locator('.model-still')
+      const compositionFrame = page.locator('.model-composition-frame')
+      await expect(modelStill).toBeVisible()
       await expect
         .poll(() =>
           page
@@ -1350,6 +1514,20 @@ test.describe('responsive first-model reveal', () => {
             .evaluate((image) => Reflect.get(image, 'currentSrc') as string),
         )
         .toContain(viewport.poster)
+      const stillBox = await modelStill.boundingBox()
+      const compositionFrameBox = await compositionFrame.boundingBox()
+      expect(stillBox).not.toBeNull()
+      expect(compositionFrameBox).not.toBeNull()
+      expect(stillBox?.x).toBeCloseTo(compositionFrameBox?.x ?? 0, 0)
+      expect(stillBox?.y).toBeCloseTo(compositionFrameBox?.y ?? 0, 0)
+      expect(stillBox?.width).toBeCloseTo(
+        compositionFrameBox?.width ?? 0,
+        0,
+      )
+      expect(stillBox?.height).toBeCloseTo(
+        compositionFrameBox?.height ?? 0,
+        0,
+      )
       await expect(viewerHost).toHaveCSS('opacity', '1')
       const initialLoaderBox = await loader.boundingBox()
       await page.waitForTimeout(320)
@@ -1410,8 +1588,12 @@ test.describe('required responsive viewports', () => {
       const modelViewportBox = await page
         .locator('.model-viewport')
         .boundingBox()
+      const compositionFrameBox = await page
+        .locator('.model-composition-frame')
+        .boundingBox()
       expect(stageBox).not.toBeNull()
       expect(modelViewportBox).not.toBeNull()
+      expect(compositionFrameBox).not.toBeNull()
       const canvasBox = await page.locator('.viewer-canvas').boundingBox()
       expect(canvasBox).not.toBeNull()
       expect(canvasBox?.x).toBeCloseTo(modelViewportBox?.x ?? 0, 0)
@@ -1424,19 +1606,23 @@ test.describe('required responsive viewports', () => {
         modelViewportBox?.height ?? 0,
         0,
       )
-      expect(modelViewportBox?.x ?? -1).toBeGreaterThanOrEqual(
+      expect(modelViewportBox?.x ?? Number.POSITIVE_INFINITY).toBeCloseTo(0, 0)
+      expect(modelViewportBox?.y ?? Number.POSITIVE_INFINITY).toBeCloseTo(0, 0)
+      expect(modelViewportBox?.width ?? 0).toBeCloseTo(viewport.width, 0)
+      expect(modelViewportBox?.height ?? 0).toBeCloseTo(viewport.height, 0)
+      expect(compositionFrameBox?.x ?? -1).toBeGreaterThanOrEqual(
         (stageBox?.x ?? 0) - 1,
       )
-      expect(modelViewportBox?.y ?? -1).toBeGreaterThanOrEqual(
+      expect(compositionFrameBox?.y ?? -1).toBeGreaterThanOrEqual(
         (stageBox?.y ?? 0) - 1,
       )
       expect(
-        (modelViewportBox?.x ?? 0) + (modelViewportBox?.width ?? 0),
+        (compositionFrameBox?.x ?? 0) + (compositionFrameBox?.width ?? 0),
       ).toBeLessThanOrEqual(
         (stageBox?.x ?? 0) + (stageBox?.width ?? 0) + 1,
       )
       expect(
-        (modelViewportBox?.y ?? 0) + (modelViewportBox?.height ?? 0),
+        (compositionFrameBox?.y ?? 0) + (compositionFrameBox?.height ?? 0),
       ).toBeLessThanOrEqual(
         (stageBox?.y ?? 0) + (stageBox?.height ?? 0) + 1,
       )
@@ -1476,6 +1662,12 @@ test.describe('required responsive viewports', () => {
         const museumKickerBox = await page
           .locator('.museum-kicker')
           .boundingBox()
+        const museumHeaderBox = await page
+          .locator('.museum-header')
+          .boundingBox()
+        const creatorSignatureBox = await page
+          .locator('.creator-signature-button')
+          .boundingBox()
         const titleBox = await page.locator('h1').boundingBox()
         const introBox = await intro.boundingBox()
         const animalEyebrowBox = await page
@@ -1490,6 +1682,8 @@ test.describe('required responsive viewports', () => {
 
         expect(storyPanelBox).not.toBeNull()
         expect(museumKickerBox).not.toBeNull()
+        expect(museumHeaderBox).not.toBeNull()
+        expect(creatorSignatureBox).not.toBeNull()
         expect(titleBox).not.toBeNull()
         expect(introBox).not.toBeNull()
         expect(animalEyebrowBox).not.toBeNull()
@@ -1501,15 +1695,38 @@ test.describe('required responsive viewports', () => {
         expect(
           Math.abs((museumKickerBox?.x ?? 0) - (titleBox?.x ?? 0)),
         ).toBeLessThanOrEqual(1)
+        expect(
+          Math.abs(
+            (museumKickerBox?.y ?? 0) + (museumKickerBox?.height ?? 0) / 2 -
+              ((creatorSignatureBox?.y ?? 0) +
+                (creatorSignatureBox?.height ?? 0) / 2),
+          ),
+        ).toBeLessThanOrEqual(1)
+        expect(
+          Math.abs(
+            (museumHeaderBox?.y ?? 0) + (museumHeaderBox?.height ?? 0) / 2 -
+              ((museumKickerBox?.y ?? 0) +
+                (museumKickerBox?.height ?? 0) / 2),
+          ),
+        ).toBeLessThanOrEqual(1)
+        expect(
+          Math.abs(
+            (museumHeaderBox?.y ?? 0) + (museumHeaderBox?.height ?? 0) / 2 -
+              ((animalEyebrowBox?.y ?? 0) +
+                (animalEyebrowBox?.height ?? 0) / 2),
+          ),
+        ).toBeLessThanOrEqual(1)
+        const creatorGap =
+          (creatorSignatureBox?.x ?? 0) -
+          ((museumKickerBox?.x ?? 0) + (museumKickerBox?.width ?? 0))
+        expect(creatorGap).toBeGreaterThanOrEqual(8)
+        expect(creatorGap).toBeLessThanOrEqual(12)
         expect(titleBox?.y ?? Number.POSITIVE_INFINITY).toBeLessThan(
           (introBox?.y ?? 0) + (introBox?.height ?? 0),
         )
         expect(introBox?.y ?? Number.POSITIVE_INFINITY).toBeLessThan(
           (titleBox?.y ?? 0) + (titleBox?.height ?? 0),
         )
-        expect(
-          Math.abs((museumKickerBox?.y ?? 0) - (animalEyebrowBox?.y ?? 0)),
-        ).toBeLessThanOrEqual(1)
         expect(
           Math.abs(
             (animalEyebrowBox?.x ?? 0) +
@@ -1596,10 +1813,10 @@ test.describe('required responsive viewports', () => {
           stageActionsBox?.height ?? Number.POSITIVE_INFINITY,
         )
         expect(stageActionsBox?.y ?? -1).toBeGreaterThanOrEqual(
-          (modelViewportBox?.y ?? 0) - 2,
+          (stageBox?.y ?? 0) - 2,
         )
         expect(stageActionsBox?.y ?? Number.POSITIVE_INFINITY).toBeLessThan(
-          (modelViewportBox?.y ?? 0) + 80,
+          (stageBox?.y ?? 0) + 80,
         )
 
         const bottomInset =

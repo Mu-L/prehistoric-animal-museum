@@ -1159,7 +1159,9 @@ h1 {
 }
 
 .model-viewport {
-  position: relative;
+  position: fixed;
+  z-index: 2;
+  inset: 0;
   width: 100%;
   height: 100%;
   min-width: 1px;
@@ -1825,6 +1827,12 @@ h1 {
 @media (min-width: 1024px) {
   .card-review-status {
     display: none;
+  }
+
+  .github-star-toast {
+    position: absolute;
+    grid-area: navigation;
+    bottom: calc(100% + 12px);
   }
 }
 
@@ -2671,9 +2679,9 @@ h1 {
   .animal-copy {
     display: grid;
     min-width: 0;
-    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-columns: fit-content(48%) minmax(0, 1fr);
     column-gap: 11px;
-    align-items: center;
+    align-items: start;
   }
 
   .animal-eyebrow {
@@ -2691,7 +2699,9 @@ h1 {
   h1 {
     grid-column: 1;
     font-size: clamp(2.15rem, 10.4vw, 2.55rem);
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+    white-space: normal;
   }
 
   .child-intro {
@@ -3207,6 +3217,7 @@ h1 {
 
 .museum-kicker {
   min-height: 28px;
+  align-self: center;
   gap: 8px;
   padding: 0;
   border: 0;
@@ -3218,8 +3229,8 @@ h1 {
   display: flex;
   min-width: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 10px;
 }
 
 .creator-signature-button {
@@ -3233,13 +3244,13 @@ h1 {
   padding: 0 2px;
   border: 0;
   border-radius: 7px;
-  color: #315a4c;
+  color: #62756d;
   background: transparent;
   cursor: pointer;
   font-size: 0.72rem;
-  font-weight: 780;
-  letter-spacing: 0.02em;
-  opacity: 0.82;
+  font-weight: 700;
+  letter-spacing: 0;
+  opacity: 0.7;
   white-space: nowrap;
   transition:
     transform 150ms ease,
@@ -3869,7 +3880,7 @@ h1 {
 
   .animal-eyebrow {
     position: absolute;
-    top: 14px;
+    top: 30px;
     right: 0;
     grid-column: 1 / -1;
     justify-content: flex-end;
@@ -3901,7 +3912,7 @@ h1 {
 @media (max-width: 767px) and (orientation: portrait) {
   .museum-experience {
     grid-template:
-      "story" 106px
+      "story" minmax(106px, auto)
       "stage" minmax(0, 1fr)
       "controls" auto
       "navigation" auto /
@@ -3916,7 +3927,8 @@ h1 {
   }
 
   .story-card {
-    height: 106px;
+    height: auto;
+    min-height: 106px;
     padding: 8px 11px 9px;
     border-color: rgb(77 94 69 / 15%);
     border-radius: 18px;
@@ -3941,7 +3953,7 @@ h1 {
   }
 
   .animal-copy {
-    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-columns: fit-content(48%) minmax(0, 1fr);
     column-gap: 12px;
   }
 
@@ -4136,12 +4148,12 @@ h1 {
 
 @media (max-width: 370px) and (orientation: portrait) {
   .museum-experience {
-    grid-template-rows: 102px minmax(0, 1fr) auto auto;
+    grid-template-rows: minmax(102px, auto) minmax(0, 1fr) auto auto;
     gap: 5px;
   }
 
   .story-card {
-    height: 102px;
+    min-height: 102px;
   }
 
   h1 {
@@ -4374,9 +4386,10 @@ h1 {
   }
 }
 
-/* The model, preview, loader, and fallback now share one fitted viewport.
-   Older responsive offsets targeted the former full-screen canvas and must not
-   move elements away from this common coordinate system. */
+/* The preview frame remains the shared initial composition for the still and
+   WebGL camera, while the WebGL canvas itself spans the screen so zoomed models
+   are clipped only by the real viewport. Older responsive offsets must not
+   move the frame overlays away from that common coordinate system. */
 .museum-experience:not(.museum-experience--focus) .stage-actions {
   top: 0;
   right: 0;
@@ -4403,14 +4416,6 @@ h1 {
 }
 
 @media (max-width: 767px) and (orientation: portrait) {
-  .museum-experience {
-    grid-template-rows: 106px minmax(0, 1fr) auto auto;
-  }
-
-  .story-card {
-    height: 106px;
-  }
-
   .museum-header {
     min-height: 48px;
     gap: 7px;
@@ -4459,16 +4464,6 @@ h1 {
   .github-star-toast__actions a,
   .github-star-toast__actions button {
     padding: 0 10px;
-  }
-}
-
-@media (max-width: 370px) and (orientation: portrait) {
-  .museum-experience {
-    grid-template-rows: 102px minmax(0, 1fr) auto auto;
-  }
-
-  .story-card {
-    height: 102px;
   }
 }
 
