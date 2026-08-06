@@ -172,6 +172,7 @@ describe('App', () => {
     viewerMock.failConstruction = false
     viewerMock.failureHandlers.length = 0
     configureSuccessfulViewer()
+    window.localStorage.clear()
     window.history.replaceState({}, '', '/')
   })
 
@@ -237,6 +238,48 @@ describe('App', () => {
     }
   })
 
+  it('opens the creator story without replacing the museum and restores focus', async () => {
+    const user = userEvent.setup()
+    await renderReadyApp()
+
+    const aboutButton = screen.getByRole('button', {
+      name: '了解Leon做了个和这座博物馆',
+    })
+    const navigation = screen.getByRole('region', { name: '动物选择' })
+    await user.click(aboutButton)
+
+    const dialog = screen.getByRole('dialog', { name: '关于这座博物馆' })
+    expect(dialog).toBeVisible()
+    expect(
+      within(dialog).getByText('一个程序员爸爸，为女儿做的小博物馆'),
+    ).toBeVisible()
+    expect(within(dialog).getByText(/女儿三岁时会害怕电视里的恐龙追逐/))
+      .toBeVisible()
+    expect(
+      within(dialog).getByRole('link', { name: '在 GitHub 查看源码' }),
+    ).toHaveAttribute(
+      'href',
+      'https://github.com/s010s/prehistoric-animal-museum',
+    )
+    expect(
+      within(dialog).getByRole('link', { name: '查看许可与素材说明' }),
+    ).toHaveAttribute(
+      'href',
+      'https://github.com/s010s/prehistoric-animal-museum/blob/main/LICENSING.md',
+    )
+    expect(navigation).toHaveAttribute('inert')
+
+    await user.click(
+      within(dialog).getByRole('button', { name: '关闭关于这座博物馆' }),
+    )
+    expect(
+      screen.queryByRole('dialog', { name: '关于这座博物馆' }),
+    ).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(aboutButton).toHaveFocus()
+    })
+  })
+
   it('replaces navigation with the parent drawer and gives focus mode Escape priority', async () => {
     const user = userEvent.setup()
     await renderReadyApp()
@@ -278,6 +321,18 @@ describe('App', () => {
         name: 'Creative Commons Attribution 4.0 International',
       }),
     ).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/4.0/')
+    expect(
+      within(dialog).getByRole('link', { name: '查看 GitHub 项目' }),
+    ).toHaveAttribute(
+      'href',
+      'https://github.com/s010s/prehistoric-animal-museum',
+    )
+    expect(
+      within(dialog).getByRole('link', { name: '查看完整许可说明' }),
+    ).toHaveAttribute(
+      'href',
+      'https://github.com/s010s/prehistoric-animal-museum/blob/main/LICENSING.md',
+    )
     await waitFor(() => {
       expect(
         screen.getByRole('button', { name: '关闭家长资料' }),

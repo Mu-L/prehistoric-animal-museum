@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Info,
   Leaf,
   LayoutGrid,
   Maximize2,
@@ -28,6 +29,8 @@ import {
   AnimalCollectionSheet,
   type CollectionAnimal,
 } from './components/AnimalCollectionSheet'
+import { AboutDrawer } from './components/AboutDrawer'
+import { GitHubStarPrompt } from './components/GitHubStarPrompt'
 import { IconButton } from './components/IconButton'
 import {
   ParentDrawer,
@@ -647,6 +650,7 @@ export function App() {
   const viewerRequiresRemountRef = useRef(false)
   const drawerTriggerRef = useRef<HTMLButtonElement>(null)
   const collectionTriggerRef = useRef<HTMLButtonElement>(null)
+  const aboutTriggerRef = useRef<HTMLButtonElement>(null)
   const focusTriggerRef = useRef<HTMLButtonElement>(null)
   const focusExitRef = useRef<HTMLButtonElement>(null)
   const railRef = useRef<HTMLDivElement>(null)
@@ -667,6 +671,7 @@ export function App() {
   const [viewerFailure, setViewerFailure] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collectionOpen, setCollectionOpen] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
   const [modelDataNotice, setModelDataNotice] =
     useState<ModelDataNotice | null>(null)
@@ -681,7 +686,7 @@ export function App() {
     narration.getServerSnapshot,
   )
   const activeAnimal = animalIndex.get(activeAnimalId) ?? initialAnimal
-  const overlayOpen = drawerOpen || collectionOpen
+  const overlayOpen = drawerOpen || collectionOpen || aboutOpen
   const collectionAnimals = useMemo<CollectionAnimal[]>(
     () =>
       animals.map((animal) => ({
@@ -1327,13 +1332,16 @@ export function App() {
       } else if (drawerOpen) {
         event.preventDefault()
         setDrawerOpen(false)
+      } else if (aboutOpen) {
+        event.preventDefault()
+        setAboutOpen(false)
       }
     }
     document.addEventListener('keydown', handleEscape)
     return () => {
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [collectionOpen, drawerOpen, exitFocusMode, focusMode])
+  }, [aboutOpen, collectionOpen, drawerOpen, exitFocusMode, focusMode])
 
   useEffect(() => {
     if (focusMode) {
@@ -1528,15 +1536,31 @@ export function App() {
       {!focusMode ? (
         <section aria-hidden={overlayOpen} className="story-panel" inert={overlayOpen}>
           <div className="story-card">
-            <p className="museum-kicker">
-              <span className="museum-mark" aria-hidden="true">
-                <Leaf size={16} strokeWidth={2.3} />
-              </span>
-              <span>史前动物博物馆</span>
-              {localReviewMode ? (
-                <span className="review-mode-label">本地评审</span>
-              ) : null}
-            </p>
+            <div className="museum-header">
+              <p className="museum-kicker">
+                <span className="museum-mark" aria-hidden="true">
+                  <Leaf size={16} strokeWidth={2.3} />
+                </span>
+                <span>史前动物博物馆</span>
+                {localReviewMode ? (
+                  <span className="review-mode-label">本地评审</span>
+                ) : null}
+              </p>
+              <button
+                aria-label="了解Leon做了个和这座博物馆"
+                className="creator-signature-button"
+                onClick={() => {
+                  setDrawerOpen(false)
+                  setCollectionOpen(false)
+                  setAboutOpen(true)
+                }}
+                ref={aboutTriggerRef}
+                type="button"
+              >
+                <Info aria-hidden="true" size={16} strokeWidth={2.1} />
+                <span>Leon做了个</span>
+              </button>
+            </div>
             <div className="title-lockup" key={`title-${activeAnimal.id}`}>
               <div className="animal-copy">
                 <div className="animal-eyebrow">
@@ -1606,6 +1630,7 @@ export function App() {
               className="parent-info-button"
               onClick={() => {
                 setCollectionOpen(false)
+                setAboutOpen(false)
                 setDrawerOpen(true)
               }}
               ref={drawerTriggerRef}
@@ -1619,6 +1644,7 @@ export function App() {
               className="collection-open-button"
               onClick={() => {
                 setDrawerOpen(false)
+                setAboutOpen(false)
                 setCollectionOpen(true)
               }}
               ref={collectionTriggerRef}
@@ -1825,6 +1851,17 @@ export function App() {
         </aside>
       ) : null}
 
+      <GitHubStarPrompt
+        blocked={
+          focusMode ||
+          overlayOpen ||
+          modelDataNotice !== null ||
+          loadSnapshot.phase !== 'idle' ||
+          narrationSnapshot.playback === 'playing'
+        }
+        start={loadSnapshot.readyAnimalId !== null}
+      />
+
       <p aria-atomic="true" aria-live="polite" className="sr-only" role="status">
         {liveMessage}
       </p>
@@ -1835,6 +1872,11 @@ export function App() {
         open={drawerOpen && !focusMode}
         returnFocusTo={drawerTriggerRef}
         showReviewDetails={localReviewMode}
+      />
+      <AboutDrawer
+        onClose={() => setAboutOpen(false)}
+        open={aboutOpen && !focusMode}
+        returnFocusTo={aboutTriggerRef}
       />
       <AnimalCollectionSheet
         animals={collectionAnimals}

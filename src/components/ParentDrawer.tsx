@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { ChevronDown, X } from 'lucide-react'
+import { GITHUB_LICENSING_URL, GITHUB_REPOSITORY_URL } from '../github'
 import { IconButton } from './IconButton'
 
 export interface ParentReviewFacts {
@@ -284,15 +285,24 @@ export function ParentDrawer({
                 <p>
                   开源代码允许依 AGPL-3.0 商业使用；原创博物馆内容按
                   CC BY-NC-SA 4.0 非商业共享；品牌只独立防止冒充官方，
-                  第三方素材沿用原许可。{' '}
+                  第三方素材沿用原许可。
+                </p>
+                <div className="source-link-actions">
                   <a
-                    href="https://github.com/s010s/prehistoric-animal-museum/blob/main/LICENSING.md"
+                    href={GITHUB_REPOSITORY_URL}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    查看源代码和完整许可
+                    查看 GitHub 项目
                   </a>
-                </p>
+                  <a
+                    href={GITHUB_LICENSING_URL}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    查看完整许可说明
+                  </a>
+                </div>
               </div>
             </details>
           </div>

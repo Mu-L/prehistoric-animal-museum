@@ -139,7 +139,7 @@ This is a mixed-license repository:
 - Software code is genuinely open source under [GNU AGPL-3.0-only](LICENSE). Commercial use is allowed; modified versions offered over a network must provide their Corresponding Source under the license.
 - Original editorial text, narration, exhibit backgrounds, and similar museum content whose rights belong to the project owner or a contributor are shared under [CC BY-NC-SA 4.0](LICENSES/CC-BY-NC-SA-4.0.txt). Attribution and ShareAlike apply; commercial use is not granted.
 - Contributors retain copyright in their original contributions. There is no default copyright transfer, and the project owner receives no unilateral right to place a contribution under a proprietary or separate commercial license.
-- “Leon 做了个 / Leon Made This”, project names, logos, and source-identifying brand elements are independently protected only to prevent confusion about the official source. Renamed, rebranded forks and normal downstream development remain allowed.
+- “Leon做了个 / Leon Made This”, project names, logos, and source-identifying brand elements are independently protected only to prevent confusion about the official source. Renamed, rebranded forks and normal downstream development remain allowed.
 - Third-party libraries, fonts, 3D models, and mixed assets retain their recorded terms, authors, sources, licenses, and modification histories.
 
 The complete scope is defined in the [licensing guide](LICENSING.md), with contribution terms in [CONTRIBUTING.md](CONTRIBUTING.md) and brand boundaries in [BRAND_POLICY.md](BRAND_POLICY.md). Asset sources, modifications, and distribution notices are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and each animal package's `provenance/LICENSES/` directory.

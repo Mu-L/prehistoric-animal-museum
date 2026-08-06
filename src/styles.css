@@ -1584,6 +1584,103 @@ h1 {
   font-weight: 780;
 }
 
+.github-star-toast {
+  position: fixed;
+  z-index: 47;
+  bottom: max(128px, calc(env(safe-area-inset-bottom) + 120px));
+  left: 50%;
+  display: grid;
+  width: min(560px, calc(100vw - 24px));
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgb(255 255 255 / 68%);
+  border-radius: 20px;
+  color: #29483d;
+  background: rgb(255 253 247 / 96%);
+  box-shadow: 0 14px 38px rgb(29 49 38 / 20%);
+  transform: translateX(-50%);
+  animation: model-data-notice-enter 180ms ease both;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.github-star-toast__icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 14px;
+  color: color-mix(in srgb, var(--animal-accent) 84%, #29483d);
+  background: color-mix(in srgb, var(--animal-accent-soft) 48%, white);
+}
+
+.github-star-toast__copy {
+  min-width: 0;
+}
+
+.github-star-toast__copy strong {
+  display: block;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.github-star-toast__copy p {
+  margin: 3px 0 0;
+  color: #53675f;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.github-star-toast__actions {
+  display: flex;
+  gap: 7px;
+}
+
+.github-star-toast__actions a,
+.github-star-toast__actions button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 780;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.github-star-toast__actions a {
+  border: 1px solid transparent;
+  color: #fffdf7;
+  background: var(--leaf);
+}
+
+.github-star-toast__actions button {
+  border: 1px solid rgb(53 104 89 / 18%);
+  color: #315a4c;
+  background: rgb(255 255 255 / 72%);
+}
+
+.github-star-toast__actions a:hover,
+.github-star-toast__actions button:hover {
+  transform: translateY(-1px);
+}
+
+.github-star-toast__actions a:active,
+.github-star-toast__actions button:active {
+  transform: translateY(1px) scale(0.98);
+}
+
 .animal-step {
   border-color: rgb(54 80 63 / 12%);
   box-shadow: none;
@@ -2014,6 +2111,31 @@ h1 {
 .source-list a {
   color: #245e82;
   line-height: 1.45;
+}
+
+.source-link-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.source-link-actions a {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid rgb(36 94 130 / 20%);
+  border-radius: 14px;
+  background: rgb(240 247 248 / 76%);
+  font-size: 0.82rem;
+  font-weight: 760;
+  text-decoration: none;
+}
+
+.source-link-actions a:hover {
+  border-color: rgb(36 94 130 / 38%);
+  background: rgb(235 245 247 / 96%);
 }
 
 .focus-exit {
@@ -3092,6 +3214,136 @@ h1 {
   background: transparent;
 }
 
+.museum-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.creator-signature-button {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 48px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 7px;
+  color: #315a4c;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 780;
+  letter-spacing: 0.02em;
+  opacity: 0.82;
+  white-space: nowrap;
+  transition:
+    transform 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease;
+}
+
+.creator-signature-button:hover {
+  color: var(--leaf);
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.creator-signature-button:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.museum-experience[data-review-mode] .creator-signature-button {
+  display: none;
+}
+
+.about-drawer__scroll {
+  display: grid;
+}
+
+.about-drawer__body {
+  display: grid;
+  gap: 22px;
+  align-content: start;
+}
+
+.about-story {
+  padding: 20px;
+  border-left: 4px solid var(--animal-accent);
+  border-radius: 7px 20px 20px 7px;
+  background: color-mix(in srgb, var(--animal-accent-soft) 28%, #fffdf7);
+}
+
+.about-story h3 {
+  margin: 0;
+  color: #244d3d;
+  font-size: 1.18rem;
+  line-height: 1.45;
+}
+
+.about-story p {
+  margin: 12px 0 0;
+  color: #3d554b;
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+
+.about-links {
+  display: grid;
+  gap: 10px;
+}
+
+.about-link {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 16px;
+  border-radius: 15px;
+  font-size: 0.88rem;
+  font-weight: 790;
+  text-decoration: none;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.about-link:hover {
+  transform: translateY(-1px);
+}
+
+.about-link:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.about-link--primary {
+  border: 1px solid transparent;
+  color: #fffdf7;
+  background: var(--leaf);
+  box-shadow: 0 10px 24px rgb(35 83 62 / 20%);
+}
+
+.about-link--primary:hover {
+  background: #2c5a4d;
+}
+
+.about-link--secondary {
+  border: 1px solid rgb(53 104 89 / 18%);
+  color: #315a4c;
+  background: rgb(255 255 255 / 70%);
+}
+
+.about-link--secondary:hover {
+  border-color: rgb(53 104 89 / 34%);
+  background: rgb(255 255 255 / 96%);
+}
+
 .museum-mark {
   width: 26px;
   height: 26px;
@@ -4142,6 +4394,100 @@ h1 {
 
 .model-composition-frame .model-fallback {
   bottom: 8px;
+}
+
+@media (max-width: 767px) {
+  .museum-experience:not([data-review-mode]) .animal-eyebrow {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) and (orientation: portrait) {
+  .museum-experience {
+    grid-template-rows: 106px minmax(0, 1fr) auto auto;
+  }
+
+  .story-card {
+    height: 106px;
+  }
+
+  .museum-header {
+    min-height: 48px;
+    gap: 7px;
+  }
+
+  .museum-kicker {
+    min-width: 0;
+  }
+
+  .museum-kicker > span:nth-child(2) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .creator-signature-button {
+    min-height: 48px;
+    gap: 5px;
+    padding: 0;
+    font-size: clamp(0.64rem, 2.8vw, 0.74rem);
+  }
+
+  .title-lockup {
+    margin-top: 5px;
+  }
+
+  .museum-experience[data-review-mode] .animal-eyebrow {
+    top: -56px;
+  }
+
+  .github-star-toast {
+    bottom: max(148px, calc(env(safe-area-inset-bottom) + 140px));
+    width: calc(100vw - 14px);
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 9px 10px;
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .github-star-toast__actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .github-star-toast__actions a,
+  .github-star-toast__actions button {
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 370px) and (orientation: portrait) {
+  .museum-experience {
+    grid-template-rows: 102px minmax(0, 1fr) auto auto;
+  }
+
+  .story-card {
+    height: 102px;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .museum-header {
+    gap: 5px;
+  }
+
+  .creator-signature-button {
+    min-height: 48px;
+    padding: 0;
+    font-size: 0.61rem;
+  }
+
+  .github-star-toast {
+    bottom: 88px;
+    left: 63.5%;
+    width: min(480px, calc(73vw - 22px));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

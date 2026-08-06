@@ -133,7 +133,7 @@ npm run test:review
 - 软件代码是真正的开源软件，采用 [GNU AGPL-3.0-only](LICENSE)，允许商业使用；修改后通过网络提供服务时，必须按许可证提供对应源代码。
 - 项目方或贡献者拥有权利的原创科普文字、旁白、展厅背景和类似内容采用 [CC BY-NC-SA 4.0](LICENSES/CC-BY-NC-SA-4.0.txt)，须署名、相同方式共享，不授予商业使用权。
 - 贡献者保留其原创贡献的著作权，不发生默认版权转让；未经贡献者另行同意，项目方不能把其贡献单方面改成专有许可或独立商业许可。
-- “Leon 做了个 / Leon Made This”、项目名称、标志及用于识别官方来源的品牌元素独立保护，只用于防止冒充官方；改名、替换品牌后的 Fork 和正常二次开发不受妨碍，详见[品牌政策](BRAND_POLICY.md)。
+- “Leon做了个 / Leon Made This”、项目名称、标志及用于识别官方来源的品牌元素独立保护，只用于防止冒充官方；改名、替换品牌后的 Fork 和正常二次开发不受妨碍，详见[品牌政策](BRAND_POLICY.md)。
 - 第三方库、字体、3D 模型和混合素材继续遵守各自许可，并保留作者、来源、许可和修改记录。
 
 完整适用范围见[许可说明](LICENSING.md)，贡献方式见[贡献指南](CONTRIBUTING.md)，品牌边界见[品牌政策](BRAND_POLICY.md)。素材来源、修改记录和分发说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，以及每个动物包内的 `provenance/LICENSES/`。

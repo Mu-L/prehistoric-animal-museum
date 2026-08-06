@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { GITHUB_STAR_PROMPT_STORAGE_KEY } from '../src/github'
 import { MODEL_DATA_REMINDER_STORAGE_KEY } from '../src/model-policy'
 
 const nestedPath = '/prehistoric-animal-museum/'
@@ -173,6 +174,91 @@ test('loads from the nested static base with Chinese semantics and accessible to
   await expect(tooltip).toHaveRole('tooltip')
   await expect(tooltip).toHaveText('恢复初始视角')
   await expect(tooltip).toHaveCSS('opacity', '1')
+})
+
+test('opens the creator story in the left drawer and keeps source links distinct', async ({
+  page,
+}) => {
+  await openMuseum(page)
+  const trigger = page.getByRole('button', {
+    name: '了解Leon做了个和这座博物馆',
+  })
+  await trigger.click()
+
+  const dialog = page.getByRole('dialog', { name: '关于这座博物馆' })
+  await expect(dialog).toBeVisible()
+  await expect(
+    dialog.getByText('一个程序员爸爸，为女儿做的小博物馆'),
+  ).toBeVisible()
+  await expect(
+    dialog.getByRole('link', { name: '在 GitHub 查看源码' }),
+  ).toHaveAttribute(
+    'href',
+    'https://github.com/s010s/prehistoric-animal-museum',
+  )
+  await expect(
+    dialog.getByRole('link', { name: '查看许可与素材说明' }),
+  ).toHaveAttribute(
+    'href',
+    'https://github.com/s010s/prehistoric-animal-museum/blob/main/LICENSING.md',
+  )
+  const drawerBox = await dialog.boundingBox()
+  expect(drawerBox).not.toBeNull()
+  expect(drawerBox?.x ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(12)
+
+  await dialog.getByRole('button', { name: '关闭关于这座博物馆' }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+
+  await page.getByRole('button', { name: '给家长的资料' }).click()
+  const parentDialog = page.getByRole('dialog', { name: '给家长的资料' })
+  const disclosure = parentDialog.getByText('开源代码与分层许可')
+  await disclosure.click()
+  await expect(
+    parentDialog.getByRole('link', { name: '查看 GitHub 项目' }),
+  ).toHaveAttribute(
+    'href',
+    'https://github.com/s010s/prehistoric-animal-museum',
+  )
+  await expect(
+    parentDialog.getByRole('link', { name: '查看完整许可说明' }),
+  ).toHaveAttribute(
+    'href',
+    'https://github.com/s010s/prehistoric-animal-museum/blob/main/LICENSING.md',
+  )
+})
+
+test('offers a GitHub Star after 60 seconds without leaving the museum tab', async ({
+  page,
+}) => {
+  await page.addInitScript(`(() => {
+    const nativeSetTimeout = window.setTimeout.bind(window)
+    window.setTimeout = (handler, timeout = 0, ...args) =>
+      nativeSetTimeout(handler, timeout === 60000 ? 50 : timeout, ...args)
+  })()`)
+  await openMuseum(page)
+
+  const prompt = page.getByRole('complementary', {
+    name: '支持这座博物馆',
+  })
+  await expect(prompt).toBeVisible()
+  const link = prompt.getByRole('link', { name: '去 GitHub' })
+  await expect(link).toHaveAttribute('target', '_blank')
+  await expect(link).toHaveAttribute(
+    'href',
+    'https://github.com/s010s/prehistoric-animal-museum',
+  )
+
+  await prompt.getByRole('button', { name: '暂时不用' }).click()
+  await expect(prompt).toHaveCount(0)
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (key) => window.localStorage.getItem(key),
+        GITHUB_STAR_PROMPT_STORAGE_KEY,
+      ),
+    )
+    .toMatch(/^dismissed-until:/)
 })
 
 test('eagerly loads every thumbnail in the complete museum index', async ({
