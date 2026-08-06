@@ -171,11 +171,12 @@ export const provenance = [
     "source": {
       "type": "derived",
       "title": "古神翼龙 collection thumbnail",
-      "generatedOn": "2026-08-01",
+      "generatedOn": "2026-08-07",
       "inputAssetPaths": [
-        "images/poster.webp"
+        "model/model.glb",
+        "backgrounds/landscape.webp"
       ],
-      "method": "Cropped the reviewed poster to a readable 320 × 320 WebP collection image."
+      "method": "Captured the current 1440 × 900 desktop presentation, cropped a clean 500 × 500 animal-and-habitat region outside the interface chrome, resized it to 320 × 320, and encoded it as WebP."
     },
     "license": {
       "spdx": "CC-BY-4.0",
@@ -183,8 +184,8 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 11202,
-      "sha256": "796339e52ff9e78a99ae38788bc9207102f5142918809b1bad157fb02023d652"
+      "bytes": 14316,
+      "sha256": "e5cef97c3e3b558bdf7103feb799fc8814594c4fe07fe144f750363ef4e5cbaf"
     },
     "modifications": [
       "Selected a card-size crop that keeps the animal readable.",

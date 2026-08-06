@@ -174,16 +174,16 @@ export const provenance = [
     source: {
       type: 'derived',
       title: 'Stegosaurus collection thumbnail',
-      generatedOn: '2026-07-29',
-      inputAssetPaths: ['images/poster.webp'],
+      generatedOn: '2026-08-07',
+      inputAssetPaths: ['model/model.glb', 'backgrounds/landscape.webp'],
       method:
-        'Cropped a readable 700 × 700 model-stage detail from the corrected runtime presentation, resized it to 320 × 320, then encoded with cwebp quality 82 effort 6.',
+        'Captured the current 1440 × 900 desktop presentation in model focus mode, cropped a clean 900 × 900 animal-and-habitat region, resized it to 320 × 320, and encoded it as WebP.',
     },
     license: modelLicense,
     runtime: {
       sha256:
-        'a5535eca0d5dc26a4017fa786bbf4d77c91bc78c00017dd6664f1c51913df423',
-      bytes: 18_252,
+        'de3175b49c1342759d7de8b987f927b09da0e3c0441e7ce76009308ebe694ad9',
+      bytes: 33_072,
     },
     modifications: [
       'Replaced the letterboxed overview with a closer crop that keeps the head and back plates readable at card size.',

@@ -686,10 +686,10 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 沧龙 collection thumbnail, derived on 2026-08-01
+- Source: 沧龙 collection thumbnail, derived on 2026-08-07
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `34edf4c3cbac664a85bcc4bfc9c85d1b310148e78a10d26aad806290287895d0`
+- Runtime SHA-256: `96a2b1a38afb6e17f80fd32f69429a7764fdc42578205c6edb61ea521a3ba64f`
 - Modifications:
   - Selected a card-size crop that keeps the animal readable.
   - Exported without embedded text, controls, labels, logos, or watermarks.
@@ -1137,10 +1137,10 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: Stegosaurus collection thumbnail, derived on 2026-07-29
+- Source: Stegosaurus collection thumbnail, derived on 2026-08-07
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: Thumbnail includes “PBR Stegasaurus (Animated)” by Ferocious Industries, CC BY 4.0; scene art generated for this project.
-- Runtime SHA-256: `a5535eca0d5dc26a4017fa786bbf4d77c91bc78c00017dd6664f1c51913df423`
+- Runtime SHA-256: `de3175b49c1342759d7de8b987f927b09da0e3c0441e7ce76009308ebe694ad9`
 - Modifications:
   - Replaced the letterboxed overview with a closer crop that keeps the head and back plates readable at card size.
   - Exported a 320 × 320 WebP without embedded text, controls, or labels.
@@ -1289,10 +1289,10 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 古神翼龙 collection thumbnail, derived on 2026-08-01
+- Source: 古神翼龙 collection thumbnail, derived on 2026-08-07
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `796339e52ff9e78a99ae38788bc9207102f5142918809b1bad157fb02023d652`
+- Runtime SHA-256: `e5cef97c3e3b558bdf7103feb799fc8814594c4fe07fe144f750363ef4e5cbaf`
 - Modifications:
   - Selected a card-size crop that keeps the animal readable.
   - Exported without embedded text, controls, labels, logos, or watermarks.

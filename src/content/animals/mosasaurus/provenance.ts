@@ -171,12 +171,12 @@ export const provenance = [
     "source": {
       "type": "derived",
       "title": "沧龙 collection thumbnail",
-      "generatedOn": "2026-08-01",
+      "generatedOn": "2026-08-07",
       "inputAssetPaths": [
         "model/model.glb",
         "backgrounds/landscape.webp"
       ],
-      "method": "Deterministic square crop from the accepted desktop review presentation after hiding all interface chrome."
+      "method": "Captured the current 1440 × 900 desktop presentation in model focus mode, cropped a clean 700 × 700 animal-and-habitat region, resized it to 320 × 320, and encoded it as WebP."
     },
     "license": {
       "spdx": "CC-BY-4.0",
@@ -184,8 +184,8 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 11094,
-      "sha256": "34edf4c3cbac664a85bcc4bfc9c85d1b310148e78a10d26aad806290287895d0"
+      "bytes": 12150,
+      "sha256": "96a2b1a38afb6e17f80fd32f69429a7764fdc42578205c6edb61ea521a3ba64f"
     },
     "modifications": [
       "Selected a card-size crop that keeps the animal readable.",
