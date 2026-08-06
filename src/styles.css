@@ -1533,7 +1533,7 @@ h1 {
 .model-data-notice {
   position: fixed;
   z-index: 46;
-  bottom: max(94px, calc(env(safe-area-inset-bottom) + 86px));
+  bottom: max(128px, calc(env(safe-area-inset-bottom) + 120px));
   left: 50%;
   display: grid;
   width: min(420px, calc(100vw - 24px));
@@ -3208,21 +3208,70 @@ h1 {
   -webkit-backdrop-filter: blur(10px);
 }
 
+.animal-rail {
+  grid-auto-columns: 90px;
+  scrollbar-width: none;
+}
+
+.animal-rail::-webkit-scrollbar {
+  display: none;
+}
+
 .animal-card {
+  position: relative;
+  min-height: 84px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 54px 18px;
+  gap: 2px;
+  justify-items: center;
+  padding: 4px;
   border-width: 1px;
   border-radius: 13px;
   background: rgb(242 236 216 / 76%);
+  text-align: center;
 }
 
 .animal-card[data-selected="true"] {
   border-color: color-mix(in srgb, var(--animal-accent) 74%, #ffffff);
   background: color-mix(in srgb, var(--animal-accent-soft) 32%, white);
-  box-shadow: inset 3px 0 var(--animal-accent);
+  box-shadow: inset 0 -3px var(--animal-accent);
   transform: none;
 }
 
 .thumbnail-frame {
+  grid-row: 1;
+  width: 54px;
+  height: 54px;
   border-radius: 10px;
+}
+
+.animal-card strong {
+  grid-row: 2;
+  align-self: center;
+  justify-self: stretch;
+  min-width: 0;
+  font-size: 0.86rem;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.card-status {
+  position: absolute;
+  z-index: 3;
+  top: 44px;
+  right: 5px;
+  left: 5px;
+  padding: 1px 2px;
+  border-radius: 5px;
+  color: #fff;
+  background: rgb(35 59 48 / 82%);
+  text-align: center;
+}
+
+.card-review-status {
+  display: none;
 }
 
 .model-gesture-hint {
@@ -3610,7 +3659,7 @@ h1 {
     padding:
       max(7px, env(safe-area-inset-top))
       max(7px, env(safe-area-inset-right))
-      max(6px, env(safe-area-inset-bottom))
+      max(2px, env(safe-area-inset-bottom))
       max(7px, env(safe-area-inset-left));
   }
 
@@ -3714,31 +3763,33 @@ h1 {
   }
 
   .animal-rail {
-    grid-auto-columns: minmax(102px, 118px);
+    grid-auto-columns: 72px;
     gap: 5px;
     padding: 0 2px;
   }
 
   .animal-card {
-    min-height: 52px;
-    grid-template-columns: 44px minmax(0, 1fr);
+    min-height: 68px;
+    grid-template-rows: 44px 16px;
     padding: 3px;
     border-radius: 11px;
   }
 
   .thumbnail-frame {
+    grid-row: 1;
     width: 44px;
     height: 44px;
-    border-radius: 8px;
+    border-radius: 9px;
   }
 
   .animal-card strong {
     font-size: 0.78rem;
   }
 
-  .card-status,
-  .card-review-status {
-    font-size: 0.54rem;
+  .card-status {
+    top: 34px;
+    right: 4px;
+    left: 4px;
   }
 
   .model-gesture-hint {
@@ -3751,7 +3802,7 @@ h1 {
   }
 
   .model-data-notice {
-    bottom: max(122px, calc(env(safe-area-inset-bottom) + 114px));
+    bottom: max(148px, calc(env(safe-area-inset-bottom) + 140px));
   }
 
   .collection-sheet {
@@ -3862,7 +3913,7 @@ h1 {
 
   .model-gesture-hint,
   .model-data-notice {
-    bottom: max(138px, calc(env(safe-area-inset-bottom) + 130px));
+    bottom: max(148px, calc(env(safe-area-inset-bottom) + 140px));
   }
 }
 
@@ -3955,7 +4006,7 @@ h1 {
   .animal-rail {
     grid-area: rail;
     height: auto;
-    grid-auto-columns: minmax(104px, 116px);
+    grid-auto-columns: 72px;
     grid-auto-flow: column;
     grid-auto-rows: auto;
     align-content: normal;
@@ -3972,8 +4023,8 @@ h1 {
   }
 
   .animal-card {
-    min-height: 48px;
-    grid-template-columns: 40px minmax(0, 1fr);
+    min-height: 62px;
+    grid-template-rows: 40px 14px;
     padding: 3px;
     border-radius: 11px;
   }
@@ -3982,6 +4033,16 @@ h1 {
     width: 40px;
     height: 40px;
     border-radius: 8px;
+  }
+
+  .animal-card strong {
+    font-size: 0.7rem;
+  }
+
+  .card-status {
+    top: 30px;
+    right: 4px;
+    left: 4px;
   }
 
   .stage-actions {
@@ -3996,15 +4057,15 @@ h1 {
   }
 
   .model-gesture-hint {
-    bottom: 82px;
+    bottom: 98px;
   }
 
   .model-fallback {
-    bottom: 72px;
+    bottom: 88px;
   }
 
   .model-data-notice {
-    bottom: 72px;
+    bottom: 88px;
     left: 63.5%;
     width: min(390px, calc(73vw - 22px));
   }

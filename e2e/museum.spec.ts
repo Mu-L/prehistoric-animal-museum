@@ -1515,7 +1515,57 @@ test.describe('required responsive viewports', () => {
         expect(stageActionsBox?.y ?? Number.POSITIVE_INFINITY).toBeLessThan(
           (modelViewportBox?.y ?? 0) + 80,
         )
+
+        const bottomInset =
+          viewport.height -
+          ((animalNavigationBox?.y ?? 0) +
+            (animalNavigationBox?.height ?? 0))
+        expect(bottomInset).toBeGreaterThanOrEqual(0)
+        expect(bottomInset).toBeLessThanOrEqual(3)
       }
+
+      const animalNameLayouts = await page.evaluate<
+        Array<{
+          clientWidth: number
+          labelTop: number
+          lineCount: number
+          scrollWidth: number
+          thumbnailBottom: number
+        }>
+      >(`(() =>
+        Array.from(document.querySelectorAll('.animal-card strong')).map(
+          (label) => {
+            const range = document.createRange()
+            range.selectNodeContents(label)
+            const thumbnail = label.parentElement?.querySelector(
+              '.thumbnail-frame',
+            )
+            return {
+              clientWidth: label.clientWidth,
+              labelTop: label.getBoundingClientRect().top,
+              lineCount: range.getClientRects().length,
+              scrollWidth: label.scrollWidth,
+              thumbnailBottom:
+                thumbnail?.getBoundingClientRect().bottom ??
+                Number.POSITIVE_INFINITY,
+            }
+          },
+        )
+      )()`)
+      expect(animalNameLayouts.length).toBeGreaterThan(0)
+      expect(
+        animalNameLayouts.every(({ lineCount }) => lineCount === 1),
+      ).toBe(true)
+      expect(
+        animalNameLayouts.every(
+          ({ clientWidth, scrollWidth }) => scrollWidth <= clientWidth + 1,
+        ),
+      ).toBe(true)
+      expect(
+        animalNameLayouts.every(
+          ({ labelTop, thumbnailBottom }) => thumbnailBottom <= labelTop,
+        ),
+      ).toBe(true)
 
       const rail = page.locator('.animal-rail')
       await expect(rail).toBeVisible()
