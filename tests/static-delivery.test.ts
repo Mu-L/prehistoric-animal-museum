@@ -73,6 +73,21 @@ afterEach(async () => {
 })
 
 describe('static multilingual delivery', () => {
+  it('keeps browser tests out of deployment builds', async () => {
+    const [packageSource, pagesWorkflow] = await Promise.all([
+      readFile('package.json', 'utf8'),
+      readFile('.github/workflows/pages.yml', 'utf8'),
+    ])
+    const packageJson = JSON.parse(packageSource) as {
+      scripts?: Record<string, string>
+    }
+    const cloudflareBuild = packageJson.scripts?.['build:cloudflare']
+
+    expect(cloudflareBuild).toBe('npm run build:cloudflare:assets')
+    expect(cloudflareBuild).not.toMatch(/playwright|test:e2e/u)
+    expect(pagesWorkflow).not.toMatch(/playwright|test:e2e/u)
+  })
+
   it('prepares Cloudflare output with locale pages and SEO control files at host root', async () => {
     const fixtureRoot = await temporaryDirectory('museum-cloudflare-')
     const sourceDirectory = join(fixtureRoot, 'dist')
