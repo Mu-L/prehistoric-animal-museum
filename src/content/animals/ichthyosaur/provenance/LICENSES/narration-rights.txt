@@ -21,3 +21,17 @@ notice identifies the model, Serena speaker, AI synthesis, and Apache-2.0
 model license. A residual risk is retained because the official materials do
 not separately disclose Serena's training/performance or voice-personality
 rights chain. The audio must not imply endorsement by Qwen or Alibaba.
+
+English narration approval
+
+Locale: en
+Speaker: Serena
+Language: English
+Generated: 2026-08-07
+Runtime bytes: 149805
+Runtime SHA-256: 2e31f92e8bd54eb08971b3b6bb6d3279fa31242149f43f70917fb67709c139c8
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-07
+
+Script: This is an ichthyosaur. Ichthyosaurs were reptiles that lived in ancient seas. Look at its streamlined body and four flippers. Does it look like a little boat made for swimming?

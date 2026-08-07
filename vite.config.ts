@@ -13,6 +13,7 @@ import {
   parseAllowedHosts,
   privateLocalMaterialDeny,
 } from './scripts/review-server-security'
+import { multilingualSeoPlugin } from './scripts/multilingual-seo'
 
 const redistributableNotices = [
   'LICENSE',
@@ -280,6 +281,7 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       bundledNotices(),
+      multilingualSeoPlugin(),
       privateLocalMaterialGuard(),
       localReview(command === 'serve' && mode === 'review'),
     ],

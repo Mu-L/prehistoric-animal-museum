@@ -1,7 +1,9 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useId, useRef } from 'react'
 import { Check, Footprints, X } from 'lucide-react'
+import { useI18n } from '../i18n/I18nProvider'
 import { IconButton } from './IconButton'
+import { LanguageMenu } from './LanguageMenu'
 
 export interface CollectionAnimal {
   readonly classification: string
@@ -39,6 +41,7 @@ export function AnimalCollectionSheet({
   open,
   returnFocusTo,
 }: AnimalCollectionSheetProps) {
+  const { messages } = useI18n()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLElement>(null)
   const titleId = useId()
@@ -107,20 +110,21 @@ export function AnimalCollectionSheet({
           <div>
             <p className="collection-sheet__eyebrow">
               <Footprints aria-hidden="true" size={17} strokeWidth={2.2} />
-              {animals.length === 9
-                ? '九位史前朋友'
-                : `${animals.length} 位史前朋友`}
+              {messages.collection.friends(animals.length)}
             </p>
-            <h2 id={titleId}>全馆图鉴</h2>
-            <p>选一位朋友，马上前往它的 3D 展台。</p>
+            <h2 id={titleId}>{messages.collection.title}</h2>
+            <p>{messages.collection.intro}</p>
           </div>
-          <IconButton
-            hideTooltipOnFocus
-            icon={X}
-            label="关闭全馆图鉴"
-            onClick={onClose}
-            ref={closeButtonRef}
-          />
+          <div className="collection-sheet__actions">
+            <LanguageMenu />
+            <IconButton
+              hideTooltipOnFocus
+              icon={X}
+              label={messages.collection.close}
+              onClick={onClose}
+              ref={closeButtonRef}
+            />
+          </div>
         </header>
         <div className="collection-grid" role="list">
           {animals.map((animal, index) => {
@@ -130,7 +134,7 @@ export function AnimalCollectionSheet({
               <div key={animal.id} role="listitem">
                 <button
                   aria-current={current ? 'true' : undefined}
-                  aria-label={`${current ? '当前展台，' : ''}前往${animal.name}展台`}
+                  aria-label={messages.collection.cardLabel(animal.name, current)}
                   className="collection-card"
                   data-collection-animal-id={animal.id}
                   data-current={current}
@@ -156,15 +160,15 @@ export function AnimalCollectionSheet({
                   {current ? (
                     <span className="collection-card__state">
                       <Check aria-hidden="true" size={15} strokeWidth={2.5} />
-                      当前
+                      {messages.collection.current}
                     </span>
                   ) : loading ? (
                     <span className="collection-card__state">
                       {loadingPhase === 'preparing'
-                        ? '正在打开'
+                        ? messages.collection.opening
                         : loadingPercent === null
-                          ? '准备中'
-                          : `下载中 ${loadingPercent}%`}
+                          ? messages.collection.preparing
+                          : messages.collection.downloading(loadingPercent)}
                     </span>
                   ) : null}
                 </button>

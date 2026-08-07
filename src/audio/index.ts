@@ -5,6 +5,7 @@ export {
 } from './narration-controller'
 export type {
   NarrationAvailability,
+  NarrationControlLabels,
   NarrationControllerOptions,
   NarrationMedia,
   NarrationMediaFactory,

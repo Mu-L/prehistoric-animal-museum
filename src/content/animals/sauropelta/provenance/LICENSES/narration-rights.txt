@@ -14,3 +14,17 @@ Public distribution decision: approved
 Approved: Project owner on 2026-07-31
 
 Script: 这是胄甲龙，一种生活在早白垩世北美洲的植食性甲龙类恐龙。看看它背上的骨质护甲和肩部的大刺，像不像穿着一件结实的防护外套？
+
+English narration approval
+
+Locale: en
+Speaker: Serena
+Language: English
+Generated: 2026-08-07
+Runtime bytes: 162045
+Runtime SHA-256: 5eb570b5695afb2be679d922931c9311c17328442af711d8500c1339a769c78d
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-07
+
+Script: This is Sauropelta, a plant-eating armoured dinosaur from Early Cretaceous North America. Look at the bony armour on its back and the big spikes by its shoulders. Does it look as though it is wearing a strong protective coat?

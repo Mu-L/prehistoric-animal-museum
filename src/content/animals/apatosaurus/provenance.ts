@@ -1,10 +1,12 @@
 import {
   createPublishedAssetProvenance,
+  createReviewedEnglishNarrationProvenance,
   reviewedBackgroundSources,
 } from '../../provenance-helpers'
+import { en } from './content.en'
 import { zhCN } from './content.zh-CN'
 
-export const provenance = createPublishedAssetProvenance({
+const baseProvenance = createPublishedAssetProvenance({
   animalName: zhCN.name,
   model: {
     source: {
@@ -72,3 +74,8 @@ export const provenance = createPublishedAssetProvenance({
       '184993cb9bbc6a008eaf336f47314b75ffaab12da8ac2cc570cdec9d00728082',
   },
 })
+
+export const provenance = [
+  ...baseProvenance,
+  createReviewedEnglishNarrationProvenance('apatosaurus', en),
+] as const

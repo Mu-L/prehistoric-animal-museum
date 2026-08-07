@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Footprints } from 'lucide-react'
+import { useI18n } from '../i18n/I18nProvider'
 import {
   ViewerController,
   ViewerUnavailableError,
@@ -46,6 +47,7 @@ export function ViewerStage({
   posterUrl,
   posterPortraitUrl,
 }: ViewerStageProps) {
+  const { messages } = useI18n()
   const stageRef = useRef<HTMLDivElement>(null)
   const compositionFrameRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -194,7 +196,7 @@ export function ViewerStage({
         {showModelStill ? (
           <picture aria-hidden="true" className="model-still">
             <img
-              alt={`${label}的透明背景静态模型图`}
+              alt={messages.viewer.stillAlt(label)}
               decoding="async"
               fetchPriority="high"
               src={previewUrl}
@@ -214,17 +216,17 @@ export function ViewerStage({
             </span>
             <strong>
               {loadingPhase === 'preparing'
-                ? '正在打开 3D 模型…'
+                ? messages.viewer.preparing
                 : loadingPhase === 'downloading'
                   ? loadingPercent === null
-                    ? '正在下载 3D 模型…'
-                    : `正在下载 3D 模型 · ${loadingPercent}%`
+                    ? messages.viewer.downloading
+                    : messages.viewer.downloadingPercent(loadingPercent)
                   : loadingPhase === 'checking-cache'
-                    ? '正在查找 3D 模型…'
-                    : '正在请第一位朋友出来……'}
+                    ? messages.viewer.checkingCache
+                    : messages.viewer.invitingFirst}
             </strong>
             <progress
-              aria-label="3D 模型加载进度"
+              aria-label={messages.viewer.progressLabel}
               className="model-load-progress"
               max={100}
               {...(loadingPhase !== 'downloading' || loadingPercent === null
@@ -235,19 +237,19 @@ export function ViewerStage({
         ) : null}
         {modelReady ? (
           <p aria-hidden="true" className="model-gesture-hint">
-            拖动旋转，滚动或双指缩放
+            {messages.viewer.gestureHint}
           </p>
         ) : null}
         {failureMessage ? (
           <div className="model-fallback" role="status">
-            <strong>今天先看看它的静态模型吧</strong>
+            <strong>{messages.viewer.fallbackTitle}</strong>
             <span>{failureMessage}</span>
             <button
               className="friendly-button friendly-button--small"
               onClick={onRetry}
               type="button"
             >
-              重新加载模型
+              {messages.viewer.retry}
             </button>
           </div>
         ) : null}

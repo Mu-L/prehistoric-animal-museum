@@ -1,4 +1,6 @@
+import { createReviewedEnglishNarrationProvenance } from '../../provenance-helpers'
 import type { AssetProvenance } from '../../types'
+import { en } from './content.en'
 
 export const provenance = [
   {
@@ -229,5 +231,6 @@ export const provenance = [
     "evidencePaths": [
       "provenance/LICENSES/narration-rights.txt"
     ]
-  }
+  },
+  createReviewedEnglishNarrationProvenance('rhamphorhynchus', en),
 ] as const satisfies readonly [AssetProvenance, ...AssetProvenance[]]

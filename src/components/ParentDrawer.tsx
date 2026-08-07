@@ -2,7 +2,9 @@ import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { ChevronDown, X } from 'lucide-react'
 import { GITHUB_LICENSING_URL, GITHUB_REPOSITORY_URL } from '../github'
+import { useI18n } from '../i18n/I18nProvider'
 import { IconButton } from './IconButton'
+import { LanguageMenu } from './LanguageMenu'
 
 export interface ParentReviewFacts {
   readonly badge: string
@@ -65,6 +67,7 @@ export function ParentDrawer({
   returnFocusTo,
   showReviewDetails = false,
 }: ParentDrawerProps) {
+  const { locale, messages } = useI18n()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const drawerRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -173,16 +176,19 @@ export function ParentDrawer({
         <div className="drawer-handle" aria-hidden="true" />
         <header className="drawer-header">
           <div>
-            <p className="drawer-eyebrow">一起了解更多</p>
-            <h2 id={titleId}>给家长的资料</h2>
+            <p className="drawer-eyebrow">{messages.parent.eyebrow}</p>
+            <h2 id={titleId}>{messages.parent.title}</h2>
           </div>
-          <IconButton
-            hideTooltipOnFocus
-            icon={X}
-            label="关闭家长资料"
-            onClick={onClose}
-            ref={closeButtonRef}
-          />
+          <div className="drawer-header__actions">
+            <LanguageMenu />
+            <IconButton
+              hideTooltipOnFocus
+              icon={X}
+              label={messages.parent.close}
+              onClick={onClose}
+              ref={closeButtonRef}
+            />
+          </div>
         </header>
         <div
           aria-describedby={showScrollCue ? scrollHintId : undefined}
@@ -192,25 +198,27 @@ export function ParentDrawer({
           <div>
             <dl className="fact-grid">
               <div>
-                <dt>生活时期</dt>
+                <dt>{messages.parent.period}</dt>
                 <dd>{facts.period}</dd>
               </div>
               <div>
-                <dt>发现地区</dt>
-                <dd>{facts.discoveryRegions.join('、')}</dd>
+                <dt>{messages.parent.regions}</dt>
+                <dd>{messages.parent.joinRegions(facts.discoveryRegions)}</dd>
               </div>
               <div>
                 <dt>{facts.sizeLabel}</dt>
                 <dd>{facts.size}</dd>
               </div>
               <div>
-                <dt>食性</dt>
+                <dt>{messages.parent.diet}</dt>
                 <dd>{facts.diet}</dd>
               </div>
               <div className="fact-grid__wide">
-                <dt>分类提示</dt>
+                <dt>{messages.parent.classification}</dt>
                 <dd>
-                  {facts.classification}。{facts.classificationNote}
+                  {facts.classification}
+                  {locale === 'zh-CN' ? '。' : '. '}
+                  {facts.classificationNote}
                 </dd>
               </div>
             </dl>
@@ -239,12 +247,12 @@ export function ParentDrawer({
               </section>
             ) : null}
             <div className="narration-transcript">
-              <p className="drawer-eyebrow">一起听的时候也能看</p>
-              <h3>介绍文稿</h3>
-              <p>{facts.narrationScript.join('')}</p>
+              <p className="drawer-eyebrow">{messages.parent.eyebrow}</p>
+              <h3>{messages.parent.narration}</h3>
+              <p>{facts.narrationScript.join(locale === 'zh-CN' ? '' : ' ')}</p>
             </div>
             <details className="source-disclosure">
-              <summary>内容参考</summary>
+              <summary>{messages.parent.sources}</summary>
               <div className="source-list">
                 <ul>
                   {facts.sources.map((source) => (
@@ -258,7 +266,7 @@ export function ParentDrawer({
               </div>
             </details>
             <details className="source-disclosure">
-              <summary>模型素材与许可</summary>
+              <summary>{messages.parent.credits}</summary>
               <div className="source-list">
                 <ul>
                   {facts.assetCredits.map((credit) => (
@@ -270,7 +278,8 @@ export function ParentDrawer({
                       ) : (
                         displaySourceTitle(credit.sourceTitle)
                       )}
-                      ：{credit.attribution}{' '}
+                      {locale === 'zh-CN' ? '：' : ': '}
+                      {credit.attribution}{' '}
                       <a href={credit.licenseUrl} rel="noreferrer" target="_blank">
                         {credit.licenseName}
                       </a>
@@ -280,27 +289,23 @@ export function ParentDrawer({
               </div>
             </details>
             <details className="source-disclosure">
-              <summary>开源代码与分层许可</summary>
+              <summary>{messages.parent.licensing}</summary>
               <div className="source-list">
-                <p>
-                  开源代码允许依 AGPL-3.0 商业使用；原创博物馆内容按
-                  CC BY-NC-SA 4.0 非商业共享；品牌只独立防止冒充官方，
-                  第三方素材沿用原许可。
-                </p>
+                <p>{messages.parent.licensingBody}</p>
                 <div className="source-link-actions">
                   <a
                     href={GITHUB_REPOSITORY_URL}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    查看 GitHub 项目
+                    {messages.parent.repository}
                   </a>
                   <a
                     href={GITHUB_LICENSING_URL}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    查看完整许可说明
+                    {messages.parent.fullLicensing}
                   </a>
                 </div>
               </div>
@@ -308,7 +313,7 @@ export function ParentDrawer({
           </div>
         </div>
         <p className="sr-only" id={scrollHintId}>
-          资料还可以继续向上滑动。
+          {messages.parent.moreHint}
         </p>
         <div
           aria-hidden="true"
@@ -316,7 +321,7 @@ export function ParentDrawer({
           data-visible={showScrollCue}
         >
           <ChevronDown size={17} strokeWidth={2.2} />
-          <span>向上滑动查看更多</span>
+          <span>{messages.parent.more}</span>
         </div>
       </section>
     </div>,

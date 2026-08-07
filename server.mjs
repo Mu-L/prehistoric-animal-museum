@@ -13,7 +13,9 @@ const mimeTypes = new Map([
   ['.mp3', 'audio/mpeg'],
   ['.png', 'image/png'],
   ['.svg', 'image/svg+xml'],
+  ['.txt', 'text/plain; charset=utf-8'],
   ['.webp', 'image/webp'],
+  ['.xml', 'application/xml; charset=utf-8'],
 ])
 
 const args = process.argv.slice(2)
@@ -41,8 +43,8 @@ if (!existsSync(root) || !statSync(root).isDirectory()) {
   process.exit(1)
 }
 
-function sendFile(filePath, response, delayMs = 0) {
-  response.writeHead(200, {
+function sendFile(filePath, response, delayMs = 0, statusCode = 200) {
+  response.writeHead(statusCode, {
     'Content-Type': mimeTypes.get(extname(filePath).toLowerCase()) ?? 'application/octet-stream',
     'Cache-Control': filePath.endsWith('.html') ? 'no-cache' : 'public, max-age=3600',
     'X-Content-Type-Options': 'nosniff',
@@ -59,6 +61,20 @@ function sendFile(filePath, response, delayMs = 0) {
   createReadStream(filePath).pipe(response)
 }
 
+function sendNotFound(response) {
+  const notFoundPath = resolve(root, '404.html')
+  if (existsSync(notFoundPath) && statSync(notFoundPath).isFile()) {
+    sendFile(notFoundPath, response, 0, 404)
+    return
+  }
+
+  response.writeHead(404, {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'X-Content-Type-Options': 'nosniff',
+  })
+  response.end('Not found')
+}
+
 const server = createServer((request, response) => {
   const requestUrl = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`)
 
@@ -69,7 +85,7 @@ const server = createServer((request, response) => {
   }
 
   const relativePath = decodeURIComponent(requestUrl.pathname.slice(base.length))
-  const requestedPath = resolve(root, relativePath || 'index.html')
+  const requestedPath = resolve(root, relativePath)
   const isInsideRoot = requestedPath === root || requestedPath.startsWith(`${root}${sep}`)
 
   if (!isInsideRoot) {
@@ -88,13 +104,23 @@ const server = createServer((request, response) => {
     return
   }
 
-  if (!extname(relativePath)) {
-    sendFile(resolve(root, 'index.html'), response)
-    return
+  if (existsSync(requestedPath) && statSync(requestedPath).isDirectory()) {
+    if (!requestUrl.pathname.endsWith('/')) {
+      response.writeHead(301, {
+        Location: `${requestUrl.pathname}/${requestUrl.search}`,
+      })
+      response.end()
+      return
+    }
+
+    const directoryIndex = resolve(requestedPath, 'index.html')
+    if (existsSync(directoryIndex) && statSync(directoryIndex).isFile()) {
+      sendFile(directoryIndex, response)
+      return
+    }
   }
 
-  response.writeHead(404)
-  response.end('Not found')
+  sendNotFound(response)
 })
 
 server.listen(port, host, () => {

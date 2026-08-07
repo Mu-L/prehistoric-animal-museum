@@ -62,6 +62,7 @@ const canonicalVisualAssetPaths = [
 const canonicalSourcePaths = [
   'animal.ts',
   'content.zh-CN.ts',
+  'content.en.ts',
   'package.ts',
   'provenance.ts',
   ...canonicalVisualAssetPaths,
@@ -85,6 +86,10 @@ const assetLimits = {
     ceiling: 120 * KIBIBYTE,
   },
   'audio/narration.zh-CN.mp3': {
+    target: 200 * KIBIBYTE,
+    ceiling: 300 * KIBIBYTE,
+  },
+  'audio/narration.en.mp3': {
     target: 200 * KIBIBYTE,
     ceiling: 300 * KIBIBYTE,
   },
@@ -129,6 +134,365 @@ function readNumber(value: unknown): number | undefined {
 
 function records(value: unknown): ReadonlyArray<Record<string, unknown>> {
   return readArray(value).filter(isRecord)
+}
+
+interface LocaleCompletenessCandidate {
+  readonly id: string
+  readonly status: 'draft' | 'published'
+  readonly content: unknown
+  readonly narration: unknown
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+function isPositiveFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+}
+
+function isHttpsUrl(value: unknown): boolean {
+  if (!isNonEmptyString(value)) {
+    return false
+  }
+  try {
+    return new URL(value).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function incompletePublicContentPaths(value: Record<string, unknown>): string[] {
+  const paths: string[] = []
+  for (const field of [
+    'name',
+    'classificationLabel',
+    'visibleFeature',
+    'parentClassificationNote',
+  ] as const) {
+    if (!isNonEmptyString(value[field])) {
+      paths.push(field)
+    }
+  }
+
+  const narration = isRecord(value.narration) ? value.narration : {}
+  const sentences = readArray(narration.sentences)
+  if (
+    sentences.length !== 2 ||
+    !sentences.every(isNonEmptyString)
+  ) {
+    paths.push('narration.sentences')
+  }
+  const pronunciation = readArray(narration.pronunciation)
+  if (
+    pronunciation.length === 0 ||
+    !pronunciation.every(
+      (entry) =>
+        isRecord(entry) &&
+        isNonEmptyString(entry.text) &&
+        isNonEmptyString(entry.reading) &&
+        (entry.note === undefined || isNonEmptyString(entry.note)),
+    )
+  ) {
+    paths.push('narration.pronunciation')
+  }
+
+  const facts = isRecord(value.facts) ? value.facts : {}
+  if (!isNonEmptyString(facts.period)) {
+    paths.push('facts.period')
+  }
+  const discoveryRegions = readArray(facts.discoveryRegions)
+  if (
+    discoveryRegions.length === 0 ||
+    !discoveryRegions.every(isNonEmptyString)
+  ) {
+    paths.push('facts.discoveryRegions')
+  }
+  if (
+    !['herbivore', 'carnivore', 'omnivore', 'unknown'].includes(
+      readString(facts.diet) ?? '',
+    )
+  ) {
+    paths.push('facts.diet')
+  }
+  const size = isRecord(facts.size) ? facts.size : {}
+  const sizeKind = readString(size.kind)
+  if (
+    ![
+      'body-length',
+      'shoulder-height',
+      'wingspan',
+      'group-range',
+    ].includes(sizeKind ?? '') ||
+    !isPositiveFiniteNumber(size.minMeters) ||
+    !isPositiveFiniteNumber(size.maxMeters) ||
+    (isPositiveFiniteNumber(size.minMeters) &&
+      isPositiveFiniteNumber(size.maxMeters) &&
+      size.maxMeters < size.minMeters) ||
+    (sizeKind === 'group-range' && !isNonEmptyString(size.note))
+  ) {
+    paths.push('facts.size')
+  }
+
+  const sources = readArray(value.sources)
+  if (
+    sources.length < 1 ||
+    sources.length > 3 ||
+    !sources.every(
+      (source) =>
+        isRecord(source) &&
+        isNonEmptyString(source.title) &&
+        isHttpsUrl(source.url) &&
+        isNonEmptyString(source.accessedOn) &&
+        isoDatePattern.test(source.accessedOn),
+    )
+  ) {
+    paths.push('sources')
+  }
+
+  const editorial = isRecord(value.editorial) ? value.editorial : {}
+  if (!isNonEmptyString(editorial.editedBy)) {
+    paths.push('editorial.editedBy')
+  }
+  if (!isNonEmptyString(editorial.reviewedBy)) {
+    paths.push('editorial.reviewedBy')
+  }
+  if (
+    !isNonEmptyString(editorial.reviewedOn) ||
+    !isoDatePattern.test(editorial.reviewedOn)
+  ) {
+    paths.push('editorial.reviewedOn')
+  }
+  if (
+    !Array.isArray(editorial.uncertaintyNotes) ||
+    !editorial.uncertaintyNotes.every(isNonEmptyString)
+  ) {
+    paths.push('editorial.uncertaintyNotes')
+  }
+
+  return paths
+}
+
+interface PublicTextEntry {
+  readonly path: string
+  readonly value: string
+}
+
+function publicTextEntries(value: Record<string, unknown>): PublicTextEntry[] {
+  const entries: PublicTextEntry[] = []
+  const add = (path: string, candidate: unknown) => {
+    if (isNonEmptyString(candidate)) {
+      entries.push({ path, value: candidate.trim() })
+    }
+  }
+  for (const field of [
+    'name',
+    'classificationLabel',
+    'visibleFeature',
+    'parentClassificationNote',
+  ] as const) {
+    add(field, value[field])
+  }
+
+  const narration = isRecord(value.narration) ? value.narration : {}
+  readArray(narration.sentences).forEach((sentence, index) =>
+    add(`narration.sentences.${index}`, sentence),
+  )
+  records(narration.pronunciation).forEach((entry, index) => {
+    add(`narration.pronunciation.${index}.text`, entry.text)
+    add(`narration.pronunciation.${index}.reading`, entry.reading)
+    add(`narration.pronunciation.${index}.note`, entry.note)
+  })
+
+  const facts = isRecord(value.facts) ? value.facts : {}
+  add('facts.period', facts.period)
+  readArray(facts.discoveryRegions).forEach((region, index) =>
+    add(`facts.discoveryRegions.${index}`, region),
+  )
+  const size = isRecord(facts.size) ? facts.size : {}
+  add('facts.size.note', size.note)
+
+  const editorial = isRecord(value.editorial) ? value.editorial : {}
+  readArray(editorial.uncertaintyNotes).forEach((note, index) =>
+    add(`editorial.uncertaintyNotes.${index}`, note),
+  )
+  return entries
+}
+
+const hanCharacterPattern = /\p{Script=Han}/u
+const americanSpellingPattern =
+  /\b(?:behaviors?|catalogs?|cataloged|cataloging|centers?|centered|centering|colors?|colored|coloring|colorful|favorites?|gray|grays|recognized?|recognizes|recognizing|organized?|organizes|organizing|theaters?|traveled|traveling)\b/iu
+
+function publicTextFingerprint(value: Record<string, unknown>): string {
+  return publicTextEntries(value)
+    .map(({ value: text }) => text.normalize('NFKC').replace(/\s+/g, ' ').trim())
+    .join('\u241e')
+}
+
+export function validateLocaleCompleteness(
+  definition: LocaleCompletenessCandidate,
+): ValidationIssue[] {
+  if (definition.status === 'draft') {
+    return []
+  }
+
+  const issues: ValidationIssue[] = []
+  const content = isRecord(definition.content) ? definition.content : {}
+  const narration = isRecord(definition.narration)
+    ? definition.narration
+    : {}
+
+  for (const locale of ['zh-CN', 'en'] as const) {
+    const localeContent = content[locale]
+    if (!isRecord(localeContent)) {
+      issues.push(
+        issue(
+          'error',
+          'PUBLISHED_LOCALE_CONTENT_MISSING',
+          `已发布动物必须提供完整的 ${locale} 公开内容。`,
+          { animalId: definition.id, path: `content.${locale}` },
+        ),
+      )
+    } else {
+      for (const incompletePath of incompletePublicContentPaths(localeContent)) {
+        issues.push(
+          issue(
+            'error',
+            'PUBLISHED_LOCALE_CONTENT_INCOMPLETE',
+            `已发布动物的 ${locale} 公开内容字段不完整：${incompletePath}。`,
+            {
+              animalId: definition.id,
+              path: `content.${locale}.${incompletePath}`,
+            },
+          ),
+        )
+      }
+      const publicText = publicTextEntries(localeContent)
+      if (
+        locale === 'zh-CN' &&
+        !publicText.some(({ value: text }) => hanCharacterPattern.test(text))
+      ) {
+        issues.push(
+          issue(
+            'error',
+            'PUBLISHED_LOCALE_LANGUAGE_INVALID',
+            'zh-CN 公开内容必须是简体中文，不能复制英文内容充数。',
+            { animalId: definition.id, path: 'content.zh-CN' },
+          ),
+        )
+      }
+      if (locale === 'en') {
+        for (const entry of publicText) {
+          if (hanCharacterPattern.test(entry.value)) {
+            issues.push(
+              issue(
+                'error',
+                'PUBLISHED_LOCALE_LANGUAGE_INVALID',
+                `英文公开内容包含汉字：${entry.path}。`,
+                {
+                  animalId: definition.id,
+                  path: `content.en.${entry.path}`,
+                },
+              ),
+            )
+          }
+          if (americanSpellingPattern.test(entry.value)) {
+            issues.push(
+              issue(
+                'error',
+                'PUBLISHED_ENGLISH_STYLE_INVALID',
+                `英文公开内容必须使用英式拼写：${entry.path}。`,
+                {
+                  animalId: definition.id,
+                  path: `content.en.${entry.path}`,
+                },
+              ),
+            )
+          }
+        }
+      }
+    }
+
+    const localeNarration = narration[locale]
+    if (!isRecord(localeNarration) || localeNarration.status !== 'ready') {
+      issues.push(
+        issue(
+          'error',
+          'PUBLISHED_LOCALE_NARRATION_NOT_READY',
+          `已发布动物必须提供通过听审的 ${locale} 旁白。`,
+          { animalId: definition.id, path: `audio/narration.${locale}.mp3` },
+        ),
+      )
+    } else {
+      const expectedSourcePath = `audio/narration.${locale}.mp3`
+      if (localeNarration.sourcePath !== expectedSourcePath) {
+        issues.push(
+          issue(
+            'error',
+            'PUBLISHED_LOCALE_NARRATION_INVALID',
+            `${locale} 旁白必须使用规范路径 ${expectedSourcePath}。`,
+            { animalId: definition.id, path: `narration.${locale}.sourcePath` },
+          ),
+        )
+      }
+      if (localeNarration.mimeType !== 'audio/mpeg') {
+        issues.push(
+          issue(
+            'error',
+            'PUBLISHED_LOCALE_NARRATION_INVALID',
+            `${locale} 旁白必须声明 audio/mpeg。`,
+            { animalId: definition.id, path: `narration.${locale}.mimeType` },
+          ),
+        )
+      }
+      const expectedLanguage = locale === 'zh-CN' ? 'Chinese' : 'English'
+      if (
+        localeNarration.speaker !== 'Serena' ||
+        localeNarration.language !== expectedLanguage
+      ) {
+        issues.push(
+          issue(
+            'error',
+            'PUBLISHED_LOCALE_NARRATION_VOICE_INVALID',
+            `${locale} 旁白必须使用 Serena，并声明 ${expectedLanguage}。`,
+            { animalId: definition.id, path: `narration.${locale}` },
+          ),
+        )
+      }
+      if (localeNarration.humanReviewStatus !== 'approved') {
+        issues.push(
+          issue(
+            'error',
+            'PUBLISHED_LOCALE_NARRATION_REVIEW_MISSING',
+            `已发布动物的 ${locale} 旁白必须有明确的完整听审通过记录。`,
+            {
+              animalId: definition.id,
+              path: `narration.${locale}.humanReviewStatus`,
+            },
+          ),
+        )
+      }
+    }
+  }
+
+  const zhCNContent = content['zh-CN']
+  const englishContent = content.en
+  if (
+    isRecord(zhCNContent) &&
+    isRecord(englishContent) &&
+    publicTextFingerprint(zhCNContent) === publicTextFingerprint(englishContent)
+  ) {
+    issues.push(
+      issue(
+        'error',
+        'PUBLISHED_LOCALE_CONTENT_DUPLICATED',
+        '中英文公开内容不能是同一份文本。',
+        { animalId: definition.id, path: 'content.en' },
+      ),
+    )
+  }
+
+  return issues
 }
 
 function byteAt(buffer: Buffer, offset: number): number {
@@ -496,7 +860,7 @@ async function pathExists(path: string): Promise<boolean> {
 function validateContentFields(
   definition: AnimalPackageDefinition,
 ): ValidationIssue[] {
-  const issues: ValidationIssue[] = []
+  const issues: ValidationIssue[] = [...validateLocaleCompleteness(definition)]
   const context = { animalId: definition.id }
   const content = definition.content['zh-CN']
 
@@ -556,6 +920,17 @@ function validateContentFields(
       ),
     )
   }
+  if (!content) {
+    issues.push(
+      issue(
+        definition.status === 'published' ? 'error' : 'warning',
+        'ZH_CONTENT_MISSING',
+        '动物包缺少简体中文内容。',
+        context,
+      ),
+    )
+    return issues
+  }
   if (
     content.facts.size.minMeters <= 0 ||
     content.facts.size.maxMeters < content.facts.size.minMeters
@@ -577,32 +952,43 @@ function validateContentFields(
       ),
     )
   }
-  if (content.sources.length < 1 || content.sources.length > 3) {
-    issues.push(
-      issue(
-        'error',
-        'INVALID_SOURCE_COUNT',
-        '中文内容必须包含 1–3 个入门参考来源。',
-        context,
-      ),
-    )
-  }
-  for (const source of content.sources) {
-    if (!isoDatePattern.test(source.accessedOn)) {
+  for (const locale of ['zh-CN', 'en'] as const) {
+    const localeContent = definition.content[locale]
+    if (!localeContent) {
+      continue
+    }
+    if (localeContent.sources.length < 1 || localeContent.sources.length > 3) {
       issues.push(
         issue(
           'error',
-          'INVALID_SOURCE_DATE',
-          `来源 “${source.title}” 的访问日期无效。`,
+          'INVALID_SOURCE_COUNT',
+          `${locale} 内容必须包含 1–3 个入门参考来源。`,
           context,
         ),
       )
     }
-  }
-  if (!isoDatePattern.test(content.editorial.reviewedOn)) {
-    issues.push(
-      issue('error', 'INVALID_REVIEW_DATE', '内容复核日期无效。', context),
-    )
+    for (const source of localeContent.sources) {
+      if (!isoDatePattern.test(source.accessedOn)) {
+        issues.push(
+          issue(
+            'error',
+            'INVALID_SOURCE_DATE',
+            `${locale} 来源 “${source.title}” 的访问日期无效。`,
+            context,
+          ),
+        )
+      }
+    }
+    if (!isoDatePattern.test(localeContent.editorial.reviewedOn)) {
+      issues.push(
+        issue(
+          'error',
+          'INVALID_REVIEW_DATE',
+          `${locale} 内容复核日期无效。`,
+          context,
+        ),
+      )
+    }
   }
 
   return issues
@@ -654,27 +1040,30 @@ async function validatePublishedPackage(
   }
 
   const expectedRuntimePaths = new Set<string>(canonicalVisualAssetPaths)
-  if (definition.narration.status === 'ready') {
-    expectedRuntimePaths.add(definition.narration.sourcePath)
-    if (!(await pathExists(join(directoryPath, definition.narration.sourcePath)))) {
+  for (const locale of ['zh-CN', 'en'] as const) {
+    const narration = definition.narration[locale]
+    if (!narration || narration.status !== 'ready') {
+      issues.push(
+        issue(
+          'error',
+          'PUBLISHED_LOCALE_NARRATION_NOT_READY',
+          `已发布动物必须提供通过听审的 ${locale} 旁白。`,
+          { ...context, path: `audio/narration.${locale}.mp3` },
+        ),
+      )
+      continue
+    }
+    expectedRuntimePaths.add(narration.sourcePath)
+    if (!(await pathExists(join(directoryPath, narration.sourcePath)))) {
       issues.push(
         issue(
           'error',
           'NARRATION_FILE_MISSING',
-          `已声明完成的介绍音频不存在：${definition.narration.sourcePath}。`,
-          { ...context, path: definition.narration.sourcePath },
+          `已声明完成的介绍音频不存在：${narration.sourcePath}。`,
+          { ...context, path: narration.sourcePath },
         ),
       )
     }
-  } else {
-    issues.push(
-      issue(
-        'manual-gate',
-        'NARRATION_PENDING_REVIEW',
-        definition.narration.gate.reason,
-        { ...context, path: definition.narration.expectedPath },
-      ),
-    )
   }
 
   const provenanceByPath = new Map<string, AssetProvenance>()
@@ -690,6 +1079,100 @@ async function validatePublishedPackage(
       )
     }
     provenanceByPath.set(record.assetPath, record)
+  }
+
+  const narrationRecords = (['zh-CN', 'en'] as const).map((locale) => ({
+    locale,
+    record: provenanceByPath.get(`audio/narration.${locale}.mp3`),
+  }))
+  const [zhCNNarrationRecord, englishNarrationRecord] = narrationRecords.map(
+    ({ record }) => record,
+  )
+  if (
+    zhCNNarrationRecord &&
+    englishNarrationRecord &&
+    zhCNNarrationRecord.runtime.sha256 === englishNarrationRecord.runtime.sha256
+  ) {
+    issues.push(
+      issue(
+        'error',
+        'NARRATION_LOCALES_IDENTICAL',
+        '中英文旁白不能使用同一份音频。',
+        { ...context, path: 'audio/narration.en.mp3' },
+      ),
+    )
+  }
+
+  for (const { locale, record } of narrationRecords) {
+    if (!record) {
+      continue
+    }
+    const expectedScript = definition.content[locale]?.narration.sentences.join(
+      locale === 'zh-CN' ? '' : ' ',
+    )
+    const generatedSource =
+      record.source.type === 'generated' ? record.source : undefined
+    if (
+      record.kind !== 'narration' ||
+      !generatedSource ||
+      !generatedSource.tool.includes('Qwen3-TTS') ||
+      !generatedSource.revision?.includes('Serena')
+    ) {
+      issues.push(
+        issue(
+          'error',
+          'NARRATION_GENERATION_EVIDENCE_INVALID',
+          `${locale} 旁白必须记录 Qwen3-TTS Serena 的离线生成证据。`,
+          { ...context, path: record.assetPath },
+        ),
+      )
+    } else if (
+      expectedScript &&
+      generatedSource.prompt.normalize('NFKC').replace(/\s+/g, ' ').trim() !==
+        expectedScript.normalize('NFKC').replace(/\s+/g, ' ').trim()
+    ) {
+      issues.push(
+        issue(
+          'error',
+          'NARRATION_SCRIPT_MISMATCH',
+          `${locale} 旁白来源记录没有绑定当前两句公开脚本。`,
+          { ...context, path: record.assetPath },
+        ),
+      )
+    }
+
+    const availableEvidence = await Promise.all(
+      record.evidencePaths.map(async (evidencePath) => {
+        const absoluteEvidencePath = join(directoryPath, evidencePath)
+        return (await pathExists(absoluteEvidencePath))
+          ? readFile(absoluteEvidencePath, 'utf8')
+          : ''
+      }),
+    )
+    const evidenceText = availableEvidence.join('\n')
+    const listeningApproved =
+      /human listening review:\s*approved/iu.test(evidenceText) ||
+      /listened to and approved by the project owner/iu.test(evidenceText)
+    const languageEvidence = `${generatedSource?.title ?? ''}\n${evidenceText}`
+    const languageRecorded =
+      locale === 'zh-CN'
+        ? /language:\s*Chinese|Mandarin narration/iu.test(languageEvidence)
+        : /language:\s*English|English narration/iu.test(languageEvidence)
+    if (
+      !/Serena/iu.test(evidenceText) ||
+      !listeningApproved ||
+      !/project owner/iu.test(evidenceText) ||
+      !languageRecorded
+    ) {
+      issues.push(
+        issue(
+          'error',
+          'NARRATION_LISTENING_EVIDENCE_INVALID',
+          `${locale} 旁白缺少 Serena 与项目所有者完整听审通过证据。`,
+          { ...context, path: record.assetPath },
+        ),
+      )
+    }
   }
 
   for (const relativePath of expectedRuntimePaths) {

@@ -12,6 +12,7 @@ import {
   inspectWebp,
   sha256,
   validateCollection,
+  validateLocaleCompleteness,
   validateRecordedAsset,
 } from '../scripts/content-validation'
 
@@ -160,5 +161,156 @@ describe('collection validation utility', () => {
         'MAIN_COLLECTION_NOT_LOOPING',
       ]),
     )
+  })
+})
+
+describe('published locale completeness', () => {
+  const approvedDefinition = {
+    ...animalDefinition,
+    narration: {
+      ...animalDefinition.narration,
+      en: {
+        ...animalDefinition.narration.en,
+        humanReviewStatus: 'approved',
+      },
+    },
+  }
+
+  it('rejects empty locale shells and ready narration records without canonical metadata', () => {
+    const issues = validateLocaleCompleteness({
+      id: 'empty-shell',
+      status: 'published',
+      content: { 'zh-CN': {}, en: {} },
+      narration: {
+        'zh-CN': { status: 'ready' },
+        en: { status: 'ready' },
+      },
+    })
+
+    expect(issues.map(({ code }) => code)).toEqual(
+      expect.arrayContaining([
+        'PUBLISHED_LOCALE_CONTENT_INCOMPLETE',
+        'PUBLISHED_LOCALE_NARRATION_INVALID',
+      ]),
+    )
+    expect(issues.map(({ path }) => path)).toEqual(
+      expect.arrayContaining([
+        'content.zh-CN.name',
+        'content.en.narration.sentences',
+        'narration.zh-CN.sourcePath',
+        'narration.en.mimeType',
+      ]),
+    )
+  })
+
+  it('accepts the complete production locale records', () => {
+    expect(validateLocaleCompleteness(approvedDefinition)).toEqual([])
+  })
+
+  it('keeps a generated English track out of publication until listening is approved', () => {
+    const pendingDefinition = {
+      ...approvedDefinition,
+      narration: {
+        ...approvedDefinition.narration,
+        en: {
+          ...approvedDefinition.narration.en,
+          humanReviewStatus: 'pending',
+        },
+      },
+    }
+    expect(
+      validateLocaleCompleteness(pendingDefinition).map(({ code }) => code),
+    ).toContain('PUBLISHED_LOCALE_NARRATION_REVIEW_MISSING')
+  })
+
+  it('rejects copied Chinese content and American spelling in the English edition', () => {
+    const copied = validateLocaleCompleteness({
+      ...approvedDefinition,
+      content: {
+        'zh-CN': animalDefinition.content['zh-CN'],
+        en: animalDefinition.content['zh-CN'],
+      },
+    })
+    expect(copied.map(({ code }) => code)).toEqual(
+      expect.arrayContaining([
+        'PUBLISHED_LOCALE_LANGUAGE_INVALID',
+        'PUBLISHED_LOCALE_CONTENT_DUPLICATED',
+      ]),
+    )
+
+    const americanSpelling = validateLocaleCompleteness({
+      ...approvedDefinition,
+      content: {
+        ...approvedDefinition.content,
+        en: {
+          ...approvedDefinition.content.en,
+          visibleFeature: 'Look at the color and behavior of this animal.',
+        },
+      },
+    })
+    expect(americanSpelling.map(({ code }) => code)).toContain(
+      'PUBLISHED_ENGLISH_STYLE_INVALID',
+    )
+  })
+
+  it('requires Serena with the locale-bound language declaration', () => {
+    const issues = validateLocaleCompleteness({
+      ...approvedDefinition,
+      narration: {
+        ...approvedDefinition.narration,
+        en: {
+          ...approvedDefinition.narration.en,
+          speaker: 'Aiden',
+          language: 'Chinese',
+        },
+      },
+    })
+    expect(issues.map(({ code }) => code)).toContain(
+      'PUBLISHED_LOCALE_NARRATION_VOICE_INVALID',
+    )
+  })
+
+  it('blocks a published package unless both public locales and narrations are complete', () => {
+    const incomplete = {
+      ...animalDefinition,
+      content: { 'zh-CN': animalDefinition.content['zh-CN'] },
+      narration: {
+        'zh-CN': {
+          status: 'ready',
+          sourcePath: 'audio/narration.zh-CN.mp3',
+          mimeType: 'audio/mpeg',
+        },
+        en: {
+          status: 'pending-review',
+          expectedPath: 'audio/narration.en.mp3',
+          message: 'Narration is being prepared',
+          gate: {
+            id: 'final-narration',
+            locale: 'en',
+            reason: 'English listening review is pending.',
+          },
+        },
+      },
+    }
+
+    expect(
+      validateLocaleCompleteness(incomplete).map(({ code }) => code),
+    ).toEqual(
+      expect.arrayContaining([
+        'PUBLISHED_LOCALE_CONTENT_MISSING',
+        'PUBLISHED_LOCALE_NARRATION_NOT_READY',
+      ]),
+    )
+  })
+
+  it('allows an incomplete draft while keeping it out of the public collection', () => {
+    expect(
+      validateLocaleCompleteness({
+        ...animalDefinition,
+        status: 'draft',
+        content: { 'zh-CN': animalDefinition.content['zh-CN'] },
+        narration: {},
+      }),
+    ).toEqual([])
   })
 })

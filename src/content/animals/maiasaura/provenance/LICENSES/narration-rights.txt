@@ -17,3 +17,17 @@ https://qwen.ai/blog/?id=qwen3tts-0115
 
 The owner approves public distribution of this reviewed MP3. The public
 notice identifies the model, Serena speaker, AI synthesis, and model license.
+
+English narration approval
+
+Locale: en
+Speaker: Serena
+Language: English
+Generated: 2026-08-07
+Runtime bytes: 146925
+Runtime SHA-256: baeba1370388b5299cd7e7dd28ec4830e89ce9f77aeb9c66920738ecd9bb4bc1
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-07
+
+Script: This is Maiasaura, a plant-eating, duck-billed dinosaur from Late Cretaceous North America. Look at its broad beak and strong hind legs. Can you imagine it walking slowly near a nesting ground?

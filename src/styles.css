@@ -961,7 +961,7 @@ a:focus-visible {
   border-style: dashed;
 }
 
-h1 {
+.animal-title {
   margin: 0;
   color: #214c3c;
   font-family:
@@ -1898,6 +1898,19 @@ h1 {
   padding: 24px 26px 12px;
 }
 
+.drawer-header__actions,
+.collection-sheet__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.drawer-header > :first-child,
+.collection-sheet__header > :first-child {
+  min-width: 0;
+}
+
 .drawer-header h2 {
   margin: 3px 0 0;
   font-family:
@@ -2146,11 +2159,18 @@ h1 {
   background: rgb(235 245 247 / 96%);
 }
 
-.focus-exit {
+.focus-actions {
   position: fixed;
   z-index: 100;
   top: max(14px, env(safe-area-inset-top));
   right: max(14px, env(safe-area-inset-right));
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.focus-actions .focus-exit {
+  position: static;
 }
 
 .focus-return-hint {
@@ -2552,7 +2572,7 @@ h1 {
     margin-bottom: 3px;
   }
 
-  h1 {
+  .animal-title {
     font-size: clamp(2.75rem, 7vw, 3.5rem);
   }
 
@@ -2696,7 +2716,7 @@ h1 {
     display: none;
   }
 
-  h1 {
+  .animal-title {
     grid-column: 1;
     font-size: clamp(2.15rem, 10.4vw, 2.55rem);
     overflow-wrap: anywhere;
@@ -2887,7 +2907,7 @@ h1 {
     min-height: 0;
   }
 
-  h1 {
+  .animal-title {
     font-size: 2.05rem;
   }
 
@@ -2911,7 +2931,7 @@ h1 {
   }
 }
 
-@media (max-height: 500px) and (orientation: landscape) {
+@media (max-height: 560px) and (orientation: landscape) {
   .museum-experience {
     grid-template:
       "story stage" minmax(0, 1fr) /
@@ -2965,7 +2985,7 @@ h1 {
     display: none;
   }
 
-  h1 {
+  .animal-title {
     font-size: clamp(2rem, 9vh, 2.55rem);
   }
 
@@ -3436,6 +3456,10 @@ h1 {
   -webkit-backdrop-filter: blur(10px);
 }
 
+.stage-actions > .language-menu {
+  margin-inline-end: 6px;
+}
+
 .stage-actions .icon-button {
   border-color: transparent;
   border-radius: 13px;
@@ -3887,7 +3911,7 @@ h1 {
     margin: 0;
   }
 
-  h1 {
+  .animal-title {
     grid-column: 1;
     font-size: clamp(2.65rem, 5.8vw, 3.5rem);
     white-space: nowrap;
@@ -3962,7 +3986,7 @@ h1 {
     font-size: 0.62rem;
   }
 
-  h1 {
+  .animal-title {
     font-size: clamp(1.9rem, 8.4vw, 2.2rem);
     line-height: 1;
   }
@@ -4156,7 +4180,7 @@ h1 {
     min-height: 102px;
   }
 
-  h1 {
+  .animal-title {
     font-size: 1.82rem;
   }
 
@@ -4181,7 +4205,7 @@ h1 {
   }
 }
 
-@media (max-height: 500px) and (orientation: landscape) {
+@media (max-height: 560px) and (orientation: landscape) {
   .museum-experience {
     grid-template:
       "story stage" minmax(0, 1fr) /
@@ -4208,7 +4232,7 @@ h1 {
     margin-top: 8px;
   }
 
-  h1 {
+  .animal-title {
     font-size: clamp(1.92rem, 8.4vh, 2.35rem);
   }
 
@@ -4467,7 +4491,7 @@ h1 {
   }
 }
 
-@media (max-height: 500px) and (orientation: landscape) {
+@media (max-height: 560px) and (orientation: landscape) {
   .museum-header {
     gap: 5px;
   }
@@ -4485,6 +4509,256 @@ h1 {
   }
 }
 
+/* Locale-specific typography and language control */
+html[data-locale="en"] {
+  font-family:
+    "Nunito Variable", "Avenir Next", Avenir, system-ui, sans-serif;
+}
+
+html[data-locale="en"] .animal-title,
+html[data-locale="en"] .drawer-header h2,
+html[data-locale="en"] .collection-sheet__header h2,
+html[data-locale="en"] .collection-card__copy strong {
+  font-family:
+    "Fredoka Variable", "Arial Rounded MT Bold", system-ui, sans-serif;
+  font-weight: 570;
+  letter-spacing: -0.018em;
+}
+
+.museum-experience[data-locale="en"] .animal-title {
+  font-size: clamp(2.45rem, 4.05vw, 3.7rem);
+  line-height: 1.02;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+  white-space: nowrap;
+}
+
+.museum-experience[data-locale="en"] .animal-eyebrow,
+.museum-experience[data-locale="en"] .museum-kicker {
+  letter-spacing: 0.035em;
+}
+
+.museum-experience[data-locale="en"] .animal-card strong,
+.museum-experience[data-locale="en"] .collection-card__copy strong {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+.museum-experience[data-locale="en"] .animal-rail {
+  grid-auto-columns: 144px;
+}
+
+.museum-experience[data-locale="en"] .animal-card strong {
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.language-menu {
+  position: relative;
+}
+
+.language-menu__trigger {
+  display: inline-flex;
+  width: 52px;
+  min-width: 52px;
+  height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 65%);
+  border-radius: 18px;
+  color: #214a33;
+  background: rgb(255 253 247 / 90%);
+  box-shadow:
+    0 8px 22px rgb(37 56 32 / 14%),
+    inset 0 1px rgb(255 255 255 / 78%);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 850;
+  backdrop-filter: blur(12px);
+}
+
+.language-menu__trigger:hover,
+.language-menu__trigger[aria-expanded="true"] {
+  background: rgb(255 255 255 / 96%);
+}
+
+.language-menu__popover {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 9px);
+  right: 0;
+  display: grid;
+  width: max-content;
+  min-width: 190px;
+  gap: 3px;
+  padding: 7px;
+  border: 1px solid rgb(48 77 62 / 13%);
+  border-radius: 16px;
+  background: rgb(255 253 247 / 97%);
+  box-shadow: 0 18px 45px rgb(28 46 37 / 22%);
+  backdrop-filter: blur(16px);
+}
+
+.language-menu__choice {
+  display: grid;
+  min-height: 48px;
+  grid-template-columns: 18px minmax(0, 1fr) 18px;
+  gap: 10px;
+  align-items: center;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 760;
+  text-align: left;
+}
+
+.language-menu__choice [lang="zh-CN"] {
+  font-family:
+    "Noto Sans SC Variable", "Noto Sans SC", "PingFang SC",
+    "Microsoft YaHei", system-ui, sans-serif;
+}
+
+.language-menu__choice [lang="en"] {
+  font-family:
+    "Nunito Variable", "Avenir Next", Avenir, system-ui, sans-serif;
+}
+
+.language-menu__choice:hover,
+.language-menu__choice:focus-visible {
+  background: color-mix(in srgb, var(--animal-accent-soft) 38%, white);
+}
+
+.language-menu__radio {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgb(44 75 60 / 45%);
+  border-radius: 50%;
+  background: #fffdf7;
+}
+
+.language-menu__selected-mark {
+  display: grid;
+  color: var(--leaf);
+  opacity: 0;
+  place-items: center;
+}
+
+.language-menu__choice[aria-checked="true"] {
+  color: #173b2b;
+  background: #e3eee5;
+  box-shadow: inset 3px 0 0 var(--leaf);
+  font-weight: 850;
+}
+
+.language-menu__choice[aria-checked="true"] .language-menu__radio {
+  border-color: var(--leaf);
+}
+
+.language-menu__choice[aria-checked="true"] .language-menu__radio::after {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--leaf);
+  content: "";
+}
+
+.language-menu__choice[aria-checked="true"] .language-menu__selected-mark {
+  opacity: 1;
+}
+
+@media (max-width: 1023px) and (orientation: portrait) {
+  .museum-experience[data-locale="en"] .animal-copy {
+    display: block;
+  }
+
+  .museum-experience[data-locale="en"] .animal-eyebrow {
+    position: static;
+    justify-content: flex-start;
+    margin-bottom: 3px;
+  }
+
+  .museum-experience[data-locale="en"] .child-intro {
+    margin-top: 5px;
+  }
+}
+
+@media (max-width: 767px) and (orientation: portrait) {
+  .museum-experience[data-locale="en"] .story-card {
+    min-height: 0;
+  }
+
+  .museum-experience[data-locale="en"] .animal-title {
+    font-size: clamp(1.62rem, 7.3vw, 2.05rem);
+    line-height: 1.04;
+  }
+
+  .museum-experience[data-locale="en"] .child-intro {
+    font-size: clamp(0.76rem, 3.35vw, 0.88rem);
+    line-height: 1.28;
+  }
+
+  .museum-experience[data-locale="en"] .animal-rail {
+    grid-auto-columns: 132px;
+  }
+
+  .museum-experience[data-locale="en"] .animal-card strong {
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+
+  html[data-locale="en"] .collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .language-menu__trigger {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .museum-experience[data-locale="en"] .animal-title {
+    font-size: clamp(1.48rem, 6.4vh, 1.9rem);
+    line-height: 1.02;
+  }
+
+  .museum-experience[data-locale="en"] .child-intro {
+    font-size: 0.66rem;
+    line-height: 1.2;
+  }
+
+  .museum-experience[data-locale="en"] .animal-rail {
+    grid-auto-columns: 112px;
+  }
+
+  .museum-experience[data-locale="en"] .animal-card strong {
+    font-size: 0.65rem;
+    line-height: 1.2;
+  }
+
+  .language-menu__trigger {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    border-radius: 13px;
+  }
+
+  .language-menu__popover {
+    top: 0;
+    right: calc(100% + 7px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -4492,7 +4766,7 @@ h1 {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 80ms !important;
+    transition: none !important;
   }
 
   .loading-orbit,

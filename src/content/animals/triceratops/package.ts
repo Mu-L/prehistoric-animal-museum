@@ -1,14 +1,15 @@
-import type { PublishedAnimalDefinition } from '../../types'
+import { definePublishedAnimal } from '../../types'
+import { en } from './content.en'
 import { zhCN } from './content.zh-CN'
 import { provenance } from './provenance'
 
-export const animalDefinition = {
+export const animalDefinition = definePublishedAnimal({
   id: 'triceratops',
   status: 'published',
   kind: 'dinosaur',
   habitat: 'land',
   atmosphere: 'plains',
-  content: { 'zh-CN': zhCN },
+  content: { 'zh-CN': zhCN, en },
   presentation: {
     cameraLightScale: 1.25,
     initialYawDegrees: -90,
@@ -22,9 +23,22 @@ export const animalDefinition = {
     speed: 0.9,
   },
   narration: {
-    status: 'ready',
-    sourcePath: 'audio/narration.zh-CN.mp3',
-    mimeType: 'audio/mpeg',
+    'zh-CN': {
+      status: 'ready',
+      sourcePath: 'audio/narration.zh-CN.mp3',
+      mimeType: 'audio/mpeg',
+      speaker: 'Serena',
+      language: 'Chinese',
+      humanReviewStatus: 'approved',
+    },
+    en: {
+      status: 'ready',
+      sourcePath: 'audio/narration.en.mp3',
+      mimeType: 'audio/mpeg',
+      speaker: 'Serena',
+      language: 'English',
+      humanReviewStatus: 'approved',
+    },
   },
   provenance,
-} satisfies PublishedAnimalDefinition
+})

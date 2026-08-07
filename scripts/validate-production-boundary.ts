@@ -2,6 +2,7 @@ import { readdir, readFile } from 'node:fs/promises'
 import { extname, join, relative } from 'node:path'
 
 import { mainCollection } from '../src/content/collections/main'
+import { supportedLocales } from '../src/i18n/locale'
 import { localReviewAssetPrefix } from './review-assets'
 import { unprefixedRouteMarker } from './review-server-security'
 
@@ -50,14 +51,16 @@ const glbFiles = files.filter((file) => extname(file) === '.glb')
 const mp3Files = files.filter((file) => extname(file) === '.mp3')
 const sourceMaps = files.filter((file) => extname(file) === '.map')
 const expectedAnimalAssetCount = mainCollection.animalIds.length
+const expectedNarrationAssetCount =
+  expectedAnimalAssetCount * supportedLocales.length
 if (glbFiles.length !== expectedAnimalAssetCount) {
   findings.push(
     `expected exactly ${expectedAnimalAssetCount} production GLBs; found ${glbFiles.length}`,
   )
 }
-if (mp3Files.length !== expectedAnimalAssetCount) {
+if (mp3Files.length !== expectedNarrationAssetCount) {
   findings.push(
-    `expected exactly ${expectedAnimalAssetCount} reviewed production MP3s; found ${mp3Files.length}`,
+    `expected exactly ${expectedNarrationAssetCount} reviewed locale MP3s; found ${mp3Files.length}`,
   )
 }
 if (sourceMaps.length !== 0) {

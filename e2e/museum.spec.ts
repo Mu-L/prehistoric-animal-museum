@@ -11,7 +11,10 @@ async function openMuseum(
 ): Promise<Locator> {
   const response = await page.goto(`.${query}`)
   expect(response?.ok()).toBe(true)
-  await expect(page.getByRole('heading', { level: 1, name: '剑龙' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { level: 1, name: '史前动物博物馆' }),
+  ).toBeVisible()
+  await expect(page.getByRole('heading', { level: 2, name: '剑龙' })).toBeVisible()
 
   const museum = page.locator('#museum-experience')
   await expect(museum).toBeVisible()
@@ -54,6 +57,209 @@ async function expectPrimaryTargetsAtLeast48Px(page: Page): Promise<void> {
     expect(box, `${name} should have a layout box`).not.toBeNull()
     expect(box?.width ?? 0, `${name} width`).toBeGreaterThanOrEqual(48)
     expect(box?.height ?? 0, `${name} height`).toBeGreaterThanOrEqual(48)
+  }
+}
+
+async function switchToEnglish(page: Page): Promise<void> {
+  await page
+    .getByRole('button', { name: '切换语言，当前简体中文' })
+    .click()
+  await page.getByRole('menuitemradio', { name: 'English' }).click()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  await expect(page.locator('#museum-experience')).toHaveAttribute(
+    'data-locale',
+    'en',
+  )
+}
+
+async function expectEnglishAnimalRailNamesContained(page: Page): Promise<void> {
+  await page.evaluate(() => document.fonts.ready.then(() => undefined))
+  const animalNameLayouts = await page.evaluate<
+    Array<{
+      cardBottom: number
+      cardLeft: number
+      cardRight: number
+      clientHeight: number
+      clientWidth: number
+      labelBottom: number
+      labelLeft: number
+      labelRight: number
+      lineCount: number
+      name: string
+      scrollHeight: number
+      scrollWidth: number
+      textLeft: number
+      textRight: number
+    }>
+  >(`(() =>
+    Array.from(
+      document.querySelectorAll(
+        '.animal-card:not([data-animal-id^="fixture-"]) strong'
+      )
+    ).map((label) => {
+      const range = document.createRange()
+      range.selectNodeContents(label)
+      const lineTops = new Set(
+        Array.from(range.getClientRects()).map((rect) => Math.round(rect.top))
+      )
+      const card = label.closest('.animal-card')
+      const cardBox = card?.getBoundingClientRect()
+      const labelBox = label.getBoundingClientRect()
+      const textRects = Array.from(range.getClientRects())
+      return {
+        cardBottom: cardBox?.bottom ?? Number.NEGATIVE_INFINITY,
+        cardLeft: cardBox?.left ?? Number.POSITIVE_INFINITY,
+        cardRight: cardBox?.right ?? Number.NEGATIVE_INFINITY,
+        clientHeight: label.clientHeight,
+        clientWidth: label.clientWidth,
+        labelBottom: labelBox.bottom,
+        labelLeft: labelBox.left,
+        labelRight: labelBox.right,
+        lineCount: lineTops.size,
+        name: label.textContent ?? '',
+        scrollHeight: label.scrollHeight,
+        scrollWidth: label.scrollWidth,
+        textLeft: Math.min(...textRects.map((rect) => rect.left)),
+        textRight: Math.max(...textRects.map((rect) => rect.right))
+      }
+    })
+  )()`)
+  expect(animalNameLayouts).toHaveLength(18)
+  const railFailures = animalNameLayouts.flatMap((layout) => {
+    const failures: string[] = []
+    if (layout.lineCount < 1 || layout.lineCount > 2) {
+      failures.push('uses more than two lines')
+    }
+    if (layout.scrollHeight > layout.clientHeight + 1) {
+      failures.push('is clipped vertically')
+    }
+    if (layout.scrollWidth > layout.clientWidth + 1) {
+      failures.push('is clipped horizontally')
+    }
+    if (
+      layout.labelBottom > layout.cardBottom + 1 ||
+      layout.labelLeft < layout.cardLeft - 1 ||
+      layout.labelRight > layout.cardRight + 1 ||
+      layout.textLeft < layout.cardLeft - 1 ||
+      layout.textRight > layout.cardRight + 1
+    ) {
+      failures.push('extends outside its card')
+    }
+    return failures.length === 0 ? [] : [{ failures, layout }]
+  })
+  expect(
+    railFailures,
+    'every English animal name should stay inside its card',
+  ).toEqual([])
+}
+
+async function expectEnglishTitleContained(
+  page: Page,
+  name: string,
+): Promise<void> {
+  const title = page.getByRole('heading', { level: 2, name })
+  await expect(title).toBeVisible()
+  await page.evaluate(() => document.fonts.ready.then(() => undefined))
+  const layout = await title.evaluate((element) => {
+    const titleBox = element.getBoundingClientRect()
+    const storyCardBox = element.closest('.story-card')?.getBoundingClientRect()
+    const range = document.createRange()
+    range.selectNodeContents(element)
+    const textRects = Array.from(range.getClientRects())
+    const lineTops = new Set(textRects.map((rect) => Math.round(rect.top)))
+    const style = getComputedStyle(element)
+    return {
+      clientWidth: element.clientWidth,
+      hyphens: style.hyphens,
+      lineCount: lineTops.size,
+      overflowWrap: style.overflowWrap,
+      scrollWidth: element.scrollWidth,
+      storyCardLeft: storyCardBox?.left ?? Number.POSITIVE_INFINITY,
+      storyCardRight: storyCardBox?.right ?? Number.NEGATIVE_INFINITY,
+      textLeft: Math.min(...textRects.map((rect) => rect.left)),
+      textRight: Math.max(...textRects.map((rect) => rect.right)),
+      titleLeft: titleBox.left,
+      titleRight: titleBox.right,
+      wordBreak: style.wordBreak,
+    }
+  })
+  expect(layout.lineCount).toBe(1)
+  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1)
+  expect(layout.textLeft).toBeGreaterThanOrEqual(layout.titleLeft - 1)
+  expect(layout.textRight).toBeLessThanOrEqual(layout.titleRight + 1)
+  expect(layout.textLeft).toBeGreaterThanOrEqual(layout.storyCardLeft - 1)
+  expect(layout.textRight).toBeLessThanOrEqual(layout.storyCardRight + 1)
+  expect(layout.wordBreak).toBe('normal')
+  expect(layout.overflowWrap).toBe('normal')
+  expect(layout.hyphens).toBe('none')
+}
+
+async function setEnglishTitleForLayoutProbe(
+  page: Page,
+  name: string,
+): Promise<void> {
+  await page.locator('.animal-title').evaluate((title, nextName) => {
+    title.textContent = nextName
+    window.dispatchEvent(new Event('resize'))
+  }, name)
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      }),
+  )
+}
+
+async function expectEnglishResponsiveLayout(
+  page: Page,
+  viewport: { readonly width: number; readonly height: number },
+): Promise<void> {
+  await page.evaluate(() => document.fonts.ready.then(() => undefined))
+  await expect(page.getByRole('heading', { level: 2, name: 'Stegosaurus' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+  await expectPrimaryTargetsAtLeast48Px(page)
+
+  const titleLayout = await page.locator('.animal-title').evaluate((title) => {
+    const range = document.createRange()
+    range.selectNodeContents(title)
+    const lineTops = new Set(
+      Array.from(range.getClientRects()).map((rect) => Math.round(rect.top)),
+    )
+    const style = getComputedStyle(title)
+    return {
+      clientWidth: title.clientWidth,
+      hyphens: style.hyphens,
+      lineCount: lineTops.size,
+      overflowWrap: style.overflowWrap,
+      scrollWidth: title.scrollWidth,
+      wordBreak: style.wordBreak,
+    }
+  })
+  expect(titleLayout.lineCount).toBe(1)
+  expect(titleLayout.scrollWidth).toBeLessThanOrEqual(
+    titleLayout.clientWidth + 1,
+  )
+  expect(titleLayout.wordBreak).toBe('normal')
+  expect(titleLayout.overflowWrap).toBe('normal')
+  expect(titleLayout.hyphens).toBe('none')
+
+  await expectEnglishAnimalRailNamesContained(page)
+
+  if (viewport.width <= 767 && viewport.height > viewport.width) {
+    await page
+      .getByRole('button', { name: 'Open the full museum guide' })
+      .click()
+    const collection = page.getByRole('dialog', { name: 'Museum guide' })
+    await expect(collection).toBeVisible()
+    const columnCount = await collection.locator('.collection-grid').evaluate(
+      (grid) =>
+        getComputedStyle(grid)
+          .gridTemplateColumns.split(' ')
+          .filter(Boolean).length,
+    )
+    expect(columnCount).toBe(2)
+    await expectNoHorizontalOverflow(page)
+    await page.getByRole('button', { name: 'Close the museum guide' }).click()
   }
 }
 
@@ -132,6 +338,8 @@ test('loads from the nested static base with Chinese semantics and accessible to
   const museum = await openMuseum(page)
 
   expect(new URL(page.url()).pathname).toBe(nestedPath)
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
+  await expect(page.locator('html')).toHaveAttribute('data-locale', 'zh-CN')
   const moduleScriptUrl = await page
     .locator('script[type="module"]')
     .getAttribute('src')
@@ -212,7 +420,7 @@ test('opens the creator story in the left drawer and keeps source links distinct
 
   await page.getByRole('button', { name: '给家长的资料' }).click()
   const parentDialog = page.getByRole('dialog', { name: '给家长的资料' })
-  const disclosure = parentDialog.getByText('开源代码与分层许可')
+  const disclosure = parentDialog.getByText('开源与许可')
   await disclosure.click()
   await expect(
     parentDialog.getByRole('link', { name: '查看 GitHub 项目' }),
@@ -603,7 +811,7 @@ test('keeps every initial model surface transparent across a hard refresh', asyn
 
   const assertTransparentStage = async () => {
     await expect(
-      page.getByRole('heading', { level: 1, name: '剑龙' }),
+      page.getByRole('heading', { level: 2, name: '剑龙' }),
     ).toBeVisible()
     await expect(page.locator('.scene-background img')).toBeVisible()
     await expect(page.locator('.viewer-canvas')).toBeVisible()
@@ -1358,6 +1566,44 @@ const requiredViewports = [
   { name: 'desktop-1885x1329', poster: 'preview-desktop-standard', width: 1885, height: 1329 },
 ] as const
 
+test('English animal rail contains long names at every required viewport', async ({
+  page,
+}) => {
+  test.setTimeout(60_000)
+  await page.setViewportSize(requiredViewports[0])
+  await openMuseum(page, '', { waitForModel: false })
+  await switchToEnglish(page)
+
+  for (const viewport of requiredViewports) {
+    await page.setViewportSize(viewport)
+    await expectEnglishAnimalRailNamesContained(page)
+  }
+})
+
+test('all English animal titles stay whole at every required viewport', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  await page.setViewportSize(requiredViewports[0])
+  const response = await page.goto('.')
+  expect(response?.ok()).toBe(true)
+  await expect(page.getByRole('heading', { level: 2, name: '剑龙' })).toBeVisible()
+  await switchToEnglish(page)
+  const englishNames = await page
+    .locator('.animal-card:not([data-animal-id^="fixture-"]) strong')
+    .allTextContents()
+  expect(englishNames).toHaveLength(18)
+
+  for (const viewport of requiredViewports) {
+    await page.setViewportSize(viewport)
+    for (const name of englishNames) {
+      await setEnglishTitleForLayoutProbe(page, name)
+      await expectEnglishTitleContained(page, name)
+      await expectNoHorizontalOverflow(page)
+    }
+  }
+})
+
 test('mobile portrait grows the story card around a three-line animal introduction', async ({
   page,
 }) => {
@@ -1451,7 +1697,7 @@ test('mobile portrait keeps a five-character animal name aligned with its introd
   }>(`(() => {
     const card = document.querySelector('.story-card')
     const intro = document.querySelector('.child-intro > span')
-    const title = document.querySelector('h1')
+    const title = document.querySelector('.animal-title')
     if (
       !(card instanceof HTMLElement) ||
       !(intro instanceof HTMLElement) ||
@@ -1562,7 +1808,7 @@ test.describe('required responsive viewports', () => {
         width: viewport.width,
         height: viewport.height,
       })
-      await openMuseum(page, '?fixtures=1')
+      const museum = await openMuseum(page, '?fixtures=1')
       await expectNoHorizontalOverflow(page)
       await expectPrimaryTargetsAtLeast48Px(page)
       const focusButton = page.getByRole('button', { name: '专注看模型' })
@@ -1668,7 +1914,7 @@ test.describe('required responsive viewports', () => {
         const creatorSignatureBox = await page
           .locator('.creator-signature-button')
           .boundingBox()
-        const titleBox = await page.locator('h1').boundingBox()
+        const titleBox = await page.locator('.animal-title').boundingBox()
         const introBox = await intro.boundingBox()
         const animalEyebrowBox = await page
           .locator('.animal-eyebrow')
@@ -1991,7 +2237,7 @@ test.describe('required responsive viewports', () => {
       await expect(exit).toBeVisible()
       await expect(page.getByRole('heading', { name: '剑龙' })).toHaveCount(0)
       await expect(page.getByRole('region', { name: '动物选择' })).toHaveCount(0)
-      await expect(page.locator('button:visible')).toHaveCount(1)
+      await expect(page.locator('button:visible')).toHaveCount(2)
       await expect(page.locator('.model-gesture-hint')).toBeHidden()
       const focusedStageBox = await stage.boundingBox()
       expect(focusedStageBox).not.toBeNull()
@@ -2005,6 +2251,30 @@ test.describe('required responsive viewports', () => {
       await expect(page.getByRole('heading', { name: '剑龙' })).toBeVisible()
       await expect(page.getByRole('region', { name: '动物选择' })).toBeVisible()
       await expectNoHorizontalOverflow(page)
+
+      await page.evaluate(() => {
+        Object.defineProperty(window, '__responsiveLocaleCanvas', {
+          configurable: true,
+          value: document.querySelector('.viewer-canvas'),
+        })
+      })
+      await switchToEnglish(page)
+      await expect(museum).toHaveAttribute(
+        'data-ready-animal-id',
+        'stegosaurus',
+      )
+      expect(
+        await page.evaluate(
+          () =>
+            (
+              window as typeof window & {
+                __responsiveLocaleCanvas: Element | null
+              }
+            ).__responsiveLocaleCanvas ===
+            document.querySelector('.viewer-canvas'),
+        ),
+      ).toBe(true)
+      await expectEnglishResponsiveLayout(page, viewport)
     })
   }
 })

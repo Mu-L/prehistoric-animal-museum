@@ -17,3 +17,17 @@ https://qwen.ai/blog/?id=qwen3tts-0115
 
 The owner approves public distribution of this reviewed MP3. The public
 notice identifies the model, Serena speaker, AI synthesis, and model license.
+
+English narration approval
+
+Locale: en
+Speaker: Serena
+Language: English
+Generated: 2026-08-07
+Runtime bytes: 158685
+Runtime SHA-256: b79326f2bb4db6bb1436c38a777f059a4eeb077404c5d5c972391bf23d42b969
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-07
+
+Script: This is Megalodon, a giant prehistoric shark that once swam through warm seas around the world. Look at its streamlined body and rows of teeth. As its tail swishes, does it look like a giant submarine?

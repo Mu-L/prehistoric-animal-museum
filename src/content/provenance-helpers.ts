@@ -1,4 +1,5 @@
 import type {
+  AnimalContentEn,
   AssetProvenance,
   IsoDate,
   Sha256,
@@ -245,6 +246,119 @@ export const reviewedBackgroundSources = {
   >
 >
 
+export const reviewedEnglishNarrationArtifacts = {
+  apatosaurus: {
+    generatedOn: '2026-08-07',
+    bytes: 111_165,
+    sha256:
+      'e8cf97fca62ebcd999aa07097e13672214455508cc19843374beb1e3b6f8be79',
+  },
+  dilophosaurus: {
+    generatedOn: '2026-08-07',
+    bytes: 164_685,
+    sha256:
+      '05bb9c7ad3db9abcbf016f12a98df0a0c1ae8d1adbd7c2bf5a67074ad5a8eded',
+  },
+  gigantoraptor: {
+    generatedOn: '2026-08-07',
+    bytes: 119_325,
+    sha256:
+      '1fb80903c1ff64245d9b3199a2c7dd34ae6e3880f2c1a18c9d6ba9de8db27392',
+  },
+  ichthyosaur: {
+    generatedOn: '2026-08-07',
+    bytes: 149_805,
+    sha256:
+      '2e31f92e8bd54eb08971b3b6bb6d3279fa31242149f43f70917fb67709c139c8',
+  },
+  maiasaura: {
+    generatedOn: '2026-08-07',
+    bytes: 146_925,
+    sha256:
+      'baeba1370388b5299cd7e7dd28ec4830e89ce9f77aeb9c66920738ecd9bb4bc1',
+  },
+  mammoth: {
+    generatedOn: '2026-08-07',
+    bytes: 175_485,
+    sha256:
+      '8bf9a31a9d7f9fb9811a037dfda34c9195912d4bc1e3ab0d3b810103bb3498f9',
+  },
+  megalodon: {
+    generatedOn: '2026-08-07',
+    bytes: 158_685,
+    sha256:
+      'b79326f2bb4db6bb1436c38a777f059a4eeb077404c5d5c972391bf23d42b969',
+  },
+  meganeura: {
+    generatedOn: '2026-08-07',
+    bytes: 170_925,
+    sha256:
+      '0e64580c4e23e2a87a5bf11b199eec51579ed3d09c70708be440220a4eb5fd9a',
+  },
+  mosasaurus: {
+    generatedOn: '2026-08-07',
+    bytes: 163_485,
+    sha256:
+      'c38635ea87ab13cc11582094f5957fdb4d28549f9c1f82f81c13bc0d6ce9fd62',
+  },
+  pachycephalosaurus: {
+    generatedOn: '2026-08-07',
+    bytes: 128_205,
+    sha256:
+      'b80a946b9a91553cf92e47a99b2c9843f0fd533c1c6fcce648c95acb7e7af2b9',
+  },
+  plesiosaurus: {
+    generatedOn: '2026-08-07',
+    bytes: 174_285,
+    sha256:
+      '8bd7a297842516bd023982ec6a2ac7d0836e346e0cbea8f28b87fb6296784c18',
+  },
+  pteranodon: {
+    generatedOn: '2026-08-07',
+    bytes: 133_485,
+    sha256:
+      '72a17d2c2952066b9ec7729ed4ae16fef9ad922c110aab0b2dfdab866c46a1a4',
+  },
+  rhamphorhynchus: {
+    generatedOn: '2026-08-07',
+    bytes: 152_685,
+    sha256:
+      'fb6833123c194204addbecf4001b180416dba86e6a82740a9097fcaf5b3ead67',
+  },
+  sauropelta: {
+    generatedOn: '2026-08-07',
+    bytes: 162_045,
+    sha256:
+      '5eb570b5695afb2be679d922931c9311c17328442af711d8500c1339a769c78d',
+  },
+  stegosaurus: {
+    generatedOn: '2026-08-07',
+    bytes: 109_725,
+    sha256:
+      '149e9c47a9e2e9c58f6cfbeda8a776cdadea3a6fe484ede260f5c085640699f2',
+  },
+  triceratops: {
+    generatedOn: '2026-08-07',
+    bytes: 147_885,
+    sha256:
+      '37ab3b9c99951ae50ffb14e1ffffff8ae34a54941595a8d9347ea758f0e131fb',
+  },
+  tupandactylus: {
+    generatedOn: '2026-08-07',
+    bytes: 167_565,
+    sha256:
+      '35e1cedc16daca46f1e46b58503f8d33df301b06195902865f56f857d3cc83d3',
+  },
+  'tyrannosaurus-rex': {
+    generatedOn: '2026-08-07',
+    bytes: 129_405,
+    sha256:
+      '7320895ee5b83b9eb51f90ae76586f5a67ffbe16778e7216097a81b404617d3e',
+  },
+} as const satisfies Readonly<
+  Record<string, RuntimeFile & { readonly generatedOn: IsoDate }>
+>
+
 export interface PublishedAssetProvenanceInput {
   readonly animalName: string
   readonly model: {
@@ -289,6 +403,42 @@ const qwenOutputLicense = {
   name: 'CC BY-NC-SA 4.0 project-owned Qwen3-TTS output',
   url: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
 } as const
+
+export function createReviewedEnglishNarrationProvenance(
+  animalId: keyof typeof reviewedEnglishNarrationArtifacts,
+  content: AnimalContentEn,
+): AssetProvenance {
+  const artifact = reviewedEnglishNarrationArtifacts[animalId]
+  return {
+    assetPath: 'audio/narration.en.mp3',
+    kind: 'narration',
+    source: {
+      type: 'generated',
+      title: `${content.name} English narration`,
+      tool: 'Qwen3-TTS CustomVoice',
+      model: 'Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice',
+      revision:
+        '85e237c12c027371202489a0ec509ded67b5e4b5; Serena built-in voice; deterministic local generation',
+      generatedOn: artifact.generatedOn,
+      prompt: content.narration.sentences.join(' '),
+      sha256: artifact.sha256,
+      bytes: artifact.bytes,
+    },
+    license: qwenOutputLicense,
+    runtime: {
+      bytes: artifact.bytes,
+      sha256: artifact.sha256,
+    },
+    modifications: [
+      'Generated offline from the exact reviewed English two-sentence script with the Serena voice.',
+      'Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.',
+    ],
+    attribution:
+      'Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).',
+    redistributionAllowed: true,
+    evidencePaths: ['provenance/LICENSES/narration-rights.txt'],
+  }
+}
 
 export function createPublishedAssetProvenance(
   input: PublishedAssetProvenanceInput,

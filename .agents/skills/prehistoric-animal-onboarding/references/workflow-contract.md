@@ -82,8 +82,10 @@ npm run test:e2e
   and the browser proves paused 0/4-second states. Pixel gates do not approve
   tooth clearance, tongue following, soft tissue or child comfort.
 - Narration must identify the pinned `qwen-tts` 0.1.1 / Qwen3-TTS 0.6B
-  CustomVoice revision / Serena / Chinese chain and two identical seeded raw
-  runs. System TTS has no fallback status and hard-fails.
+  CustomVoice revision and two identical seeded raw runs independently for
+  each locale. The approved pairs are Serena / Chinese for `zh-CN` and Serena /
+  English for `en`. System TTS and cross-language fallback have no fallback
+  status and hard-fail.
 - A land contact shadow must have visible opacity and cover at least two
   measured foot contacts after the initial yaw is applied; `shadow: ground`
   alone is insufficient. The five-
@@ -103,9 +105,10 @@ npm run test:e2e
   generated decision report for every `hold` and `reject`.
 - Promotion dry-run code `3` with otherwise-valid deterministic inputs is the
   correct pre-approval result; no install is authorized.
-- `approval record` may run only against an explicit owner decision. After
-  recording it, rerun `review prepare` so the manifest hashes the approval and
-  approved editorial sources.
+- `approval record` may run only against an explicit owner decision covering
+  both localized editorial records and complete listening of both narrations.
+  After recording it, rerun `review prepare` so the manifest hashes the
+  approval and both approved editorial sources.
 - Real `promote-batch` validates the whole batch before installation, stages
   complete packages, exposes `animal.ts` last, updates the collection once,
   regenerates credits/notices, validates content, and rolls back on failure.

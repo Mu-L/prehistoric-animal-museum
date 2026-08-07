@@ -21,3 +21,17 @@ notice identifies the model, Serena speaker, AI synthesis, and Apache-2.0
 model license. A residual risk is retained because the official materials do
 not separately disclose Serena's training/performance or voice-personality
 rights chain. The audio must not imply endorsement by Qwen or Alibaba.
+
+English narration approval
+
+Locale: en
+Speaker: Serena
+Language: English
+Generated: 2026-08-07
+Runtime bytes: 109725
+Runtime SHA-256: 149e9c47a9e2e9c58f6cfbeda8a776cdadea3a6fe484ede260f5c085640699f2
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-07
+
+Script: This is Stegosaurus, a plant-eating dinosaur from the Late Jurassic. Look at the two rows of plates along its back. Do they look like a line of little hills?

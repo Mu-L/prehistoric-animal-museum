@@ -22,10 +22,24 @@ function publishedAnimal(id: string): PublishedAnimalPackage {
   return {
     ...stegosaurus,
     id,
+    assets: {
+      ...stegosaurus.assets,
+      narration: {
+        'zh-CN': {
+          ...stegosaurus.narration['zh-CN'],
+          url: '/fixtures/narration.zh-CN.mp3',
+        },
+        en: {
+          ...stegosaurus.narration.en,
+          url: '/fixtures/narration.en.mp3',
+        },
+      },
+    },
   }
 }
 
 function draftAnimal(id: string): DraftAnimalPackage {
+  const animation = stegosaurus.animation
   return {
     id,
     status: 'draft',
@@ -34,7 +48,7 @@ function draftAnimal(id: string): DraftAnimalPackage {
     atmosphere: 'forest',
     content: stegosaurus.content,
     presentation: stegosaurus.presentation,
-    animation: stegosaurus.animation,
+    ...(animation ? { animation } : {}),
     narration: stegosaurus.narration,
     provenance: [],
     assets: {},
@@ -115,6 +129,29 @@ describe('explicit looping collection', () => {
 })
 
 describe('authored exhibit scenes', () => {
+  it('wires distinct, reviewed narration assets for both public locales', () => {
+    for (const animal of productionAnimals) {
+      const zhCNRecord = animal.provenance.find(
+        ({ assetPath }) => assetPath === 'audio/narration.zh-CN.mp3',
+      )
+      const enRecord = animal.provenance.find(
+        ({ assetPath }) => assetPath === 'audio/narration.en.mp3',
+      )
+
+      expect(animal.narration['zh-CN'].humanReviewStatus).toBe('approved')
+      expect(animal.narration.en.humanReviewStatus).toBe('approved')
+      expect(animal.assets.narration['zh-CN'].url).toBeTruthy()
+      expect(animal.assets.narration.en.url).toBeTruthy()
+      expect(animal.assets.narration.en.url).not.toBe(
+        animal.assets.narration['zh-CN'].url,
+      )
+      expect(zhCNRecord).toBeDefined()
+      expect(enRecord).toBeDefined()
+      expect(enRecord?.runtime.sha256).not.toBe(zhCNRecord?.runtime.sha256)
+      expect(enRecord?.license.spdx).toBe('CC-BY-NC-SA-4.0')
+    }
+  })
+
   it('uses a distinct responsive background pair for every production animal', () => {
     const backgroundPairs = productionAnimals.map((animal) => {
       const landscape = animal.provenance.find(

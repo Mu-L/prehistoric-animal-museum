@@ -78,11 +78,26 @@ function normalizeError(error: unknown): Error {
   return new Error(typeof error === 'string' ? error : 'Unknown narration error')
 }
 
-export function getNarrationControlLabel(snapshot: NarrationSnapshot): string {
+export interface NarrationControlLabels {
+  readonly listen: string
+  readonly pause: string
+  readonly unavailable: string
+}
+
+const defaultNarrationControlLabels: NarrationControlLabels = {
+  listen: '听它的介绍',
+  pause: '暂停介绍',
+  unavailable: NARRATION_UNAVAILABLE_LABEL,
+}
+
+export function getNarrationControlLabel(
+  snapshot: NarrationSnapshot,
+  labels: NarrationControlLabels = defaultNarrationControlLabels,
+): string {
   if (snapshot.availability !== 'available') {
-    return NARRATION_UNAVAILABLE_LABEL
+    return labels.unavailable
   }
-  return snapshot.playback === 'playing' ? '暂停介绍' : '听它的介绍'
+  return snapshot.playback === 'playing' ? labels.pause : labels.listen
 }
 
 /**

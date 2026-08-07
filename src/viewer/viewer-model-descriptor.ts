@@ -1,4 +1,5 @@
 export interface ViewerModelDescriptor {
+  accessibilityLabel?: string
   id: string
   label: string
   modelUrl: string

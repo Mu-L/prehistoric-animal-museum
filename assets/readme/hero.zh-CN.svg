@@ -38,7 +38,7 @@
     <text x="2" y="291" font-size="22" fill="#5c6e68">免费的 3D 史前动物小世界</text>
 
     <g transform="translate(0 322)" font-size="18" font-weight="700">
-      <g><rect width="126" height="42" rx="21" fill="#356859"/><text x="63" y="27" text-anchor="middle" fill="#fffdf7">持续扩充</text></g>
+      <g><rect width="126" height="42" rx="21" fill="#356859"/><text x="63" y="27" text-anchor="middle" fill="#fffdf7">18 种动物</text></g>
       <g transform="translate(138 0)"><rect width="116" height="42" rx="21" fill="#f4b85f"/><text x="58" y="27" text-anchor="middle" fill="#493817">没有闯关</text></g>
       <g transform="translate(266 0)"><rect width="126" height="42" rx="21" fill="#d9e6d8"/><text x="63" y="27" text-anchor="middle" fill="#29483d">代码开源</text></g>
     </g>

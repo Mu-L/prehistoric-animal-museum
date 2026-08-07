@@ -1,4 +1,6 @@
+import { createReviewedEnglishNarrationProvenance } from '../../provenance-helpers'
 import type { AssetProvenance } from '../../types'
+import { en } from './content.en'
 
 const modelLicense = {
   spdx: 'CC-BY-4.0',
@@ -232,6 +234,7 @@ export const provenance = [
     redistributionAllowed: true,
     evidencePaths: ['provenance/LICENSES/narration-rights.txt'],
   },
+  createReviewedEnglishNarrationProvenance('stegosaurus', en),
 ] satisfies readonly [
   AssetProvenance,
   ...AssetProvenance[],

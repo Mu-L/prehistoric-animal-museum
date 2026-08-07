@@ -27,6 +27,16 @@ content, contributions, and Brand Assets follow the separate scopes in
 
 ## 迷惑龙 (`apatosaurus`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Apatosaurus English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `e8cf97fca62ebcd999aa07097e13672214455508cc19843374beb1e3b6f8be79`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -103,6 +113,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Verified zero foot drift, ground penetration, seam separation, new BVH overlap, collapsed triangles, and flipped triangles, then validator-checked and reviewed the derivative in the shared museum viewer.
 ## 双冠龙 (`dilophosaurus`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Dilophosaurus English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `05bb9c7ad3db9abcbf016f12a98df0a0c1ae8d1adbd7c2bf5a67074ad5a8eded`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -179,6 +199,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Included the human-reviewed curated-components partial mouth relaxation in the same Idle loop.
 ## 巨盗龙 (`gigantoraptor`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Gigantoraptor English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `1fb80903c1ff64245d9b3199a2c7dd34ae6e3880f2c1a18c9d6ba9de8db27392`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -255,6 +285,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Validated and reviewed the self-contained derivative.
 ## 鱼龙类 (`ichthyosaur`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Ichthyosaurs English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `2e31f92e8bd54eb08971b3b6bb6d3279fa31242149f43f70917fb67709c139c8`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -331,6 +371,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Normalized the derivative to one closed-loop Idle, repacked it, validated it with zero Khronos errors and warnings before runtime compression, and reviewed it in the shared museum viewer.
 ## 慈母龙 (`maiasaura`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Maiasaura English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `baeba1370388b5299cd7e7dd28ec4830e89ce9f77aeb9c66920738ecd9bb4bc1`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -406,6 +456,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Exported a single closed-loop Idle, validator-checked the result, and reviewed the animated skinned bounds in the shared museum viewer.
 ## 长毛猛犸象 (`mammoth`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Woolly mammoth English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `8bf9a31a9d7f9fb9811a037dfda34c9195912d4bc1e3ab0d3b810103bb3498f9`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -483,6 +543,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Normalized the Blender export to one closed-loop Idle clip with two rotation-only channels, then validator-checked and reviewed the derivative in the shared museum viewer.
 ## 巨齿鲨 (`megalodon`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Megalodon English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `b79326f2bb4db6bb1436c38a777f059a4eeb077404c5d5c972391bf23d42b969`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -558,6 +628,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Added restrained paired-fin pose changes, exported one closed-loop Idle, validator-checked the result, and reviewed the animated skinned bounds in the shared museum viewer.
 ## 巨脉蜻蜓 (`meganeura`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Meganeura English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `0e64580c4e23e2a87a5bf11b199eec51579ed3d09c70708be440220a4eb5fd9a`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -633,6 +713,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Authored and validator-checked one closed eight-second flying-insect Idle for the shared museum viewer.
 ## 沧龙 (`mosasaurus`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Mosasaurus English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `c38635ea87ab13cc11582094f5957fdb4d28549f9c1f82f81c13bc0d6ce9fd62`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -709,6 +799,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Included the human-reviewed source-rig partial mouth relaxation in the same Idle loop.
 ## 肿头龙 (`pachycephalosaurus`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Pachycephalosaurus English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `b80a946b9a91553cf92e47a99b2c9843f0fd533c1c6fcce648c95acb7e7af2b9`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -783,6 +883,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Deduplicated, pruned, repacked, validated, and reviewed the derivative.
 ## 蛇颈龙类 (`plesiosaurus`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Plesiosaurs English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `8bd7a297842516bd023982ec6a2ac7d0836e346e0cbea8f28b87fb6296784c18`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -859,6 +969,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Validator-checked the result and reviewed the full neck, tail, eye, and flipper silhouettes in the shared museum viewer.
 ## 无齿翼龙 (`pteranodon`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Pteranodon English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `72a17d2c2952066b9ec7729ed4ae16fef9ad922c110aab0b2dfdab866c46a1a4`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -934,6 +1054,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Deduplicated, pruned, repacked, validated, and reviewed the derivative.
 ## 喙嘴翼龙 (`rhamphorhynchus`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Rhamphorhynchus English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `fb6833123c194204addbecf4001b180416dba86e6a82740a9097fcaf5b3ead67`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -1009,6 +1139,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Authored and validator-checked one closed eight-second flying-wing Idle for the shared museum viewer.
 ## 胄甲龙 (`sauropelta`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Sauropelta English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `5eb570b5695afb2be679d922931c9311c17328442af711d8500c1339a769c78d`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -1084,6 +1224,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Authored and validator-checked one closed eight-second land-breathe-tail Idle for the shared museum viewer.
 ## 剑龙 (`stegosaurus`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Stegosaurus English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `149e9c47a9e2e9c58f6cfbeda8a776cdadea3a6fe484ede260f5c085640699f2`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -1160,6 +1310,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Corrected the project-facing animal name from “Stegasaurus” to “Stegosaurus”.
 ## 三角龙 (`triceratops`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Triceratops English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `37ab3b9c99951ae50ffb14e1ffffff8ae34a54941595a8d9347ea758f0e131fb`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -1236,6 +1396,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Normalized the Blender export to one closed-loop Idle clip with four rotation-only channels, then validator-checked and reviewed the derivative in the shared museum viewer.
 ## 古神翼龙 (`tupandactylus`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Tupandactylus English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `35e1cedc16daca46f1e46b58503f8d33df301b06195902865f56f857d3cc83d3`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration
@@ -1312,6 +1482,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Included the human-reviewed curated-components partial mouth relaxation in the same Idle loop.
 ## 霸王龙 (`tyrannosaurus-rex`)
 
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Tyrannosaurus rex English narration, generated with Qwen3-TTS CustomVoice on 2026-08-07
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `7320895ee5b83b9eb51f90ae76586f5a67ffbe16778e7216097a81b404617d3e`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
 ### `audio/narration.zh-CN.mp3`
 
 - Asset type: narration

@@ -4,6 +4,15 @@ import type {
 } from '../src/content/types'
 import type { LoadedAnimalDefinition } from './content-data'
 
+function publishedZhCNName(
+  definition: LoadedAnimalDefinition['definition'],
+): string {
+  if (definition.status !== 'published') {
+    throw new Error(`草稿动物 “${definition.id}” 不能生成公开署名。`)
+  }
+  return definition.content['zh-CN'].name
+}
+
 function sourceTitle(record: AssetProvenance): string {
   return record.source.title
 }
@@ -106,7 +115,7 @@ ${record.modifications.map((change) => `  - ${change}`).join('\n')}`,
         )
         .join('\n')
 
-      return `## ${definition.content['zh-CN'].name} (\`${definition.id}\`)
+      return `## ${publishedZhCNName(definition)} (\`${definition.id}\`)
 
 ${records}`
     })

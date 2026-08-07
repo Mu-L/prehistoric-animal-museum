@@ -9,6 +9,8 @@ import {
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from '../src/App'
+import { NARROW_TOUCH_MEDIA_QUERY } from '../src/model-policy'
+import { mainAnimals } from '../src/content/catalog'
 
 interface Deferred<T> {
   readonly promise: Promise<T>
@@ -41,6 +43,7 @@ const viewerMock = vi.hoisted(() => ({
     }) => void
   >,
   reset: vi.fn(),
+  setAccessibilityLabel: vi.fn(),
   setFocusMode: vi.fn(),
   stageModel: vi.fn(),
 }))
@@ -98,6 +101,10 @@ vi.mock('../src/viewer/ViewerController', () => {
 
     reset(): void {
       viewerMock.reset()
+    }
+
+    setAccessibilityLabel(label: string): void {
+      viewerMock.setAccessibilityLabel(label)
     }
 
     setFocusMode(focused: boolean): void {
@@ -167,12 +174,14 @@ describe('App', () => {
     viewerMock.destroy.mockReset()
     viewerMock.disposeStagedModel.mockReset()
     viewerMock.reset.mockReset()
+    viewerMock.setAccessibilityLabel.mockReset()
     viewerMock.setFocusMode.mockReset()
     viewerMock.stageModel.mockReset()
     viewerMock.failConstruction = false
     viewerMock.failureHandlers.length = 0
     configureSuccessfulViewer()
     window.localStorage.clear()
+    window.localStorage.setItem('museum.locale', 'zh-CN')
     window.history.replaceState({}, '', '/')
   })
 
@@ -188,7 +197,10 @@ describe('App', () => {
     expect(viewerMock.constructorCount).toBe(1)
     expect(viewerMock.stageModel).toHaveBeenCalledTimes(1)
     expect(
-      screen.getByRole('heading', { level: 1, name: '剑龙' }),
+      screen.getByRole('heading', { level: 1, name: '史前动物博物馆' }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('heading', { level: 2, name: '剑龙' }),
     ).toBeVisible()
     expect(
       screen.getByText('看看它背上的两排骨板，像不像一列起伏的小山？'),
@@ -236,6 +248,229 @@ describe('App', () => {
     ]) {
       expectTooltip(name)
     }
+  })
+
+  it('switches to English without reloading the model and remembers a shareable locale path', async () => {
+    const user = userEvent.setup()
+    window.history.replaceState({}, '', '/museum/?animal=stegosaurus')
+    await renderReadyApp()
+
+    expect(viewerMock.constructorCount).toBe(1)
+    expect(viewerMock.stageModel).toHaveBeenCalledTimes(1)
+
+    const languageButton = screen.getByRole('button', {
+      name: '切换语言，当前简体中文',
+    })
+    await user.click(languageButton)
+    const menu = screen.getByRole('menu', { name: '选择界面语言' })
+    await user.click(
+      within(menu).getByRole('menuitemradio', { name: 'English' }),
+    )
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Prehistoric Animal Museum',
+      }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Stegosaurus' }),
+    ).toBeVisible()
+    expect(document.documentElement).toHaveAttribute('lang', 'en')
+    expect(document.documentElement).toHaveAttribute('data-locale', 'en')
+    expect(window.location.pathname).toBe('/museum/en/')
+    expect(new URL(window.location.href).searchParams.get('animal')).toBe(
+      'stegosaurus',
+    )
+    expect(window.localStorage.getItem('museum.locale')).toBe('en')
+    expect(viewerMock.constructorCount).toBe(1)
+    expect(viewerMock.stageModel).toHaveBeenCalledTimes(1)
+    expect(viewerMock.setAccessibilityLabel).toHaveBeenLastCalledWith(
+      'Stegosaurus 3D model. Drag to rotate; scroll or pinch to zoom.',
+    )
+  })
+
+  it('commits the latest language when locale changes during the initial model load', async () => {
+    const user = userEvent.setup()
+    const pendingModel = deferred<ReturnType<typeof stagedModel>>()
+    const stegosaurus = mainAnimals.find(
+      (animal) => animal.id === 'stegosaurus',
+    )
+    if (!stegosaurus) {
+      throw new Error('The Stegosaurus fixture is missing.')
+    }
+    const originalNarration = stegosaurus.assets.narration
+    const mutableAssets = stegosaurus.assets as unknown as {
+      narration: typeof originalNarration
+    }
+    mutableAssets.narration = {
+      'zh-CN': {
+        ...originalNarration['zh-CN'],
+        url: '/audio/narration.zh-CN.mp3',
+      },
+      en: {
+        ...originalNarration.en,
+        url: '/audio/narration.en.mp3',
+      },
+    }
+    const media = {
+      addEventListener: vi.fn(),
+      autoplay: false,
+      currentTime: 0,
+      pause: vi.fn(),
+      play: vi.fn(() => Promise.resolve()),
+      preload: '',
+      removeEventListener: vi.fn(),
+    }
+    const AudioMock = vi.fn(function AudioMock() {
+      return media as unknown as HTMLAudioElement
+    })
+    vi.stubGlobal('Audio', AudioMock)
+    viewerMock.stageModel.mockImplementationOnce(() => pendingModel.promise)
+
+    try {
+      render(<App />)
+      await waitFor(() => {
+        expect(viewerMock.stageModel).toHaveBeenCalledOnce()
+      })
+
+      await user.click(
+        screen.getByRole('button', {
+          name: '切换语言，当前简体中文',
+        }),
+      )
+      await user.click(
+        screen.getByRole('menuitemradio', { name: 'English' }),
+      )
+      expect(
+        screen.getByRole('heading', { level: 2, name: 'Stegosaurus' }),
+      ).toBeVisible()
+
+      await act(async () => {
+        pendingModel.resolve(stagedModel({ id: 'stegosaurus' }))
+        await pendingModel.promise
+        await Promise.resolve()
+      })
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Stegosaurus is now in the exhibit.'),
+        ).toBeVisible()
+      })
+      expect(viewerMock.stageModel).toHaveBeenCalledOnce()
+      expect(viewerMock.setAccessibilityLabel).toHaveBeenLastCalledWith(
+        'Stegosaurus 3D model. Drag to rotate; scroll or pinch to zoom.',
+      )
+      expect(
+        viewerMock.setAccessibilityLabel.mock.invocationCallOrder.at(-1),
+      ).toBeGreaterThan(viewerMock.commitModel.mock.invocationCallOrder.at(-1) ?? 0)
+
+      await user.click(
+        screen.getByRole('button', { name: 'Listen to its introduction' }),
+      )
+      expect(AudioMock).toHaveBeenCalledWith('/audio/narration.en.mp3')
+      expect(AudioMock).not.toHaveBeenCalledWith('/audio/narration.zh-CN.mp3')
+    } finally {
+      mutableAssets.narration = originalNarration
+    }
+  })
+
+  it('stops and rewinds the previous language narration during a locale switch', async () => {
+    const user = userEvent.setup()
+    const media = {
+      addEventListener: vi.fn(),
+      autoplay: false,
+      currentTime: 0,
+      pause: vi.fn(),
+      play: vi.fn(() => Promise.resolve()),
+      preload: '',
+      removeEventListener: vi.fn(),
+    }
+    const AudioMock = vi.fn(function AudioMock() {
+      return media as unknown as HTMLAudioElement
+    })
+    vi.stubGlobal('Audio', AudioMock)
+    window.history.replaceState({}, '', '/museum/?animal=stegosaurus')
+    await renderReadyApp()
+
+    await user.click(screen.getByRole('button', { name: '听它的介绍' }))
+    await waitFor(() => {
+      expect(media.play).toHaveBeenCalledTimes(1)
+    })
+    media.currentTime = 8
+
+    await user.click(
+      screen.getByRole('button', {
+        name: '切换语言，当前简体中文',
+      }),
+    )
+    await user.click(
+      screen.getByRole('menuitemradio', { name: 'English' }),
+    )
+
+    expect(media.pause).toHaveBeenCalled()
+    expect(media.currentTime).toBe(0)
+    expect(screen.getByRole('heading', { name: 'Stegosaurus' })).toBeVisible()
+    expect(viewerMock.constructorCount).toBe(1)
+    expect(viewerMock.stageModel).toHaveBeenCalledTimes(1)
+  })
+
+  it('switches language inside an open drawer without closing it or reloading the model', async () => {
+    const user = userEvent.setup()
+    await renderReadyApp()
+
+    await user.click(
+      screen.getByRole('button', { name: '给家长的资料' }),
+    )
+    const chineseDialog = screen.getByRole('dialog', {
+      name: '给家长的资料',
+    })
+    await user.click(
+      within(chineseDialog).getByRole('button', {
+        name: '切换语言，当前简体中文',
+      }),
+    )
+    await user.click(
+      within(chineseDialog).getByRole('menuitemradio', { name: 'English' }),
+    )
+
+    const englishDialog = screen.getByRole('dialog', {
+      name: 'Guide for grown-ups',
+    })
+    expect(englishDialog).toBeVisible()
+    expect(within(englishDialog).getByText('Late Jurassic')).toBeVisible()
+    expect(document.getElementById('museum-experience')).not.toHaveClass(
+      'museum-experience--focus',
+    )
+    expect(viewerMock.stageModel).toHaveBeenCalledTimes(1)
+  })
+
+  it('switches language in model focus mode without leaving focus or reloading the model', async () => {
+    const user = userEvent.setup()
+    await renderReadyApp()
+
+    await user.click(
+      screen.getByRole('button', { name: '专注看模型' }),
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: '切换语言，当前简体中文',
+      }),
+    )
+    await user.click(
+      screen.getByRole('menuitemradio', { name: 'English' }),
+    )
+
+    expect(document.getElementById('museum-experience')).toHaveClass(
+      'museum-experience--focus',
+    )
+    expect(
+      screen.getByRole('button', { name: 'Exit model focus mode' }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('heading', { name: 'Stegosaurus' }),
+    ).not.toBeInTheDocument()
+    expect(viewerMock.stageModel).toHaveBeenCalledTimes(1)
   })
 
   it('opens the creator story without replacing the museum and restores focus', async () => {
@@ -349,7 +584,12 @@ describe('App', () => {
     expect(exitButton).toBeVisible()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: '剑龙' })).not.toBeInTheDocument()
-    expect(screen.getAllByRole('button')).toEqual([exitButton])
+    expect(screen.getAllByRole('button')).toEqual([
+      screen.getByRole('button', {
+        name: '切换语言，当前简体中文',
+      }),
+      exitButton,
+    ])
     expect(viewerMock.setFocusMode).toHaveBeenCalledWith(true)
 
     await user.keyboard('{Escape}')
@@ -404,7 +644,7 @@ describe('App', () => {
     expect(screen.queryByRole('dialog', { name: '全馆图鉴' })).not.toBeInTheDocument()
     await waitFor(() => {
       expect(
-        screen.getByRole('heading', { level: 1, name: '三角龙' }),
+        screen.getByRole('heading', { level: 2, name: '三角龙' }),
       ).toBeVisible()
     })
     expect(new URL(window.location.href).searchParams.get('animal')).toBe(
@@ -912,6 +1152,108 @@ describe('App', () => {
     expect(
       screen.getByRole('dialog', { name: '给家长的资料' }),
     ).toBeVisible()
+  })
+
+  it('localises a WebGL fallback reported by the renderer', async () => {
+    window.localStorage.setItem('museum.locale', 'en')
+    window.history.replaceState({}, '', '/museum/en/')
+    viewerMock.failConstruction = true
+
+    render(<App />)
+
+    expect(
+      await screen.findByText('Let’s look at its still model for now'),
+    ).toBeVisible()
+    expect(
+      screen.getByText('This browser cannot display the 3D model right now.'),
+    ).toBeVisible()
+    expect(
+      screen.getByAltText(
+        'Still model of Stegosaurus on a transparent background',
+      ),
+    ).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Stegosaurus' })).toBeVisible()
+  })
+
+  it('relocalises a visible model-data notice without dismissing it', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string): MediaQueryList => ({
+        matches: query === NARROW_TOUCH_MEDIA_QUERY,
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    )
+    await renderReadyApp()
+
+    expect(
+      await screen.findByText(
+        '这里的 3D 动物会使用一些流量，连接 Wi‑Fi 时观看会更顺畅。',
+      ),
+    ).toBeVisible()
+    await user.click(
+      screen.getByRole('button', {
+        name: '切换语言，当前简体中文',
+      }),
+    )
+    await user.click(
+      screen.getByRole('menuitemradio', { name: 'English' }),
+    )
+
+    expect(
+      screen.getByText(
+        'The 3D animals use some data. A Wi-Fi connection may feel smoother.',
+      ),
+    ).toBeVisible()
+    expect(
+      screen.queryByText(
+        '这里的 3D 动物会使用一些流量，连接 Wi‑Fi 时观看会更顺畅。',
+      ),
+    ).not.toBeInTheDocument()
+  })
+
+  it('relocalises an already-visible WebGL fallback and its announcement', async () => {
+    const user = userEvent.setup()
+    await renderReadyApp()
+    const failureHandler = viewerMock.failureHandlers.at(-1)
+    if (!failureHandler) {
+      throw new Error('The mock viewer did not receive an onFailure callback')
+    }
+
+    act(() => {
+      failureHandler({
+        kind: 'context-lost',
+        message: 'WebGL 绘图环境暂时不可用。',
+      })
+    })
+    expect(screen.getByText('WebGL 绘图环境暂时不可用。')).toBeVisible()
+
+    await user.click(
+      screen.getByRole('button', {
+        name: '切换语言，当前简体中文',
+      }),
+    )
+    await user.click(
+      screen.getByRole('menuitemradio', { name: 'English' }),
+    )
+
+    expect(
+      screen.getByText('The 3D drawing surface is temporarily unavailable.'),
+    ).toBeVisible()
+    expect(
+      document.querySelector('.sr-only[role="status"]'),
+    ).toHaveTextContent(
+      'The 3D exhibit is unavailable, so a still model of Stegosaurus is shown instead.',
+    )
+    expect(
+      screen.queryByText('WebGL 绘图环境暂时不可用。'),
+    ).not.toBeInTheDocument()
   })
 
   it('shows the poster after context loss and remounts a working viewer on retry', async () => {

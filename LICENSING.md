@@ -31,7 +31,7 @@ copyright or similar rights, the following original content is licensed under
 
 - child-facing introductions, narration scripts, parent guides, and other
   original editorial prose;
-- project-generated Mandarin narration recordings;
+- project-generated English and Mandarin narration recordings;
 - project-generated landscape and portrait exhibit backgrounds;
 - original documentation prose, illustrations, screenshots, and editorial
   graphics, except for Brand Assets described below.

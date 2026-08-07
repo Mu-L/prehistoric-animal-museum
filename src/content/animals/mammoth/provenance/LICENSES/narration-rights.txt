@@ -21,3 +21,17 @@ notice identifies the model, Serena speaker, AI synthesis, and Apache-2.0
 model license. A residual risk is retained because the official materials do
 not separately disclose Serena's training/performance or voice-personality
 rights chain. The audio must not imply endorsement by Qwen or Alibaba.
+
+English narration approval
+
+Locale: en
+Speaker: Serena
+Language: English
+Generated: 2026-08-07
+Runtime bytes: 175485
+Runtime SHA-256: 8bf9a31a9d7f9fb9811a037dfda34c9195912d4bc1e3ab0d3b810103bb3498f9
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-07
+
+Script: This shaggy animal is a woolly mammoth, a prehistoric relative of elephants that lived on the open lands of the cold north. Look at its thick, shaggy coat, small ears and long tusks that curve forwards.

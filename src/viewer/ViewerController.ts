@@ -734,7 +734,8 @@ export class ViewerController {
     this.current = staged
     this.renderer.domElement.setAttribute(
       'aria-label',
-      `${staged.descriptor.label}三维模型，可拖动旋转并缩放`,
+      staged.descriptor.accessibilityLabel ??
+        `${staged.descriptor.label}三维模型，可拖动旋转并缩放`,
     )
     this.renderer.domElement.setAttribute('aria-hidden', 'false')
     this.renderer.domElement.dataset.modelLoadSource = staged.loadSource
@@ -790,6 +791,10 @@ export class ViewerController {
     if (this.current === staged) {
       this.current = null
     }
+  }
+
+  setAccessibilityLabel(label: string): void {
+    this.renderer.domElement.setAttribute('aria-label', label)
   }
 
   reset(): void {

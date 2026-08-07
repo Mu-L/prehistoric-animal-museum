@@ -21,3 +21,17 @@ notice identifies the model, Serena speaker, AI synthesis, and Apache-2.0
 model license. A residual risk is retained because the official materials do
 not separately disclose Serena's training/performance or voice-personality
 rights chain. The audio must not imply endorsement by Qwen or Alibaba.
+
+English narration approval
+
+Locale: en
+Speaker: Serena
+Language: English
+Generated: 2026-08-07
+Runtime bytes: 119325
+Runtime SHA-256: 1fb80903c1ff64245d9b3199a2c7dd34ae6e3880f2c1a18c9d6ba9de8db27392
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-07
+
+Script: This is Gigantoraptor, a huge, bird-like dinosaur from the Late Cretaceous. Look at its long neck, slender legs and bird-like body shape.

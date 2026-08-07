@@ -17,3 +17,17 @@ https://qwen.ai/blog/?id=qwen3tts-0115
 
 The owner approves public distribution of this reviewed MP3. The public
 notice identifies the model, Serena speaker, AI synthesis, and model license.
+
+English narration approval
+
+Locale: en
+Speaker: Serena
+Language: English
+Generated: 2026-08-07
+Runtime bytes: 174285
+Runtime SHA-256: 8bd7a297842516bd023982ec6a2ac7d0836e346e0cbea8f28b87fb6296784c18
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-07
+
+Script: This is a plesiosaur. Plesiosaurs were sea reptiles that lived alongside dinosaurs, but they were not dinosaurs. Look at its long neck and four flippers. All four could work together like wings under the water.

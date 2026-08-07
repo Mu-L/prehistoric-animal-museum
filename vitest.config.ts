@@ -22,6 +22,7 @@ export default defineConfig({
     exclude: [
       'e2e/**',
       'review-e2e/**',
+      'scripts/readme-screenshot-capture/**',
       '**/node_modules/**',
       '**/dist/**',
       ...(process.env.CI ? localReviewOnlyTests : []),

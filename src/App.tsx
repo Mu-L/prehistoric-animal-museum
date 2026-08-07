@@ -19,6 +19,7 @@ import {
   type RefObject,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -32,16 +33,22 @@ import {
 import { AboutDrawer } from './components/AboutDrawer'
 import { GitHubStarPrompt } from './components/GitHubStarPrompt'
 import { IconButton } from './components/IconButton'
+import { LanguageMenu } from './components/LanguageMenu'
 import {
   ParentDrawer,
   type ParentFacts,
   type ParentReviewFacts,
 } from './components/ParentDrawer'
+import { ResponsiveAnimalTitle } from './components/ResponsiveAnimalTitle'
 import { SceneAtmosphere } from './components/SceneAtmosphere'
 import { ViewerStage } from './components/ViewerStage'
 import { mainAnimals } from './content/catalog'
 import { credits } from './content/credits.generated'
 import type { PublishedAnimalPackage } from './content/types'
+import { I18nProvider, useI18n } from './i18n/I18nProvider'
+import type { Locale } from './i18n/locale'
+import { updateLocalizedMetadata } from './i18n/metadata'
+import { dietLabel, formatSizeFact, messagesFor } from './i18n/messages'
 import { localReviewAnimals } from 'virtual:local-review-catalog'
 import {
   MODEL_DATA_REMINDER_STORAGE_KEY,
@@ -103,10 +110,15 @@ interface LoadedRuntimeAnimal {
   readonly staged: StagedViewerModel
 }
 
-interface ModelDataNotice {
-  readonly kind: 'first-entry' | 'large-model'
-  readonly message: string
-}
+type ModelDataNotice =
+  | { readonly kind: 'first-entry' }
+  | {
+      readonly animalId: string
+      readonly kind: 'large-model'
+      readonly modelBytes: number
+    }
+
+type ViewerFailureKind = 'context-lost' | 'webgl-unavailable'
 
 interface ModelLoadingProgress {
   readonly animalId: string
@@ -238,42 +250,48 @@ if (!defaultPackage) {
   throw new Error('主展览集合中没有可展示的动物。')
 }
 
-function dietLabel(
-  diet: DisplayableAnimalPackage['content']['zh-CN']['facts']['diet'],
-): string {
-  return (
-    {
-      herbivore: '植食',
-      carnivore: '肉食',
-      omnivore: '杂食',
-      unknown: '尚不确定',
-    } as const
-  )[diet]
+function narrationUrlFor(
+  animal: DisplayableAnimalPackage,
+  locale: Locale,
+): string | null {
+  const narration = animal.assets.narration as unknown
+  if (!narration || typeof narration !== 'object') {
+    return null
+  }
+  const localeNarration = (narration as Record<string, unknown>)[locale]
+  if (
+    localeNarration &&
+    typeof localeNarration === 'object' &&
+    (localeNarration as { status?: unknown }).status === 'ready'
+  ) {
+    return (
+      (localeNarration as { url?: string }).url ??
+      (locale === 'zh-CN' ? (narration as { url?: string }).url : undefined) ??
+      null
+    )
+  }
+  // Local review packages may still be migrated one at a time. Never reuse a
+  // Mandarin track in the English interface.
+  if (
+    locale === 'zh-CN' &&
+    (narration as { status?: unknown }).status === 'ready'
+  ) {
+    return (narration as { url?: string }).url ?? null
+  }
+  return null
 }
 
-function sizeFact(
-  size: DisplayableAnimalPackage['content']['zh-CN']['facts']['size'],
-): { readonly label: string; readonly value: string } {
-  const range =
-    size.minMeters === size.maxMeters
-      ? `${size.minMeters} 米（约）`
-      : `${size.minMeters}-${size.maxMeters} 米（约）`
-  if (size.kind === 'wingspan') {
-    return { label: '翼展', value: range }
+function toRuntimeAnimal(
+  animal: DisplayableAnimalPackage,
+  locale: Locale,
+): RuntimeAnimal {
+  const content =
+    animal.content[locale] ??
+    (animal.status === 'draft' ? animal.content['zh-CN'] : undefined)
+  if (!content) {
+    throw new Error(`动物 “${animal.id}” 没有可预览的 ${locale} 内容。`)
   }
-  if (size.kind === 'shoulder-height') {
-    return { label: '肩高', value: range }
-  }
-  if (size.kind === 'group-range') {
-    return { label: '类群体型', value: `${size.note}；${range}` }
-  }
-  return { label: '体长', value: range }
-}
-
-function toRuntimeAnimal(animal: DisplayableAnimalPackage): RuntimeAnimal {
-  const content = animal.content['zh-CN']
-  const narration = animal.assets.narration
-  const size = sizeFact(content.facts.size)
+  const size = formatSizeFact(content.facts.size, locale)
   const review: ParentReviewFacts | null = animal.review
     ? {
         badge: animal.review.badge,
@@ -320,7 +338,7 @@ function toRuntimeAnimal(animal: DisplayableAnimalPackage): RuntimeAnimal {
       assetCredits,
       classification: content.classificationLabel,
       classificationNote: content.parentClassificationNote,
-      diet: dietLabel(content.facts.diet),
+      diet: dietLabel(content.facts.diet, locale),
       discoveryRegions: [...content.facts.discoveryRegions],
       size: size.value,
       sizeLabel: size.label,
@@ -337,37 +355,36 @@ function toRuntimeAnimal(animal: DisplayableAnimalPackage): RuntimeAnimal {
       thumbnail: animal.assets.thumbnail,
       backgroundLandscape: animal.assets.backgrounds.landscape,
       backgroundPortrait: animal.assets.backgrounds.portrait,
-      narration: narration.status === 'ready' ? narration.url : null,
+      narration: narrationUrlFor(animal, locale),
     },
     viewer: createViewerModelDescriptor(
       animal,
       content.name,
       animal.assets.model,
+      messagesFor(locale).viewer.modelLabel(content.name),
     ),
   }
 }
 
-const productionAnimals = publishedMainAnimals.map(toRuntimeAnimal)
-const defaultAnimal = toRuntimeAnimal(defaultPackage)
 const localReviewMode = import.meta.env.MODE === 'review'
-const applicationAnimals = localReviewMode
-  ? localReviewAnimals.map(toRuntimeAnimal)
-  : productionAnimals
 const initialLoadSnapshot: AnimalLoadSnapshot = {
   readyAnimalId: null,
-  requestedAnimalId: defaultAnimal.id,
+  requestedAnimalId: defaultPackage.id,
   requestToken: 0,
   phase: 'loading',
   showDelayedLabel: false,
   failure: null,
 }
 
-function readInitialAnimal(animals: readonly RuntimeAnimal[]): RuntimeAnimal {
+function readInitialAnimal(
+  animals: readonly RuntimeAnimal[],
+  fallback: RuntimeAnimal,
+): RuntimeAnimal {
   const requestedId = new URLSearchParams(window.location.search).get('animal')
   return (
     animals.find((animal) => animal.id === requestedId) ??
     animals[0] ??
-    defaultAnimal
+    fallback
   )
 }
 
@@ -377,7 +394,11 @@ function replaceAnimalUrl(animalId: string): void {
   window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
 }
 
-function makeE2EFixtures(base: RuntimeAnimal): RuntimeAnimal[] {
+function makeE2EFixtures(
+  base: RuntimeAnimal,
+  locale: Locale,
+): RuntimeAnimal[] {
+  const fixtureMessages = messagesFor(locale)
   const makeFixture = (
     id: string,
     name: string,
@@ -396,10 +417,19 @@ function makeE2EFixtures(base: RuntimeAnimal): RuntimeAnimal[] {
         habitat === 'water' ? 'underwater' : base.atmosphere,
       facts: {
         ...base.facts,
-        classification: `测试分类：${name}`,
-        classificationNote: '仅用于端到端原子切换验证。',
-        discoveryRegions: [`测试展区：${name}`],
-        period: `测试时期：${name}`,
+        classification:
+          locale === 'zh-CN'
+            ? `测试分类：${name}`
+            : `Test classification: ${name}`,
+        classificationNote:
+          locale === 'zh-CN'
+            ? '仅用于端到端原子切换验证。'
+            : 'Used only to verify atomic exhibit switching in end-to-end tests.',
+        discoveryRegions: [
+          locale === 'zh-CN' ? `测试展区：${name}` : `Test region: ${name}`,
+        ],
+        period:
+          locale === 'zh-CN' ? `测试时期：${name}` : `Test period: ${name}`,
       },
       assets: {
         ...base.assets,
@@ -415,6 +445,7 @@ function makeE2EFixtures(base: RuntimeAnimal): RuntimeAnimal[] {
       },
       viewer: {
         ...base.viewer,
+        accessibilityLabel: fixtureMessages.viewer.modelLabel(name),
         id,
         label: name,
         modelUrl: `${base.viewer.modelUrl}${
@@ -428,28 +459,31 @@ function makeE2EFixtures(base: RuntimeAnimal): RuntimeAnimal[] {
   return [
     makeFixture(
       'fixture-slow',
-      '慢慢龙',
-      '它会慢一点来到展台，用来检查连续选择。',
+      locale === 'zh-CN' ? '慢慢龙' : 'Slow test animal',
+      locale === 'zh-CN'
+        ? '它会慢一点来到展台，用来检查连续选择。'
+        : 'It reaches the exhibit slowly so rapid selections can be checked.',
       { delayMs: 850, ignoreAbort: true },
     ),
     makeFixture(
       'fixture-fast',
-      '快快龙',
-      '它会很快来到展台，用来确认最新选择获胜。',
+      locale === 'zh-CN' ? '快快龙' : 'Fast test animal',
+      locale === 'zh-CN'
+        ? '它会很快来到展台，用来确认最新选择获胜。'
+        : 'It reaches the exhibit quickly so the latest selection can win.',
       { delayMs: 60 },
       'water',
     ),
     makeFixture(
       'fixture-retry',
-      '再试龙',
-      '它第一次会迷路，再点一次就能来到展台。',
+      locale === 'zh-CN' ? '再试龙' : 'Retry test animal',
+      locale === 'zh-CN'
+        ? '它第一次会迷路，再点一次就能来到展台。'
+        : 'Its first visit fails so the retry path can be checked.',
       { delayMs: 80, failuresBeforeSuccess: 1 },
     ),
   ]
 }
-
-const e2eFixtureAnimals =
-  import.meta.env.MODE === 'e2e' ? makeE2EFixtures(defaultAnimal) : []
 
 function waitForFixture(
   milliseconds: number,
@@ -580,23 +614,46 @@ function readE2EFixturesEnabled(): boolean {
   )
 }
 
-export function App() {
+function MuseumApp() {
+  const { locale, messages } = useI18n()
   const e2eFixturesEnabled = useMemo(() => readE2EFixturesEnabled(), [])
+  const productionAnimals = useMemo(
+    () => publishedMainAnimals.map((animal) => toRuntimeAnimal(animal, locale)),
+    [locale],
+  )
+  const defaultAnimal =
+    productionAnimals[0] ?? toRuntimeAnimal(defaultPackage!, locale)
+  const applicationAnimals = useMemo(
+    () =>
+      localReviewMode
+        ? localReviewAnimals.map((animal) => toRuntimeAnimal(animal, locale))
+        : productionAnimals,
+    [locale, productionAnimals],
+  )
+  const e2eFixtureAnimals = useMemo(
+    () =>
+      import.meta.env.MODE === 'e2e'
+        ? makeE2EFixtures(defaultAnimal, locale)
+        : [],
+    [defaultAnimal, locale],
+  )
   const animals = useMemo(
     () =>
       e2eFixturesEnabled
         ? [...productionAnimals, ...e2eFixtureAnimals]
         : applicationAnimals,
-    [e2eFixturesEnabled],
+    [applicationAnimals, e2eFixtureAnimals, e2eFixturesEnabled, productionAnimals],
   )
   const animalIndex = useMemo(
     () => new Map(animals.map((animal) => [animal.id, animal])),
     [animals],
   )
-  const initialAnimal = useMemo(() => readInitialAnimal(animals), [animals])
+  const initialAnimal = useMemo(
+    () => readInitialAnimal(animals, defaultAnimal),
+    [animals, defaultAnimal],
+  )
   const modelCache = useMemo(() => new ModelCache(), [])
-  const idlePreloadTargets = useMemo(
-    () =>
+  const [idlePreloadTargets] = useState(() =>
       animals.map((animal) => ({
         id: animal.id,
         imageUrls: () => {
@@ -620,7 +677,6 @@ export function App() {
         },
         modelUrl: animal.assets.model,
       })),
-    [animals],
   )
 
   const viewerControllerRef = useRef<ViewerController | null>(null)
@@ -628,6 +684,15 @@ export function App() {
   const idlePreloadCoordinatorRef = useRef<IdlePreloadCoordinator | null>(null)
   const attemptsRef = useRef(new Map<string, number>())
   const activeAnimalRef = useRef(initialAnimal)
+  const animalIndexRef = useRef(animalIndex)
+  const messagesRef = useRef(messages)
+  const liveMessageLocaleRef = useRef(locale)
+  useLayoutEffect(() => {
+    animalIndexRef.current = animalIndex
+  }, [animalIndex])
+  useLayoutEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
   const backgroundTimerRef = useRef<number | null>(null)
   const visibleBackgroundRef = useRef(initialAnimal)
   const initialPresentationPendingRef = useRef(true)
@@ -668,7 +733,8 @@ export function App() {
   const [modelReady, setModelReady] = useState(false)
   const [modelLoadingProgress, setModelLoadingProgress] =
     useState<ModelLoadingProgress | null>(null)
-  const [viewerFailure, setViewerFailure] = useState<string | null>(null)
+  const [viewerFailure, setViewerFailure] =
+    useState<ViewerFailureKind | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collectionOpen, setCollectionOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
@@ -676,7 +742,7 @@ export function App() {
   const [modelDataNotice, setModelDataNotice] =
     useState<ModelDataNotice | null>(null)
   const [liveMessage, setLiveMessage] = useState(
-    `正在准备${initialAnimal.name}展台。`,
+    messages.loading.initialExhibit(initialAnimal.name),
   )
 
   const narration = useMemo(() => new NarrationController(), [])
@@ -686,6 +752,9 @@ export function App() {
     narration.getServerSnapshot,
   )
   const activeAnimal = animalIndex.get(activeAnimalId) ?? initialAnimal
+  useEffect(() => {
+    activeAnimalRef.current = activeAnimal
+  }, [activeAnimal])
   const overlayOpen = drawerOpen || collectionOpen || aboutOpen
   const collectionAnimals = useMemo<CollectionAnimal[]>(
     () =>
@@ -699,8 +768,22 @@ export function App() {
   )
 
   useEffect(() => {
-    document.title = `${activeAnimal.name} | 史前动物博物馆`
-  }, [activeAnimal.name])
+    updateLocalizedMetadata({
+      locale,
+      documentTitle: messages.documentTitle,
+      museumTitle: messages.museumName,
+      creatorBrand: messages.creatorBrand,
+      description: messages.seo.description(animals.length),
+      socialImageAlt: messages.seo.socialImageAlt,
+    })
+  }, [animals.length, locale, messages])
+
+  useEffect(() => {
+    viewerController?.setAccessibilityLabel(
+      activeAnimal.viewer.accessibilityLabel ??
+        messages.viewer.modelLabel(activeAnimal.name),
+    )
+  }, [activeAnimal.name, activeAnimal.viewer.accessibilityLabel, messages, viewerController])
 
   const dismissModelDataNotice = useCallback(() => {
     if (modelDataNoticeTimerRef.current !== null) {
@@ -759,10 +842,9 @@ export function App() {
           return
         }
         presentModelDataNotice({
+          animalId: animal.id,
           kind: 'large-model',
-          message: `${animal.name}的 3D 模型约 ${formatModelSize(
-            animal.assets.modelBytes,
-          )}，第一次下载的数据量较大，加载可能会久一点。`,
+          modelBytes: animal.assets.modelBytes,
         })
       }, LARGE_MODEL_NOTICE_DELAY_MS)
     },
@@ -831,8 +913,6 @@ export function App() {
       }
       presentModelDataNotice({
         kind: 'first-entry',
-        message:
-          '这里的 3D 动物会使用一些流量，连接 Wi‑Fi 时观看会更顺畅。',
       })
     }, 0)
 
@@ -880,10 +960,10 @@ export function App() {
 
   useEffect(() => {
     narration.commit({
-      animalId: initialAnimal.id,
-      source: initialAnimal.assets.narration,
+      animalId: activeAnimal.id,
+      source: activeAnimal.assets.narration,
     })
-  }, [initialAnimal, narration])
+  }, [activeAnimal.assets.narration, activeAnimal.id, narration])
 
   useEffect(() => {
     if (
@@ -978,7 +1058,7 @@ export function App() {
     setModelReady(false)
     setModelLoadingProgress(null)
     clearLargeModelNotice()
-    setViewerFailure(failure.message)
+    setViewerFailure(failure.kind)
     viewerRequiresRemountRef.current =
       failure.kind === 'webgl-unavailable' || failure.kind === 'context-lost'
     const fatalViewerFailure =
@@ -1000,7 +1080,9 @@ export function App() {
       }))
     }
     setLiveMessage(
-      `三维展台暂时不可用，已经换成${activeAnimalRef.current.name}的静态模型图。`,
+      messagesRef.current.viewerFallbackAnnouncement(
+        activeAnimalRef.current.name,
+      ),
     )
   }, [clearLargeModelNotice])
 
@@ -1052,7 +1134,9 @@ export function App() {
     }
     setBackgroundTransitionReady(false)
     setLiveMessage(
-      `${activeAnimalRef.current.name}的场景还在准备，先保留上一幅画面。`,
+      messagesRef.current.loading.backgroundPending(
+        activeAnimalRef.current.name,
+      ),
     )
   }, [])
 
@@ -1080,7 +1164,7 @@ export function App() {
       load: async (animalId, context: AnimalLoadContext) => {
         idlePreloadCoordinator.cancelAll()
         clearLargeModelNotice()
-        const animal = animalIndex.get(animalId)
+        const animal = animalIndexRef.current.get(animalId)
         if (!animal) {
           throw new Error(`没有找到动物 ${animalId}。`)
         }
@@ -1210,9 +1294,14 @@ export function App() {
       },
       commit: ({ animal, staged }) => {
         const isInitialCommit = initialPresentationPendingRef.current
+        const localizedAnimal = animalIndexRef.current.get(animal.id) ?? animal
         controller.commitModel(staged)
+        controller.setAccessibilityLabel(
+          localizedAnimal.viewer.accessibilityLabel ??
+            messagesRef.current.viewer.modelLabel(localizedAnimal.name),
+        )
         const previousAnimal = activeAnimalRef.current
-        if (previousAnimal.id !== animal.id) {
+        if (previousAnimal.id !== localizedAnimal.id) {
           if (backgroundTimerRef.current !== null) {
             window.clearTimeout(backgroundTimerRef.current)
             backgroundTimerRef.current = null
@@ -1223,19 +1312,21 @@ export function App() {
           )
         }
         initialPresentationPendingRef.current = false
-        activeAnimalRef.current = animal
-        setActiveAnimalId(animal.id)
+        activeAnimalRef.current = localizedAnimal
+        setActiveAnimalId(localizedAnimal.id)
         if (!isInitialCommit) {
           setModelLoadingProgress(null)
         }
         setViewerFailure(null)
-        replaceAnimalUrl(animal.id)
+        replaceAnimalUrl(localizedAnimal.id)
         narration.commit({
-          animalId: animal.id,
-          source: animal.assets.narration,
+          animalId: localizedAnimal.id,
+          source: localizedAnimal.assets.narration,
         })
-        idlePreloadCoordinator.scheduleAfterCommit(animal.id)
-        setLiveMessage(`${animal.name}已经来到展台。`)
+        idlePreloadCoordinator.scheduleAfterCommit(localizedAnimal.id)
+        setLiveMessage(
+          messagesRef.current.loading.arrived(localizedAnimal.name),
+        )
       },
       dispose: ({ staged }) => {
         controller.disposeStagedModel(staged)
@@ -1253,9 +1344,11 @@ export function App() {
       if (snapshot.phase === 'failed' && snapshot.failure) {
         clearLargeModelNotice()
         setModelLoadingProgress(null)
-        const failedAnimal = animalIndex.get(snapshot.failure.animalId)
+        const failedAnimal = animalIndexRef.current.get(snapshot.failure.animalId)
         setLiveMessage(
-          `${failedAnimal?.name ?? '这只动物'}暂时没准备好，可以点击它的卡片重试。`,
+          messagesRef.current.loading.failedRetry(
+            failedAnimal?.name ?? messagesRef.current.loading.unknownAnimal,
+          ),
         )
       }
     })
@@ -1273,7 +1366,6 @@ export function App() {
       }
     }
   }, [
-    animalIndex,
     clearLargeModelNotice,
     idlePreloadTargets,
     modelCache,
@@ -1314,7 +1406,7 @@ export function App() {
     focusPointerRef.current = null
     viewerControllerRef.current?.setFocusMode(false)
     setFocusMode(false)
-    setLiveMessage('已经回到完整的博物馆界面。')
+    setLiveMessage(messagesRef.current.focusExited)
     window.setTimeout(() => focusTriggerRef.current?.focus(), 0)
   }, [])
 
@@ -1364,14 +1456,14 @@ export function App() {
     }
     idlePreloadCoordinatorRef.current?.cancelAll()
     clearLargeModelNotice()
-    setLiveMessage('正在准备新的动物展台。')
+    setLiveMessage(messages.loading.preparingExhibit)
     void coordinator.request(animalId)
   }
 
   const retryAnimal = () => {
     idlePreloadCoordinatorRef.current?.cancelAll()
     clearLargeModelNotice()
-    setLiveMessage('正在重新准备展台。')
+    setLiveMessage(messages.loading.retryingExhibit)
     const coordinator = coordinatorRef.current
     if (viewerRequiresRemountRef.current) {
       viewerRequiresRemountRef.current = false
@@ -1409,8 +1501,34 @@ export function App() {
   }
   const initialModelFailure =
     !modelReady && loadSnapshot.phase === 'failed'
-      ? '它暂时没准备好，再点一次试试。'
-      : viewerFailure
+      ? messages.loading.failed
+      : viewerFailure === 'context-lost'
+        ? messages.viewer.contextLost
+        : viewerFailure === 'webgl-unavailable'
+          ? messages.viewer.webglUnavailable
+          : null
+  const modelDataNoticeMessage =
+    modelDataNotice?.kind === 'first-entry'
+      ? messages.dataNotice.wifi
+      : modelDataNotice?.kind === 'large-model'
+        ? messages.dataNotice.largeModel(
+            animalIndex.get(modelDataNotice.animalId)?.name ??
+              messages.loading.unknownAnimal,
+            formatModelSize(modelDataNotice.modelBytes),
+          )
+        : null
+
+  useEffect(() => {
+    if (liveMessageLocaleRef.current === locale) {
+      return
+    }
+    liveMessageLocaleRef.current = locale
+    setLiveMessage(
+      viewerFailure
+        ? messages.viewerFallbackAnnouncement(activeAnimal.name)
+        : '',
+    )
+  }, [activeAnimal.name, locale, messages, viewerFailure])
 
   const enterFocusMode = () => {
     if (!modelReady) {
@@ -1418,9 +1536,7 @@ export function App() {
     }
     viewerControllerRef.current?.setFocusMode(true)
     setFocusMode(true)
-    setLiveMessage(
-      '已进入模型专注模式，轻点画面或按 Escape 返回完整界面。',
-    )
+    setLiveMessage(messages.focusEntered)
   }
 
   const handleFocusPointerDown = (
@@ -1466,19 +1582,22 @@ export function App() {
   const handleNarrationToggle = async () => {
     const result = await narration.toggle()
     if (result.status === 'playing') {
-      setLiveMessage(`正在播放${activeAnimalRef.current.name}的介绍。`)
+      setLiveMessage(messages.narration.playing(activeAnimalRef.current.name))
     } else if (result.status === 'paused') {
-      setLiveMessage(`${activeAnimalRef.current.name}的介绍已暂停。`)
+      setLiveMessage(messages.narration.paused(activeAnimalRef.current.name))
     }
   }
 
-  const narrationLabel = getNarrationControlLabel(narrationSnapshot)
+  const narrationLabel = getNarrationControlLabel(
+    narrationSnapshot,
+    messages.narration,
+  )
   const narrationVisibleLabel =
     narrationSnapshot.availability === 'available'
       ? narrationSnapshot.playback === 'playing'
-        ? '暂停'
-        : '听介绍'
-      : '暂无语音'
+        ? messages.narration.pauseShort
+        : messages.narration.listenShort
+      : messages.narration.unavailableShort
   const hasOutgoingBackground =
     outgoingAnimal !== null && outgoingAnimal.id !== activeAnimal.id
   const initialLoading =
@@ -1506,6 +1625,7 @@ export function App() {
       className={`museum-experience ${focusMode ? 'museum-experience--focus' : ''}`}
       data-atmosphere={activeAnimal.atmosphere}
       data-habitat={activeAnimal.habitat}
+      data-locale={locale}
       data-ready-animal-id={loadSnapshot.readyAnimalId ?? ''}
       data-review-mode={localReviewMode || undefined}
       data-request-token={loadSnapshot.requestToken}
@@ -1537,17 +1657,17 @@ export function App() {
         <section aria-hidden={overlayOpen} className="story-panel" inert={overlayOpen}>
           <div className="story-card">
             <div className="museum-header">
-              <p className="museum-kicker">
+              <h1 className="museum-kicker">
                 <span className="museum-mark" aria-hidden="true">
                   <Leaf size={16} strokeWidth={2.3} />
                 </span>
-                <span>史前动物博物馆</span>
+                <span>{messages.museumName}</span>
                 {localReviewMode ? (
-                  <span className="review-mode-label">本地评审</span>
+                  <span className="review-mode-label">{messages.localReview}</span>
                 ) : null}
-              </p>
+              </h1>
               <button
-                aria-label="了解Leon做了个和这座博物馆"
+                aria-label={messages.creatorAboutLabel}
                 className="creator-signature-button"
                 onClick={() => {
                   setDrawerOpen(false)
@@ -1558,13 +1678,13 @@ export function App() {
                 type="button"
               >
                 <Info aria-hidden="true" size={16} strokeWidth={2.1} />
-                <span>Leon做了个</span>
+                <span>{messages.creatorBrand}</span>
               </button>
             </div>
             <div className="title-lockup" key={`title-${activeAnimal.id}`}>
               <div className="animal-copy">
                 <div className="animal-eyebrow">
-                  <span>今天认识</span>
+                  <span>{messages.todayMeet}</span>
                   <span className="classification-chip">
                     {activeAnimal.classification}
                   </span>
@@ -1577,7 +1697,9 @@ export function App() {
                     </span>
                   ) : null}
                 </div>
-                <h1>{activeAnimal.name}</h1>
+                <ResponsiveAnimalTitle locale={locale}>
+                  {activeAnimal.name}
+                </ResponsiveAnimalTitle>
                 <p className="child-intro">
                   <Eye aria-hidden="true" size={21} strokeWidth={2.2} />
                   <span>{activeAnimal.intro}</span>
@@ -1622,11 +1744,11 @@ export function App() {
                 id={narrationScriptId}
                 role="tooltip"
               >
-                {activeAnimal.narrationScript.join('')}
+                {activeAnimal.narrationScript.join(locale === 'zh-CN' ? '' : ' ')}
               </span>
             </div>
             <button
-              aria-label="给家长的资料"
+              aria-label={messages.parentInfo}
               className="parent-info-button"
               onClick={() => {
                 setCollectionOpen(false)
@@ -1637,10 +1759,10 @@ export function App() {
               type="button"
             >
               <BookOpen aria-hidden="true" size={21} strokeWidth={2.1} />
-              <span>家长资料</span>
+              <span>{messages.parentInfoShort}</span>
             </button>
             <button
-              aria-label="打开全馆图鉴"
+              aria-label={messages.openCollection}
               className="collection-open-button"
               onClick={() => {
                 setDrawerOpen(false)
@@ -1651,7 +1773,7 @@ export function App() {
               type="button"
             >
               <LayoutGrid aria-hidden="true" size={21} strokeWidth={2.1} />
-              <span>全馆</span>
+              <span>{messages.collectionShort}</span>
             </button>
           </div>
         </section>
@@ -1659,7 +1781,7 @@ export function App() {
 
       <section
         aria-hidden={overlayOpen && !focusMode}
-        aria-label={`${activeAnimal.name}模型展台`}
+        aria-label={messages.stageLabel(activeAnimal.name)}
         className="stage-panel"
         data-testid="model-stage"
         inert={overlayOpen && !focusMode}
@@ -1688,19 +1810,20 @@ export function App() {
         />
         {!focusMode ? (
           <div aria-hidden={overlayOpen} className="stage-actions" inert={overlayOpen}>
+            <LanguageMenu />
             <IconButton
               icon={RotateCcw}
-              label="恢复初始视角"
+              label={messages.resetView}
               onClick={() => {
                 viewerControllerRef.current?.reset()
-                setLiveMessage('已经恢复初始视角。')
+                setLiveMessage(messages.resetDone)
               }}
             />
             <IconButton
               disabled={!modelReady}
               icon={Maximize2}
               hideTooltipOnFocus
-              label="专注看模型"
+              label={messages.focusView}
               onClick={enterFocusMode}
               ref={focusTriggerRef}
             />
@@ -1708,16 +1831,19 @@ export function App() {
         ) : (
           <>
             <p aria-hidden="true" className="focus-return-hint">
-              轻点画面即可返回
+              {messages.focusReturnHint}
             </p>
-            <IconButton
-              className="focus-exit"
-              hideTooltipOnFocus
-              icon={Minimize2}
-              label="退出模型专注模式"
-              onClick={exitFocusMode}
-              ref={focusExitRef}
-            />
+            <div className="focus-actions">
+              <LanguageMenu />
+              <IconButton
+                className="focus-exit"
+                hideTooltipOnFocus
+                icon={Minimize2}
+                label={messages.exitFocus}
+                onClick={exitFocusMode}
+                ref={focusExitRef}
+              />
+            </div>
           </>
         )}
       </section>
@@ -1725,7 +1851,11 @@ export function App() {
       {!focusMode ? (
         <section
           aria-hidden={overlayOpen}
-          aria-label={localReviewMode ? '本地评审动物选择' : '动物选择'}
+          aria-label={
+            localReviewMode
+              ? messages.reviewNavigationLabel
+              : messages.navigationLabel
+          }
           className={`animal-navigation ${
             animals.length === 1 ? 'animal-navigation--single' : ''
           }`}
@@ -1735,7 +1865,7 @@ export function App() {
           <IconButton
             className="animal-step animal-step--previous"
             icon={ChevronLeft}
-            label="上一只动物"
+            label={messages.previousAnimal}
             onClick={() => requestAdjacentAnimal(-1)}
           />
           <div className="animal-rail" ref={railRef} role="list">
@@ -1751,19 +1881,13 @@ export function App() {
                 <div className="animal-card-slot" key={animal.id} role="listitem">
                   <button
                     aria-current={selected ? 'true' : undefined}
-                    aria-label={
-                      failed
-                        ? `查看${animal.name}${
-                            localReviewMode && animal.review
-                              ? `，本地评审，${animal.review.displayLabel}`
-                              : ''
-                          }，加载失败，点击重试`
-                        : `查看${animal.name}${
-                            localReviewMode && animal.review
-                              ? `，本地评审，${animal.review.displayLabel}`
-                              : ''
-                          }`
-                    }
+                    aria-label={messages.viewAnimal(
+                      animal.name,
+                      localReviewMode && animal.review
+                        ? animal.review.displayLabel
+                        : '',
+                      failed,
+                    )}
                     className="animal-card"
                     data-animal-id={animal.id}
                     data-failed={failed}
@@ -1804,18 +1928,20 @@ export function App() {
                     loadSnapshot.showDelayedLabel ? (
                       <span className="card-status">
                         {loadingPhase === 'preparing'
-                          ? '正在打开…'
+                          ? messages.loading.opening
                           : loadingPercent === null
-                            ? '正在请它出来…'
-                            : `下载中 · ${loadingPercent}%`}
+                            ? messages.loading.inviting
+                            : messages.loading.downloading(loadingPercent)}
                       </span>
                     ) : null}
-                    {failed ? <span className="card-status">点我再试</span> : null}
+                    {failed ? (
+                      <span className="card-status">{messages.loading.retry}</span>
+                    ) : null}
                     {!failed &&
                     (!loading || !loadSnapshot.showDelayedLabel) &&
                     localReviewMode &&
                     animal.review ? (
-                      <span className="card-review-status">本地评审</span>
+                      <span className="card-review-status">{messages.localReview}</span>
                     ) : null}
                   </button>
                 </div>
@@ -1825,7 +1951,7 @@ export function App() {
           <IconButton
             className="animal-step animal-step--next"
             icon={ChevronRight}
-            label="下一只动物"
+            label={messages.nextAnimal}
             onClick={() => requestAdjacentAnimal(1)}
           />
         </section>
@@ -1840,13 +1966,13 @@ export function App() {
           role="status"
         >
           <span aria-hidden="true" className="model-data-notice__dot" />
-          <p>{modelDataNotice.message}</p>
+          <p>{modelDataNoticeMessage}</p>
           <button
-            aria-label="关闭模型流量提示"
+            aria-label={messages.dataNotice.dismissLabel}
             onClick={dismissModelDataNotice}
             type="button"
           >
-            知道了
+            {messages.dataNotice.dismiss}
           </button>
         </aside>
       ) : null}
@@ -1899,5 +2025,13 @@ export function App() {
         returnFocusTo={collectionTriggerRef}
       />
     </main>
+  )
+}
+
+export function App() {
+  return (
+    <I18nProvider>
+      <MuseumApp />
+    </I18nProvider>
   )
 }

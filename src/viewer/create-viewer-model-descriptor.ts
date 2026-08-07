@@ -19,8 +19,10 @@ export function createViewerModelDescriptor(
   animal: ViewerAnimalSource,
   label: string,
   modelUrl: string,
+  accessibilityLabel?: string,
 ): ViewerModelDescriptor {
   return {
+    ...(accessibilityLabel ? { accessibilityLabel } : {}),
     id: animal.id,
     label,
     modelUrl,

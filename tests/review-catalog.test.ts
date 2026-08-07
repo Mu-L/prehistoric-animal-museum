@@ -10,7 +10,11 @@ import {
   localReviewAnimals,
 } from '../src/review/catalog'
 import { animal as sauropeltaDraft } from '../src/review/animals/sauropelta/package'
-import type { DisplayableAnimalPackage } from '../src/review/types'
+import {
+  reviewNarrationAssetFor,
+  reviewNarrationPlanFor,
+  type DisplayableAnimalPackage,
+} from '../src/review/types'
 
 describe('local collection review catalog', () => {
   it('switches an allowlisted draft to production assets without a catalog edit', () => {
@@ -115,17 +119,25 @@ describe('local collection review catalog', () => {
           `/__museum-review-assets/${animal.id}/background-portrait`,
         )
       }
-      expect(animal.narration.status).toBe('ready')
-      expect(animal.assets.narration.status).toBe('ready')
-      if (animal.assets.narration.status !== 'ready') {
+      const zhNarrationPlan = reviewNarrationPlanFor(
+        animal.narration,
+        'zh-CN',
+      )
+      const zhNarrationAsset = reviewNarrationAssetFor(
+        animal.assets.narration,
+        'zh-CN',
+      )
+      expect(zhNarrationPlan?.status).toBe('ready')
+      expect(zhNarrationAsset?.status).toBe('ready')
+      if (zhNarrationAsset?.status !== 'ready') {
         throw new Error(`Expected ready narration for ${animal.id}`)
       }
       if (promotedIds.has(animal.id)) {
-        expect(animal.assets.narration.url).toContain(
+        expect(zhNarrationAsset.url).toContain(
           `/src/content/animals/${animal.id}/audio/narration.zh-CN.mp3`,
         )
       } else {
-        expect(animal.assets.narration.url).toBe(
+        expect(zhNarrationAsset.url).toBe(
           `/__museum-review-assets/${animal.id}/narration.mp3`,
         )
       }
@@ -139,6 +151,27 @@ describe('local collection review catalog', () => {
       } else {
         expect(promotedIds.has(animal.id)).toBe(true)
       }
+    }
+  })
+
+  it('does not reuse a legacy Mandarin review track for English', () => {
+    expect(
+      reviewNarrationPlanFor(sauropeltaDraft.narration, 'en'),
+    ).toBeUndefined()
+    expect(
+      reviewNarrationAssetFor(sauropeltaDraft.assets.narration, 'en'),
+    ).toBeUndefined()
+  })
+
+  it('fills published review overlays from the matching production locale', () => {
+    for (const animal of localReviewAnimals) {
+      expect(animal.content.en?.name).toBeTruthy()
+      const narration = reviewNarrationPlanFor(animal.narration, 'en')
+      expect(narration?.status).toBe('ready')
+      if (narration?.status !== 'ready') {
+        throw new Error(`Expected ready English narration for ${animal.id}`)
+      }
+      expect(narration.sourcePath).toBe('audio/narration.en.mp3')
     }
   })
 
@@ -392,7 +425,11 @@ describe('local collection review catalog', () => {
 
     for (const animal of [tyrannosaurus, triceratops, apatosaurus]) {
       expect(animal?.status).toBe('published')
-      expect(animal?.narration.status).toBe('ready')
+      expect(
+        animal
+          ? reviewNarrationPlanFor(animal.narration, 'zh-CN')?.status
+          : undefined,
+      ).toBe('ready')
       expect(animal?.content['zh-CN'].sources.length).toBeGreaterThanOrEqual(1)
       expect(animal?.content['zh-CN'].sources.length).toBeLessThanOrEqual(3)
     }
@@ -452,7 +489,12 @@ describe('local collection review catalog', () => {
 
     for (const animal of additions) {
       expect(animal?.status).toBe('published')
-      expect(animal?.assets.narration.status).toBe('ready')
+      expect(
+        animal
+          ? reviewNarrationAssetFor(animal.assets.narration, 'zh-CN')
+              ?.status
+          : undefined,
+      ).toBe('ready')
     }
 
     expect(gigantoraptor?.animation).toEqual({
@@ -467,7 +509,11 @@ describe('local collection review catalog', () => {
     expect(gigantoraptor?.review?.note).toContain('225%')
     expect(gigantoraptor?.review?.note).toContain('450%')
     expect(gigantoraptor?.review?.note).toContain('500%')
-    expect(gigantoraptor?.narration.status).toBe('ready')
+    expect(
+      gigantoraptor
+        ? reviewNarrationPlanFor(gigantoraptor.narration, 'zh-CN')?.status
+        : undefined,
+    ).toBe('ready')
     expect(gigantoraptor?.review?.note).toContain('很高科学不确定性')
     expect(gigantoraptor?.content['zh-CN'].facts.diet).toBe('unknown')
 
@@ -480,7 +526,11 @@ describe('local collection review catalog', () => {
     expect(mammoth?.review?.status).toBe(
       '头部长牙与尾部 Blender Idle 待复看',
     )
-    expect(mammoth?.narration.status).toBe('ready')
+    expect(
+      mammoth
+        ? reviewNarrationPlanFor(mammoth.narration, 'zh-CN')?.status
+        : undefined,
+    ).toBe('ready')
     expect(mammoth?.review?.note).toContain('cháng máo')
     expect(mammoth?.review?.note).toContain('约 7°')
     expect(mammoth?.review?.note).toContain('固定尾根')
@@ -516,8 +566,12 @@ describe('local collection review catalog', () => {
         loop: 'repeat',
         speed: animal.id === 'maiasaura' ? 0.9 : 1,
       })
-      expect(animal.narration.status).toBe('ready')
-      expect(animal.assets.narration.status).toBe('ready')
+      expect(
+        reviewNarrationPlanFor(animal.narration, 'zh-CN')?.status,
+      ).toBe('ready')
+      expect(
+        reviewNarrationAssetFor(animal.assets.narration, 'zh-CN')?.status,
+      ).toBe('ready')
       expect(animal.review?.modelCredit?.licenseUrl).toBe(
         'https://creativecommons.org/licenses/by/4.0/',
       )
@@ -535,13 +589,21 @@ describe('local collection review catalog', () => {
     expect(promoted.map(({ id }) => id)).toEqual(promotedIds)
     for (const animal of promoted) {
       expect(animal.status).toBe('published')
-      expect(animal.provenance).toHaveLength(7)
+      expect(animal.provenance).toHaveLength(8)
       expect(
         animal.provenance.find(({ assetPath }) => assetPath === 'model/model.glb')
           ?.source,
       ).toMatchObject({
         type: 'third-party',
       })
+      const englishNarrationSource = animal.provenance.find(
+        ({ assetPath }) => assetPath === 'audio/narration.en.mp3',
+      )?.source
+      expect(englishNarrationSource?.type).toBe('generated')
+      if (englishNarrationSource?.type !== 'generated') {
+        throw new Error(`Expected generated English narration for ${animal.id}`)
+      }
+      expect(englishNarrationSource.revision).toContain('Serena')
       expect('draftNotes' in animal).toBe(false)
     }
 

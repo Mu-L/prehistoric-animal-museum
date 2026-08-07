@@ -23,6 +23,10 @@ import type {
   CompleteDraftAnimalPackage,
   DisplayableAnimalPackage,
 } from './types'
+import {
+  reviewNarrationAssetFor,
+  reviewNarrationPlanFor,
+} from './types'
 
 const reviewedStegosaurus = {
   ...stegosaurus,
@@ -74,6 +78,45 @@ function acceptedOnboardingAnimal(
   }
 }
 
+function mergePublishedReviewAnimal(
+  productionAnimal: PublishedAnimalPackage,
+  reviewAnimal: DisplayableAnimalPackage,
+): DisplayableAnimalPackage {
+  if (!reviewAnimal.review) {
+    return productionAnimal
+  }
+  return {
+    ...reviewAnimal,
+    status: 'published',
+    review: reviewAnimal.review,
+    content: {
+      'zh-CN': reviewAnimal.content['zh-CN'],
+      en: reviewAnimal.content.en ?? productionAnimal.content.en,
+    },
+    narration: {
+      'zh-CN':
+        reviewNarrationPlanFor(reviewAnimal.narration, 'zh-CN') ??
+        productionAnimal.narration['zh-CN'],
+      en:
+        reviewNarrationPlanFor(reviewAnimal.narration, 'en') ??
+        productionAnimal.narration.en,
+    },
+    assets: {
+      ...reviewAnimal.assets,
+      narration: {
+        'zh-CN':
+          reviewNarrationAssetFor(
+            reviewAnimal.assets.narration,
+            'zh-CN',
+          ) ?? productionAnimal.assets.narration['zh-CN'],
+        en:
+          reviewNarrationAssetFor(reviewAnimal.assets.narration, 'en') ??
+          productionAnimal.assets.narration.en,
+      },
+    },
+  }
+}
+
 const publishedReviewAnimals: readonly DisplayableAnimalPackage[] = [
   reviewedStegosaurus,
   pachycephalosaurus,
@@ -115,7 +158,9 @@ export function buildLocalReviewCatalog(
   return [
     ...productionAnimals.map((animal) => {
       const publishedReview = publishedReviewById.get(animal.id)
-      if (publishedReview) return publishedReview
+      if (publishedReview) {
+        return mergePublishedReviewAnimal(animal, publishedReview)
+      }
       const draft = draftById.get(animal.id)
       return draft ? acceptedOnboardingAnimal(animal, draft) : animal
     }),

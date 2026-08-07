@@ -7,7 +7,10 @@ export interface PublishedAnimalAssetUrls {
   readonly backgroundLandscape: string
   readonly backgroundPortrait: string
   readonly model: string
-  readonly narration: string
+  readonly narration: {
+    readonly 'zh-CN': string
+    readonly en: string
+  }
   readonly poster: string
   readonly posterPortrait: string
   readonly thumbnail: string
@@ -37,10 +40,14 @@ export function createRuntimeAnimal(
         portrait: urls.backgroundPortrait,
       },
       narration: {
-        status: 'ready',
-        sourcePath: 'audio/narration.zh-CN.mp3',
-        mimeType: 'audio/mpeg',
-        url: urls.narration,
+        'zh-CN': {
+          ...definition.narration['zh-CN'],
+          url: urls.narration['zh-CN'],
+        },
+        en: {
+          ...definition.narration.en,
+          url: urls.narration.en,
+        },
       },
     },
   }

@@ -3,6 +3,21 @@ import type { CreditEntry } from './types'
 
 export const credits = [
   {
+    "id": "apatosaurus:audio/narration.en.mp3",
+    "animalId": "apatosaurus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Apatosaurus English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
     "id": "apatosaurus:audio/narration.zh-CN.mp3",
     "animalId": "apatosaurus",
     "assetPath": "audio/narration.zh-CN.mp3",
@@ -110,6 +125,21 @@ export const credits = [
       "Normalized the animal to a 3.2-unit total length with canonical transforms, centred horizontal bounds, and all four feet resting on the ground plane.",
       "Authored one eight-second in-place morph-target Idle at 24 frames per second; all feet and lower limbs remain fixed, the loop closes exactly, and the head and open mouth move as one rigid region.",
       "Verified zero foot drift, ground penetration, seam separation, new BVH overlap, collapsed triangles, and flipped triangles, then validator-checked and reviewed the derivative in the shared museum viewer."
+    ]
+  },
+  {
+    "id": "dilophosaurus:audio/narration.en.mp3",
+    "animalId": "dilophosaurus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Dilophosaurus English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
     ]
   },
   {
@@ -223,6 +253,21 @@ export const credits = [
     ]
   },
   {
+    "id": "gigantoraptor:audio/narration.en.mp3",
+    "animalId": "gigantoraptor",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Gigantoraptor English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
     "id": "gigantoraptor:audio/narration.zh-CN.mp3",
     "animalId": "gigantoraptor",
     "assetPath": "audio/narration.zh-CN.mp3",
@@ -330,6 +375,21 @@ export const credits = [
       "Injected 29 rotation-only channels for the torso, neck, head, jaw, arms, and tail into the normalized base GLB while preserving its original mesh and skin hierarchy.",
       "Kept the root, hips, and legs stationary to avoid foot sliding.",
       "Validated and reviewed the self-contained derivative."
+    ]
+  },
+  {
+    "id": "ichthyosaur:audio/narration.en.mp3",
+    "animalId": "ichthyosaur",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Ichthyosaurs English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
     ]
   },
   {
@@ -443,6 +503,21 @@ export const credits = [
     ]
   },
   {
+    "id": "maiasaura:audio/narration.en.mp3",
+    "animalId": "maiasaura",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Maiasaura English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
     "id": "maiasaura:audio/narration.zh-CN.mp3",
     "animalId": "maiasaura",
     "assetPath": "audio/narration.zh-CN.mp3",
@@ -549,6 +624,21 @@ export const credits = [
       "Replaced the cyan-orange toy-like colour treatment with a project-authored warm brown back, pale underside, dark dorsal markings, multiscale mottling, higher roughness, and a clearer skin normal surface.",
       "Authored an eight-second in-place Idle at 24 frames per second with visibly increased torso, head, neck, forelimb, and full-tail motion while retaining stable four-foot contact.",
       "Exported a single closed-loop Idle, validator-checked the result, and reviewed the animated skinned bounds in the shared museum viewer."
+    ]
+  },
+  {
+    "id": "mammoth:audio/narration.en.mp3",
+    "animalId": "mammoth",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Woolly mammoth English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
     ]
   },
   {
@@ -663,6 +753,21 @@ export const credits = [
     ]
   },
   {
+    "id": "megalodon:audio/narration.en.mp3",
+    "animalId": "megalodon",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Megalodon English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
     "id": "megalodon:audio/narration.zh-CN.mp3",
     "animalId": "megalodon",
     "assetPath": "audio/narration.zh-CN.mp3",
@@ -772,6 +877,21 @@ export const credits = [
     ]
   },
   {
+    "id": "meganeura:audio/narration.en.mp3",
+    "animalId": "meganeura",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Meganeura English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
     "id": "meganeura:audio/narration.zh-CN.mp3",
     "animalId": "meganeura",
     "assetPath": "audio/narration.zh-CN.mp3",
@@ -878,6 +998,21 @@ export const credits = [
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
       "Authored and validator-checked one closed eight-second flying-insect Idle for the shared museum viewer."
+    ]
+  },
+  {
+    "id": "mosasaurus:audio/narration.en.mp3",
+    "animalId": "mosasaurus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Mosasaurus English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
     ]
   },
   {
@@ -991,6 +1126,21 @@ export const credits = [
     ]
   },
   {
+    "id": "pachycephalosaurus:audio/narration.en.mp3",
+    "animalId": "pachycephalosaurus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Pachycephalosaurus English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
     "id": "pachycephalosaurus:audio/narration.zh-CN.mp3",
     "animalId": "pachycephalosaurus",
     "assetPath": "audio/narration.zh-CN.mp3",
@@ -1096,6 +1246,21 @@ export const credits = [
       "Converted legacy material data to metallic/roughness.",
       "Cleared zero-weight joint indices and retained the presentation-safe Idle clip.",
       "Deduplicated, pruned, repacked, validated, and reviewed the derivative."
+    ]
+  },
+  {
+    "id": "plesiosaurus:audio/narration.en.mp3",
+    "animalId": "plesiosaurus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Plesiosaurs English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
     ]
   },
   {
@@ -1209,6 +1374,21 @@ export const credits = [
     ]
   },
   {
+    "id": "pteranodon:audio/narration.en.mp3",
+    "animalId": "pteranodon",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Pteranodon English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
     "id": "pteranodon:audio/narration.zh-CN.mp3",
     "animalId": "pteranodon",
     "assetPath": "audio/narration.zh-CN.mp3",
@@ -1315,6 +1495,21 @@ export const credits = [
       "Used Blender 5.2 to transfer the source flying action onto the normalized runtime rig, rebase the root to the museum rest origin, and reduce its translation to 3.5%.",
       "Retained the repaired in-place flight loop as the single Idle clip.",
       "Deduplicated, pruned, repacked, validated, and reviewed the derivative."
+    ]
+  },
+  {
+    "id": "rhamphorhynchus:audio/narration.en.mp3",
+    "animalId": "rhamphorhynchus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Rhamphorhynchus English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
     ]
   },
   {
@@ -1427,6 +1622,21 @@ export const credits = [
     ]
   },
   {
+    "id": "sauropelta:audio/narration.en.mp3",
+    "animalId": "sauropelta",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Sauropelta English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
     "id": "sauropelta:audio/narration.zh-CN.mp3",
     "animalId": "sauropelta",
     "assetPath": "audio/narration.zh-CN.mp3",
@@ -1533,6 +1743,21 @@ export const credits = [
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
       "Authored and validator-checked one closed eight-second land-breathe-tail Idle for the shared museum viewer."
+    ]
+  },
+  {
+    "id": "stegosaurus:audio/narration.en.mp3",
+    "animalId": "stegosaurus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Stegosaurus English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
     ]
   },
   {
@@ -1646,6 +1871,21 @@ export const credits = [
     ]
   },
   {
+    "id": "triceratops:audio/narration.en.mp3",
+    "animalId": "triceratops",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Triceratops English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
     "id": "triceratops:audio/narration.zh-CN.mp3",
     "animalId": "triceratops",
     "assetPath": "audio/narration.zh-CN.mp3",
@@ -1756,6 +1996,21 @@ export const credits = [
     ]
   },
   {
+    "id": "tupandactylus:audio/narration.en.mp3",
+    "animalId": "tupandactylus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Tupandactylus English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
     "id": "tupandactylus:audio/narration.zh-CN.mp3",
     "animalId": "tupandactylus",
     "assetPath": "audio/narration.zh-CN.mp3",
@@ -1863,6 +2118,21 @@ export const credits = [
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
       "Authored and validator-checked one closed eight-second flying-wing Idle for the shared museum viewer.",
       "Included the human-reviewed curated-components partial mouth relaxation in the same Idle loop."
+    ]
+  },
+  {
+    "id": "tyrannosaurus-rex:audio/narration.en.mp3",
+    "animalId": "tyrannosaurus-rex",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Tyrannosaurus rex English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
     ]
   },
   {

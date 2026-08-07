@@ -8,6 +8,7 @@ import {
   recordGitHubStarPromptOpened,
   shouldSuppressGitHubStarPrompt,
 } from '../github'
+import { useI18n } from '../i18n/I18nProvider'
 
 interface GitHubStarPromptProps {
   readonly blocked: boolean
@@ -26,6 +27,7 @@ export function GitHubStarPrompt({
   blocked,
   start,
 }: GitHubStarPromptProps) {
+  const { messages } = useI18n()
   const remainingMsRef = useRef(GITHUB_STAR_PROMPT_DELAY_MS)
   const startedAtRef = useRef<number | null>(null)
   const timerRef = useRef<number | null>(null)
@@ -117,7 +119,7 @@ export function GitHubStarPrompt({
 
   return (
     <aside
-      aria-label="支持这座博物馆"
+      aria-label={messages.star.label}
       aria-live="polite"
       className="github-star-toast"
     >
@@ -125,8 +127,8 @@ export function GitHubStarPrompt({
         <Star size={19} strokeWidth={2.2} />
       </span>
       <div className="github-star-toast__copy">
-        <strong>喜欢这座小博物馆吗？</strong>
-        <p>可以去 GitHub 点一颗 Star，帮助更多家庭看到它。</p>
+        <strong>{messages.star.title}</strong>
+        <p>{messages.star.body}</p>
       </div>
       <div className="github-star-toast__actions">
         <a
@@ -135,11 +137,11 @@ export function GitHubStarPrompt({
           rel="noreferrer"
           target="_blank"
         >
-          <span>去 GitHub</span>
+          <span>{messages.star.open}</span>
           <ExternalLink aria-hidden="true" size={15} strokeWidth={2} />
         </a>
         <button onClick={dismiss} type="button">
-          暂时不用
+          {messages.star.dismiss}
         </button>
       </div>
     </aside>

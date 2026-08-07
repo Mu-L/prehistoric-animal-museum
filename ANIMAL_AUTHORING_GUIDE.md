@@ -13,6 +13,7 @@ canonical layout:
 src/content/animals/<animal-id>/
   animal.ts
   content.zh-CN.ts
+  content.en.ts
   package.ts
   provenance.ts
   model/model.glb
@@ -24,6 +25,7 @@ src/content/animals/<animal-id>/
   backgrounds/landscape.webp
   backgrounds/portrait.webp
   audio/narration.zh-CN.mp3
+  audio/narration.en.mp3
   provenance/LICENSES/
     model-license.txt
     model-source.txt
@@ -40,7 +42,7 @@ collection entry, local asset records, and URLs must agree.
 Retain private source material outside tracked runtime paths:
 
 - original model archive and untouched source GLB;
-- source page/API evidence, author, URL, access date, license, and download
+- source page/API evidence, author, URL, access date, licence, and download
   variant;
 - original generated images and prompt records;
 - Blender or material workspaces and processing reports;
@@ -50,7 +52,7 @@ Retain private source material outside tracked runtime paths:
 These belong in the ignored project work areas such as `assets/candidates`,
 `.handoff`, `prototypes`, or `spikes`. Never use `git add -f` to publish them.
 
-Reject an input when its direct source, author, license, or modification chain
+Reject an input when its direct source, author, licence, or modification chain
 cannot be explained. Prefer CC0, CC BY 4.0, public-domain material, or
 project-authored/generated work with a retained rights basis.
 
@@ -88,9 +90,17 @@ texture resizing, geometry or pose changes, and the final byte count and hash.
 
 ## 4. Content and presentation
 
-`content.zh-CN.ts` contains two child-facing narration sentences, a visible
-feature, cautious parent facts, pronunciation entries, uncertainty notes, and
-one to three authoritative sources. Do not infer species, sex, colour, diet,
+`content.zh-CN.ts` and `content.en.ts` each contain two child-facing narration
+sentences, a visible feature, cautious parent facts, pronunciation entries,
+uncertainty notes, and one to three authoritative sources. They describe the
+same reviewed facts but remain complete locale records; never fill a missing
+English field from Chinese or vice versa. Published packages require both.
+Drafts may be incomplete while work is in progress.
+
+Write natural international English for children aged roughly 2–6 and their
+parents, with consistent British spelling rather than literal translation.
+Generate English measurements from the metric facts so the UI can show metric
+first with approximate imperial units. Do not infer species, sex, colour, diet,
 sound, or behaviour from a model.
 
 Choose the correct size semantic:
@@ -100,7 +110,7 @@ Choose the correct size semantic:
 - `shoulder-height`;
 - `group-range`, with a note that it is not the displayed individual's size.
 
-`package.ts` declares framing and behavior. Start conservatively:
+`package.ts` declares framing and behaviour. Start conservatively:
 
 ```ts
 presentation: {
@@ -126,8 +136,8 @@ readable square thumbnail. Current ceilings are:
 - poster: 500 KiB;
 - thumbnail: 120 KiB.
 
-The poster and thumbnail must show the same model, material, pose direction,
-and scene as the published package.
+The landscape and portrait posters and the thumbnail must show the same model,
+material, pose direction, and matching scene as the published package.
 
 The transparent images used while WebGL loads are generated artifacts, not
 animal-authored layout. After the GLB and `presentation` values are final, run:
@@ -146,15 +156,37 @@ fail until this command is rerun. For owner-only candidates, use
 
 ## 6. Narration
 
-Narration never autoplays. Generate the exact two approved sentences offline,
-normalize to a compact 48 kHz mono MP3, and listen to the complete result.
-Check names, geological periods, polyphonic characters, omissions, duplicated
-words, artifacts, silence, loudness, and pacing.
+Narration never autoplays. Generate the exact two approved sentences for each
+locale offline, normalize each to a compact 48 kHz mono MP3, and listen to both
+complete results. Check names, geological periods, polyphonic characters or
+English scientific-name pronunciation, omissions, duplicated words, artifacts,
+silence, loudness, pacing, and age suitability.
 
-The current public voice is Qwen3-TTS 0.6B CustomVoice with the built-in Serena
-speaker. Public notices must say that the Chinese script was written and
-reviewed by humans and synthesized offline with AI. Retain the model/license
-links, script hash, output hash, and listening decision.
+The onboarding profile records a separate language entry for `zh-CN` and `en`.
+Both use Qwen3-TTS 0.6B CustomVoice with its built-in Serena speaker. The
+`zh-CN` entry declares `Chinese`, while the `en` entry declares `English`;
+another speaker or a locale/language mismatch is a publication error. The
+wrapper loads the shared local checkpoint and can generate one or both
+configured locales:
+
+```sh
+../.runtime/qwen3-tts/venv/bin/python \
+  tools/animal-onboarding/audio/generate_narration.py \
+  <profile.json> --locale zh-CN --locale en
+```
+
+Each locale entry uses `path`, `scriptPath`, optional `metricsPath`, `speaker`,
+`language`, and `humanReviewStatus`. Use `Chinese` for `zh-CN` and `English`
+for `en`; the loader rejects a mismatched locale/language pair. The profile
+also needs `assets.posterPortraitPath`. After the explicit owner decision,
+`approval record` writes both locale approvals under
+`approvals.audioByLocale`.
+
+Keep separate `narration.<locale>.metrics.json` records. Public notices must say
+that the scripts were reviewed by humans and synthesized offline with AI.
+Retain model/licence links, script hashes, output hashes, declared voices and
+independent listening decisions. A Chinese-only legacy profile is readable as
+a draft but is deliberately blocked from publication.
 
 ## 7. Provenance and publication
 
@@ -162,11 +194,11 @@ links, script hash, output hash, and listening decision.
 
 - `model/model.glb`;
 - both backgrounds;
-- poster and thumbnail;
-- narration MP3.
+- landscape poster, portrait poster and thumbnail;
+- both narration MP3s.
 
 For each record, include source, author/tool, direct URL where applicable,
-license, original and runtime hashes/bytes, modifications, attribution,
+licence, original and runtime hashes/bytes, modifications, attribution,
 redistribution decision, and evidence paths. Run:
 
 ```sh
@@ -192,9 +224,10 @@ node --import tsx tools/animal-onboarding/src/cli.ts approval record \
 node --import tsx tools/animal-onboarding/src/cli.ts review prepare <profile.json>
 ```
 
-Remove any “review pending” wording from the approved Chinese content, run an
-approved batch dry-run, then promote the entire approved order in one
-transaction:
+Remove any “review pending” wording from both approved content modules, confirm
+that `poster-portrait.webp`, both narration files and both locale listening
+decisions are present, run an approved batch dry-run, then promote the entire
+approved order in one transaction:
 
 ```sh
 node --import tsx tools/animal-onboarding/src/cli.ts promote-batch \
@@ -204,7 +237,7 @@ node --import tsx tools/animal-onboarding/src/cli.ts promote-batch \
 ```
 
 The transaction copies only manifest-hashed reviewed outputs, generates typed
-production definitions and license records, stages complete packages, exposes
+production definitions and licence records, stages complete packages, exposes
 `animal.ts` last, updates the collection once, regenerates credits/notices,
 validates content, and rolls back on failure. Same-hash reruns are idempotent;
 different or partial targets hard-fail. Run `promote verify <profile.json>` for
@@ -213,8 +246,10 @@ an inferred owner preference.
 
 For packages outside that workflow, only set `status: 'published'` and add the
 ID to `src/content/collections/main.ts` after content, model, scene, narration,
-rights, responsive, and owner checks pass. The collection order is explicit
-and loops.
+rights, responsive, and owner checks pass. Update the collection count and
+canonical names in both `README.md` and `README.zh-CN.md`; the verification
+suite compares both public collection tables with `mainCollection`. The
+collection order is explicit and loops.
 
 ## 8. Complete verification
 
@@ -236,7 +271,8 @@ Check 360×640, 390×844, 844×390, 768×1024, and 1440×900. Confirm:
 - the full animal remains inside the composition-safe frame;
 - phone-landscape navigation shows complete cards in the vertical rail;
 - touch targets remain at least 48×48 CSS pixels;
-- switching is latest-request-wins and stops old narration;
+- switching animals or languages is latest-request-wins and stops old
+  narration;
 - loading, failure, retry, reset, focus mode, drawer, and URL selection work;
 - repeated switching does not retain stale audio, scenes, or GPU resources;
 - the production boundary contains only declared public assets.

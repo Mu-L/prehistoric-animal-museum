@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { GitHubStarPrompt } from '../src/components/GitHubStarPrompt'
+import { I18nProvider } from '../src/i18n/I18nProvider'
 import {
   GITHUB_STAR_PROMPT_DELAY_MS,
   GITHUB_STAR_PROMPT_STORAGE_KEY,
@@ -9,6 +10,7 @@ describe('GitHubStarPrompt', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     window.localStorage.clear()
+    window.localStorage.setItem('museum.locale', 'zh-CN')
   })
 
   afterEach(() => {
@@ -18,7 +20,7 @@ describe('GitHubStarPrompt', () => {
   })
 
   it('appears after 60 seconds and records a GitHub visit', async () => {
-    render(<GitHubStarPrompt blocked={false} start />)
+    render(<Prompt />)
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(GITHUB_STAR_PROMPT_DELAY_MS - 1)
@@ -60,7 +62,7 @@ describe('GitHubStarPrompt', () => {
     })
 
     try {
-      render(<GitHubStarPrompt blocked={false} start />)
+      render(<Prompt />)
       await act(async () => {
         await vi.advanceTimersByTimeAsync(30_000)
       })
@@ -99,7 +101,7 @@ describe('GitHubStarPrompt', () => {
   })
 
   it('defers display while blocked and cools down after dismissal', async () => {
-    const { rerender } = render(<GitHubStarPrompt blocked start />)
+    const { rerender } = render(<Prompt blocked />)
     await act(async () => {
       await vi.advanceTimersByTimeAsync(GITHUB_STAR_PROMPT_DELAY_MS)
     })
@@ -107,7 +109,7 @@ describe('GitHubStarPrompt', () => {
       screen.queryByRole('complementary', { name: '支持这座博物馆' }),
     ).not.toBeInTheDocument()
 
-    rerender(<GitHubStarPrompt blocked={false} start />)
+    rerender(<Prompt />)
     const prompt = screen.getByRole('complementary', {
       name: '支持这座博物馆',
     })
@@ -117,7 +119,7 @@ describe('GitHubStarPrompt', () => {
       .toMatch(/^dismissed-until:/)
 
     cleanup()
-    render(<GitHubStarPrompt blocked={false} start />)
+    render(<Prompt />)
     await act(async () => {
       await vi.advanceTimersByTimeAsync(GITHUB_STAR_PROMPT_DELAY_MS)
     })
@@ -126,3 +128,10 @@ describe('GitHubStarPrompt', () => {
     ).not.toBeInTheDocument()
   })
 })
+function Prompt({ blocked = false }: { readonly blocked?: boolean }) {
+  return (
+    <I18nProvider>
+      <GitHubStarPrompt blocked={blocked} start />
+    </I18nProvider>
+  )
+}

@@ -21,3 +21,17 @@ notice identifies the model, Serena speaker, AI synthesis, and Apache-2.0
 model license. A residual risk is retained because the official materials do
 not separately disclose Serena's training/performance or voice-personality
 rights chain. The audio must not imply endorsement by Qwen or Alibaba.
+
+English narration approval
+
+Locale: en
+Speaker: Serena
+Language: English
+Generated: 2026-08-07
+Runtime bytes: 147885
+Runtime SHA-256: 37ab3b9c99951ae50ffb14e1ffffff8ae34a54941595a8d9347ea758f0e131fb
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-07
+
+Script: This is Triceratops, a plant-eating dinosaur from the Late Cretaceous. Look at the two long horns above its eyes, the little horn on its nose and the wide frill behind its head.

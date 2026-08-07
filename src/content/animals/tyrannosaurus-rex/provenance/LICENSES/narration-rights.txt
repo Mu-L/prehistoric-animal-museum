@@ -21,3 +21,17 @@ notice identifies the model, Serena speaker, AI synthesis, and Apache-2.0
 model license. A residual risk is retained because the official materials do
 not separately disclose Serena's training/performance or voice-personality
 rights chain. The audio must not imply endorsement by Qwen or Alibaba.
+
+English narration approval
+
+Locale: en
+Speaker: Serena
+Language: English
+Generated: 2026-08-07
+Runtime bytes: 129405
+Runtime SHA-256: 7320895ee5b83b9eb51f90ae76586f5a67ffbe16778e7216097a81b404617d3e
+Human listening review: approved
+Public distribution decision: approved
+Approved: Project owner on 2026-08-07
+
+Script: This is Tyrannosaurus rex, a meat-eating dinosaur from the Late Cretaceous. Look at its huge head, powerful hind legs and two very short front limbs.

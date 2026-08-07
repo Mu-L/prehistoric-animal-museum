@@ -33,6 +33,9 @@ const expectedProductionSignatures = new Map<string, string>()
 
 if (target === 'production') {
   for (const { definition } of await loadAnimalDefinitions()) {
+    if (definition.status !== 'published') {
+      continue
+    }
     const descriptor = createViewerModelDescriptor(
       definition,
       definition.content['zh-CN'].name,

@@ -1,14 +1,15 @@
-import type { PublishedAnimalDefinition } from '../../types'
+import { definePublishedAnimal } from '../../types'
+import { en } from './content.en'
 import { zhCN } from './content.zh-CN'
 import { provenance } from './provenance'
 
-export const animalDefinition = {
+export const animalDefinition = definePublishedAnimal({
   id: 'ichthyosaur',
   status: 'published',
   kind: 'marine-reptile',
   habitat: 'water',
   atmosphere: 'underwater',
-  content: { 'zh-CN': zhCN },
+  content: { 'zh-CN': zhCN, en },
   presentation: {
     initialYawDegrees: 0,
     landscapeHorizontalOffset: 0,
@@ -24,9 +25,22 @@ export const animalDefinition = {
     speed: 0.95,
   },
   narration: {
-    status: 'ready',
-    sourcePath: 'audio/narration.zh-CN.mp3',
-    mimeType: 'audio/mpeg',
+    'zh-CN': {
+      status: 'ready',
+      sourcePath: 'audio/narration.zh-CN.mp3',
+      mimeType: 'audio/mpeg',
+      speaker: 'Serena',
+      language: 'Chinese',
+      humanReviewStatus: 'approved',
+    },
+    en: {
+      status: 'ready',
+      sourcePath: 'audio/narration.en.mp3',
+      mimeType: 'audio/mpeg',
+      speaker: 'Serena',
+      language: 'English',
+      humanReviewStatus: 'approved',
+    },
   },
   provenance,
-} satisfies PublishedAnimalDefinition
+})

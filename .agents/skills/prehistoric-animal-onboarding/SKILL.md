@@ -52,10 +52,13 @@ read-only golden samples.
    per-model hinge, exact connected-component/vertex counts and a bounded soft
    tissue mask. Otherwise record `disabled`; never move a broad guessed head
    region just to manufacture mouth motion.
-5. Generate narration with `audio/generate_narration.py` in the pinned
-   Qwen3-TTS environment. Require the 0.6B CustomVoice checkpoint, Serena,
-   Chinese, the pinned model revision and two byte-identical seeded raw runs.
-   Never substitute macOS `say`, Tingting, or another system TTS.
+5. Generate both localized narrations with `audio/generate_narration.py` in the
+   pinned Qwen3-TTS environment. Require the 0.6B CustomVoice checkpoint, the
+   pinned model revision and two byte-identical seeded raw runs for each
+   locale. The approved voice matrix is Serena / Chinese for `zh-CN` and
+   Serena / English for `en`. Keep the scripts, MP3s, metrics and listening
+   decisions independent; never substitute one locale for the other or use
+   macOS `say`, Tingting, or another system TTS.
 6. Run `qa ... --model-only --autofix`. In this command, safe autofix is
    deliberately limited to refreshing QA reports, recorded hashes and the
    draft manifest. Regenerate Blender output, backgrounds or review derivatives
@@ -81,12 +84,13 @@ read-only golden samples.
 9. Run `review prepare <profile.json>`, then
    `promote <profile.json> --dry-run`. A code `3` after otherwise-valid inputs
    is the expected result while owner production approval is absent.
-10. Only after the owner explicitly accepts every human-only category and
-    production/public distribution, record the decision with `approval record
+10. Only after the owner explicitly accepts every human-only category,
+    including both localized content records and complete listening of both
+    narrations, plus production/public distribution, record the decision with `approval record
     <profile.json...> --by <owner> --on <YYYY-MM-DD>`. This command requires an
     already-passed complete local draft, updates the profile review statuses,
     and writes a hashed `approval-record.json`; never run it from inference.
-11. Remove pending wording from the approved Chinese editorial record, rerun
+11. Remove pending wording from both approved localized editorial records, rerun
     `review prepare`, then run one approved batch dry-run. For real promotion,
     use `promote-batch <profile.json...> --collection main`. The tool validates
     every animal before writing, assembles canonical packages under each run’s
@@ -118,8 +122,9 @@ supported by the profile and rerun the failed stage:
   tongue and soft tissue cannot remain coherent, set the profile to `disabled`
   with evidence or send the asset for manual rigging—never widen the mask or
   waive the 0/4/8-second evidence gate;
-- narration engine failure: regenerate with pinned Qwen3-TTS Serena; a
-  technically valid system-TTS MP3 is still a hard failure;
+- narration engine failure: regenerate the affected locale with the pinned
+  Qwen3-TTS Serena / declared-language pair; a technically valid system-TTS
+  MP3, cross-language fallback or copied narration is still a hard failure;
 - floating land animal: move the animal onto a continuous readable ground patch,
   then correct the yaw-rotated, contact-derived shadow center/depth/opacity and
   rerun all five browser viewports; mathematical shadow coverage does not
@@ -130,8 +135,9 @@ supported by the profile and rerun the failed stage:
 - landmarks or composition failure: correct profile orientation/presentation,
   rerun Blender if landmarks changed, then rerun all five viewports;
 - missing derivative or hash mismatch: regenerate from the reviewed source;
-- science, anatomy, material, background, natural motion, Chinese copy, audio
-  listening or publication decision: leave it pending for a human.
+- science, anatomy, material, background, natural motion, Simplified Chinese or
+  English copy, either locale's complete audio listening, or publication
+  decision: leave it pending for a human.
 
 Never repair a rights or science failure by weakening a threshold or changing a
 gate category.
@@ -144,7 +150,8 @@ Report, for every draft:
 - declared mouth-motion mode, measured affected region and, when enabled, both
   Blender 0/4/8-second and browser 0/4-second evidence;
 - warnings;
-- all still-pending human-only decisions;
+- all still-pending human-only decisions, listed separately for `zh-CN` and
+  `en` content and narration where applicable;
 - promotion dry-run and, when authorized, `promotion-result.json` plus the
   exact tracked-file list;
 - proof that production directories equal the current collection, the original
