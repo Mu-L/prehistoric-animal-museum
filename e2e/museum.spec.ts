@@ -10,6 +10,8 @@ interface NormalizedAlphaBounds {
   readonly centerY: number
   readonly height: number
   readonly pixelCount: number
+  readonly visualCenterX: number
+  readonly visualCenterY: number
   readonly xMax: number
   readonly xMin: number
   readonly yMax: number
@@ -31,6 +33,9 @@ async function normalizedAlphaBounds(
   let maxX = -1
   let maxY = -1
   let pixelCount = 0
+  let alphaWeight = 0
+  let weightedX = 0
+  let weightedY = 0
 
   for (let y = 0; y < info.height; y += 1) {
     for (let x = 0; x < info.width; x += 1) {
@@ -39,6 +44,9 @@ async function normalizedAlphaBounds(
         continue
       }
       pixelCount += 1
+      alphaWeight += alpha
+      weightedX += (x + 0.5) * alpha
+      weightedY += (y + 0.5) * alpha
       minX = Math.min(minX, x)
       minY = Math.min(minY, y)
       maxX = Math.max(maxX, x)
@@ -59,6 +67,8 @@ async function normalizedAlphaBounds(
     centerY: (yMin + yMax) / 2,
     height: yMax - yMin,
     pixelCount,
+    visualCenterX: weightedX / alphaWeight / info.width,
+    visualCenterY: weightedY / alphaWeight / info.height,
     width: xMax - xMin,
     xMax,
     xMin,
@@ -1908,6 +1918,14 @@ test.describe('first-frame preview silhouette', () => {
       profile: 'tabletPortrait',
       width: 768,
     },
+    {
+      height: 1329,
+      name: 'detail-tablet-portrait-844x1329',
+      path: './en/animals/pachycephalosaurus/',
+      poster: 'preview-tablet-portrait',
+      profile: 'tabletPortrait',
+      width: 844,
+    },
   ] as const
 
   for (const viewport of previewViewports) {
@@ -1930,13 +1948,15 @@ test.describe('first-frame preview silhouette', () => {
       })
 
       const response = await page.goto(
-        './en/?animal=pachycephalosaurus',
+        'path' in viewport
+          ? viewport.path
+          : './en/?animal=pachycephalosaurus',
         { waitUntil: 'domcontentloaded' },
       )
       expect(response?.ok()).toBe(true)
       await expect(
         page.getByRole('heading', {
-          level: 2,
+          level: 'path' in viewport ? 1 : 2,
           name: 'Pachycephalosaurus',
         }),
       ).toBeVisible()
@@ -1977,6 +1997,8 @@ test.describe('first-frame preview silhouette', () => {
       const modelStill = page.locator('.model-still')
       const canvas = page.locator('.viewer-canvas')
       await expect(compositionFrame).toBeVisible()
+      const stillCompositionBox = await compositionFrame.boundingBox()
+      expect(stillCompositionBox).not.toBeNull()
       await expect(modelStill).toBeVisible()
       await expect(page.locator('.model-viewport')).toHaveAttribute(
         'data-preview-profile',
@@ -2038,6 +2060,9 @@ test.describe('first-frame preview silhouette', () => {
           }),
       )
 
+      const webglCompositionBox = await compositionFrame.boundingBox()
+      expect(webglCompositionBox).not.toBeNull()
+
       const webglPng = await compositionFrame.screenshot({
         animations: 'disabled',
         omitBackground: true,
@@ -2059,8 +2084,16 @@ test.describe('first-frame preview silhouette', () => {
       if (!stillBounds || !webglBounds) {
         throw new Error(`${viewport.name} did not produce two silhouettes.`)
       }
+      if (!stillCompositionBox || !webglCompositionBox) {
+        throw new Error(`${viewport.name} did not produce two composition boxes.`)
+      }
 
-      const diagnostics = JSON.stringify({ stillBounds, webglBounds })
+      const diagnostics = JSON.stringify({
+        stillBounds,
+        stillCompositionBox,
+        webglBounds,
+        webglCompositionBox,
+      })
       for (const dimension of ['width', 'height'] as const) {
         expect(
           Math.abs(stillBounds[dimension] - webglBounds[dimension]),
@@ -2077,6 +2110,45 @@ test.describe('first-frame preview silhouette', () => {
         boundsIntersectionOverUnion(stillBounds, webglBounds),
         `${viewport.name} bounding-box IoU: ${diagnostics}`,
       ).toBeGreaterThanOrEqual(0.85)
+      if (viewport.profile === 'tabletPortrait') {
+        for (const bounds of [stillBounds, webglBounds]) {
+          expect(
+            bounds.visualCenterX,
+            `${viewport.name} visual centre: ${diagnostics}`,
+          ).toBeGreaterThanOrEqual(0.47)
+          expect(
+            bounds.visualCenterX,
+            `${viewport.name} visual centre: ${diagnostics}`,
+          ).toBeLessThanOrEqual(0.52)
+        }
+      }
+      if ('path' in viewport) {
+        for (const [bounds, box] of [
+          [stillBounds, stillCompositionBox],
+          [webglBounds, webglCompositionBox],
+        ] as const) {
+          const absoluteVisualCenterX =
+            (box.x + bounds.visualCenterX * box.width) / viewport.width
+          const absoluteVisualCenterY =
+            (box.y + bounds.visualCenterY * box.height) / viewport.height
+          expect(
+            absoluteVisualCenterX,
+            `${viewport.name} absolute horizontal centre: ${diagnostics}`,
+          ).toBeGreaterThanOrEqual(0.47)
+          expect(
+            absoluteVisualCenterX,
+            `${viewport.name} absolute horizontal centre: ${diagnostics}`,
+          ).toBeLessThanOrEqual(0.52)
+          expect(
+            absoluteVisualCenterY,
+            `${viewport.name} absolute vertical centre: ${diagnostics}`,
+          ).toBeGreaterThanOrEqual(0.56)
+          expect(
+            absoluteVisualCenterY,
+            `${viewport.name} absolute vertical centre: ${diagnostics}`,
+          ).toBeLessThanOrEqual(0.62)
+        }
+      }
     })
   }
 })

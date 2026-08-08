@@ -372,13 +372,49 @@ test('keeps the English Back to museum action contained at responsive boundaries
 
     const layout = await returnLink.evaluate((link) => {
       const actions = link.closest('.story-actions')
+      const animalTitle = document.querySelector('.animal-title')
+      const introText = document.querySelector('.child-intro > span')
+      const storyCard = document.querySelector('.story-card')
+      const storyPanel = document.querySelector('.story-panel')
       const label = link.querySelector(':scope > span')
-      if (!(actions instanceof HTMLElement) || !(label instanceof HTMLElement)) {
+      if (
+        !(actions instanceof HTMLElement) ||
+        !(animalTitle instanceof HTMLElement) ||
+        !(introText instanceof HTMLElement) ||
+        !(label instanceof HTMLElement) ||
+        !(storyCard instanceof HTMLElement) ||
+        !(storyPanel instanceof HTMLElement)
+      ) {
         throw new Error('The Back to museum action is incomplete.')
       }
       const actionsBox = actions.getBoundingClientRect()
       const labelStyle = getComputedStyle(label)
       const linkBox = link.getBoundingClientRect()
+      const panelBox = storyPanel.getBoundingClientRect()
+      const panelStyle = getComputedStyle(storyPanel)
+      const panelInnerWidth =
+        panelBox.width -
+        Number.parseFloat(panelStyle.paddingLeft) -
+        Number.parseFloat(panelStyle.paddingRight)
+      const storyCardBox = storyCard.getBoundingClientRect()
+      const titleStyle = getComputedStyle(animalTitle)
+      const titleRange = document.createRange()
+      titleRange.selectNodeContents(animalTitle)
+      const titleTextBox = titleRange.getBoundingClientRect()
+      const titleLineCount = new Set(
+        Array.from(titleRange.getClientRects()).map((line) =>
+          Math.round(line.top),
+        ),
+      ).size
+      const introStyle = getComputedStyle(introText)
+      const introRange = document.createRange()
+      introRange.selectNodeContents(introText)
+      const introTextBox = introRange.getBoundingClientRect()
+      const introLineCount = new Set(
+        Array.from(introRange.getClientRects()).map((line) =>
+          Math.round(line.top),
+        ),
+      ).size
       const labelVisible = labelStyle.display !== 'none'
       const textRange = document.createRange()
       textRange.selectNodeContents(label)
@@ -396,6 +432,7 @@ test('keeps the English Back to museum action contained at responsive boundaries
         actionsLeft: actionsBox.left,
         actionsRight: actionsBox.right,
         actionsTop: actionsBox.top,
+        actionsWidth: actionsBox.width,
         documentScrollWidth: document.documentElement.scrollWidth,
         labelDisplay: labelStyle.display,
         linkBottom: linkBox.bottom,
@@ -408,6 +445,24 @@ test('keeps the English Back to museum action contained at responsive boundaries
         linkScrollWidth: link.scrollWidth,
         linkTop: linkBox.top,
         linkWidth: linkBox.width,
+        panelInnerWidth,
+        introFontSize: Number.parseFloat(introStyle.fontSize),
+        introLineCount,
+        introTextBottom: introTextBox.bottom,
+        introTextLeft: introTextBox.left,
+        introTextRight: introTextBox.right,
+        introTextTop: introTextBox.top,
+        storyCardBottom: storyCardBox.bottom,
+        storyCardLeft: storyCardBox.left,
+        storyCardRight: storyCardBox.right,
+        storyCardTop: storyCardBox.top,
+        storyCardWidth: storyCardBox.width,
+        titleFontSize: Number.parseFloat(titleStyle.fontSize),
+        titleLineCount,
+        titleTextBottom: titleTextBox.bottom,
+        titleTextLeft: titleTextBox.left,
+        titleTextRight: titleTextBox.right,
+        titleTextTop: titleTextBox.top,
         textBottom: textBox?.bottom ?? null,
         textLeft: textBox?.left ?? null,
         textLineCount,
@@ -451,6 +506,54 @@ test('keeps the English Back to museum action contained at responsive boundaries
       layout.documentScrollWidth,
       `${viewport.name}: page must not overflow horizontally`,
     ).toBeLessThanOrEqual(layout.viewportWidth + 1)
+
+    if (
+      viewport.width >= 768 &&
+      viewport.width <= 1023 &&
+      viewport.height > viewport.width
+    ) {
+      expect(
+        layout.storyCardWidth / layout.panelInnerWidth,
+        `${viewport.name}: story copy must retain at least half of the card`,
+      ).toBeGreaterThanOrEqual(0.52)
+      expect(
+        layout.actionsWidth / layout.panelInnerWidth,
+        `${viewport.name}: actions must not squeeze the story copy`,
+      ).toBeLessThanOrEqual(0.44)
+      expect(
+        layout.titleFontSize,
+        `${viewport.name}: title font`,
+      ).toBeGreaterThanOrEqual(32)
+      expect(
+        layout.introFontSize,
+        `${viewport.name}: intro font`,
+      ).toBeGreaterThanOrEqual(14)
+      expect(layout.titleLineCount, `${viewport.name}: title lines`).toBe(1)
+      expect(
+        layout.introLineCount,
+        `${viewport.name}: intro lines`,
+      ).toBeLessThanOrEqual(3)
+      for (const [edge, value, boundary] of [
+        ['title left', layout.titleTextLeft, layout.storyCardLeft],
+        ['title top', layout.titleTextTop, layout.storyCardTop],
+        ['intro left', layout.introTextLeft, layout.storyCardLeft],
+        ['intro top', layout.introTextTop, layout.storyCardTop],
+      ] as const) {
+        expect(value, `${viewport.name}: ${edge}`).toBeGreaterThanOrEqual(
+          boundary - 1,
+        )
+      }
+      for (const [edge, value, boundary] of [
+        ['title right', layout.titleTextRight, layout.storyCardRight],
+        ['title bottom', layout.titleTextBottom, layout.storyCardBottom],
+        ['intro right', layout.introTextRight, layout.storyCardRight],
+        ['intro bottom', layout.introTextBottom, layout.storyCardBottom],
+      ] as const) {
+        expect(value, `${viewport.name}: ${edge}`).toBeLessThanOrEqual(
+          boundary + 1,
+        )
+      }
+    }
 
     if (viewport.hidesLabel) {
       expect(layout.labelDisplay, `${viewport.name}: compact label`).toBe('none')

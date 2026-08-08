@@ -13,6 +13,7 @@ export const animalDefinition = definePublishedAnimal({
   presentation: {
     initialYawDegrees: -90,
     landscapeVerticalOffset: 0.05,
+    portraitHorizontalOffset: 0.08,
     portraitVerticalOffset: 0.07,
     safeAreaPadding: 0.1,
     shadow: 'ground',

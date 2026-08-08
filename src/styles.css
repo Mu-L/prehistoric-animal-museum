@@ -3880,6 +3880,16 @@ a:focus-visible {
     grid-template-columns: minmax(116px, 1.05fr) minmax(100px, 0.9fr) minmax(76px, 0.64fr);
   }
 
+  .stage-actions {
+    top: max(202px, calc(env(safe-area-inset-top) + 192px));
+  }
+
+  .model-gesture-hint {
+    bottom: max(116px, calc(env(safe-area-inset-bottom) + 108px));
+  }
+}
+
+@media (max-width: 1023px) and (min-width: 768px) and (orientation: landscape) {
   .museum-experience[data-page-kind="animal-detail"] .story-actions {
     grid-template-columns:
       minmax(0, 1fr)
@@ -3889,14 +3899,6 @@ a:focus-visible {
 
   .museum-experience[data-page-kind="animal-detail"] .collection-open-button {
     grid-column: auto;
-  }
-
-  .stage-actions {
-    top: max(202px, calc(env(safe-area-inset-top) + 192px));
-  }
-
-  .model-gesture-hint {
-    bottom: max(116px, calc(env(safe-area-inset-bottom) + 108px));
   }
 }
 
