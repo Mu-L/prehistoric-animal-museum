@@ -19,6 +19,18 @@ function serialiseBootstrap(state: InitialAppState): string {
     .replaceAll('\u2029', '\\u2029')
 }
 
+function renderMuseumQueryRedirect(state: InitialAppState): string {
+  if (state.pageKind !== 'museum') {
+    return ''
+  }
+
+  const detailBase = state.rootFallback
+    ? `./${state.locale}/animals/`
+    : './animals/'
+  const animalIds = JSON.stringify(staticAnimalDetailIds)
+  return `<script data-museum-query-redirect>(function(){var p=new URLSearchParams(location.search),a=p.get('animal');if(!a||!${animalIds}.includes(a))return;p.delete('animal');var u=new URL(${JSON.stringify(detailBase)}+encodeURIComponent(a)+'/',location.href);u.search=p.toString();u.hash=location.hash;history.replaceState(history.state,'',u.href);location.reload()})()</script>`
+}
+
 function rebaseApplicationAssets(
   markup: string,
   assetBase: './assets/' | '../assets/' | '../../../assets/',
@@ -64,7 +76,11 @@ export function renderPrerenderedMuseumDocument(
         : '../assets/',
   )}${documentSource.slice(end)}`
   const bootstrap = `<script id="${appBootstrapElementId}" type="application/json">${serialiseBootstrap(state)}</script>`
-  return withMarkup.replace('</head>', `    ${bootstrap}\n  </head>`)
+  const queryRedirect = renderMuseumQueryRedirect(state)
+  return withMarkup.replace(
+    '</head>',
+    `    ${bootstrap}${queryRedirect ? `\n    ${queryRedirect}` : ''}\n  </head>`,
+  )
 }
 
 export async function writeLocalizedMuseumPrerenders(

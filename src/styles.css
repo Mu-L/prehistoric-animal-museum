@@ -3889,7 +3889,7 @@ a:focus-visible {
   }
 }
 
-@media (max-width: 1023px) and (min-width: 768px) and (orientation: landscape) {
+@media (max-width: 1023px) and (min-width: 768px) and (orientation: landscape) and (max-height: 560px) {
   .museum-experience[data-page-kind="animal-detail"] .story-actions {
     grid-template-columns:
       minmax(0, 1fr)

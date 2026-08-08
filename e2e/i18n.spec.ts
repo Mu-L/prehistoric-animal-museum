@@ -321,7 +321,10 @@ async function expectReadableEnglishStoryLayout(
   expect(layout.documentScrollHeight).toBeLessThanOrEqual(viewport.height + 1)
   expect(layout.titleFontSize).toBeGreaterThanOrEqual(18)
   expect(layout.titleLineCount).toBe(1)
-  expect(layout.introLineCount).toBeLessThanOrEqual(5)
+  expect(
+    layout.introLineCount,
+    `${viewport.name}: introduction lines`,
+  ).toBeLessThanOrEqual(5)
 
   const compactLandscape =
     viewport.width > viewport.height && viewport.height <= 560
@@ -347,9 +350,10 @@ async function expectReadableEnglishStoryLayout(
 async function waitForMuseumShell(
   page: Page,
   heading: string,
+  level: 1 | 2 = 2,
 ): Promise<void> {
   await expect(page.locator('#museum-experience')).toBeVisible()
-  await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible()
+  await expect(page.getByRole('heading', { level, name: heading })).toBeVisible()
 }
 
 async function waitForReadyAnimal(page: Page, animalId: string): Promise<void> {
@@ -546,8 +550,13 @@ test('switches language with the radio menu without reloading the page or model'
     }
   })
 
-  const response = await page.goto('./zh-CN/?animal=mammoth')
+  const response = await page.goto('./zh-CN/')
   expect(response?.ok()).toBe(true)
+  await waitForMuseumShell(page, '剑龙')
+  await waitForReadyAnimal(page, 'stegosaurus')
+  await page
+    .locator('a[data-animal-detail-link][data-animal-id="mammoth"]')
+    .click()
   await waitForMuseumShell(page, '长毛猛犸象')
   await waitForReadyAnimal(page, 'mammoth')
 
@@ -705,7 +714,11 @@ test('switches language with the radio menu without reloading the page or model'
   expect(glbRequests).toHaveLength(modelRequestCount)
 
   await page.reload()
-  await waitForMuseumShell(page, '长毛猛犸象')
+  await waitForMuseumShell(page, '长毛猛犸象', 1)
+  expect(new URL(page.url()).pathname).toBe(
+    `${nestedPath}zh-CN/animals/mammoth/`,
+  )
+  expect(new URL(page.url()).search).toBe('')
   await page
     .getByRole('button', { name: '切换语言，当前简体中文' })
     .click()
@@ -902,7 +915,7 @@ test('keeps representative English stories readable across responsive breakpoint
   for (const story of responsiveEnglishStoryCases) {
     const response = await page.goto(`./en/?animal=${story.animalId}`)
     expect(response?.ok()).toBe(true)
-    await waitForMuseumShell(page, story.heading)
+    await waitForMuseumShell(page, story.heading, 1)
 
     for (const viewport of responsiveStoryViewports) {
       await page.setViewportSize(viewport)
@@ -938,7 +951,7 @@ test('keeps the reported Retina phone and tablet layouts readable with touch inp
     await page.route('**/*.glb', (route) => route.abort())
     const response = await page.goto(`${baseURL}en/?animal=ichthyosaur`)
     expect(response?.ok()).toBe(true)
-    await waitForMuseumShell(page, 'Ichthyosaurs')
+    await waitForMuseumShell(page, 'Ichthyosaurs', 1)
     for (const viewport of viewports) {
       await page.setViewportSize(viewport)
       await expectReadableEnglishStoryLayout(page, viewport)
