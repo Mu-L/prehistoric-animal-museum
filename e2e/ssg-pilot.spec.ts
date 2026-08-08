@@ -236,6 +236,68 @@ test('hydrates a requested detail without flashing the default animal and exits 
   await expect(museum).toHaveAttribute('data-page-kind', 'museum')
 })
 
+test('normalizes a refreshed museum query to the matching static animal without flashing the default exhibit', async ({
+  page,
+}) => {
+  const hydrationErrors = collectHydrationErrors(page)
+  await page.addInitScript(() => {
+    const titleHistory: string[] = []
+    Object.defineProperty(window, '__museumAnimalTitleHistory', {
+      configurable: true,
+      value: titleHistory,
+    })
+    const recordTitle = () => {
+      const title = document.querySelector('.animal-title')?.textContent?.trim()
+      if (title && titleHistory.at(-1) !== title) {
+        titleHistory.push(title)
+      }
+    }
+    new MutationObserver(recordTitle).observe(document, {
+      characterData: true,
+      childList: true,
+      subtree: true,
+    })
+    document.addEventListener('DOMContentLoaded', recordTitle, { once: true })
+  })
+  const requestedModels: string[] = []
+  await page.route('**/*.glb*', (route) => {
+    requestedModels.push(route.request().url())
+    return route.abort()
+  })
+
+  await page.goto('./en/?animal=pachycephalosaurus')
+  await page.waitForURL('**/en/animals/pachycephalosaurus/')
+
+  const museum = page.locator('#museum-experience')
+  await expect(museum).toHaveAttribute('data-page-kind', 'animal-detail')
+  await expect(museum).toHaveAttribute(
+    'data-requested-animal-id',
+    'pachycephalosaurus',
+  )
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Pachycephalosaurus' }),
+  ).toBeVisible()
+  await expect(page.locator('.model-still img')).toHaveAttribute(
+    'alt',
+    'Still model of Pachycephalosaurus on a transparent background',
+  )
+
+  const titleHistory = await page.evaluate(
+    () =>
+      (
+        window as typeof window & {
+          __museumAnimalTitleHistory: string[]
+        }
+      ).__museumAnimalTitleHistory,
+  )
+  expect(titleHistory).toContain('Pachycephalosaurus')
+  expect(titleHistory).not.toContain('Stegosaurus')
+  expect(
+    requestedModels.some((url) => url.includes('/stegosaurus/')),
+  ).toBe(false)
+  expect(hydrationErrors).toEqual([])
+})
+
 test('shows the default Chinese museum immediately when the edge redirect fails open', async ({
   page,
 }) => {

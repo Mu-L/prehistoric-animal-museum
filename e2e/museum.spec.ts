@@ -1956,7 +1956,7 @@ test.describe('first-frame preview silhouette', () => {
       expect(response?.ok()).toBe(true)
       await expect(
         page.getByRole('heading', {
-          level: 'path' in viewport ? 1 : 2,
+          level: 1,
           name: 'Pachycephalosaurus',
         }),
       ).toBeVisible()
