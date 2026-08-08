@@ -1,4 +1,4 @@
-import { copyFile, mkdir, rm } from 'node:fs/promises'
+import { mkdir, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -7,7 +7,7 @@ import sharp from 'sharp'
 
 import { writeLocalizedMuseumPrerenders } from './prerender-localized-museum'
 import type { InitialAppState } from '../src/app-bootstrap'
-import { pilotAnimalDetailIds } from '../src/content/pilot-animal-details'
+import { staticAnimalDetailIds } from '../src/content/static-animal-details'
 
 const projectRoot = resolve(import.meta.dirname, '..')
 const outputDirectory = resolve(projectRoot, 'dist')
@@ -15,8 +15,8 @@ const serverOutputDirectory = resolve(projectRoot, '.prerender-ssr')
 const modeIndex = process.argv.indexOf('--mode')
 const mode = modeIndex === -1 ? 'production' : (process.argv[modeIndex + 1] ?? 'production')
 
-async function copyPilotDetailAssets(): Promise<void> {
-  for (const animalId of pilotAnimalDetailIds) {
+async function writeAnimalSocialImages(): Promise<void> {
+  for (const animalId of staticAnimalDetailIds) {
     const targetDirectory = resolve(outputDirectory, 'animals', animalId)
     await mkdir(targetDirectory, { recursive: true })
     const animalDirectory = resolve(
@@ -33,35 +33,10 @@ async function copyPilotDetailAssets(): Promise<void> {
       ])
       .webp({ effort: 5, quality: 86 })
       .toBuffer()
-    const heroPortrait = await sharp(
-      resolve(animalDirectory, 'backgrounds/portrait.webp'),
-    )
-      .resize(390, 844, { fit: 'cover' })
-      .composite([
-        {
-          input: resolve(
-            animalDirectory,
-            'images/poster-portrait.webp',
-          ),
-        },
-      ])
+    await sharp(hero)
+      .resize(1200, 630, { fit: 'cover' })
       .webp({ effort: 5, quality: 86 })
-      .toBuffer()
-
-    await Promise.all([
-      copyFile(
-        resolve(animalDirectory, 'images/thumbnail.webp'),
-        resolve(targetDirectory, 'thumbnail.webp'),
-      ),
-      sharp(hero).toFile(resolve(targetDirectory, 'hero.webp')),
-      sharp(heroPortrait).toFile(
-        resolve(targetDirectory, 'hero-portrait.webp'),
-      ),
-      sharp(hero)
-        .resize(1200, 630, { fit: 'cover' })
-        .webp({ effort: 5, quality: 86 })
-        .toFile(resolve(targetDirectory, 'social.webp')),
-    ])
+      .toFile(resolve(targetDirectory, 'social.webp'))
   }
 }
 
@@ -95,7 +70,7 @@ try {
     outputDirectory,
     serverEntry.renderMuseumApp,
   )
-  await copyPilotDetailAssets()
+  await writeAnimalSocialImages()
 } finally {
   await rm(serverOutputDirectory, { force: true, recursive: true })
 }

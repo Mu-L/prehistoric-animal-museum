@@ -6,7 +6,15 @@ import {
   renderPrerenderedMuseumDocument,
   writeLocalizedMuseumPrerenders,
 } from '../scripts/prerender-localized-museum'
+import { mainAnimals } from '../src/content/catalog'
+import { mainCollection } from '../src/content/collections/main'
 import { renderMuseumApp } from '../src/entry-server'
+
+const locales = ['zh-CN', 'en'] as const
+const detailPages = locales.flatMap((locale) =>
+  mainCollection.animalIds.map((animalId) => ({ animalId, locale })),
+)
+const animalsById = new Map(mainAnimals.map((animal) => [animal.id, animal]))
 
 describe('localized museum prerender document', () => {
   it('replaces the temporary shell with real application markup and bootstrap state', () => {
@@ -106,19 +114,11 @@ describe('localized museum prerender document', () => {
     const outputDirectory = await mkdtemp(join(tmpdir(), 'museum-prerender-'))
     const template = `<!doctype html><html lang="en"><head></head><body><div id="root"><!--museum-root-start--><main class="seo-static-shell">Temporary</main><!--museum-root-end--></div></body></html>`
     const detailTemplate = `<!doctype html><html lang="en"><head><style id="animal-detail-fallback-style">.animal-page { display: block; }</style></head><body><div id="root"><!--museum-root-start--><main class="animal-page">Temporary</main><!--museum-root-end--></div><script type="module" src="../../../assets/app.js"></script></body></html>`
-    const detailPages = [
-      ['zh-CN', 'stegosaurus'],
-      ['en', 'stegosaurus'],
-      ['zh-CN', 'tyrannosaurus-rex'],
-      ['en', 'tyrannosaurus-rex'],
-      ['zh-CN', 'mosasaurus'],
-      ['en', 'mosasaurus'],
-    ] as const
     try {
       await mkdir(join(outputDirectory, 'en'), { recursive: true })
       await mkdir(join(outputDirectory, 'zh-CN'), { recursive: true })
       await Promise.all(
-        detailPages.map(([locale, animalId]) =>
+        detailPages.map(({ locale, animalId }) =>
           mkdir(join(outputDirectory, locale, 'animals', animalId), {
             recursive: true,
           }),
@@ -128,7 +128,7 @@ describe('localized museum prerender document', () => {
       await writeFile(join(outputDirectory, 'en/index.html'), template)
       await writeFile(join(outputDirectory, 'zh-CN/index.html'), template)
       await Promise.all(
-        detailPages.map(([locale, animalId]) =>
+        detailPages.map(({ locale, animalId }) =>
           writeFile(
             join(
               outputDirectory,
@@ -178,6 +178,83 @@ describe('localized museum prerender document', () => {
       expect(fallback).toContain(
         'href="./zh-CN/animals/mosasaurus/"',
       )
+
+      const localizedDetails = await Promise.all(
+        detailPages.map(async ({ animalId, locale }) => ({
+          animalId,
+          locale,
+          source: await readFile(
+            join(
+              outputDirectory,
+              locale,
+              'animals',
+              animalId,
+              'index.html',
+            ),
+            'utf8',
+          ),
+        })),
+      )
+
+      expect(localizedDetails).toHaveLength(36)
+      for (const { animalId, locale, source } of localizedDetails) {
+        const animal = animalsById.get(animalId)
+        if (!animal) {
+          throw new Error(`Missing canonical published animal ${animalId}`)
+        }
+        const content = animal.content[locale]
+        const document = new DOMParser().parseFromString(source, 'text/html')
+        const museum = document.querySelector('#museum-experience')
+        const bootstrapSource = document.querySelector(
+          '#museum-bootstrap',
+        )?.textContent
+
+        expect(museum).not.toBeNull()
+        expect(museum?.getAttribute('data-locale')).toBe(locale)
+        expect(museum?.getAttribute('data-page-kind')).toBe('animal-detail')
+        expect(museum?.getAttribute('data-requested-animal-id')).toBe(animalId)
+        expect(document.querySelector('h1.animal-title')?.textContent).toBe(
+          content.name,
+        )
+        expect(document.querySelector('.child-intro')?.textContent).toContain(
+          content.visibleFeature,
+        )
+        expect(
+          document
+            .querySelector<HTMLImageElement>('.model-still img')
+            ?.getAttribute('src'),
+        ).toContain(`/animals/${animalId}/`)
+        expect(JSON.parse(bootstrapSource ?? '{}')).toEqual({
+          animalId,
+          locale,
+          pageKind: 'animal-detail',
+          preference: locale,
+        })
+        expect(
+          document
+            .querySelector('[data-museum-return]')
+            ?.getAttribute('href'),
+        ).toBe(`../../../${locale}/?animal=${animalId}`)
+        expect(
+          document.querySelectorAll('[data-animal-detail-link]'),
+        ).toHaveLength(mainCollection.animalIds.length)
+        for (const linkedAnimalId of mainCollection.animalIds) {
+          expect(
+            document
+              .querySelector(
+                `[data-animal-detail-link][data-animal-id="${linkedAnimalId}"]`,
+              )
+              ?.getAttribute('href'),
+          ).toBe(`../${linkedAnimalId}/`)
+        }
+        expect(
+          document.querySelector('script[type="module"]')?.getAttribute('src'),
+        ).toBe('../../../assets/app.js')
+        expect(document.querySelector('#animal-detail-fallback-style')).toBeNull()
+        expect(document.querySelector('.animal-page')).toBeNull()
+        expect(document.querySelector('.seo-static-shell')).toBeNull()
+      }
+
       expect(englishMosasaurus).toContain('id="museum-experience"')
       expect(englishMosasaurus).toContain('data-locale="en"')
       expect(englishMosasaurus).toContain(

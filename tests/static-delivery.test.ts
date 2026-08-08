@@ -164,7 +164,18 @@ describe('static multilingual delivery', () => {
     expect(headers).toContain('/museum/assets/*')
     expect(headers).toContain('/museum/zh-CN/')
     expect(headers).toContain('/museum/en/')
-    expect(headers).toContain('/museum/en/animals/stegosaurus/')
+    for (const locale of ['zh-CN', 'en']) {
+      expect(headers).toContain(`/museum/${locale}/animals/*
+  Cache-Control: public, max-age=0, must-revalidate`)
+    }
+    const headerRules = headers
+      .split(/\r?\n/u)
+      .filter((line) => line.startsWith('/'))
+    const perDetailHeaderRules = headerRules.filter((rule) =>
+      /^\/museum\/(?:zh-CN|en)\/animals\/(?!\*$)/u.test(rule),
+    )
+    expect(perDetailHeaderRules).toEqual([])
+    expect(headerRules.length).toBeLessThan(50)
     expect(headers).not.toContain('\n/museum/*\n')
 
     expect(

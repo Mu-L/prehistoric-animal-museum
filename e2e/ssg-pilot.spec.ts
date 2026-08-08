@@ -2,47 +2,46 @@ import { expect, test, type Page } from '@playwright/test'
 
 const nestedPath = '/prehistoric-animal-museum/'
 
-const pilotAnimals = [
+const noJsDetailCases = [
   {
-    id: 'stegosaurus',
-    names: { 'zh-CN': '剑龙', en: 'Stegosaurus' },
-    introductions: {
-      'zh-CN': '看看它背上的两排骨板，像不像一列起伏的小山？',
-      en: 'Look at the two rows of plates along its back. Do they look like a line of little hills?',
-    },
+    animalId: 'stegosaurus',
+    atmosphere: 'forest',
+    introduction: '看看它背上的两排骨板，像不像一列起伏的小山？',
+    locale: 'zh-CN',
+    museumName: '史前动物博物馆',
+    name: '剑龙',
     siblingId: 'tyrannosaurus-rex',
   },
   {
-    id: 'tyrannosaurus-rex',
-    names: { 'zh-CN': '霸王龙', en: 'Tyrannosaurus rex' },
-    introductions: {
-      'zh-CN': '看看它大大的脑袋、粗壮的后腿和两条短短的前肢。',
-      en: 'Look at its huge head, powerful hind legs and two very short front limbs.',
-    },
-    siblingId: 'mosasaurus',
+    animalId: 'pachycephalosaurus',
+    atmosphere: 'forest',
+    introduction:
+      'Look at its round, bony dome and the little bumps around it. Does it look like a small, round hat?',
+    locale: 'en',
+    museumName: 'Prehistoric Animal Museum',
+    name: 'Pachycephalosaurus',
+    siblingId: 'pteranodon',
   },
   {
-    id: 'mosasaurus',
-    names: { 'zh-CN': '沧龙', en: 'Mosasaurus' },
-    introductions: {
-      'zh-CN': '看看它的鳍状肢和有力的尾部，你能想象它怎样在海水中向前游吗？',
-      en: 'Look at its flippers and powerful tail. Can you imagine its tail pushing it forwards while the flippers steer?',
-    },
-    siblingId: 'stegosaurus',
+    animalId: 'pteranodon',
+    atmosphere: 'air',
+    introduction: '看看它长长的无齿嘴巴、头后的冠和展开的大翅膀。',
+    locale: 'zh-CN',
+    museumName: '史前动物博物馆',
+    name: '无齿翼龙',
+    siblingId: 'tupandactylus',
+  },
+  {
+    animalId: 'mosasaurus',
+    atmosphere: 'underwater',
+    introduction:
+      'Look at its flippers and powerful tail. Can you imagine its tail pushing it forwards while the flippers steer?',
+    locale: 'en',
+    museumName: 'Prehistoric Animal Museum',
+    name: 'Mosasaurus',
+    siblingId: 'megalodon',
   },
 ] as const
-
-const detailCases = (['zh-CN', 'en'] as const).flatMap((locale) =>
-  pilotAnimals.map((animal) => ({
-    animalId: animal.id,
-    introduction: animal.introductions[locale],
-    locale,
-    museumName:
-      locale === 'zh-CN' ? '史前动物博物馆' : 'Prehistoric Animal Museum',
-    name: animal.names[locale],
-    siblingId: animal.siblingId,
-  })),
-)
 
 function collectHydrationErrors(page: Page): string[] {
   const hydrationErrors: string[] = []
@@ -78,7 +77,7 @@ test('hydrates the real English museum first frame without replacing it', async 
       name: 'Prehistoric Animal Museum',
     }),
   ).toBeVisible()
-  await expect(page.locator('a[data-animal-detail-link]')).toHaveCount(3)
+  await expect(page.locator('a[data-animal-detail-link]')).toHaveCount(18)
   await expect(
     page.locator('a[data-animal-detail-link][data-animal-id="mosasaurus"]'),
   ).toHaveAttribute('href', './animals/mosasaurus/')
@@ -87,7 +86,7 @@ test('hydrates the real English museum first frame without replacing it', async 
   expect(hydrationErrors).toEqual([])
 })
 
-for (const detailCase of detailCases) {
+for (const detailCase of noJsDetailCases) {
   test(`serves the ${detailCase.locale} ${detailCase.animalId} museum deep link with useful no-JS content`, async ({
     baseURL,
     browser,
@@ -114,6 +113,10 @@ for (const detailCase of detailCases) {
       const museum = page.locator('#museum-experience')
       await expect(museum).toBeVisible()
       await expect(museum).toHaveAttribute('data-locale', detailCase.locale)
+      await expect(museum).toHaveAttribute(
+        'data-atmosphere',
+        detailCase.atmosphere,
+      )
       await expect(museum).toHaveAttribute(
         'data-page-kind',
         'animal-detail',

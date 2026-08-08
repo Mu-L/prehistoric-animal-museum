@@ -3,6 +3,7 @@
 import { renderToString } from 'react-dom/server'
 
 import { App } from '../src/App'
+import { mainCollection } from '../src/content/collections/main'
 import { renderMuseumApp } from '../src/entry-server'
 
 describe('museum server rendering', () => {
@@ -23,8 +24,12 @@ describe('museum server rendering', () => {
     expect(html).toContain('data-requested-animal-id="stegosaurus"')
     expect(html).toContain('Prehistoric Animal Museum')
     expect(html).toContain('Stegosaurus')
-    expect(html.match(/data-animal-detail-link=""/g)).toHaveLength(3)
-    expect(html).toContain('href="./animals/mosasaurus/"')
+    expect(html.match(/data-animal-detail-link=""/g)).toHaveLength(
+      mainCollection.animalIds.length,
+    )
+    for (const animalId of mainCollection.animalIds) {
+      expect(html).toContain(`href="./animals/${animalId}/"`)
+    }
     expect(html).not.toContain('seo-static-shell')
   })
 
@@ -52,8 +57,10 @@ describe('museum server rendering', () => {
       rootFallback: true,
     })
 
-    expect(html).toContain('href="./zh-CN/animals/mosasaurus/"')
-    expect(html).not.toContain('href="./animals/mosasaurus/"')
+    for (const animalId of mainCollection.animalIds) {
+      expect(html).toContain(`href="./zh-CN/animals/${animalId}/"`)
+      expect(html).not.toContain(`href="./animals/${animalId}/"`)
+    }
   })
 
   it('renders an animal deep link as the matching museum exhibit', () => {
@@ -73,8 +80,12 @@ describe('museum server rendering', () => {
     expect(html).toContain(
       'data-museum-return="" href="../../../en/?animal=mosasaurus"',
     )
-    expect(html).toContain('href="../stegosaurus/"')
-    expect(html).toContain('href="../tyrannosaurus-rex/"')
+    expect(html.match(/data-animal-detail-link=""/g)).toHaveLength(
+      mainCollection.animalIds.length,
+    )
+    for (const animalId of mainCollection.animalIds) {
+      expect(html).toContain(`href="../${animalId}/"`)
+    }
     expect(html).not.toContain('seo-static-shell')
   })
 })

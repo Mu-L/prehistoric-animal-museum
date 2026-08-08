@@ -6,6 +6,7 @@ import { dirname, resolve } from 'node:path'
 import sharp from 'sharp'
 import type { Plugin } from 'vite'
 
+import { animalSeoDescription } from '../src/content/animal-seo'
 import { animalDefinition as apatosaurusDefinition } from '../src/content/animals/apatosaurus/package'
 import { animalDefinition as dilophosaurusDefinition } from '../src/content/animals/dilophosaurus/package'
 import { animalDefinition as gigantoraptorDefinition } from '../src/content/animals/gigantoraptor/package'
@@ -25,7 +26,7 @@ import { animalDefinition as triceratopsDefinition } from '../src/content/animal
 import { animalDefinition as tupandactylusDefinition } from '../src/content/animals/tupandactylus/package'
 import { animalDefinition as tyrannosaurusRexDefinition } from '../src/content/animals/tyrannosaurus-rex/package'
 import { mainCollection } from '../src/content/collections/main'
-import { pilotAnimalDetailIds } from '../src/content/pilot-animal-details'
+import { staticAnimalDetailIds } from '../src/content/static-animal-details'
 import type {
   AnimalContent,
   Habitat,
@@ -119,11 +120,19 @@ const canonicalAnimalDefinitions = [
   tyrannosaurusRexDefinition,
 ] as const satisfies readonly PublishedAnimalDefinition[]
 
-const pilotAnimalDefinitions = [
-  stegosaurusDefinition,
-  tyrannosaurusRexDefinition,
-  mosasaurusDefinition,
-] as const satisfies readonly PublishedAnimalDefinition[]
+const canonicalAnimalDefinitionsById = new Map(
+  canonicalAnimalDefinitions.map((definition) => [definition.id, definition]),
+)
+
+const staticAnimalDetailDefinitions = staticAnimalDetailIds.map((animalId) => {
+  const definition = canonicalAnimalDefinitionsById.get(animalId)
+  if (!definition) {
+    throw new Error(
+      `Static animal detail cannot find the canonical content package for “${animalId}”.`,
+    )
+  }
+  return definition
+})
 
 function createCatalogueEntries(
   animalIds: readonly string[],
@@ -201,7 +210,7 @@ const catalogueGroups: readonly CatalogueGroup[] = catalogueHabitatOrder.map(
 export const seoCatalogueAnimalIds = catalogueAnimals.map(({ id }) => id)
 
 const catalogueAnimalCount = seoCatalogueAnimalIds.length
-const pilotAnimalIds = new Set<string>(pilotAnimalDetailIds)
+const staticAnimalIds = new Set<string>(staticAnimalDetailIds)
 
 const pageCopy = {
   'x-default': {
@@ -411,7 +420,7 @@ function renderCatalogue(locale: SeoPageLocale): string {
               (animal) => {
                 const name = catalogueNameMarkup(animal, locale)
                 const content =
-                  locale !== 'x-default' && pilotAnimalIds.has(animal.id)
+                  locale !== 'x-default' && staticAnimalIds.has(animal.id)
                     ? `<a href="./animals/${escapeHtml(animal.id)}/">${name}</a>`
                     : name
                 return `<li data-animal-id="${animal.id}">${content}</li>`
@@ -533,7 +542,7 @@ function renderAnimalDetailDocument(
   const copy = animalPageCopy[locale]
   const canonical = animalCanonicalUrl(locale, definition.id, options)
   const otherLocale = locale === 'zh-CN' ? 'en' : 'zh-CN'
-  const description = content.narration.sentences.join(' ')
+  const description = animalSeoDescription(content.narration.sentences)
   const title =
     locale === 'zh-CN'
       ? `${content.name} | 史前动物博物馆`
@@ -557,7 +566,7 @@ function renderAnimalDetailDocument(
   const uncertainty = content.editorial.uncertaintyNotes
     .map((note) => `<li>${escapeHtml(note)}</li>`)
     .join('')
-  const relatedAnimals = pilotAnimalDefinitions
+  const relatedAnimals = staticAnimalDetailDefinitions
     .filter((animal) => animal.id !== definition.id)
     .map((animal) => {
       const relatedContent = animal.content[locale]
@@ -854,7 +863,7 @@ function renderSitemap(options: ResolvedSeoOptions): string {
   const urls = [
     canonicalUrl('zh-CN', options),
     canonicalUrl('en', options),
-    ...[...pilotAnimalIds].flatMap((animalId) => [
+    ...staticAnimalDetailIds.flatMap((animalId) => [
       animalCanonicalUrl('zh-CN', animalId, options),
       animalCanonicalUrl('en', animalId, options),
     ]),
@@ -999,77 +1008,39 @@ export function createMultilingualSeoArtifacts(
   rawOptions: MultilingualSeoOptions = {},
 ): ReadonlyMap<string, string> {
   const options = resolveOptions(rawOptions)
-  return new Map([
+  const artifacts = new Map<string, string>([
     [
       'index.html',
       renderSeoDocument(builtAppHtml, 'zh-CN', options, true),
     ],
     ['zh-CN/index.html', renderSeoDocument(builtAppHtml, 'zh-CN', options)],
     ['en/index.html', renderSeoDocument(builtAppHtml, 'en', options)],
-    [
-      'zh-CN/animals/stegosaurus/index.html',
-      renderHydratableAnimalDetailDocument(
-        builtAppHtml,
-        stegosaurusDefinition,
-        'zh-CN',
-        options,
-      ),
-    ],
-    [
-      'en/animals/stegosaurus/index.html',
-      renderHydratableAnimalDetailDocument(
-        builtAppHtml,
-        stegosaurusDefinition,
-        'en',
-        options,
-      ),
-    ],
-    [
-      'zh-CN/animals/tyrannosaurus-rex/index.html',
-      renderHydratableAnimalDetailDocument(
-        builtAppHtml,
-        tyrannosaurusRexDefinition,
-        'zh-CN',
-        options,
-      ),
-    ],
-    [
-      'en/animals/tyrannosaurus-rex/index.html',
-      renderHydratableAnimalDetailDocument(
-        builtAppHtml,
-        tyrannosaurusRexDefinition,
-        'en',
-        options,
-      ),
-    ],
-    [
-      'zh-CN/animals/mosasaurus/index.html',
-      renderHydratableAnimalDetailDocument(
-        builtAppHtml,
-        mosasaurusDefinition,
-        'zh-CN',
-        options,
-      ),
-    ],
-    [
-      'en/animals/mosasaurus/index.html',
-      renderHydratableAnimalDetailDocument(
-        builtAppHtml,
-        mosasaurusDefinition,
-        'en',
-        options,
-      ),
-    ],
-    [
-      'robots.txt',
-      `User-agent: *\nAllow: /\nSitemap: ${options.siteOrigin}/sitemap.xml\n`,
-    ],
-    ['sitemap.xml', renderSitemap(options)],
-    ['404.html', renderNotFound(options)],
-    ['social/museum.svg', renderSocialCard('x-default')],
-    ['social/museum.zh-CN.svg', renderSocialCard('zh-CN')],
-    ['social/museum.en.svg', renderSocialCard('en')],
   ])
+
+  for (const definition of staticAnimalDetailDefinitions) {
+    for (const locale of ['zh-CN', 'en'] as const) {
+      artifacts.set(
+        `${locale}/animals/${definition.id}/index.html`,
+        renderHydratableAnimalDetailDocument(
+          builtAppHtml,
+          definition,
+          locale,
+          options,
+        ),
+      )
+    }
+  }
+
+  artifacts.set(
+    'robots.txt',
+    `User-agent: *\nAllow: /\nSitemap: ${options.siteOrigin}/sitemap.xml\n`,
+  )
+  artifacts.set('sitemap.xml', renderSitemap(options))
+  artifacts.set('404.html', renderNotFound(options))
+  artifacts.set('social/museum.svg', renderSocialCard('x-default'))
+  artifacts.set('social/museum.zh-CN.svg', renderSocialCard('zh-CN'))
+  artifacts.set('social/museum.en.svg', renderSocialCard('en'))
+  return artifacts
 }
 
 export function multilingualSeoPlugin(

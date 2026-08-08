@@ -546,7 +546,11 @@ test('preloads only the adjacent model binaries after the quiet-period gate', as
   expect(failedModelUrls).toEqual([])
 
   const requestsBeforeAdjacentSelection = modelRequestCount
-  await page.getByRole('button', { name: '查看无齿翼龙' }).click()
+  await page
+    .locator(
+      'a[data-animal-detail-link][data-animal-id="pteranodon"]',
+    )
+    .click()
   await expect(page.locator('#museum-experience')).toHaveAttribute(
     'data-ready-animal-id',
     'pteranodon',
@@ -573,7 +577,11 @@ test('shows an adjacent in-memory model without fading the WebGL canvas', async 
     .toBe(3)
   await installModelTransitionProbe(page)
 
-  await page.getByRole('button', { name: '查看无齿翼龙' }).click()
+  await page
+    .locator(
+      'a[data-animal-detail-link][data-animal-id="pteranodon"]',
+    )
+    .click()
   await expect(museum).toHaveAttribute(
     'data-ready-animal-id',
     'pteranodon',
@@ -610,7 +618,11 @@ test('shows a browser-cached model without fading after a hard refresh', async (
   )
   await installModelTransitionProbe(page)
 
-  await page.getByRole('button', { name: '查看无齿翼龙' }).click()
+  await page
+    .locator(
+      'a[data-animal-detail-link][data-animal-id="pteranodon"]',
+    )
+    .click()
   await expect(museum).toHaveAttribute(
     'data-ready-animal-id',
     'pteranodon',

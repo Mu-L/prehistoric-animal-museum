@@ -15,6 +15,16 @@ const canonicalDefinitionModules = import.meta.glob<AnimalDefinitionModule>(
   '../src/content/animals/*/package.ts',
   { eager: true },
 )
+const locales = ['zh-CN', 'en'] as const
+const canonicalDefinitionsById = new Map(
+  Object.values(canonicalDefinitionModules).map(({ animalDefinition }) => [
+    animalDefinition.id,
+    animalDefinition,
+  ]),
+)
+const detailCases = locales.flatMap((locale) =>
+  mainCollection.animalIds.map((animalId) => ({ animalId, locale })),
+)
 
 const builtAppHtml = `<!doctype html>
 <html lang="zh-CN">
@@ -51,14 +61,8 @@ describe('multilingual SEO artifacts', () => {
   })
 
   it('derives every crawlable ID, localized name and gallery from canonical content', () => {
-    const definitionsById = new Map(
-      Object.values(canonicalDefinitionModules).map(({ animalDefinition }) => [
-        animalDefinition.id,
-        animalDefinition,
-      ]),
-    )
     const canonicalAnimals = mainCollection.animalIds.map((id) => {
-      const definition = definitionsById.get(id)
+      const definition = canonicalDefinitionsById.get(id)
       if (!definition || definition.status !== 'published') {
         throw new Error(`Missing canonical published animal ${id}`)
       }
@@ -217,26 +221,17 @@ describe('multilingual SEO artifacts', () => {
     },
   )
 
-  it.each([
-    ['zh-CN', 'stegosaurus'],
-    ['en', 'stegosaurus'],
-    ['zh-CN', 'tyrannosaurus-rex'],
-    ['en', 'tyrannosaurus-rex'],
-    ['zh-CN', 'mosasaurus'],
-    ['en', 'mosasaurus'],
-  ] as const)(
-    'prepares a hydratable %s %s detail document for museum SSR',
-    (locale, animalId) => {
+  it.each(detailCases)(
+    'prepares a hydratable $locale $animalId detail document for museum SSR',
+    ({ locale, animalId }) => {
       const fileName = `${locale}/animals/${animalId}/index.html`
       const source = artifactSource(artifacts, fileName)
       const document = parseHtml(source)
-      const definition = Object.values(canonicalDefinitionModules).find(
-        (module) => module.animalDefinition.id === animalId,
-      )
-      if (!definition || definition.animalDefinition.status !== 'published') {
+      const definition = canonicalDefinitionsById.get(animalId)
+      if (!definition || definition.status !== 'published') {
         throw new Error(`Missing canonical published animal ${animalId}`)
       }
-      const content = definition.animalDefinition.content[locale]
+      const content = definition.content[locale]
       const otherLocale = locale === 'zh-CN' ? 'en' : 'zh-CN'
       const canonical = `https://example.test/museum/${locale}/animals/${animalId}/`
       const otherCanonical = `https://example.test/museum/${otherLocale}/animals/${animalId}/`
@@ -244,8 +239,14 @@ describe('multilingual SEO artifacts', () => {
       const fallback = root?.querySelector(
         `[data-animal-detail="${animalId}"]`,
       )
+      const description =
+        document
+          .querySelector('meta[name="description"]')
+          ?.getAttribute('content') ?? ''
 
       expect(document.documentElement.lang).toBe(locale)
+      expect(description).not.toBe('')
+      expect(description.length).toBeLessThanOrEqual(160)
       expect(root).not.toBeNull()
       expect(source).toMatch(
         /<div id="root"><!--museum-root-start-->[\s\S]*<!--museum-root-end--><\/div>/,
@@ -296,12 +297,14 @@ describe('multilingual SEO artifacts', () => {
         breadcrumb?: {
           itemListElement?: Array<{ item?: string; name?: string }>
         }
+        description?: string
         inLanguage?: string
         name?: string
         url?: string
       }
       expect(structuredData).toMatchObject({
         '@type': 'WebPage',
+        description,
         inLanguage: locale,
         name: content.name,
         url: canonical,
@@ -326,32 +329,28 @@ describe('multilingual SEO artifacts', () => {
     },
   )
 
-  it('emits only the three bilingual pilot detail artifacts', () => {
+  it('emits exactly one localized detail artifact for all 18 animals', () => {
+    const expectedDetailArtifacts = detailCases
+      .map(
+        ({ animalId, locale }) =>
+          `${locale}/animals/${animalId}/index.html`,
+      )
+      .sort()
+
     expect(
       [...artifacts.keys()]
         .filter((fileName) => fileName.includes('/animals/'))
         .sort(),
-    ).toEqual([
-      'en/animals/mosasaurus/index.html',
-      'en/animals/stegosaurus/index.html',
-      'en/animals/tyrannosaurus-rex/index.html',
-      'zh-CN/animals/mosasaurus/index.html',
-      'zh-CN/animals/stegosaurus/index.html',
-      'zh-CN/animals/tyrannosaurus-rex/index.html',
-    ])
+    ).toEqual(expectedDetailArtifacts)
   })
 
-  it('links the localized catalogue to every published pilot detail page', () => {
-    for (const locale of ['zh-CN', 'en'] as const) {
+  it('links the localized catalogue to every published detail page', () => {
+    for (const locale of locales) {
       const document = parseHtml(
         artifactSource(artifacts, `${locale}/index.html`),
       )
 
-      for (const animalId of [
-        'stegosaurus',
-        'tyrannosaurus-rex',
-        'mosasaurus',
-      ]) {
+      for (const animalId of mainCollection.animalIds) {
         expect(
           document
             .querySelector<HTMLAnchorElement>(
@@ -456,18 +455,21 @@ describe('multilingual SEO artifacts', () => {
     )
 
     const sitemap = artifactSource(artifacts, 'sitemap.xml')
-    expect(sitemap).not.toContain('<loc>https://example.test/museum/</loc>')
-    expect(sitemap).toContain(
-      '<loc>https://example.test/museum/zh-CN/</loc>',
-    )
-    expect(sitemap).toContain('<loc>https://example.test/museum/en/</loc>')
-    expect(sitemap).toContain(
-      '<loc>https://example.test/museum/zh-CN/animals/mosasaurus/</loc>',
-    )
-    expect(sitemap).toContain(
-      '<loc>https://example.test/museum/en/animals/mosasaurus/</loc>',
-    )
-    expect(sitemap.match(/<url>/g)).toHaveLength(8)
+    const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
+      .map((match) => match[1])
+      .sort()
+    const expectedSitemapUrls = [
+      'https://example.test/museum/zh-CN/',
+      'https://example.test/museum/en/',
+      ...detailCases.map(
+        ({ animalId, locale }) =>
+          `https://example.test/museum/${locale}/animals/${animalId}/`,
+      ),
+    ].sort()
+
+    expect(sitemapUrls).toEqual(expectedSitemapUrls)
+    expect(sitemapUrls).toHaveLength(38)
+    expect(sitemapUrls).not.toContain('https://example.test/museum/')
 
     const notFound = parseHtml(artifactSource(artifacts, '404.html'))
     expect(

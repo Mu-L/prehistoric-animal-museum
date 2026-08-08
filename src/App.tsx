@@ -48,8 +48,9 @@ import { ResponsiveAnimalTitle } from './components/ResponsiveAnimalTitle'
 import { SceneAtmosphere } from './components/SceneAtmosphere'
 import { ViewerStage } from './components/ViewerStage'
 import { mainAnimals } from './content/catalog'
+import { animalSeoDescription } from './content/animal-seo'
 import { credits } from './content/credits.generated'
-import { pilotAnimalDetailIds } from './content/pilot-animal-details'
+import { staticAnimalDetailIds } from './content/static-animal-details'
 import type { PublishedAnimalPackage } from './content/types'
 import { I18nProvider, useI18n } from './i18n/I18nProvider'
 import { localeFromPath, type Locale } from './i18n/locale'
@@ -139,9 +140,9 @@ interface ModelLoadingProgress {
 const LARGE_MODEL_NOTICE_DELAY_MS = 600
 const MODEL_PROGRESS_STEP = 5
 const NARRATION_IDLE_PRELOAD_DELAY_MS = 2_000
-const pilotAnimalDetailIdSet = new Set<string>(pilotAnimalDetailIds)
+const staticAnimalDetailIdSet = new Set<string>(staticAnimalDetailIds)
 
-function pilotAnimalDetailHref(
+function animalDetailHref(
   locale: Locale,
   animalId: string,
   rootFallback: boolean,
@@ -877,7 +878,7 @@ function MuseumApp({
     const animalDetail =
       pageKind === 'animal-detail'
         ? {
-            description: activeAnimal.narrationScript.join(' '),
+            description: animalSeoDescription(activeAnimal.narrationScript),
             id: activeAnimal.id,
             name: activeAnimal.name,
           }
@@ -2162,8 +2163,8 @@ function MuseumApp({
                   ) : null}
                 </>
               )
-              const detailHref = pilotAnimalDetailIdSet.has(animal.id)
-                ? pilotAnimalDetailHref(
+              const detailHref = staticAnimalDetailIdSet.has(animal.id)
+                ? animalDetailHref(
                     locale,
                     animal.id,
                     rootFallback,

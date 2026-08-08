@@ -33,6 +33,9 @@ async function collectFiles(directory: string): Promise<string[]> {
 
 const findings: string[] = []
 const files = await collectFiles(distributionRoot)
+const distributionPaths = new Set(
+  files.map((absolutePath) => relative(distributionRoot, absolutePath)),
+)
 
 for (const absolutePath of files) {
   const source = await readFile(absolutePath)
@@ -53,6 +56,38 @@ const sourceMaps = files.filter((file) => extname(file) === '.map')
 const expectedAnimalAssetCount = mainCollection.animalIds.length
 const expectedNarrationAssetCount =
   expectedAnimalAssetCount * supportedLocales.length
+const expectedDetailPaths = supportedLocales.flatMap((locale) =>
+  mainCollection.animalIds.map(
+    (animalId) => `${locale}/animals/${animalId}/index.html`,
+  ),
+)
+const actualDetailPaths = [...distributionPaths].filter((filePath) =>
+  /^(?:zh-CN|en)\/animals\/[^/]+\/index\.html$/.test(filePath),
+)
+const expectedSocialImagePaths = mainCollection.animalIds.map(
+  (animalId) => `animals/${animalId}/social.webp`,
+)
+
+for (const detailPath of expectedDetailPaths) {
+  if (!distributionPaths.has(detailPath)) {
+    findings.push(`missing static animal detail: ${detailPath}`)
+  }
+}
+for (const detailPath of actualDetailPaths) {
+  if (!expectedDetailPaths.includes(detailPath)) {
+    findings.push(`unexpected static animal detail: ${detailPath}`)
+  }
+}
+for (const socialImagePath of expectedSocialImagePaths) {
+  if (!distributionPaths.has(socialImagePath)) {
+    findings.push(`missing animal social image: ${socialImagePath}`)
+  }
+}
+if (actualDetailPaths.length !== expectedDetailPaths.length) {
+  findings.push(
+    `expected exactly ${expectedDetailPaths.length} static animal details; found ${actualDetailPaths.length}`,
+  )
+}
 if (glbFiles.length !== expectedAnimalAssetCount) {
   findings.push(
     `expected exactly ${expectedAnimalAssetCount} production GLBs; found ${glbFiles.length}`,
@@ -77,6 +112,6 @@ if (findings.length > 0) {
   process.exitCode = 1
 } else {
   console.log(
-    `Production boundary: ${files.length} artifact(s) scanned, ${glbFiles.length} GLBs, ${mp3Files.length} MP3s, 0 source maps, 0 private review marker(s).`,
+    `Production boundary: ${files.length} artifact(s) scanned, ${actualDetailPaths.length} animal detail HTML files, ${expectedSocialImagePaths.length} animal social images, ${glbFiles.length} GLBs, ${mp3Files.length} MP3s, 0 source maps, 0 private review marker(s).`,
   )
 }

@@ -78,6 +78,12 @@ const baseHeaders = `/museum/assets/*
 /museum/en/index.html
   Cache-Control: public, max-age=0, must-revalidate
 
+/museum/zh-CN/animals/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/museum/en/animals/*
+  Cache-Control: public, max-age=0, must-revalidate
+
 /museum/social/*
   Cache-Control: public, max-age=0, must-revalidate
 
@@ -139,20 +145,6 @@ function renderRedirects(animalDetailRoutes) {
   return `${baseRedirects}${animalRedirects ? `${animalRedirects}\n` : ''}`
 }
 
-function renderHeaders(animalDetailRoutes) {
-  const animalHeaders = animalDetailRoutes
-    .map(
-      (route) => `${route}/
-  Cache-Control: public, max-age=0, must-revalidate
-
-${route}/index.html
-  Cache-Control: public, max-age=0, must-revalidate
-`,
-    )
-    .join('\n')
-  return `${baseHeaders}\n${animalHeaders}`
-}
-
 export async function prepareCloudflarePages({
   sourceDirectory,
   outputDirectory,
@@ -183,7 +175,7 @@ export async function prepareCloudflarePages({
     ),
     writeFile(
       join(outputDirectory, '_headers'),
-      renderHeaders(animalDetailRoutes),
+      baseHeaders,
     ),
     writeFile(join(outputDirectory, '_routes.json'), functionRoutes),
   ])

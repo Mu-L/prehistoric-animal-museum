@@ -5,7 +5,7 @@ import {
   appBootstrapElementId,
   type InitialAppState,
 } from '../src/app-bootstrap'
-import { pilotAnimalDetailIds } from '../src/content/pilot-animal-details'
+import { staticAnimalDetailIds } from '../src/content/static-animal-details'
 
 export const museumRootStartMarker = '<!--museum-root-start-->'
 export const museumRootEndMarker = '<!--museum-root-end-->'
@@ -94,7 +94,7 @@ export async function writeLocalizedMuseumPrerenders(
       rootFallback: false,
     },
   ] as const
-  const detailPrerenders = pilotAnimalDetailIds.flatMap((animalId) =>
+  const detailPrerenders = staticAnimalDetailIds.flatMap((animalId) =>
     (['zh-CN', 'en'] as const).map((locale) => ({
       animalId,
       documentPath: `${locale}/animals/${animalId}/index.html`,
