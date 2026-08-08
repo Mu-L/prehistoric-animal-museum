@@ -1,55 +1,55 @@
 {
   "animalId": "tyrannosaurus-rex",
   "contractVersion": 1,
-  "generatedAt": "2026-08-05T02:32:16.189Z",
+  "generatedAt": "2026-08-08T14:00:15.135Z",
   "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.9},\"presentation\":{\"cameraLightScale\":1.3,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.12,\"portrait\":0.12},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.42,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.12,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
   "profiles": {
     "landscapeCompact": {
-      "bytes": 117038,
+      "bytes": 120814,
       "fileName": "preview-landscape-compact.webp",
       "height": 650,
-      "sha256": "22256ff1717219cfef71df8e66c70fcb5d9ef402ef91eecc01ec9224e5cfb102",
+      "sha256": "6a1c40e3ecc8428c8e7c7b7f07d697199bf2b95af2485af2cfd00f6e67f1877d",
       "width": 1250
     },
     "desktopWide": {
-      "bytes": 127064,
+      "bytes": 132934,
       "fileName": "preview-desktop-wide.webp",
       "height": 800,
-      "sha256": "185e55509cae1b671c24a4f3acbb1f9e00dfc4ca528e2d9339ada9876bd15593",
+      "sha256": "7391da6cab9eceaad9efe9aff1abca54d06bcf20f29c3aaf7a865bd2272ea917",
       "width": 1200
     },
     "phonePortraitCompact": {
-      "bytes": 62460,
+      "bytes": 64842,
       "fileName": "preview-phone-compact.webp",
       "height": 1000,
-      "sha256": "80314e29f3092da4e7e13ca07de7923c3c37be69b99c969dd6d4a4c7a1711a21",
+      "sha256": "08ad4fb3a9d283a5739f4d88512f1f1e8a38259f713f7f5e684214b776589b60",
       "width": 875
     },
     "phonePortraitTall": {
-      "bytes": 44278,
+      "bytes": 44838,
       "fileName": "preview-phone-tall.webp",
       "height": 1000,
-      "sha256": "29fa1c7995af17ff993373cfd288cdeefd94d7ebf4218e9a3709035524d53dfe",
+      "sha256": "778867744551c638a4f93a4267ef69ac6964a342146f8d3834339f0944beb5ff",
       "width": 640
     },
     "tabletPortrait": {
-      "bytes": 82112,
+      "bytes": 82512,
       "fileName": "preview-tablet-portrait.webp",
       "height": 960,
-      "sha256": "965166dd0975f905534e228bc84169946b4b11da093912e55543c93549834267",
+      "sha256": "d451cfc9441a36122c9d5c6705a9ace63b71afe83ba4223dfa87725c4ee2d5ff",
       "width": 900
     },
     "desktopStandard": {
-      "bytes": 137486,
+      "bytes": 139608,
       "fileName": "preview-desktop-standard.webp",
       "height": 960,
-      "sha256": "e3666ecfe1c7ef0e288823cd00cb3568c91dcc2f25d20a939fbc1ea4286bf78c",
+      "sha256": "8c4c70c898e3d863104ad64306100445b070d39f9d3f99494b1f78e8f3741004",
       "width": 1200
     }
   },
   "sourceModel": {
-    "bytes": 6298928,
-    "sha256": "372ae0f56c6d93442c83dbadbe4cbceb3cb926aee61b178d3da558ac676853ef"
+    "bytes": 6304976,
+    "sha256": "ea15319ca1fa3724f1a961515c36b4834446f5ac30a9b0de49b62881877efa54"
   },
   "target": "production"
 }

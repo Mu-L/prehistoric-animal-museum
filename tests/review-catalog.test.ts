@@ -435,9 +435,7 @@ describe('local collection review catalog', () => {
     }
 
     expect(tyrannosaurus?.review?.badge).toBe('待复看')
-    expect(tyrannosaurus?.review?.status).toBe(
-      '前爪连接与正常咬合 Idle 待复看',
-    )
+    expect(tyrannosaurus?.review?.status).toBe('嘴部、髋部与前爪连接待复看')
     expect(tyrannosaurus?.animation).toEqual({
       clip: 'Idle',
       loop: 'repeat',
@@ -447,6 +445,7 @@ describe('local collection review catalog', () => {
     expect(tyrannosaurus?.review?.note).toContain('约 4°')
     expect(tyrannosaurus?.review?.note).toContain('指甲组件')
     expect(tyrannosaurus?.review?.note).toContain('两段式')
+    expect(tyrannosaurus?.review?.note).toContain('髋部')
     expect(triceratops?.animation).toEqual({
       clip: 'Idle',
       loop: 'repeat',

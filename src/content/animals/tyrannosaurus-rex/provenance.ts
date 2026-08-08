@@ -19,9 +19,9 @@ const baseProvenance = createPublishedAssetProvenance({
         '6d2dee6ffe15e8ea30a87d71a466c14db68220c97f1bed6a8800532196a64705',
     },
     runtime: {
-      bytes: 6_298_928,
+      bytes: 6_304_976,
       sha256:
-        '372ae0f56c6d93442c83dbadbe4cbceb3cb926aee61b178d3da558ac676853ef',
+        'ea15319ca1fa3724f1a961515c36b4834446f5ac30a9b0de49b62881877efa54',
     },
     modifications: [
       'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
@@ -31,7 +31,8 @@ const baseProvenance = createPublishedAssetProvenance({
       'Built a project-authored 13-bone Blender armature and deterministic skin weights, with stationary root and leg bones to keep both feet planted.',
       'Reassigned both detached fingernail components on each forelimb to the same arm bone as their corresponding fingers after close-up owner review.',
       'Authored an eight-second in-place Idle with visible spine, neck, head, arm, and four-bone tail motion plus a controlled two-pulse bite whose lower-jaw opening remains at or below approximately 4 degrees.',
-      'Separated lower-jaw skin, teeth, and tongue membership from the upper palate after close-up owner review so the skin and teeth follow their respective jaw surfaces throughout both opening-and-closing pulses.',
+      'Reweighted the integrated outer lower-jaw skin and split the shared mouth lining between head and jaw, with smooth hinge and mouth-edge transitions so the skin, lower teeth, and tongue remain together throughout both opening-and-closing pulses.',
+      'Matched both 33-vertex hip seam rings to the torso spine weights, then blended each upper leg back to its stationary leg bone over 0.16 model units so the hips remain closed while both feet stay planted.',
       'Normalized the Blender export to one closed-loop Idle clip with ten rotation-only channels, then validator-checked and reviewed the derivative in the shared museum viewer.',
     ],
   },

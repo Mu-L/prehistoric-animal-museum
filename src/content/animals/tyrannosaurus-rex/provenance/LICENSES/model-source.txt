@@ -23,12 +23,16 @@ source are credited, the license is linked, and changes are identified.
   13-bone armature and deterministic skin weights added in Blender; an
   eight-second in-place Idle authored with head, arm, tail, and lower-jaw
   motion; lower-jaw membership separated from the upper palate after close-up
-  review; the lower-jaw skin, teeth, and tongue now follow the lower jaw while
-  upper teeth and palate follow the head. Both detached fingernail components
-  on each forelimb were reassigned to the corresponding arm bone. The added
-  opening remains limited to about 4 degrees and now follows one primary and
-  one smaller secondary opening-and-closing pulse; normalized to ten
-  rotation-only channels and validator-checked.
+  review; the integrated outer lower-jaw skin and shared mouth lining were
+  reweighted with smooth hinge and mouth-edge transitions so the lower-jaw
+  skin, teeth, and tongue follow the lower jaw while upper teeth and palate
+  follow the head. Both 33-vertex hip seam rings were matched to the torso
+  weights, then each upper leg was blended back to its stationary leg bone over
+  0.16 model units so the hips remain closed while the feet stay planted. Both
+  detached fingernail components on each forelimb were reassigned to the
+  corresponding arm bone. The added opening remains limited to about 4 degrees
+  and follows one primary and one smaller secondary opening-and-closing pulse;
+  normalized to ten rotation-only channels and validator-checked.
 
 Attribution: “Tyrant King - Tyrannosaurus” by Marcel Schanz, licensed under
 CC BY 4.0; converted by Sketchfab, normalized, and given a project-authored
