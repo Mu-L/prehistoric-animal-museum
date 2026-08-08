@@ -90,26 +90,15 @@ describe('multilingual SEO artifacts', () => {
     }
   })
 
-  it('renders an x-default root shell with both crawlable language links', () => {
+  it('renders a Chinese museum template as the fail-open entry', () => {
     const document = parseHtml(artifactSource(artifacts, 'index.html'))
 
-    expect(document.documentElement.lang).toBe('en')
-    expect(document.title).toBe(
-      'Prehistoric Animal Museum | 史前动物博物馆',
+    expect(document.documentElement.lang).toBe('zh-CN')
+    expect(document.title).toBe('史前动物博物馆 | 亲子 3D 史前动物展')
+    expect(document.querySelector('h1')?.textContent).toBe('史前动物博物馆')
+    expect(document.querySelectorAll('[data-seo-catalogue] li')).toHaveLength(
+      mainCollection.animalIds.length,
     )
-    expect(document.querySelector('h1')?.textContent).toContain(
-      'Prehistoric Animal Museum',
-    )
-    expect(document.querySelector('h1')?.textContent).toContain('史前动物博物馆')
-    expect(
-      document.querySelector('h1 [lang="zh-CN"]')?.textContent,
-    ).toBe('史前动物博物馆')
-    expect(
-      document.querySelectorAll('[data-seo-catalogue] [lang="zh-CN"]'),
-    ).toHaveLength(mainCollection.animalIds.length + 3)
-    expect(
-      document.querySelectorAll('[data-seo-catalogue] [lang="en"]'),
-    ).toHaveLength(mainCollection.animalIds.length + 3)
     expect(
       document.querySelector<HTMLAnchorElement>('a[hreflang="zh-CN"]')?.getAttribute(
         'href',
@@ -122,7 +111,17 @@ describe('multilingual SEO artifacts', () => {
     ).toBe('./en/')
     expect(
       document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+    ).toBe('https://example.test/museum/zh-CN/')
+    expect(
+      document.querySelector('link[rel="alternate"][hreflang="x-default"]')
+        ?.getAttribute('href'),
     ).toBe('https://example.test/museum/')
+    expect(
+      document.querySelector('script[type="module"]')?.getAttribute('src'),
+    ).toBe('./assets/app-123.js')
+    expect(
+      document.querySelector('link[rel="stylesheet"]')?.getAttribute('href'),
+    ).toBe('./assets/app-123.css')
   })
 
   it('keeps the no-JS static shell viewport-height and independently scrollable', () => {
@@ -218,6 +217,219 @@ describe('multilingual SEO artifacts', () => {
     },
   )
 
+  it('renders a crawlable Chinese Stegosaurus pilot page from canonical content', () => {
+    const document = parseHtml(
+      artifactSource(
+        artifacts,
+        'zh-CN/animals/stegosaurus/index.html',
+      ),
+    )
+
+    expect(document.documentElement.lang).toBe('zh-CN')
+    expect(document.querySelector('h1')?.textContent).toBe('剑龙')
+    expect(document.body.textContent).toContain('晚侏罗世')
+    expect(document.body.textContent).toContain('北美洲西部')
+    expect(
+      document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+    ).toBe(
+      'https://example.test/museum/zh-CN/animals/stegosaurus/',
+    )
+    expect(
+      document
+        .querySelector<HTMLAnchorElement>('[data-open-exhibit]')
+        ?.getAttribute('href'),
+    ).toBe('../../../zh-CN/?animal=stegosaurus')
+    expect(
+      document.querySelector<HTMLAnchorElement>(
+        'a[href="https://www.nhm.ac.uk/discover/dino-directory/stegosaurus.html"]',
+      ),
+    ).not.toBeNull()
+  })
+
+  it('renders the reciprocal English Stegosaurus pilot page', () => {
+    const document = parseHtml(
+      artifactSource(artifacts, 'en/animals/stegosaurus/index.html'),
+    )
+
+    expect(document.documentElement.lang).toBe('en')
+    expect(document.querySelector('h1')?.textContent).toBe('Stegosaurus')
+    expect(document.body.textContent).toContain('Late Jurassic')
+    expect(
+      document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+    ).toBe('https://example.test/museum/en/animals/stegosaurus/')
+    expect(
+      document
+        .querySelector('link[rel="alternate"][hreflang="zh-CN"]')
+        ?.getAttribute('href'),
+    ).toBe(
+      'https://example.test/museum/zh-CN/animals/stegosaurus/',
+    )
+    expect(
+      document
+        .querySelector<HTMLAnchorElement>('[data-open-exhibit]')
+        ?.getAttribute('href'),
+    ).toBe('../../../en/?animal=stegosaurus')
+  })
+
+  it('persists a detail-page language choice while preserving the same animal route', () => {
+    const document = parseHtml(
+      artifactSource(artifacts, 'zh-CN/animals/mosasaurus/index.html'),
+    )
+    const languageLink = document.querySelector<HTMLAnchorElement>(
+      'a[data-locale-choice="en"]',
+    )
+
+    expect(languageLink?.getAttribute('href')).toBe(
+      '../../../en/animals/mosasaurus/',
+    )
+    expect(
+      document.querySelector('script[data-locale-cookie]')?.textContent,
+    ).toContain(
+      'museum_locale=en; Max-Age=31536000; Path=/museum; SameSite=Lax; Secure',
+    )
+  })
+
+  it.each([
+    ['zh-CN', 'tyrannosaurus-rex', '霸王龙'],
+    ['en', 'tyrannosaurus-rex', 'Tyrannosaurus rex'],
+    ['zh-CN', 'mosasaurus', '沧龙'],
+    ['en', 'mosasaurus', 'Mosasaurus'],
+  ] as const)(
+    'renders the %s %s pilot page',
+    (locale, animalId, heading) => {
+      const document = parseHtml(
+        artifactSource(
+          artifacts,
+          `${locale}/animals/${animalId}/index.html`,
+        ),
+      )
+
+      expect(document.documentElement.lang).toBe(locale)
+      expect(document.querySelector('h1')?.textContent).toBe(heading)
+      expect(
+        document
+          .querySelector<HTMLAnchorElement>('[data-open-exhibit]')
+          ?.getAttribute('href'),
+      ).toBe(`../../../${locale}/?animal=${animalId}`)
+      expect(
+        document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+      ).toBe(
+        `https://example.test/museum/${locale}/animals/${animalId}/`,
+      )
+    },
+  )
+
+  it('keeps a pilot detail page lightweight and makes its LCP image discoverable', () => {
+    const document = parseHtml(
+      artifactSource(artifacts, 'en/animals/mosasaurus/index.html'),
+    )
+
+    expect(document.querySelector('script[src]')).toBeNull()
+    expect(
+      document.querySelectorAll('script:not([type="application/ld+json"])'),
+    ).toHaveLength(1)
+    expect(document.querySelector('link[rel="stylesheet"]')).toBeNull()
+    expect(
+      document.querySelector('link[rel="preload"][as="image"]')?.getAttribute(
+        'href',
+      ),
+    ).toBe('../../../animals/mosasaurus/hero.webp')
+    expect(
+      document.querySelector('meta[property="og:image"]')?.getAttribute(
+        'content',
+      ),
+    ).toBe(
+      'https://example.test/museum/animals/mosasaurus/social.webp',
+    )
+    expect(
+      document.querySelector<HTMLImageElement>('.animal-hero__media img')?.width,
+    ).toBe(1200)
+  })
+
+  it('links the localized catalogue to every published pilot detail page', () => {
+    for (const locale of ['zh-CN', 'en'] as const) {
+      const document = parseHtml(
+        artifactSource(artifacts, `${locale}/index.html`),
+      )
+
+      for (const animalId of [
+        'stegosaurus',
+        'tyrannosaurus-rex',
+        'mosasaurus',
+      ]) {
+        expect(
+          document
+            .querySelector<HTMLAnchorElement>(
+              `[data-animal-id="${animalId}"] a`,
+            )
+            ?.getAttribute('href'),
+        ).toBe(`./animals/${animalId}/`)
+      }
+    }
+  })
+
+  it('links each pilot detail page to the other available animal pages', () => {
+    const document = parseHtml(
+      artifactSource(artifacts, 'en/animals/mosasaurus/index.html'),
+    )
+    const related = [
+      ...document.querySelectorAll<HTMLAnchorElement>(
+        '[data-related-animals] a[data-animal-id]',
+      ),
+    ]
+
+    expect(
+      related.map((link) => [
+        link.dataset.animalId,
+        link.getAttribute('href'),
+      ]),
+    ).toEqual([
+      ['stegosaurus', '../stegosaurus/'],
+      ['tyrannosaurus-rex', '../tyrannosaurus-rex/'],
+    ])
+    expect(
+      related[0]?.querySelector('img')?.getAttribute('src'),
+    ).toBe('../../../animals/stegosaurus/thumbnail.webp')
+  })
+
+  it('describes a pilot detail page with matching breadcrumb structured data', () => {
+    const document = parseHtml(
+      artifactSource(artifacts, 'en/animals/stegosaurus/index.html'),
+    )
+    const source = document.querySelector(
+      'script[type="application/ld+json"]',
+    )?.textContent
+    expect(source).toBeTypeOf('string')
+    const data = JSON.parse(source ?? '{}') as {
+      '@type'?: string
+      breadcrumb?: {
+        itemListElement?: Array<{ item?: string; name?: string }>
+      }
+      name?: string
+      url?: string
+    }
+
+    expect(data).toMatchObject({
+      '@type': 'WebPage',
+      name: 'Stegosaurus',
+      url: 'https://example.test/museum/en/animals/stegosaurus/',
+    })
+    expect(data.breadcrumb?.itemListElement).toEqual([
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Prehistoric Animal Museum',
+        item: 'https://example.test/museum/en/',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Stegosaurus',
+        item: 'https://example.test/museum/en/animals/stegosaurus/',
+      },
+    ])
+  })
+
   it('declares the complete reciprocal hreflang set on every page', () => {
     for (const fileName of ['index.html', 'zh-CN/index.html', 'en/index.html']) {
       const document = parseHtml(artifactSource(artifacts, fileName))
@@ -257,7 +469,7 @@ describe('multilingual SEO artifacts', () => {
   })
 
   it.each([
-    ['x-default', 'index.html', 'museum.png'],
+    ['entry-fallback', 'index.html', 'museum.zh-CN.png'],
     ['zh-CN', 'zh-CN/index.html', 'museum.zh-CN.png'],
     ['en', 'en/index.html', 'museum.en.png'],
   ] as const)(
@@ -311,12 +523,18 @@ describe('multilingual SEO artifacts', () => {
     )
 
     const sitemap = artifactSource(artifacts, 'sitemap.xml')
-    expect(sitemap).toContain('<loc>https://example.test/museum/</loc>')
+    expect(sitemap).not.toContain('<loc>https://example.test/museum/</loc>')
     expect(sitemap).toContain(
       '<loc>https://example.test/museum/zh-CN/</loc>',
     )
     expect(sitemap).toContain('<loc>https://example.test/museum/en/</loc>')
-    expect(sitemap.match(/<url>/g)).toHaveLength(3)
+    expect(sitemap).toContain(
+      '<loc>https://example.test/museum/zh-CN/animals/mosasaurus/</loc>',
+    )
+    expect(sitemap).toContain(
+      '<loc>https://example.test/museum/en/animals/mosasaurus/</loc>',
+    )
+    expect(sitemap.match(/<url>/g)).toHaveLength(8)
 
     const notFound = parseHtml(artifactSource(artifacts, '404.html'))
     expect(

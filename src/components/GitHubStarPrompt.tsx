@@ -32,8 +32,17 @@ export function GitHubStarPrompt({
   const startedAtRef = useRef<number | null>(null)
   const timerRef = useRef<number | null>(null)
   const [elapsed, setElapsed] = useState(false)
-  const [suppressed, setSuppressed] = useState(readInitialSuppression)
+  const [suppressed, setSuppressed] = useState(false)
   const visible = elapsed && !suppressed && !blocked
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSuppressed(readInitialSuppression())
+    }, 0)
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [])
 
   useEffect(() => {
     if (!start || suppressed || elapsed) {

@@ -434,7 +434,7 @@ async function installAudioProbe(page: Page): Promise<void> {
   })
 }
 
-test('keeps the complete English SEO catalogue reachable without JavaScript', async ({
+test('keeps the complete English museum first frame reachable without JavaScript', async ({
   baseURL,
   browser,
 }) => {
@@ -449,24 +449,21 @@ test('keeps the complete English SEO catalogue reachable without JavaScript', as
   try {
     const response = await page.goto(`${baseURL}en/`)
     expect(response?.ok()).toBe(true)
-    const shell = page.locator('.seo-static-shell')
-    await expect(shell).toBeVisible()
-    await expect(page.locator('[data-seo-catalogue] li')).toHaveCount(
+    const museum = page.locator('#museum-experience')
+    await expect(museum).toBeVisible()
+    await expect(page.locator('.animal-title')).toHaveText('Stegosaurus')
+    await expect(page.locator('.animal-card[data-animal-id]')).toHaveCount(
       mainCollection.animalIds.length,
     )
-
-    const beforeScroll = await shell.evaluate((element) => ({
-      clientHeight: element.clientHeight,
-      overflowY: getComputedStyle(element).overflowY,
-      scrollHeight: element.scrollHeight,
-    }))
-    expect(beforeScroll.overflowY).toBe('auto')
-    expect(beforeScroll.scrollHeight).toBeGreaterThan(beforeScroll.clientHeight)
-
-    await shell.evaluate((element) => {
-      element.scrollTop = element.scrollHeight
-    })
-    await expect(page.locator('[data-seo-catalogue] li').last()).toBeInViewport()
+    await expect(page.locator('.model-still')).toBeVisible()
+    await expect
+      .poll(() =>
+        page
+          .locator('.model-still img')
+          .evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBeGreaterThan(0)
+    await expect(page.locator('.seo-static-shell')).toHaveCount(0)
   } finally {
     await context.close()
   }
@@ -549,7 +546,7 @@ test('switches language with the radio menu without reloading the page or model'
     }
   })
 
-  const response = await page.goto('.?animal=mammoth')
+  const response = await page.goto('./zh-CN/?animal=mammoth')
   expect(response?.ok()).toBe(true)
   await waitForMuseumShell(page, '长毛猛犸象')
   await waitForReadyAnimal(page, 'mammoth')
@@ -579,7 +576,7 @@ test('switches language with the radio menu without reloading the page or model'
   await expect(menu).toBeVisible()
   const choices = menu.getByRole('menuitemradio')
   await expect(choices).toHaveCount(3)
-  await expect(choices.nth(0)).toHaveAttribute('aria-checked', 'true')
+  await expect(choices.nth(1)).toHaveAttribute('aria-checked', 'true')
   await expect(choices.nth(0)).toBeFocused()
 
   await page.keyboard.press('End')
@@ -601,6 +598,16 @@ test('switches language with the radio menu without reloading the page or model'
   expect(await page.evaluate((key) => localStorage.getItem(key), localeStorageKey)).toBe(
     'en',
   )
+  expect(
+    (await page.context().cookies()).find(
+      (cookie) => cookie.name === 'museum_locale',
+    ),
+  ).toMatchObject({
+    value: 'en',
+    path: nestedPath.slice(0, -1),
+    secure: true,
+    sameSite: 'Lax',
+  })
   await expect(
     page.getByRole('button', { name: 'Change language, current English' }),
   ).toBeFocused()
@@ -676,9 +683,14 @@ test('switches language with the radio menu without reloading the page or model'
     .getByRole('menuitemradio', { name: /^Follow system \(currently / })
     .click()
   await waitForMuseumShell(page, '长毛猛犸象')
-  expect(new URL(page.url()).pathname).toBe(nestedPath)
+  expect(new URL(page.url()).pathname).toBe(`${nestedPath}zh-CN/`)
   expect(new URL(page.url()).searchParams.get('animal')).toBe('mammoth')
   expect(await page.evaluate((key) => localStorage.getItem(key), localeStorageKey)).toBeNull()
+  expect(
+    (await page.context().cookies()).find(
+      (cookie) => cookie.name === 'museum_locale',
+    ),
+  ).toBeUndefined()
   expect(
     await page.evaluate(
       () =>
@@ -691,6 +703,15 @@ test('switches language with the radio menu without reloading the page or model'
   ).toBe(true)
   await page.waitForTimeout(200)
   expect(glbRequests).toHaveLength(modelRequestCount)
+
+  await page.reload()
+  await waitForMuseumShell(page, '长毛猛犸象')
+  await page
+    .getByRole('button', { name: '切换语言，当前简体中文' })
+    .click()
+  await expect(
+    page.getByRole('menuitemradio', { name: /^跟随系统（当前：/ }),
+  ).toHaveAttribute('aria-checked', 'true')
 })
 
 test('keeps an open drawer and model focus mode during an in-place language switch', async ({
@@ -703,7 +724,7 @@ test('keeps an open drawer and model focus mode during an in-place language swit
     }
   })
 
-  const response = await page.goto('.')
+  const response = await page.goto('./zh-CN/')
   expect(response?.ok()).toBe(true)
   await waitForMuseumShell(page, '剑龙')
   await waitForReadyAnimal(page, 'stegosaurus')
@@ -780,7 +801,7 @@ test('makes the selected language unmistakable in both museum sheets', async ({
     )
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.route('**/*.glb', (route) => route.abort())
-    const response = await page.goto(baseURL)
+    const response = await page.goto(`${baseURL}zh-CN/`)
     expect(response?.ok()).toBe(true)
     await waitForMuseumShell(page, '剑龙')
 
@@ -979,14 +1000,16 @@ test('localises initial loading and recoverable model errors in English', async 
 test.describe('unsupported system language', () => {
   test.use({ locale: 'fr-FR' })
 
-  test('falls back to English at the locale-neutral URL', async ({ page }) => {
-    await page.route('**/*.glb', (route) => route.abort())
+  test('uses the default Chinese museum when the edge entry fails open', async ({ page }) => {
     const response = await page.goto('.')
     expect(response?.ok()).toBe(true)
-    await waitForMuseumShell(page, 'Stegosaurus')
-
+    await expect(page.locator('.seo-static-shell')).toHaveCount(0)
+    await expect(page.locator('#museum-experience')).toBeVisible()
+    await expect(
+      page.getByRole('heading', { level: 1, name: '史前动物博物馆' }),
+    ).toBeVisible()
     expect(new URL(page.url()).pathname).toBe(nestedPath)
-    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+    await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
     expect(await page.evaluate((key) => localStorage.getItem(key), localeStorageKey)).toBeNull()
   })
 })
@@ -994,12 +1017,11 @@ test.describe('unsupported system language', () => {
 test.describe('Traditional Chinese system language', () => {
   test.use({ locale: 'zh-TW' })
 
-  test('uses Simplified Chinese at the locale-neutral URL', async ({ page }) => {
-    await page.route('**/*.glb', (route) => route.abort())
+  test('keeps the fail-open Chinese first frame stable', async ({ page }) => {
     const response = await page.goto('.')
     expect(response?.ok()).toBe(true)
-    await waitForMuseumShell(page, '剑龙')
-
+    await expect(page.locator('.seo-static-shell')).toHaveCount(0)
+    await expect(page.locator('#museum-experience')).toBeVisible()
     expect(new URL(page.url()).pathname).toBe(nestedPath)
     await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
     expect(await page.evaluate((key) => localStorage.getItem(key), localeStorageKey)).toBeNull()

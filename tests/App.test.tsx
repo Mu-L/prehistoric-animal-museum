@@ -217,7 +217,7 @@ describe('App', () => {
       screen.getByRole('region', { name: '动物选择' }),
     ).toBeVisible()
     expect(
-      screen.getByRole('button', { name: /^查看剑龙$/ }),
+      screen.getByRole('link', { name: /^查看剑龙$/ }),
     ).toHaveAttribute('aria-current', 'true')
     expect(screen.queryByText('本地评审')).not.toBeInTheDocument()
     expect(screen.queryByText('已听审')).not.toBeInTheDocument()
@@ -679,7 +679,7 @@ describe('App', () => {
       await Promise.resolve()
     })
 
-    const card = screen.getByRole('button', { name: '查看剑龙' })
+    const card = screen.getByRole('link', { name: '查看剑龙' })
     const focusButton = screen.getByRole('button', { name: '专注看模型' })
     expect(card).toHaveAttribute('data-loading', 'true')
     expect(screen.queryByText('正在请它出来…')).not.toBeInTheDocument()
@@ -1020,7 +1020,7 @@ describe('App', () => {
       await renderReadyApp()
       scrollIntoView.mockClear()
 
-      fireEvent.focus(screen.getByRole('button', { name: '查看剑龙' }))
+      fireEvent.focus(screen.getByRole('link', { name: '查看剑龙' }))
 
       expect(scrollIntoView).not.toHaveBeenCalled()
     } finally {
@@ -1061,7 +1061,7 @@ describe('App', () => {
         within(dialog).getByRole('button', { name: '前往沧龙展台' }),
       )
 
-      const requestedCard = screen.getByRole('button', { name: '查看沧龙' })
+      const requestedCard = screen.getByRole('link', { name: '查看沧龙' })
       await waitFor(() => {
         expect(requestedCard).toHaveAttribute('data-loading', 'true')
         expect(scrollIntoView).toHaveBeenCalled()

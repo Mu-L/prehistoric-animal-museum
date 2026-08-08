@@ -10,11 +10,11 @@
   "scripts": {
     "dev": "vite",
     "review": "npm run validate:review && vite --mode review",
-    "build": "npm run validate:content && npm run validate:model-previews && tsc -b && vite build && npm run validate:production-boundary",
+    "build": "npm run validate:content && npm run validate:model-previews && tsc -b && tsx scripts/build-static-site.ts && npm run validate:production-boundary",
     "build:readme-screenshots": "vite build --mode model-still",
     "build:cloudflare": "npm run build:cloudflare:assets",
     "build:cloudflare:assets": "npm run build && node scripts/prepare-cloudflare-pages.mjs",
-    "build:e2e": "npm run validate:content && tsc -b && vite build --mode e2e",
+    "build:e2e": "npm run validate:content && tsc -b && tsx scripts/build-static-site.ts --mode e2e",
     "preview": "node server.mjs dist",
     "lint": "eslint . --max-warnings=0",
     "optimize:models": "node scripts/optimize-runtime-models.mjs",

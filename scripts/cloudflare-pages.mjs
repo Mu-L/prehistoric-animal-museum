@@ -1,4 +1,12 @@
-import { cp, copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import {
+  cp,
+  copyFile,
+  mkdir,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from 'node:fs/promises'
 import { join } from 'node:path'
 
 const hostRootSeoFiles = ['robots.txt', 'sitemap.xml']
@@ -28,8 +36,7 @@ const rootIndex = `<!doctype html>
 </html>
 `
 
-const redirects = `/museum /museum/ 301
-/museum/index.html /museum/ 301
+const baseRedirects = `/museum/index.html /museum/ 301
 /museum/zh-CN /museum/zh-CN/ 301
 /museum/zh-CN/index.html /museum/zh-CN/ 301
 /museum/en /museum/en/ 301
@@ -37,8 +44,21 @@ const redirects = `/museum /museum/ 301
 / /museum/ 301
 `
 
-const headers = `/museum/assets/*
+const functionRoutes = `${JSON.stringify(
+  {
+    version: 1,
+    include: ['/museum', '/museum/'],
+    exclude: [],
+  },
+  null,
+  2,
+)}\n`
+
+const baseHeaders = `/museum/assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+/museum/animals/*
+  Cache-Control: public, max-age=0, must-revalidate
 
 /museum/
   Cache-Control: public, max-age=0, must-revalidate
@@ -78,6 +98,61 @@ const headers = `/museum/assets/*
   Referrer-Policy: strict-origin-when-cross-origin
 `
 
+async function discoverAnimalDetailRoutes(sourceDirectory) {
+  const routes = []
+  for (const locale of ['zh-CN', 'en']) {
+    const animalsDirectory = join(sourceDirectory, locale, 'animals')
+    let entries
+    try {
+      entries = await readdir(animalsDirectory, { withFileTypes: true })
+    } catch (error) {
+      if (error?.code === 'ENOENT') {
+        continue
+      }
+      throw error
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue
+      }
+      try {
+        await readFile(join(animalsDirectory, entry.name, 'index.html'))
+      } catch (error) {
+        if (error?.code === 'ENOENT') {
+          continue
+        }
+        throw error
+      }
+      routes.push(`/museum/${locale}/animals/${entry.name}`)
+    }
+  }
+  return routes.sort()
+}
+
+function renderRedirects(animalDetailRoutes) {
+  const animalRedirects = animalDetailRoutes
+    .map(
+      (route) =>
+        `${route} ${route}/ 301\n${route}/index.html ${route}/ 301`,
+    )
+    .join('\n')
+  return `${baseRedirects}${animalRedirects ? `${animalRedirects}\n` : ''}`
+}
+
+function renderHeaders(animalDetailRoutes) {
+  const animalHeaders = animalDetailRoutes
+    .map(
+      (route) => `${route}/
+  Cache-Control: public, max-age=0, must-revalidate
+
+${route}/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+`,
+    )
+    .join('\n')
+  return `${baseHeaders}\n${animalHeaders}`
+}
+
 export async function prepareCloudflarePages({
   sourceDirectory,
   outputDirectory,
@@ -90,6 +165,7 @@ export async function prepareCloudflarePages({
   const cloudflareNotFound = rewriteNotFoundReturnPath(
     await readFile(join(sourceDirectory, '404.html'), 'utf8'),
   )
+  const animalDetailRoutes = await discoverAnimalDetailRoutes(sourceDirectory)
 
   await Promise.all(
     hostRootSeoFiles.map((fileName) =>
@@ -101,7 +177,14 @@ export async function prepareCloudflarePages({
     writeFile(join(outputDirectory, 'index.html'), rootIndex),
     writeFile(join(outputDirectory, '404.html'), cloudflareNotFound),
     writeFile(join(museumDirectory, '404.html'), cloudflareNotFound),
-    writeFile(join(outputDirectory, '_redirects'), redirects),
-    writeFile(join(outputDirectory, '_headers'), headers),
+    writeFile(
+      join(outputDirectory, '_redirects'),
+      renderRedirects(animalDetailRoutes),
+    ),
+    writeFile(
+      join(outputDirectory, '_headers'),
+      renderHeaders(animalDetailRoutes),
+    ),
+    writeFile(join(outputDirectory, '_routes.json'), functionRoutes),
   ])
 }

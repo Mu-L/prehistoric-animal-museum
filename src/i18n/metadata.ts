@@ -76,12 +76,11 @@ export function updateLocalizedMetadata({
   description,
   socialImageAlt,
 }: LocalizedMetadata): void {
-  const variant = localeFromPath(window.location.pathname) ?? 'x-default'
+  const variant = localeFromPath(window.location.pathname) ?? locale
   const canonical = canonicalFor(variant)
   const ogLocale = locale === 'zh-CN' ? 'zh_CN' : 'en_GB'
   const alternateLocale = locale === 'zh-CN' ? 'en_GB' : 'zh_CN'
-  const socialImageFileName =
-    variant === 'x-default' ? 'museum.png' : `museum.${variant}.png`
+  const socialImageFileName = `museum.${variant}.png`
   const socialImage = new URL(
     `social/${socialImageFileName}`,
     canonicalFor('x-default'),

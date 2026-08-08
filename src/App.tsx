@@ -26,6 +26,7 @@ import {
   useSyncExternalStore,
 } from 'react'
 import { NarrationController, getNarrationControlLabel } from './audio'
+import type { InitialAppState } from './app-bootstrap'
 import {
   AnimalCollectionSheet,
   type CollectionAnimal,
@@ -44,9 +45,10 @@ import { SceneAtmosphere } from './components/SceneAtmosphere'
 import { ViewerStage } from './components/ViewerStage'
 import { mainAnimals } from './content/catalog'
 import { credits } from './content/credits.generated'
+import { pilotAnimalDetailIds } from './content/pilot-animal-details'
 import type { PublishedAnimalPackage } from './content/types'
 import { I18nProvider, useI18n } from './i18n/I18nProvider'
-import type { Locale } from './i18n/locale'
+import { localeFromPath, type Locale } from './i18n/locale'
 import { updateLocalizedMetadata } from './i18n/metadata'
 import { dietLabel, formatSizeFact, messagesFor } from './i18n/messages'
 import { localReviewAnimals } from 'virtual:local-review-catalog'
@@ -133,6 +135,21 @@ interface ModelLoadingProgress {
 const LARGE_MODEL_NOTICE_DELAY_MS = 600
 const MODEL_PROGRESS_STEP = 5
 const NARRATION_IDLE_PRELOAD_DELAY_MS = 2_000
+const pilotAnimalDetailIdSet = new Set<string>(pilotAnimalDetailIds)
+
+function pilotAnimalDetailHref(
+  locale: Locale,
+  animalId: string,
+  rootFallback: boolean,
+): string {
+  const needsLocaleSegment =
+    typeof window === 'undefined'
+      ? rootFallback
+      : localeFromPath(window.location.pathname) === null
+  return needsLocaleSegment
+    ? `./${locale}/animals/${animalId}/`
+    : `./animals/${animalId}/`
+}
 
 interface WindowWithIdleCallback {
   readonly requestIdleCallback?: (
@@ -195,9 +212,7 @@ function RailThumbnail({
   readonly src: string
 }) {
   const imageRef = useRef<HTMLImageElement>(null)
-  const [shouldLoad, setShouldLoad] = useState(
-    () => priority || typeof IntersectionObserver === 'undefined',
-  )
+  const [shouldLoad, setShouldLoad] = useState(priority)
   const loadImage = priority || shouldLoad
 
   useEffect(() => {
@@ -608,13 +623,19 @@ function preloadImageAsset(
 }
 
 function readE2EFixturesEnabled(): boolean {
-  return (
-    import.meta.env.MODE === 'e2e' &&
-    new URLSearchParams(window.location.search).get('fixtures') === '1'
-  )
+  if (import.meta.env.MODE !== 'e2e' || typeof window === 'undefined') {
+    return false
+  }
+  return new URLSearchParams(window.location.search).get('fixtures') === '1'
 }
 
-function MuseumApp() {
+function MuseumApp({
+  initialAnimalId,
+  rootFallback = false,
+}: {
+  readonly initialAnimalId?: string
+  readonly rootFallback?: boolean
+}) {
   const { locale, messages } = useI18n()
   const e2eFixturesEnabled = useMemo(() => readE2EFixturesEnabled(), [])
   const productionAnimals = useMemo(
@@ -649,8 +670,11 @@ function MuseumApp() {
     [animals],
   )
   const initialAnimal = useMemo(
-    () => readInitialAnimal(animals, defaultAnimal),
-    [animals, defaultAnimal],
+    () =>
+      (initialAnimalId
+        ? animals.find((animal) => animal.id === initialAnimalId)
+        : undefined) ?? readInitialAnimal(animals, defaultAnimal),
+    [animals, defaultAnimal, initialAnimalId],
   )
   const modelCache = useMemo(() => new ModelCache(), [])
   const [idlePreloadTargets] = useState(() =>
@@ -744,6 +768,7 @@ function MuseumApp() {
   const [liveMessage, setLiveMessage] = useState(
     messages.loading.initialExhibit(initialAnimal.name),
   )
+  const initialQueryAppliedRef = useRef(false)
 
   const narration = useMemo(() => new NarrationController(), [])
   const narrationSnapshot = useSyncExternalStore(
@@ -755,6 +780,34 @@ function MuseumApp() {
   useEffect(() => {
     activeAnimalRef.current = activeAnimal
   }, [activeAnimal])
+  useEffect(() => {
+    if (!initialAnimalId || initialQueryAppliedRef.current) {
+      return
+    }
+    const requestedAnimalId = new URLSearchParams(window.location.search).get(
+      'animal',
+    )
+    const requestedAnimal = requestedAnimalId
+      ? animalIndex.get(requestedAnimalId)
+      : undefined
+    if (!requestedAnimal || requestedAnimal.id === initialAnimalId) {
+      return
+    }
+
+    // Static prerenders have to use one deterministic animal so hydration can
+    // match byte-for-byte. Apply a deep-link selection immediately after that
+    // first render, before the viewer coordinator starts its initial request.
+    queueMicrotask(() => {
+      if (initialQueryAppliedRef.current) {
+        return
+      }
+      initialQueryAppliedRef.current = true
+      activeAnimalRef.current = requestedAnimal
+      visibleBackgroundRef.current = requestedAnimal
+      setActiveAnimalId(requestedAnimal.id)
+      setLiveMessage(messages.loading.initialExhibit(requestedAnimal.name))
+    })
+  }, [animalIndex, initialAnimalId, messages.loading])
   const overlayOpen = drawerOpen || collectionOpen || aboutOpen
   const collectionAnimals = useMemo<CollectionAnimal[]>(
     () =>
@@ -1375,6 +1428,28 @@ function MuseumApp() {
   ])
 
   useEffect(() => {
+    const requestedAnimalId = new URLSearchParams(window.location.search).get(
+      'animal',
+    )
+    const coordinator = coordinatorRef.current
+    if (
+      !requestedAnimalId ||
+      !animalIndex.has(requestedAnimalId) ||
+      !coordinator
+    ) {
+      return
+    }
+    const snapshot = coordinator.getSnapshot()
+    if (
+      snapshot.requestedAnimalId === requestedAnimalId &&
+      snapshot.phase !== 'failed'
+    ) {
+      return
+    }
+    void coordinator.request(requestedAnimalId)
+  }, [animalIndex, viewerController])
+
+  useEffect(() => {
     const followRequestedAnimal =
       loadSnapshot.phase === 'loading' || loadSnapshot.phase === 'failed'
     const railAnimalId =
@@ -1877,73 +1952,112 @@ function MuseumApp() {
                 loadSnapshot.phase === 'failed' &&
                 loadSnapshot.requestedAnimalId === animal.id
               const selected = loadSnapshot.readyAnimalId === animal.id
-              return (
-                <div className="animal-card-slot" key={animal.id} role="listitem">
-                  <button
-                    aria-current={selected ? 'true' : undefined}
-                    aria-label={messages.viewAnimal(
-                      animal.name,
-                      localReviewMode && animal.review
-                        ? animal.review.displayLabel
-                        : '',
-                      failed,
-                    )}
-                    className="animal-card"
-                    data-animal-id={animal.id}
-                    data-failed={failed}
-                    data-loading={loading}
-                    data-selected={selected}
-                    onClick={() => {
-                      if (failed) {
-                        retryAnimal()
-                      } else {
-                        requestAnimal(animal.id)
+              const activateAnimal = () => {
+                if (failed) {
+                  retryAnimal()
+                } else {
+                  requestAnimal(animal.id)
+                }
+              }
+              const cardAttributes = {
+                'aria-current': selected ? ('true' as const) : undefined,
+                'aria-label': messages.viewAnimal(
+                  animal.name,
+                  localReviewMode && animal.review
+                    ? animal.review.displayLabel
+                    : '',
+                  failed,
+                ),
+                className: 'animal-card',
+                'data-animal-id': animal.id,
+                'data-failed': failed,
+                'data-loading': loading,
+                'data-selected': selected,
+              }
+              const cardContents = (
+                <>
+                  <span className="thumbnail-frame">
+                    <RailThumbnail
+                      priority={
+                        animal.id === activeAnimal.id ||
+                        animal.id === loadSnapshot.requestedAnimalId
                       }
-                    }}
-                    type="button"
-                  >
-                    <span className="thumbnail-frame">
-                      <RailThumbnail
-                        priority={
-                          animal.id === activeAnimal.id ||
-                          animal.id === loadSnapshot.requestedAnimalId
-                        }
-                        rootRef={railRef}
-                        src={animal.assets.thumbnail}
-                      />
-                      {localReviewMode && animal.review ? (
-                        <span
-                          aria-hidden="true"
-                          className="review-thumbnail-badge"
-                          data-package-status={animal.review.packageStatus}
-                        >
-                          {animal.review.stateLabel}
-                        </span>
-                      ) : null}
-                      {loading ? <span aria-hidden="true" className="loading-orbit" /> : null}
-                    </span>
-                    <strong>{animal.name}</strong>
-                    {loading &&
-                    !initialLoading &&
-                    loadSnapshot.showDelayedLabel ? (
-                      <span className="card-status">
-                        {loadingPhase === 'preparing'
-                          ? messages.loading.opening
-                          : loadingPercent === null
-                            ? messages.loading.inviting
-                            : messages.loading.downloading(loadingPercent)}
+                      rootRef={railRef}
+                      src={animal.assets.thumbnail}
+                    />
+                    {localReviewMode && animal.review ? (
+                      <span
+                        aria-hidden="true"
+                        className="review-thumbnail-badge"
+                        data-package-status={animal.review.packageStatus}
+                      >
+                        {animal.review.stateLabel}
                       </span>
                     ) : null}
-                    {failed ? (
-                      <span className="card-status">{messages.loading.retry}</span>
+                    {loading ? (
+                      <span aria-hidden="true" className="loading-orbit" />
                     ) : null}
-                    {!failed &&
-                    (!loading || !loadSnapshot.showDelayedLabel) &&
-                    localReviewMode &&
-                    animal.review ? (
-                      <span className="card-review-status">{messages.localReview}</span>
-                    ) : null}
-                  </button>
+                  </span>
+                  <strong>{animal.name}</strong>
+                  {loading &&
+                  !initialLoading &&
+                  loadSnapshot.showDelayedLabel ? (
+                    <span className="card-status">
+                      {loadingPhase === 'preparing'
+                        ? messages.loading.opening
+                        : loadingPercent === null
+                          ? messages.loading.inviting
+                          : messages.loading.downloading(loadingPercent)}
+                    </span>
+                  ) : null}
+                  {failed ? (
+                    <span className="card-status">{messages.loading.retry}</span>
+                  ) : null}
+                  {!failed &&
+                  (!loading || !loadSnapshot.showDelayedLabel) &&
+                  localReviewMode &&
+                  animal.review ? (
+                    <span className="card-review-status">
+                      {messages.localReview}
+                    </span>
+                  ) : null}
+                </>
+              )
+              const detailHref = pilotAnimalDetailIdSet.has(animal.id)
+                ? pilotAnimalDetailHref(locale, animal.id, rootFallback)
+                : null
+              return (
+                <div className="animal-card-slot" key={animal.id} role="listitem">
+                  {detailHref ? (
+                    <a
+                      {...cardAttributes}
+                      data-animal-detail-link=""
+                      href={detailHref}
+                      onClick={(event) => {
+                        if (
+                          event.button !== 0 ||
+                          event.metaKey ||
+                          event.ctrlKey ||
+                          event.shiftKey ||
+                          event.altKey
+                        ) {
+                          return
+                        }
+                        event.preventDefault()
+                        activateAnimal()
+                      }}
+                    >
+                      {cardContents}
+                    </a>
+                  ) : (
+                    <button
+                      {...cardAttributes}
+                      onClick={activateAnimal}
+                      type="button"
+                    >
+                      {cardContents}
+                    </button>
+                  )}
                 </div>
               )
             })}
@@ -2028,10 +2142,26 @@ function MuseumApp() {
   )
 }
 
-export function App() {
+export function App({
+  initialState,
+}: {
+  readonly initialState?: InitialAppState
+} = {}) {
   return (
-    <I18nProvider>
-      <MuseumApp />
+    <I18nProvider
+      {...(initialState
+        ? {
+            initialState: {
+              locale: initialState.locale,
+              preference: initialState.preference,
+            },
+          }
+        : {})}
+    >
+      <MuseumApp
+        {...(initialState ? { initialAnimalId: initialState.animalId } : {})}
+        rootFallback={initialState?.rootFallback ?? false}
+      />
     </I18nProvider>
   )
 }

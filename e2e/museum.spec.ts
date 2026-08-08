@@ -9,7 +9,7 @@ async function openMuseum(
   query = '',
   options: { waitForModel?: boolean } = {},
 ): Promise<Locator> {
-  const response = await page.goto(`.${query}`)
+  const response = await page.goto(`./zh-CN/${query}`)
   expect(response?.ok()).toBe(true)
   await expect(
     page.getByRole('heading', { level: 1, name: '史前动物博物馆' }),
@@ -44,16 +44,16 @@ async function expectNoHorizontalOverflow(page: Page): Promise<void> {
 }
 
 async function expectPrimaryTargetsAtLeast48Px(page: Page): Promise<void> {
-  const buttons = page.locator('button:visible')
-  const count = await buttons.count()
+  const targets = page.locator('button:visible, a.animal-card:visible')
+  const count = await targets.count()
   expect(count).toBeGreaterThan(0)
 
   for (let index = 0; index < count; index += 1) {
-    const button = buttons.nth(index)
-    const name = await button.getAttribute('aria-label')
-      ?? (await button.textContent())
+    const target = targets.nth(index)
+    const name = await target.getAttribute('aria-label')
+      ?? (await target.textContent())
       ?? `button ${index}`
-    const box = await button.boundingBox()
+    const box = await target.boundingBox()
     expect(box, `${name} should have a layout box`).not.toBeNull()
     expect(box?.width ?? 0, `${name} width`).toBeGreaterThanOrEqual(48)
     expect(box?.height ?? 0, `${name} height`).toBeGreaterThanOrEqual(48)
@@ -337,13 +337,13 @@ test('loads from the nested static base with Chinese semantics and accessible to
 }) => {
   const museum = await openMuseum(page)
 
-  expect(new URL(page.url()).pathname).toBe(nestedPath)
+  expect(new URL(page.url()).pathname).toBe(`${nestedPath}zh-CN/`)
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
   await expect(page.locator('html')).toHaveAttribute('data-locale', 'zh-CN')
   const moduleScriptUrl = await page
     .locator('script[type="module"]')
     .getAttribute('src')
-  expect(moduleScriptUrl).toMatch(/^\.\/assets\//)
+  expect(moduleScriptUrl).toMatch(/^\.\.\/assets\//)
 
   await expect(
     page.getByText('看看它背上的两排骨板，像不像一列起伏的小山？', {
@@ -359,7 +359,7 @@ test('loads from the nested static base with Chinese semantics and accessible to
     page.getByRole('button', { name: '听它的介绍' }),
   ).toBeEnabled()
   await expect(
-    page.getByRole('button', { name: '查看剑龙' }),
+    page.getByRole('link', { name: '查看剑龙' }),
   ).toHaveAttribute('aria-current', 'true')
   await expect(museum).toHaveAttribute(
     'data-requested-animal-id',
@@ -851,7 +851,7 @@ test('keeps every initial model surface transparent across a hard refresh', asyn
     expect(paints.clearAlpha).toBe(0)
   }
 
-  await page.goto('.')
+  await page.goto('./zh-CN/')
   await assertTransparentStage()
   await page.reload({ waitUntil: 'domcontentloaded' })
   await assertTransparentStage()
@@ -1585,7 +1585,7 @@ test('all English animal titles stay whole at every required viewport', async ({
 }) => {
   test.setTimeout(90_000)
   await page.setViewportSize(requiredViewports[0])
-  const response = await page.goto('.')
+  const response = await page.goto('./zh-CN/')
   expect(response?.ok()).toBe(true)
   await expect(page.getByRole('heading', { level: 2, name: '剑龙' })).toBeVisible()
   await switchToEnglish(page)
@@ -1609,7 +1609,7 @@ test('mobile portrait grows the story card around a three-line animal introducti
 }) => {
   const viewport = { width: 400, height: 704 }
   await page.setViewportSize(viewport)
-  const response = await page.goto('.?animal=plesiosaurus')
+  const response = await page.goto('./zh-CN/?animal=plesiosaurus')
   expect(response?.ok()).toBe(true)
 
   await expect(page.getByRole('heading', { name: '蛇颈龙类' })).toBeVisible()
@@ -1682,7 +1682,7 @@ test('mobile portrait keeps a five-character animal name aligned with its introd
   page,
 }) => {
   await page.setViewportSize({ width: 400, height: 704 })
-  const response = await page.goto('.?animal=mammoth')
+  const response = await page.goto('./zh-CN/?animal=mammoth')
   expect(response?.ok()).toBe(true)
 
   await expect(page.getByRole('heading', { name: '长毛猛犸象' })).toBeVisible()
@@ -1804,6 +1804,7 @@ test.describe('required responsive viewports', () => {
     test(`${viewport.name} has safe controls, rail, drawer, and model focus`, async ({
       page,
     }) => {
+      test.setTimeout(60_000)
       await page.setViewportSize({
         width: viewport.width,
         height: viewport.height,

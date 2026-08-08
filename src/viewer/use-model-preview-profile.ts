@@ -10,8 +10,10 @@ function currentProfile(): ModelPreviewProfile {
   return selectModelPreviewProfile((media) => window.matchMedia(media).matches)
 }
 
+const hydrationProfile = modelPreviewProfiles[modelPreviewProfiles.length - 1]!
+
 export function useModelPreviewProfile(): ModelPreviewProfile {
-  const [profile, setProfile] = useState(currentProfile)
+  const [profile, setProfile] = useState<ModelPreviewProfile>(hydrationProfile)
 
   useEffect(() => {
     const queries = modelPreviewProfiles.map(({ media }) =>

@@ -25,8 +25,11 @@ import { animalDefinition as triceratopsDefinition } from '../src/content/animal
 import { animalDefinition as tupandactylusDefinition } from '../src/content/animals/tupandactylus/package'
 import { animalDefinition as tyrannosaurusRexDefinition } from '../src/content/animals/tyrannosaurus-rex/package'
 import { mainCollection } from '../src/content/collections/main'
+import { pilotAnimalDetailIds } from '../src/content/pilot-animal-details'
 import type {
+  AnimalContent,
   Habitat,
+  Locale,
   PublishedAnimalDefinition,
 } from '../src/content/types'
 
@@ -116,6 +119,12 @@ const canonicalAnimalDefinitions = [
   tyrannosaurusRexDefinition,
 ] as const satisfies readonly PublishedAnimalDefinition[]
 
+const pilotAnimalDefinitions = [
+  stegosaurusDefinition,
+  tyrannosaurusRexDefinition,
+  mosasaurusDefinition,
+] as const satisfies readonly PublishedAnimalDefinition[]
+
 function createCatalogueEntries(
   animalIds: readonly string[],
   definitions: readonly PublishedAnimalDefinition[],
@@ -192,6 +201,7 @@ const catalogueGroups: readonly CatalogueGroup[] = catalogueHabitatOrder.map(
 export const seoCatalogueAnimalIds = catalogueAnimals.map(({ id }) => id)
 
 const catalogueAnimalCount = seoCatalogueAnimalIds.length
+const pilotAnimalIds = new Set<string>(pilotAnimalDetailIds)
 
 const pageCopy = {
   'x-default': {
@@ -335,19 +345,28 @@ function renderHead(copy: SeoPageCopy, options: ResolvedSeoOptions): string {
 function languageLinks(
   locale: SeoPageLocale,
   copy: SeoPageCopy,
+  entryFallback = false,
 ): string {
-  const rootHref = locale === 'x-default' ? './' : '../'
-  const zhCNHref =
-    locale === 'x-default' ? './zh-CN/' : locale === 'zh-CN' ? './' : '../zh-CN/'
-  const enHref =
-    locale === 'x-default' ? './en/' : locale === 'en' ? './' : '../en/'
+  if (locale === 'x-default') {
+    return `<nav aria-label="Choose a language | 选择语言">
+        <a href="./zh-CN/" hreflang="zh-CN" lang="zh-CN">简体中文</a>
+        <a href="./en/" hreflang="en" lang="en">English</a>
+      </nav>`
+  }
 
-  const navigationLabel =
-    locale === 'x-default' ? 'Choose a language' : copy.languageLabel
-  const systemLabel =
-    locale === 'x-default'
-      ? '<span lang="en">Follow system</span> | <span lang="zh-CN">跟随系统</span>'
-      : escapeHtml(copy.systemLanguageLabel)
+  if (entryFallback) {
+    return `<nav aria-label="${escapeHtml(copy.languageLabel)}">
+        <a href="./" hreflang="x-default">${escapeHtml(copy.systemLanguageLabel)}</a>
+        <a href="./zh-CN/" hreflang="zh-CN" lang="zh-CN">简体中文</a>
+        <a href="./en/" hreflang="en" lang="en">English</a>
+      </nav>`
+  }
+
+  const rootHref = '../'
+  const zhCNHref = locale === 'zh-CN' ? './' : '../zh-CN/'
+  const enHref = locale === 'en' ? './' : '../en/'
+  const navigationLabel = copy.languageLabel
+  const systemLabel = escapeHtml(copy.systemLanguageLabel)
 
   return `<nav aria-label="${escapeHtml(navigationLabel)}">
         <a href="${rootHref}" hreflang="x-default">${systemLabel}</a>
@@ -389,8 +408,14 @@ function renderCatalogue(locale: SeoPageLocale): string {
           <h2>${catalogueGroupHeadingMarkup(group, locale)}</h2>
           <ul>${group.animals
             .map(
-              (animal) =>
-                `<li data-animal-id="${animal.id}">${catalogueNameMarkup(animal, locale)}</li>`,
+              (animal) => {
+                const name = catalogueNameMarkup(animal, locale)
+                const content =
+                  locale !== 'x-default' && pilotAnimalIds.has(animal.id)
+                    ? `<a href="./animals/${escapeHtml(animal.id)}/">${name}</a>`
+                    : name
+                return `<li data-animal-id="${animal.id}">${content}</li>`
+              },
             )
             .join('')}</ul>
         </section>`,
@@ -398,7 +423,7 @@ function renderCatalogue(locale: SeoPageLocale): string {
     .join('')
 }
 
-function renderShell(copy: SeoPageCopy): string {
+function renderShell(copy: SeoPageCopy, entryFallback = false): string {
   const heading =
     copy.locale === 'x-default'
       ? '<span lang="en">Prehistoric Animal Museum</span> | <span lang="zh-CN">史前动物博物馆</span>'
@@ -416,18 +441,283 @@ function renderShell(copy: SeoPageCopy): string {
       ? '<span lang="en">Museum collection</span> | <span lang="zh-CN">博物馆藏品</span>'
       : escapeHtml(copy.catalogueHeading)
 
+  if (copy.locale === 'x-default') {
+    return `<main class="seo-static-shell" data-seo-shell="${copy.locale}">
+    <div class="seo-static-shell__inner">
+      <h1>${heading}</h1>
+      <p>${introduction}</p>
+      ${languageLinks(copy.locale, copy, entryFallback)}
+    </div>
+</main>`
+  }
+
   return `<main class="seo-static-shell" data-seo-shell="${copy.locale}">
     <div class="seo-static-shell__inner">
       <h1>${heading}</h1>
       <p>${introduction}</p>
       <p>${privacy}</p>
-      ${languageLinks(copy.locale, copy)}
+      ${languageLinks(copy.locale, copy, entryFallback)}
       <h2>${catalogueHeading}</h2>
       <div class="seo-static-shell__catalogue" data-seo-catalogue>
         ${renderCatalogue(copy.locale)}
       </div>
     </div>
-  </main>`
+</main>`
+}
+
+const animalPageCopy = {
+  'zh-CN': {
+    backToMuseum: '返回博物馆',
+    classification: '分类',
+    diet: '食性',
+    dietLabels: {
+      carnivore: '食肉',
+      herbivore: '食草',
+      omnivore: '杂食',
+      unknown: '尚不确定',
+    },
+    discoveryRegions: '化石发现地区',
+    explore: '进入 3D 展馆观察',
+    facts: '一起认识它',
+    keepExploring: '继续参观',
+    period: '生活时期',
+    size: '体型',
+    sources: '科学资料来源',
+    uncertainty: '关于复原与不确定性',
+  },
+  en: {
+    backToMuseum: 'Back to the museum',
+    classification: 'Classification',
+    diet: 'Diet',
+    dietLabels: {
+      carnivore: 'Meat-eater',
+      herbivore: 'Plant-eater',
+      omnivore: 'Omnivore',
+      unknown: 'Not yet known',
+    },
+    discoveryRegions: 'Fossil discovery regions',
+    explore: 'Explore it in the 3D museum',
+    facts: 'Meet this animal',
+    keepExploring: 'Keep exploring',
+    period: 'When it lived',
+    size: 'Size',
+    sources: 'Scientific sources',
+    uncertainty: 'Reconstruction and uncertainty',
+  },
+} as const
+
+function formatAnimalSize(content: AnimalContent, locale: Locale): string {
+  const size = content.facts.size
+  const range =
+    size.minMeters === size.maxMeters
+      ? `${size.minMeters}`
+      : `${size.minMeters}–${size.maxMeters}`
+  const unit = locale === 'zh-CN' ? '米' : 'metres'
+  return `${range} ${unit}${size.kind === 'group-range' ? ` · ${size.note}` : ''}`
+}
+
+function animalCanonicalUrl(
+  locale: Locale,
+  animalId: string,
+  options: ResolvedSeoOptions,
+): string {
+  return `${options.siteOrigin}${options.museumPath}${locale}/animals/${animalId}/`
+}
+
+function renderAnimalDetailDocument(
+  definition: PublishedAnimalDefinition,
+  locale: Locale,
+  options: ResolvedSeoOptions,
+): string {
+  const content = definition.content[locale]
+  const copy = animalPageCopy[locale]
+  const canonical = animalCanonicalUrl(locale, definition.id, options)
+  const otherLocale = locale === 'zh-CN' ? 'en' : 'zh-CN'
+  const description = content.narration.sentences.join(' ')
+  const title =
+    locale === 'zh-CN'
+      ? `${content.name} | 史前动物博物馆`
+      : `${content.name} | Prehistoric Animal Museum`
+  const heroPath = `../../../animals/${definition.id}/hero.webp`
+  const heroPortraitPath = `../../../animals/${definition.id}/hero-portrait.webp`
+  const museumHref = `../../../${locale}/`
+  const exhibitHref = `${museumHref}?animal=${encodeURIComponent(definition.id)}`
+  const alternateHref = `../../../${otherLocale}/animals/${definition.id}/`
+  const socialImage = `${options.siteOrigin}${options.museumPath}animals/${definition.id}/social.webp`
+  const cookiePath =
+    options.museumPath === '/'
+      ? '/'
+      : options.museumPath.replace(/\/$/, '')
+  const localeCookie = `museum_locale=${otherLocale}; Max-Age=31536000; Path=${cookiePath}; SameSite=Lax; Secure`
+  const sources = content.sources
+    .map(
+      (source) => `<li><a href="${escapeHtml(source.url)}" rel="noreferrer">${escapeHtml(source.title)}</a></li>`,
+    )
+    .join('')
+  const uncertainty = content.editorial.uncertaintyNotes
+    .map((note) => `<li>${escapeHtml(note)}</li>`)
+    .join('')
+  const relatedAnimals = pilotAnimalDefinitions
+    .filter((animal) => animal.id !== definition.id)
+    .map((animal) => {
+      const relatedContent = animal.content[locale]
+      return `<a data-animal-id="${escapeHtml(animal.id)}" href="../${escapeHtml(animal.id)}/">
+        <img src="../../../animals/${escapeHtml(animal.id)}/thumbnail.webp" width="320" height="320" loading="lazy" decoding="async" alt="" />
+        <span><strong>${escapeHtml(relatedContent.name)}</strong><small>${escapeHtml(relatedContent.classificationLabel)}</small></span>
+      </a>`
+    })
+    .join('')
+  const museumName =
+    locale === 'zh-CN' ? '史前动物博物馆' : 'Prehistoric Animal Museum'
+  const structuredData = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: museumName,
+          item: canonicalUrl(locale, options),
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: content.name,
+          item: canonical,
+        },
+      ],
+    },
+    description,
+    image: socialImage,
+    inLanguage: locale,
+    name: content.name,
+    url: canonical,
+  }).replaceAll('<', '\\u003c')
+
+  return `<!doctype html>
+<html lang="${locale}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#d8e7c2" />
+    <meta name="description" content="${escapeHtml(description)}" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="${escapeHtml(canonical)}" />
+    <link rel="alternate" hreflang="${locale}" href="${escapeHtml(canonical)}" />
+    <link rel="alternate" hreflang="${otherLocale}" href="${escapeHtml(animalCanonicalUrl(otherLocale, definition.id, options))}" />
+    <link rel="icon" type="image/svg+xml" href="../../../favicon.svg" />
+    <link rel="preload" as="image" href="${heroPath}" type="image/webp" media="(orientation: landscape)" />
+    <link rel="preload" as="image" href="${heroPortraitPath}" type="image/webp" media="(orientation: portrait)" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="${escapeHtml(title)}" />
+    <meta property="og:description" content="${escapeHtml(description)}" />
+    <meta property="og:url" content="${escapeHtml(canonical)}" />
+    <meta property="og:image" content="${escapeHtml(socialImage)}" />
+    <meta property="og:image:type" content="image/webp" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${escapeHtml(content.name)}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">${structuredData}</script>
+    <title>${escapeHtml(title)}</title>
+    <style>
+      :root { color-scheme: light; font-family: ${locale === 'zh-CN' ? '"Noto Sans SC", "PingFang SC",' : '"Nunito",'} system-ui, sans-serif; color: #20382f; background: #d8e7c2; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: radial-gradient(circle at 82% 8%, rgb(255 255 255 / .72), transparent 32rem), linear-gradient(155deg, #eef4df, #d8e7c2 55%, #b9d7d2); }
+      a { color: inherit; }
+      .animal-page { width: min(76rem, 100%); margin: 0 auto; padding: clamp(1rem, 3vw, 2.5rem); }
+      .animal-page__nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: clamp(1.5rem, 4vw, 3.5rem); }
+      .animal-page__nav a { min-height: 2.75rem; display: inline-flex; align-items: center; font-weight: 800; text-decoration-thickness: .1em; text-underline-offset: .22em; }
+      .animal-page__language { padding: .15rem .8rem; border: 1px solid rgb(32 56 47 / .35); border-radius: 999px; text-decoration: none; }
+      .animal-hero { display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(18rem, .98fr); align-items: center; gap: clamp(1.5rem, 5vw, 5rem); }
+      .animal-hero__eyebrow { margin: 0 0 .75rem; color: #50756a; font-size: .82rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+      h1 { margin: 0; max-width: 11ch; font-family: "Fredoka", ${locale === 'zh-CN' ? '"Noto Sans SC",' : ''} system-ui, sans-serif; font-size: clamp(3.3rem, 10vw, 7.4rem); line-height: .88; letter-spacing: -.045em; text-wrap: balance; }
+      .animal-hero__lead { max-width: 42rem; margin: 1.35rem 0; font-size: clamp(1.08rem, 2vw, 1.35rem); line-height: 1.7; }
+      .animal-hero__question { max-width: 38rem; margin: 0; padding-left: 1rem; border-left: .3rem solid #d6724d; font-weight: 750; line-height: 1.6; }
+      .animal-hero__media { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border: .7rem solid rgb(255 255 255 / .6); border-radius: clamp(1.4rem, 4vw, 3rem); box-shadow: 0 1.8rem 4rem rgb(24 67 59 / .18); transform: rotate(1.2deg); }
+      .animal-hero__media img { width: 100%; height: 100%; display: block; object-fit: cover; }
+      .animal-content { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(17rem, .85fr); gap: clamp(1.5rem, 4vw, 3.5rem); margin-top: clamp(3rem, 8vw, 7rem); }
+      .animal-card { padding: clamp(1.4rem, 3.5vw, 2.6rem); border: 1px solid rgb(32 56 47 / .12); border-radius: 2rem; background: rgb(255 255 255 / .62); box-shadow: 0 1rem 3rem rgb(32 56 47 / .08); }
+      h2 { margin: 0 0 1.4rem; font-size: clamp(1.45rem, 3vw, 2.15rem); line-height: 1.1; }
+      .animal-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 0; }
+      .animal-facts div { padding: 1rem; border-radius: 1.2rem; background: rgb(216 231 194 / .58); }
+      .animal-facts dt { color: #5e796f; font-size: .8rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+      .animal-facts dd { margin: .35rem 0 0; font-weight: 800; line-height: 1.45; }
+      .animal-card p, .animal-card li { line-height: 1.7; }
+      .animal-card ul { padding-inline-start: 1.25rem; }
+      .animal-card--notes > * + * { margin-top: 1.8rem; }
+      .animal-card details { padding-top: 1rem; border-top: 1px solid rgb(32 56 47 / .16); }
+      .animal-card summary { cursor: pointer; font-weight: 850; }
+      .animal-cta { display: inline-flex; min-height: 3.5rem; align-items: center; justify-content: center; margin-top: 1.7rem; padding: .75rem 1.35rem; border-radius: 999px; color: #fff; background: #d6724d; box-shadow: 0 .8rem 1.7rem rgb(152 72 45 / .25); font-weight: 900; text-decoration: none; }
+      .animal-related { margin-top: clamp(2rem, 5vw, 4rem); }
+      .animal-related__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+      .animal-related a { display: flex; align-items: center; gap: 1rem; min-height: 6.5rem; padding: .8rem; border: 1px solid rgb(32 56 47 / .14); border-radius: 1.35rem; background: rgb(255 255 255 / .5); text-decoration: none; transition: transform 160ms ease, background 160ms ease; }
+      .animal-related a:hover { background: rgb(255 255 255 / .78); transform: translateY(-2px); }
+      .animal-related img { width: 5rem; height: 5rem; flex: none; border-radius: 1rem; object-fit: cover; }
+      .animal-related span { display: grid; gap: .25rem; }
+      .animal-related strong { font-size: 1.05rem; }
+      .animal-related small { color: #5e796f; line-height: 1.35; }
+      .animal-footer { padding: 3rem 0 1rem; color: #4f6c63; text-align: center; }
+      @media (max-width: 760px) { .animal-hero, .animal-content { grid-template-columns: 1fr; } .animal-hero__copy { order: 1; } .animal-hero__media { order: 2; aspect-ratio: 390 / 560; transform: none; } .animal-facts, .animal-related__grid { grid-template-columns: 1fr; } }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+    </style>
+  </head>
+  <body>
+    <main class="animal-page" data-animal-detail="${escapeHtml(definition.id)}">
+      <nav class="animal-page__nav" aria-label="${escapeHtml(copy.backToMuseum)}">
+        <a href="${museumHref}">← ${escapeHtml(copy.backToMuseum)}</a>
+        <a class="animal-page__language" data-locale-choice="${otherLocale}" href="${alternateHref}" hreflang="${otherLocale}">${otherLocale === 'zh-CN' ? '简体中文' : 'English'}</a>
+      </nav>
+      <article>
+        <header class="animal-hero">
+          <div class="animal-hero__copy">
+            <p class="animal-hero__eyebrow">${escapeHtml(content.classificationLabel)}</p>
+            <h1>${escapeHtml(content.name)}</h1>
+            <p class="animal-hero__lead">${escapeHtml(content.narration.sentences[0])}</p>
+            <p class="animal-hero__question">${escapeHtml(content.visibleFeature)}</p>
+            <a class="animal-cta" data-open-exhibit href="${exhibitHref}">${escapeHtml(copy.explore)} →</a>
+          </div>
+          <picture class="animal-hero__media">
+            <source media="(orientation: portrait)" srcset="${heroPortraitPath}" />
+            <img src="${heroPath}" width="1200" height="675" fetchpriority="high" decoding="async" alt="${escapeHtml(content.name)}" />
+          </picture>
+        </header>
+        <div class="animal-content">
+          <section class="animal-card" aria-labelledby="facts-heading">
+            <h2 id="facts-heading">${escapeHtml(copy.facts)}</h2>
+            <dl class="animal-facts">
+              <div><dt>${escapeHtml(copy.period)}</dt><dd>${escapeHtml(content.facts.period)}</dd></div>
+              <div><dt>${escapeHtml(copy.discoveryRegions)}</dt><dd>${escapeHtml(content.facts.discoveryRegions.join(locale === 'zh-CN' ? '、' : ', '))}</dd></div>
+              <div><dt>${escapeHtml(copy.size)}</dt><dd>${escapeHtml(formatAnimalSize(content, locale))}</dd></div>
+              <div><dt>${escapeHtml(copy.diet)}</dt><dd>${escapeHtml(copy.dietLabels[content.facts.diet])}</dd></div>
+              <div><dt>${escapeHtml(copy.classification)}</dt><dd>${escapeHtml(content.classificationLabel)}</dd></div>
+            </dl>
+            <p>${escapeHtml(content.parentClassificationNote)}</p>
+          </section>
+          <aside class="animal-card animal-card--notes">
+            <section>
+              <h2>${escapeHtml(copy.sources)}</h2>
+              <ul>${sources}</ul>
+            </section>
+            <details>
+              <summary>${escapeHtml(copy.uncertainty)}</summary>
+              <ul>${uncertainty}</ul>
+            </details>
+          </aside>
+        </div>
+        <section class="animal-related" data-related-animals aria-labelledby="related-heading">
+          <h2 id="related-heading">${escapeHtml(copy.keepExploring)}</h2>
+          <div class="animal-related__grid">${relatedAnimals}</div>
+        </section>
+      </article>
+      <footer class="animal-footer">Prehistoric Animal Museum · 史前动物博物馆</footer>
+    </main>
+    <script data-locale-cookie>document.querySelector('[data-locale-choice]')?.addEventListener('click',function(){document.cookie=${JSON.stringify(localeCookie)}})</script>
+  </body>
+</html>
+`
 }
 
 function removeExistingSeoHead(html: string): string {
@@ -455,10 +745,31 @@ function rebaseDocumentAssets(html: string): string {
   )
 }
 
+function removeApplicationAssets(html: string): string {
+  return html
+    .replace(
+      /<script\b(?=[^>]*\btype=["']module["'])(?=[^>]*\bsrc=["'][^"']+["'])[^>]*><\/script>\s*/gi,
+      '',
+    )
+    .replace(
+      /<link\b(?=[^>]*\brel=["'](?:modulepreload|stylesheet)["'])[^>]*>\s*/gi,
+      '',
+    )
+}
+
+function restoreEntryDocumentAssets(html: string): string {
+  return html.replace(
+    /<(?:script|link|img|source|video)\b[^>]*>/gi,
+    (assetTag) =>
+      assetTag.replace(/\b(src|href|poster)=(['"])\.\.\//g, '$1=$2./'),
+  )
+}
+
 export function renderSeoDocument(
   builtAppHtml: string,
   locale: SeoPageLocale,
   rawOptions: MultilingualSeoOptions = {},
+  entryFallback = false,
 ): string {
   const options = resolveOptions(rawOptions)
   const copy = pageCopy[locale]
@@ -481,20 +792,35 @@ export function renderSeoDocument(
   html = html.replace(/<\/head>/i, `    ${renderHead(copy, options)}\n  </head>`)
   html = html.replace(
     /<div\s+id=["']root["'][^>]*>[\s\S]*?<\/div>/i,
-    `<div id="root">${renderShell(copy)}</div>`,
+    `<div id="root"><!--museum-root-start-->${renderShell(copy, entryFallback)}<!--museum-root-end--></div>`,
   )
 
-  return locale === 'x-default' ? html : rebaseDocumentAssets(html)
+  // The locale-neutral entry is an intentional, stable language chooser. It
+  // never starts the application, so visitors do not see an SEO shell replaced
+  // by a visually unrelated interface while JavaScript downloads.
+  if (entryFallback) {
+    return restoreEntryDocumentAssets(rebaseDocumentAssets(html))
+  }
+  return locale === 'x-default'
+    ? removeApplicationAssets(html)
+    : rebaseDocumentAssets(html)
 }
 
 function renderSitemap(options: ResolvedSeoOptions): string {
-  const urls: readonly SeoPageLocale[] = ['x-default', 'zh-CN', 'en']
+  const urls = [
+    canonicalUrl('zh-CN', options),
+    canonicalUrl('en', options),
+    ...[...pilotAnimalIds].flatMap((animalId) => [
+      animalCanonicalUrl('zh-CN', animalId, options),
+      animalCanonicalUrl('en', animalId, options),
+    ]),
+  ]
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls
-  .map(
-    (locale) => `  <url>
-    <loc>${escapeHtml(canonicalUrl(locale, options))}</loc>
+    .map(
+    (url) => `  <url>
+    <loc>${escapeHtml(url)}</loc>
   </url>`,
   )
   .join('\n')}
@@ -630,9 +956,40 @@ export function createMultilingualSeoArtifacts(
 ): ReadonlyMap<string, string> {
   const options = resolveOptions(rawOptions)
   return new Map([
-    ['index.html', renderSeoDocument(builtAppHtml, 'x-default', options)],
+    [
+      'index.html',
+      renderSeoDocument(builtAppHtml, 'zh-CN', options, true),
+    ],
     ['zh-CN/index.html', renderSeoDocument(builtAppHtml, 'zh-CN', options)],
     ['en/index.html', renderSeoDocument(builtAppHtml, 'en', options)],
+    [
+      'zh-CN/animals/stegosaurus/index.html',
+      renderAnimalDetailDocument(stegosaurusDefinition, 'zh-CN', options),
+    ],
+    [
+      'en/animals/stegosaurus/index.html',
+      renderAnimalDetailDocument(stegosaurusDefinition, 'en', options),
+    ],
+    [
+      'zh-CN/animals/tyrannosaurus-rex/index.html',
+      renderAnimalDetailDocument(
+        tyrannosaurusRexDefinition,
+        'zh-CN',
+        options,
+      ),
+    ],
+    [
+      'en/animals/tyrannosaurus-rex/index.html',
+      renderAnimalDetailDocument(tyrannosaurusRexDefinition, 'en', options),
+    ],
+    [
+      'zh-CN/animals/mosasaurus/index.html',
+      renderAnimalDetailDocument(mosasaurusDefinition, 'zh-CN', options),
+    ],
+    [
+      'en/animals/mosasaurus/index.html',
+      renderAnimalDetailDocument(mosasaurusDefinition, 'en', options),
+    ],
     [
       'robots.txt',
       `User-agent: *\nAllow: /\nSitemap: ${options.siteOrigin}/sitemap.xml\n`,
@@ -648,10 +1005,17 @@ export function createMultilingualSeoArtifacts(
 export function multilingualSeoPlugin(
   options: MultilingualSeoOptions = {},
 ): Plugin {
+  let isSsrBuild = false
   return {
     name: 'multilingual-static-seo',
     apply: 'build',
+    configResolved(config) {
+      isSsrBuild = Boolean(config.build.ssr)
+    },
     async writeBundle(outputOptions) {
+      if (isSsrBuild) {
+        return
+      }
       const outputDirectory = resolve(outputOptions.dir ?? 'dist')
       const indexPath = resolve(outputDirectory, 'index.html')
       const builtAppHtml = await readFile(indexPath, 'utf8')

@@ -108,7 +108,7 @@ describe('runtime locale metadata', () => {
     ).toBe('http://localhost:3000/museum/en/')
   })
 
-  it('keeps the system-resolving root canonical and social card on x-default', () => {
+  it('keeps the fail-open root canonical on the default Chinese page', () => {
     window.history.replaceState(
       {},
       '',
@@ -126,15 +126,15 @@ describe('runtime locale metadata', () => {
 
     expect(
       document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href,
-    ).toBe('https://leon-made-this.work/museum/')
+    ).toBe('https://leon-made-this.work/museum/zh-CN/')
     expect(
       document.querySelector<HTMLMetaElement>('meta[property="og:url"]')
         ?.content,
-    ).toBe('https://leon-made-this.work/museum/')
+    ).toBe('https://leon-made-this.work/museum/zh-CN/')
     expect(
       document.querySelector<HTMLMetaElement>('meta[property="og:image"]')
         ?.content,
-    ).toBe('https://leon-made-this.work/museum/social/museum.png')
+    ).toBe('https://leon-made-this.work/museum/social/museum.zh-CN.png')
     expect(
       document.querySelector<HTMLMetaElement>('meta[property="og:locale"]')
         ?.content,
