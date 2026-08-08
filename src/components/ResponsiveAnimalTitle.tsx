@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react'
 
 interface ResponsiveAnimalTitleProps {
+  readonly as?: 'h1' | 'h2'
   readonly children: string
   readonly locale: 'zh-CN' | 'en'
 }
@@ -8,6 +9,7 @@ interface ResponsiveAnimalTitleProps {
 const TITLE_FIT_SAFETY_RATIO = 0.985
 
 export function ResponsiveAnimalTitle({
+  as: Heading = 'h2',
   children,
   locale,
 }: ResponsiveAnimalTitleProps) {
@@ -99,8 +101,8 @@ export function ResponsiveAnimalTitle({
   }, [children, locale])
 
   return (
-    <h2 className="animal-title" ref={titleRef}>
+    <Heading className="animal-title" ref={titleRef}>
       {children}
-    </h2>
+    </Heading>
   )
 }

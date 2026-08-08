@@ -608,8 +608,8 @@ function renderAnimalDetailDocument(
     <link rel="alternate" hreflang="${locale}" href="${escapeHtml(canonical)}" />
     <link rel="alternate" hreflang="${otherLocale}" href="${escapeHtml(animalCanonicalUrl(otherLocale, definition.id, options))}" />
     <link rel="icon" type="image/svg+xml" href="../../../favicon.svg" />
-    <link rel="preload" as="image" href="${heroPath}" type="image/webp" media="(orientation: landscape)" />
-    <link rel="preload" as="image" href="${heroPortraitPath}" type="image/webp" media="(orientation: portrait)" />
+    <link data-animal-detail-fallback rel="preload" as="image" href="${heroPath}" type="image/webp" media="(orientation: landscape)" />
+    <link data-animal-detail-fallback rel="preload" as="image" href="${heroPortraitPath}" type="image/webp" media="(orientation: portrait)" />
     <meta property="og:type" content="article" />
     <meta property="og:title" content="${escapeHtml(title)}" />
     <meta property="og:description" content="${escapeHtml(description)}" />
@@ -620,9 +620,9 @@ function renderAnimalDetailDocument(
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${escapeHtml(content.name)}" />
     <meta name="twitter:card" content="summary_large_image" />
-    <script type="application/ld+json">${structuredData}</script>
+    <script id="animal-structured-data" type="application/ld+json">${structuredData}</script>
     <title>${escapeHtml(title)}</title>
-    <style>
+    <style id="animal-detail-fallback-style">
       :root { color-scheme: light; font-family: ${locale === 'zh-CN' ? '"Noto Sans SC", "PingFang SC",' : '"Nunito",'} system-ui, sans-serif; color: #20382f; background: #d8e7c2; }
       * { box-sizing: border-box; }
       body { margin: 0; background: radial-gradient(circle at 82% 8%, rgb(255 255 255 / .72), transparent 32rem), linear-gradient(155deg, #eef4df, #d8e7c2 55%, #b9d7d2); }
@@ -720,6 +720,47 @@ function renderAnimalDetailDocument(
 `
 }
 
+function renderHydratableAnimalDetailDocument(
+  builtAppHtml: string,
+  definition: PublishedAnimalDefinition,
+  locale: Locale,
+  options: ResolvedSeoOptions,
+): string {
+  const fallbackDocument = renderAnimalDetailDocument(
+    definition,
+    locale,
+    options,
+  )
+  const headAssets = (
+    builtAppHtml.match(
+      /<link\b(?=[^>]*\brel=["'](?:modulepreload|stylesheet)["'])[^>]*>/gi,
+    ) ?? []
+  ).join('\n    ')
+  const applicationScripts = (
+    builtAppHtml.match(
+      /<script\b(?=[^>]*\btype=["']module["'])(?=[^>]*\bsrc=["'][^"']+["'])[^>]*><\/script>/gi,
+    ) ?? []
+  ).join('\n    ')
+  if (!headAssets || !applicationScripts) {
+    throw new Error(
+      'Built application HTML must include its stylesheet and module script.',
+    )
+  }
+
+  const rebasedHeadAssets = rebaseDocumentAssets(headAssets, '../../../')
+  const rebasedScripts = rebaseDocumentAssets(applicationScripts, '../../../')
+  return fallbackDocument
+    .replace('</head>', `    ${rebasedHeadAssets}\n  </head>`)
+    .replace(
+      '<body>',
+      `<body>\n    <div id="root"><!--museum-root-start-->`,
+    )
+    .replace(
+      '</body>',
+      `<!--museum-root-end--></div>\n    ${rebasedScripts}\n  </body>`,
+    )
+}
+
 function removeExistingSeoHead(html: string): string {
   return html
     .replace(/<title\b[^>]*>[\s\S]*?<\/title>\s*/gi, '')
@@ -737,11 +778,14 @@ function removeExistingSeoHead(html: string): string {
     )
 }
 
-function rebaseDocumentAssets(html: string): string {
+function rebaseDocumentAssets(html: string, assetBase = '../'): string {
   return html.replace(
     /<(?:script|link|img|source|video)\b[^>]*>/gi,
     (assetTag) =>
-      assetTag.replace(/\b(src|href|poster)=(['"])\.\//g, '$1=$2../'),
+      assetTag.replace(
+        /\b(src|href|poster)=(['"])\.\//g,
+        `$1=$2${assetBase}`,
+      ),
   )
 }
 
@@ -964,15 +1008,26 @@ export function createMultilingualSeoArtifacts(
     ['en/index.html', renderSeoDocument(builtAppHtml, 'en', options)],
     [
       'zh-CN/animals/stegosaurus/index.html',
-      renderAnimalDetailDocument(stegosaurusDefinition, 'zh-CN', options),
+      renderHydratableAnimalDetailDocument(
+        builtAppHtml,
+        stegosaurusDefinition,
+        'zh-CN',
+        options,
+      ),
     ],
     [
       'en/animals/stegosaurus/index.html',
-      renderAnimalDetailDocument(stegosaurusDefinition, 'en', options),
+      renderHydratableAnimalDetailDocument(
+        builtAppHtml,
+        stegosaurusDefinition,
+        'en',
+        options,
+      ),
     ],
     [
       'zh-CN/animals/tyrannosaurus-rex/index.html',
-      renderAnimalDetailDocument(
+      renderHydratableAnimalDetailDocument(
+        builtAppHtml,
         tyrannosaurusRexDefinition,
         'zh-CN',
         options,
@@ -980,15 +1035,30 @@ export function createMultilingualSeoArtifacts(
     ],
     [
       'en/animals/tyrannosaurus-rex/index.html',
-      renderAnimalDetailDocument(tyrannosaurusRexDefinition, 'en', options),
+      renderHydratableAnimalDetailDocument(
+        builtAppHtml,
+        tyrannosaurusRexDefinition,
+        'en',
+        options,
+      ),
     ],
     [
       'zh-CN/animals/mosasaurus/index.html',
-      renderAnimalDetailDocument(mosasaurusDefinition, 'zh-CN', options),
+      renderHydratableAnimalDetailDocument(
+        builtAppHtml,
+        mosasaurusDefinition,
+        'zh-CN',
+        options,
+      ),
     ],
     [
       'en/animals/mosasaurus/index.html',
-      renderAnimalDetailDocument(mosasaurusDefinition, 'en', options),
+      renderHydratableAnimalDetailDocument(
+        builtAppHtml,
+        mosasaurusDefinition,
+        'en',
+        options,
+      ),
     ],
     [
       'robots.txt',

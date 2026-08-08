@@ -250,6 +250,48 @@ describe('App', () => {
     }
   })
 
+  it('keeps an animal detail URL clean after the initial model commits', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/museum/en/animals/mosasaurus/',
+    )
+
+    render(
+      <App
+        initialState={{
+          animalId: 'mosasaurus',
+          locale: 'en',
+          pageKind: 'animal-detail',
+          preference: 'en',
+        }}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(document.getElementById('museum-experience')).toHaveAttribute(
+        'data-ready-animal-id',
+        'mosasaurus',
+      )
+    })
+
+    expect(viewerMock.stageModel).toHaveBeenCalledOnce()
+    expect(viewerMock.stageModel.mock.calls[0]?.[0]).toMatchObject({
+      id: 'mosasaurus',
+    })
+    expect(viewerMock.commitModel).toHaveBeenCalledWith(
+      expect.objectContaining({ animalId: 'mosasaurus' }),
+    )
+    expect(window.location.pathname).toBe(
+      '/museum/en/animals/mosasaurus/',
+    )
+    expect(window.location.search).toBe('')
+    expect(document.getElementById('museum-experience')).toHaveAttribute(
+      'data-page-kind',
+      'animal-detail',
+    )
+  })
+
   it('switches to English without reloading the model and remembers a shareable locale path', async () => {
     const user = userEvent.setup()
     window.history.replaceState({}, '', '/museum/?animal=stegosaurus')

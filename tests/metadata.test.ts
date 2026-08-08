@@ -145,4 +145,139 @@ describe('runtime locale metadata', () => {
       )?.content,
     ).toBe('en_GB')
   })
+
+  it('keeps an animal deep link canonical through hydration and language changes', () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/museum/en/animals/mosasaurus/',
+    )
+
+    updateLocalizedMetadata({
+      locale: 'en',
+      documentTitle: 'Mosasaurus | Prehistoric Animal Museum',
+      museumTitle: 'Prehistoric Animal Museum',
+      creatorBrand: 'Leon Made This',
+      description: 'Museum description',
+      socialImageAlt: 'Museum card',
+      animalDetail: {
+        description: 'Mosasaurus lived in Late Cretaceous seas.',
+        id: 'mosasaurus',
+        name: 'Mosasaurus',
+      },
+    })
+
+    expect(document.title).toBe(
+      'Mosasaurus | Prehistoric Animal Museum',
+    )
+    expect(
+      document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href,
+    ).toBe(
+      'https://leon-made-this.work/museum/en/animals/mosasaurus/',
+    )
+    expect(
+      document.querySelector<HTMLLinkElement>(
+        'link[rel="alternate"][hreflang="zh-CN"]',
+      )?.href,
+    ).toBe(
+      'https://leon-made-this.work/museum/zh-CN/animals/mosasaurus/',
+    )
+    expect(
+      document.querySelector<HTMLMetaElement>('meta[property="og:image"]')
+        ?.content,
+    ).toBe(
+      'https://leon-made-this.work/museum/animals/mosasaurus/social.webp',
+    )
+    expect(
+      document.querySelector<HTMLMetaElement>('meta[property="og:type"]')
+        ?.content,
+    ).toBe('article')
+    expect(
+      document.querySelector<HTMLScriptElement>('#animal-structured-data')
+        ?.textContent,
+    ).toContain('Mosasaurus')
+    expect(
+      document.querySelector(
+        'link[rel="alternate"][hreflang="x-default"]',
+      ),
+    ).toBeNull()
+
+    window.history.replaceState(
+      {},
+      '',
+      '/museum/zh-CN/animals/mosasaurus/',
+    )
+    updateLocalizedMetadata({
+      locale: 'zh-CN',
+      documentTitle: '沧龙 | 史前动物博物馆',
+      museumTitle: '史前动物博物馆',
+      creatorBrand: 'Leon做了个',
+      description: '博物馆说明',
+      socialImageAlt: '博物馆分享图',
+      animalDetail: {
+        description: '沧龙生活在白垩纪晚期的海洋里。',
+        id: 'mosasaurus',
+        name: '沧龙',
+      },
+    })
+
+    expect(
+      document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href,
+    ).toBe(
+      'https://leon-made-this.work/museum/zh-CN/animals/mosasaurus/',
+    )
+    expect(
+      document.querySelector<HTMLMetaElement>('meta[property="og:title"]')
+        ?.content,
+    ).toBe('沧龙 | 史前动物博物馆')
+    expect(
+      document.querySelector<HTMLScriptElement>('#animal-structured-data')
+        ?.textContent,
+    ).toContain('沧龙')
+  })
+
+  it('restores museum metadata when leaving an animal deep link', () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/museum/en/animals/mosasaurus/',
+    )
+    updateLocalizedMetadata({
+      locale: 'en',
+      documentTitle: 'Mosasaurus | Prehistoric Animal Museum',
+      museumTitle: 'Prehistoric Animal Museum',
+      creatorBrand: 'Leon Made This',
+      description: 'Museum description',
+      socialImageAlt: 'Museum card',
+      animalDetail: {
+        description: 'Mosasaurus description',
+        id: 'mosasaurus',
+        name: 'Mosasaurus',
+      },
+    })
+
+    window.history.replaceState({}, '', '/museum/en/?animal=mosasaurus')
+    updateLocalizedMetadata({
+      locale: 'en',
+      documentTitle: 'Prehistoric Animal Museum | A 3D Family Adventure',
+      museumTitle: 'Prehistoric Animal Museum',
+      creatorBrand: 'Leon Made This',
+      description: 'Explore 18 prehistoric animals.',
+      socialImageAlt: 'Museum card',
+    })
+
+    expect(
+      document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href,
+    ).toBe('https://leon-made-this.work/museum/en/')
+    expect(
+      document.querySelector<HTMLMetaElement>('meta[property="og:type"]')
+        ?.content,
+    ).toBe('website')
+    expect(document.querySelector('#animal-structured-data')).toBeNull()
+    expect(
+      document.querySelector<HTMLLinkElement>(
+        'link[rel="alternate"][hreflang="x-default"]',
+      )?.href,
+    ).toBe('https://leon-made-this.work/museum/')
+  })
 })

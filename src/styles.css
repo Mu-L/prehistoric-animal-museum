@@ -3434,6 +3434,7 @@ a:focus-visible {
   color: color-mix(in srgb, var(--animal-accent) 78%, #284b3c);
   border-color: color-mix(in srgb, var(--animal-accent) 28%, transparent);
   background: color-mix(in srgb, var(--animal-accent-soft) 32%, white);
+  text-decoration: none;
 }
 
 .parent-info-button:hover,

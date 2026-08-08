@@ -12,6 +12,7 @@ describe('museum server rendering', () => {
         initialState={{
           animalId: 'stegosaurus',
           locale: 'en',
+          pageKind: 'museum',
           preference: 'en',
         }}
       />,
@@ -31,6 +32,7 @@ describe('museum server rendering', () => {
     const html = renderMuseumApp({
       animalId: 'stegosaurus',
       locale: 'zh-CN',
+      pageKind: 'museum',
       preference: 'zh-CN',
     })
 
@@ -45,11 +47,34 @@ describe('museum server rendering', () => {
     const html = renderMuseumApp({
       animalId: 'stegosaurus',
       locale: 'zh-CN',
+      pageKind: 'museum',
       preference: 'zh-CN',
       rootFallback: true,
     })
 
     expect(html).toContain('href="./zh-CN/animals/mosasaurus/"')
     expect(html).not.toContain('href="./animals/mosasaurus/"')
+  })
+
+  it('renders an animal deep link as the matching museum exhibit', () => {
+    const html = renderMuseumApp({
+      animalId: 'mosasaurus',
+      locale: 'en',
+      pageKind: 'animal-detail',
+      preference: 'en',
+    })
+
+    expect(html).toContain('id="museum-experience"')
+    expect(html).toContain('data-locale="en"')
+    expect(html).toContain('data-page-kind="animal-detail"')
+    expect(html).toContain('data-requested-animal-id="mosasaurus"')
+    expect(html).toContain('Prehistoric Animal Museum')
+    expect(html).toContain('<h1 class="animal-title">Mosasaurus</h1>')
+    expect(html).toContain(
+      'data-museum-return="" href="../../../en/?animal=mosasaurus"',
+    )
+    expect(html).toContain('href="../stegosaurus/"')
+    expect(html).toContain('href="../tyrannosaurus-rex/"')
+    expect(html).not.toContain('seo-static-shell')
   })
 })

@@ -5,6 +5,7 @@ import {
   appBootstrapElementId,
   type InitialAppState,
 } from '../src/app-bootstrap'
+import { pilotAnimalDetailIds } from '../src/content/pilot-animal-details'
 
 export const museumRootStartMarker = '<!--museum-root-start-->'
 export const museumRootEndMarker = '<!--museum-root-end-->'
@@ -20,7 +21,7 @@ function serialiseBootstrap(state: InitialAppState): string {
 
 function rebaseApplicationAssets(
   markup: string,
-  assetBase: './assets/' | '../assets/',
+  assetBase: './assets/' | '../assets/' | '../../../assets/',
 ): string {
   return markup.replace(
     /\b(src|srcSet|href|poster)=(["'])\/assets\//gi,
@@ -37,6 +38,14 @@ export function renderPrerenderedMuseumDocument(
     /<style\b[^>]*id=["']seo-static-shell-style["'][^>]*>[\s\S]*?<\/style>\s*/i,
     '',
   )
+    .replace(
+      /<style\b[^>]*id=["']animal-detail-fallback-style["'][^>]*>[\s\S]*?<\/style>\s*/i,
+      '',
+    )
+    .replace(
+      /<link\b[^>]*data-animal-detail-fallback[^>]*>\s*/gi,
+      '',
+    )
   const start = documentSource.indexOf(museumRootStartMarker)
   const end = documentSource.indexOf(museumRootEndMarker)
   if (start === -1 || end === -1 || end < start) {
@@ -48,7 +57,11 @@ export function renderPrerenderedMuseumDocument(
 
   const withMarkup = `${documentSource.slice(0, start + museumRootStartMarker.length)}${rebaseApplicationAssets(
     applicationMarkup,
-    state.rootFallback ? './assets/' : '../assets/',
+    state.pageKind === 'animal-detail'
+      ? '../../../assets/'
+      : state.rootFallback
+        ? './assets/'
+        : '../assets/',
   )}${documentSource.slice(end)}`
   const bootstrap = `<script id="${appBootstrapElementId}" type="application/json">${serialiseBootstrap(state)}</script>`
   return withMarkup.replace('</head>', `    ${bootstrap}\n  </head>`)
@@ -58,26 +71,53 @@ export async function writeLocalizedMuseumPrerenders(
   outputDirectory: string,
   render: (state: InitialAppState) => string | Promise<string>,
 ): Promise<void> {
-  const prerenders = [
-    { documentPath: 'index.html', locale: 'zh-CN', rootFallback: true },
+  const museumPrerenders = [
     {
+      animalId: 'stegosaurus',
+      documentPath: 'index.html',
+      locale: 'zh-CN',
+      pageKind: 'museum',
+      rootFallback: true,
+    },
+    {
+      animalId: 'stegosaurus',
       documentPath: 'zh-CN/index.html',
       locale: 'zh-CN',
+      pageKind: 'museum',
       rootFallback: false,
     },
-    { documentPath: 'en/index.html', locale: 'en', rootFallback: false },
+    {
+      animalId: 'stegosaurus',
+      documentPath: 'en/index.html',
+      locale: 'en',
+      pageKind: 'museum',
+      rootFallback: false,
+    },
   ] as const
+  const detailPrerenders = pilotAnimalDetailIds.flatMap((animalId) =>
+    (['zh-CN', 'en'] as const).map((locale) => ({
+      animalId,
+      documentPath: `${locale}/animals/${animalId}/index.html`,
+      locale,
+      pageKind: 'animal-detail' as const,
+      rootFallback: false,
+    })),
+  )
+  const prerenders = [...museumPrerenders, ...detailPrerenders]
 
   for (const {
+    animalId,
     documentPath: relativePath,
     locale,
+    pageKind,
     rootFallback,
   } of prerenders) {
     const documentPath = resolve(outputDirectory, relativePath)
     const source = await readFile(documentPath, 'utf8')
     const state: InitialAppState = {
-      animalId: 'stegosaurus',
+      animalId,
       locale,
+      pageKind,
       preference: locale,
       ...(rootFallback ? { rootFallback: true } : {}),
     }

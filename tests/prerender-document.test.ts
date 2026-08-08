@@ -24,6 +24,7 @@ describe('localized museum prerender document', () => {
       {
         animalId: 'stegosaurus',
         locale: 'en',
+        pageKind: 'museum',
         preference: 'en',
       },
       '<main id="museum-experience" data-locale="en"><img src="/assets/stegosaurus.webp" alt="" />Stegosaurus</main>',
@@ -38,7 +39,7 @@ describe('localized museum prerender document', () => {
     expect(
       document.querySelector('#museum-bootstrap')?.textContent,
     ).toBe(
-      '{"animalId":"stegosaurus","locale":"en","preference":"en"}',
+      '{"animalId":"stegosaurus","locale":"en","pageKind":"museum","preference":"en"}',
     )
     expect(
       document.querySelector('script[type="module"]')?.getAttribute('src'),
@@ -55,6 +56,7 @@ describe('localized museum prerender document', () => {
       {
         animalId: 'stegosaurus',
         locale: 'zh-CN',
+        pageKind: 'museum',
         preference: 'zh-CN',
         rootFallback: true,
       },
@@ -70,15 +72,75 @@ describe('localized museum prerender document', () => {
     ).toBe('./assets/stegosaurus.webp')
   })
 
+  it('keeps nested animal-detail application assets relative to the deep link', () => {
+    const source = `<!doctype html><html lang="en"><head><link rel="stylesheet" href="../../../assets/app.css" /></head><body><div id="root"><!--museum-root-start--><main class="animal-page">Temporary</main><!--museum-root-end--></div><script type="module" src="../../../assets/app.js"></script></body></html>`
+    const result = renderPrerenderedMuseumDocument(
+      source,
+      {
+        animalId: 'mosasaurus',
+        locale: 'en',
+        pageKind: 'animal-detail',
+        preference: 'en',
+      },
+      '<main id="museum-experience" data-page-kind="animal-detail"><img src="/assets/mosasaurus.webp" alt="" />Mosasaurus</main>',
+    )
+    const document = new DOMParser().parseFromString(result, 'text/html')
+
+    expect(
+      document.querySelector('#museum-bootstrap')?.textContent,
+    ).toBe(
+      '{"animalId":"mosasaurus","locale":"en","pageKind":"animal-detail","preference":"en"}',
+    )
+    expect(
+      document.querySelector('script[type="module"]')?.getAttribute('src'),
+    ).toBe('../../../assets/app.js')
+    expect(
+      document.querySelector('link[rel="stylesheet"]')?.getAttribute('href'),
+    ).toBe('../../../assets/app.css')
+    expect(
+      document.querySelector('#museum-experience img')?.getAttribute('src'),
+    ).toBe('../../../assets/mosasaurus.webp')
+  })
+
   it('writes real server-rendered first frames to the fallback and localized build documents', async () => {
     const outputDirectory = await mkdtemp(join(tmpdir(), 'museum-prerender-'))
     const template = `<!doctype html><html lang="en"><head></head><body><div id="root"><!--museum-root-start--><main class="seo-static-shell">Temporary</main><!--museum-root-end--></div></body></html>`
+    const detailTemplate = `<!doctype html><html lang="en"><head><style id="animal-detail-fallback-style">.animal-page { display: block; }</style></head><body><div id="root"><!--museum-root-start--><main class="animal-page">Temporary</main><!--museum-root-end--></div><script type="module" src="../../../assets/app.js"></script></body></html>`
+    const detailPages = [
+      ['zh-CN', 'stegosaurus'],
+      ['en', 'stegosaurus'],
+      ['zh-CN', 'tyrannosaurus-rex'],
+      ['en', 'tyrannosaurus-rex'],
+      ['zh-CN', 'mosasaurus'],
+      ['en', 'mosasaurus'],
+    ] as const
     try {
       await mkdir(join(outputDirectory, 'en'), { recursive: true })
       await mkdir(join(outputDirectory, 'zh-CN'), { recursive: true })
+      await Promise.all(
+        detailPages.map(([locale, animalId]) =>
+          mkdir(join(outputDirectory, locale, 'animals', animalId), {
+            recursive: true,
+          }),
+        ),
+      )
       await writeFile(join(outputDirectory, 'index.html'), template)
       await writeFile(join(outputDirectory, 'en/index.html'), template)
       await writeFile(join(outputDirectory, 'zh-CN/index.html'), template)
+      await Promise.all(
+        detailPages.map(([locale, animalId]) =>
+          writeFile(
+            join(
+              outputDirectory,
+              locale,
+              'animals',
+              animalId,
+              'index.html',
+            ),
+            detailTemplate,
+          ),
+        ),
+      )
 
       await writeLocalizedMuseumPrerenders(
         outputDirectory,
@@ -97,7 +159,15 @@ describe('localized museum prerender document', () => {
         join(outputDirectory, 'index.html'),
         'utf8',
       )
+      const englishMosasaurus = await readFile(
+        join(
+          outputDirectory,
+          'en/animals/mosasaurus/index.html',
+        ),
+        'utf8',
+      )
       expect(english).toContain('data-locale="en"')
+      expect(english).toContain('data-page-kind="museum"')
       expect(english).toContain('Stegosaurus')
       expect(chinese).toContain('data-locale="zh-CN"')
       expect(chinese).toContain('剑龙')
@@ -108,6 +178,27 @@ describe('localized museum prerender document', () => {
       expect(fallback).toContain(
         'href="./zh-CN/animals/mosasaurus/"',
       )
+      expect(englishMosasaurus).toContain('id="museum-experience"')
+      expect(englishMosasaurus).toContain('data-locale="en"')
+      expect(englishMosasaurus).toContain(
+        'data-page-kind="animal-detail"',
+      )
+      expect(englishMosasaurus).toContain(
+        'data-requested-animal-id="mosasaurus"',
+      )
+      expect(englishMosasaurus).toContain(
+        '<h1 class="animal-title">Mosasaurus</h1>',
+      )
+      expect(englishMosasaurus).toContain('Prehistoric Animal Museum')
+      expect(englishMosasaurus).toContain(
+        'data-museum-return="" href="../../../en/?animal=mosasaurus"',
+      )
+      expect(englishMosasaurus).toContain('href="../stegosaurus/"')
+      expect(englishMosasaurus).toContain(
+        '<script type="module" src="../../../assets/app.js"></script>',
+      )
+      expect(englishMosasaurus).not.toContain('animal-detail-fallback-style')
+      expect(englishMosasaurus).not.toContain('class="animal-page"')
     } finally {
       await rm(outputDirectory, { recursive: true })
     }
