@@ -1,49 +1,49 @@
 {
   "animalId": "pteranodon",
-  "contractVersion": 1,
-  "generatedAt": "2026-08-05T02:31:10.155Z",
-  "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.7},\"presentation\":{\"cameraLightScale\":1.5,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-20,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.05,\"portrait\":0.1},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.35,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
+  "contractVersion": 2,
+  "generatedAt": "2026-08-08T12:51:14.106Z",
+  "presentationSignature": "{\"contractVersion\":2,\"renderer\":{\"cameraFieldOfViewDegrees\":34,\"maxPixelRatio\":2},\"layout\":{\"coordinateSystem\":\"fixed-fullscreen-canvas+composition-frame-v1\",\"previewObjectFit\":\"contain\",\"referenceViewports\":[{\"key\":\"landscapeCompact\",\"width\":844,\"height\":390},{\"key\":\"desktopWide\",\"width\":1280,\"height\":720},{\"key\":\"phonePortraitCompact\",\"width\":360,\"height\":640},{\"key\":\"phonePortraitTall\",\"width\":390,\"height\":844},{\"key\":\"tabletPortrait\",\"width\":768,\"height\":1024},{\"key\":\"desktopStandard\",\"width\":1440,\"height\":900}]},\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.7},\"presentation\":{\"cameraLightScale\":1.5,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-20,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.05,\"portrait\":0.1},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.35,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
   "profiles": {
     "landscapeCompact": {
-      "bytes": 23596,
+      "bytes": 25308,
       "fileName": "preview-landscape-compact.webp",
       "height": 650,
-      "sha256": "dbf66eed6f375c597fa13c9156d90843f2a26b954eb5d74dd6ee5f65c375d469",
+      "sha256": "9b2c128e08d1570d55264c03676efb4ff6a965ed5f28749d38a1f6b92e56808f",
       "width": 1250
     },
     "desktopWide": {
-      "bytes": 29088,
+      "bytes": 31242,
       "fileName": "preview-desktop-wide.webp",
       "height": 800,
-      "sha256": "7cad9fab74d1890d0b93618360733db91718282df57b9fe75539710280389ed8",
+      "sha256": "71caf05357117b518a6332eaa3941d747c6cb98be1fefdafddf16766b87a1fa7",
       "width": 1200
     },
     "phonePortraitCompact": {
-      "bytes": 15242,
+      "bytes": 17010,
       "fileName": "preview-phone-compact.webp",
       "height": 1000,
-      "sha256": "201e60b93e1efa2ae55a6c719861c151789d2227c4200e3dea24c30ee5d87657",
+      "sha256": "5db3fbdd63b2121bcb659bea760e549d85a37e179bde42f257952676d6a14946",
       "width": 875
     },
     "phonePortraitTall": {
-      "bytes": 12386,
+      "bytes": 12972,
       "fileName": "preview-phone-tall.webp",
       "height": 1000,
-      "sha256": "1a73274fc89e5bb01df2fbec75f9482e5c3f0a78baa02d901ca2008e5d67a679",
+      "sha256": "dd62a80378fa53803623258ea0b7e168051d2a104d7375487fdb3b84ab15971b",
       "width": 640
     },
     "tabletPortrait": {
-      "bytes": 18884,
+      "bytes": 20054,
       "fileName": "preview-tablet-portrait.webp",
       "height": 960,
-      "sha256": "8e757e98b615fb5b844ee9551661a40e4b05a1cda33885d2dc1092ca2facaf3f",
+      "sha256": "7c69fc9e57bc85589332d11e903410af14008480678cdfecc73dcab8146db3cb",
       "width": 900
     },
     "desktopStandard": {
-      "bytes": 31106,
+      "bytes": 32600,
       "fileName": "preview-desktop-standard.webp",
       "height": 960,
-      "sha256": "bffa327b2b64c13b0637da34d5acf24c5683fa64d0b0899a9ca697350b6f3a86",
+      "sha256": "13574853e388c06458ac8893b2e8be33ac13f0ba76c6ea5d8bca0dc7c039a26f",
       "width": 1200
     }
   },

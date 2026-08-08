@@ -164,7 +164,8 @@ export function ViewerStage({
         if (
           reviewCanvas &&
           (import.meta.env.MODE === 'review' ||
-            import.meta.env.MODE === 'model-still')
+            import.meta.env.MODE === 'model-still' ||
+            import.meta.env.MODE === 'e2e')
         ) {
           reviewCanvas.__museumReviewSetAnimationTime = (time) =>
             controller?.setReviewAnimationTime(time) ?? false

@@ -43,6 +43,19 @@ const noJsDetailCases = [
   },
 ] as const
 
+const backToMuseumViewports = [
+  { height: 568, hidesLabel: false, name: 'minimum phone portrait', width: 320 },
+  { height: 800, hidesLabel: false, name: 'compact phone edge', width: 370 },
+  { height: 800, hidesLabel: false, name: 'compact phone edge plus one', width: 371 },
+  { height: 1024, hidesLabel: false, name: 'mobile upper edge', width: 767 },
+  { height: 1024, hidesLabel: false, name: 'tablet lower edge', width: 768 },
+  { height: 1365, hidesLabel: false, name: 'tablet upper edge', width: 1023 },
+  { height: 768, hidesLabel: false, name: 'desktop lower edge', width: 1024 },
+  { height: 720, hidesLabel: false, name: 'wide desktop', width: 1280 },
+  { height: 320, hidesLabel: true, name: 'minimum compact landscape', width: 568 },
+  { height: 390, hidesLabel: true, name: 'wide compact landscape', width: 844 },
+] as const
+
 function collectHydrationErrors(page: Page): string[] {
   const hydrationErrors: string[] = []
   page.on('console', (message) => {
@@ -327,6 +340,143 @@ test('returns from a direct detail deep link to the matching museum exhibit and 
   await expect(
     page.getByRole('dialog', { name: 'Museum guide' }),
   ).toBeVisible()
+})
+
+test('keeps the English Back to museum action contained at responsive boundaries', async ({
+  page,
+}) => {
+  await page.route('**/*.glb*', (route) => route.abort())
+  await page.setViewportSize(backToMuseumViewports[0])
+  const response = await page.goto('./en/animals/pachycephalosaurus/')
+  expect(response?.ok()).toBe(true)
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Pachycephalosaurus' }),
+  ).toBeVisible()
+
+  const returnLink = page.getByRole('link', {
+    name: 'Return to the museum and open the full guide',
+  })
+  await expect(returnLink).toBeVisible()
+
+  for (const viewport of backToMuseumViewports) {
+    await page.setViewportSize(viewport)
+    await page.evaluate(
+      () =>
+        document.fonts.ready.then(
+          () =>
+            new Promise<void>((resolve) => {
+              requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+            }),
+        ),
+    )
+
+    const layout = await returnLink.evaluate((link) => {
+      const actions = link.closest('.story-actions')
+      const label = link.querySelector(':scope > span')
+      if (!(actions instanceof HTMLElement) || !(label instanceof HTMLElement)) {
+        throw new Error('The Back to museum action is incomplete.')
+      }
+      const actionsBox = actions.getBoundingClientRect()
+      const labelStyle = getComputedStyle(label)
+      const linkBox = link.getBoundingClientRect()
+      const labelVisible = labelStyle.display !== 'none'
+      const textRange = document.createRange()
+      textRange.selectNodeContents(label)
+      const textBox = labelVisible ? textRange.getBoundingClientRect() : null
+      const textLineCount = labelVisible
+        ? new Set(
+            Array.from(textRange.getClientRects()).map((line) =>
+              Math.round(line.top),
+            ),
+          ).size
+        : 0
+
+      return {
+        actionsBottom: actionsBox.bottom,
+        actionsLeft: actionsBox.left,
+        actionsRight: actionsBox.right,
+        actionsTop: actionsBox.top,
+        documentScrollWidth: document.documentElement.scrollWidth,
+        labelDisplay: labelStyle.display,
+        linkBottom: linkBox.bottom,
+        linkClientHeight: link.clientHeight,
+        linkClientWidth: link.clientWidth,
+        linkHeight: linkBox.height,
+        linkLeft: linkBox.left,
+        linkRight: linkBox.right,
+        linkScrollHeight: link.scrollHeight,
+        linkScrollWidth: link.scrollWidth,
+        linkTop: linkBox.top,
+        linkWidth: linkBox.width,
+        textBottom: textBox?.bottom ?? null,
+        textLeft: textBox?.left ?? null,
+        textLineCount,
+        textOverflow: labelStyle.textOverflow,
+        textRight: textBox?.right ?? null,
+        textTop: textBox?.top ?? null,
+        viewportWidth: document.documentElement.clientWidth,
+      }
+    })
+
+    expect(
+      layout.linkWidth,
+      `${viewport.name}: link width`,
+    ).toBeGreaterThanOrEqual(48)
+    expect(
+      layout.linkHeight,
+      `${viewport.name}: link height`,
+    ).toBeGreaterThanOrEqual(48)
+    expect(
+      layout.linkScrollWidth,
+      `${viewport.name}: link must not clip horizontally`,
+    ).toBeLessThanOrEqual(layout.linkClientWidth + 1)
+    expect(
+      layout.linkScrollHeight,
+      `${viewport.name}: link must not clip vertically`,
+    ).toBeLessThanOrEqual(layout.linkClientHeight + 1)
+    expect(layout.linkLeft, `${viewport.name}: link left`).toBeGreaterThanOrEqual(
+      layout.actionsLeft - 1,
+    )
+    expect(layout.linkTop, `${viewport.name}: link top`).toBeGreaterThanOrEqual(
+      layout.actionsTop - 1,
+    )
+    expect(layout.linkRight, `${viewport.name}: link right`).toBeLessThanOrEqual(
+      layout.actionsRight + 1,
+    )
+    expect(
+      layout.linkBottom,
+      `${viewport.name}: link bottom`,
+    ).toBeLessThanOrEqual(layout.actionsBottom + 1)
+    expect(
+      layout.documentScrollWidth,
+      `${viewport.name}: page must not overflow horizontally`,
+    ).toBeLessThanOrEqual(layout.viewportWidth + 1)
+
+    if (viewport.hidesLabel) {
+      expect(layout.labelDisplay, `${viewport.name}: compact label`).toBe('none')
+      expect(layout.textLineCount).toBe(0)
+      continue
+    }
+
+    expect(layout.labelDisplay, `${viewport.name}: visible label`).not.toBe(
+      'none',
+    )
+    expect(layout.textOverflow).not.toBe('ellipsis')
+    expect(layout.textLineCount).toBeGreaterThanOrEqual(1)
+    expect(layout.textLineCount).toBeLessThanOrEqual(2)
+    expect(layout.textLeft ?? Number.NEGATIVE_INFINITY).toBeGreaterThanOrEqual(
+      layout.linkLeft - 1,
+    )
+    expect(layout.textTop ?? Number.NEGATIVE_INFINITY).toBeGreaterThanOrEqual(
+      layout.linkTop - 1,
+    )
+    expect(layout.textRight ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(
+      layout.linkRight + 1,
+    )
+    expect(layout.textBottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(
+      layout.linkBottom + 1,
+    )
+  }
 })
 
 test('uses an explicit CSR boundary for E2E fixtures without hydration recovery', async ({

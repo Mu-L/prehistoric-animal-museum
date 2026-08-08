@@ -1,8 +1,89 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import sharp from 'sharp'
 import { GITHUB_STAR_PROMPT_STORAGE_KEY } from '../src/github'
 import { MODEL_DATA_REMINDER_STORAGE_KEY } from '../src/model-policy'
 
 const nestedPath = '/prehistoric-animal-museum/'
+
+interface NormalizedAlphaBounds {
+  readonly centerX: number
+  readonly centerY: number
+  readonly height: number
+  readonly pixelCount: number
+  readonly xMax: number
+  readonly xMin: number
+  readonly yMax: number
+  readonly yMin: number
+  readonly width: number
+}
+
+async function normalizedAlphaBounds(
+  png: Buffer,
+  alphaThreshold = 16,
+): Promise<NormalizedAlphaBounds | null> {
+  const { data, info } = await sharp(png)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+  const alphaChannel = info.channels - 1
+  let minX = info.width
+  let minY = info.height
+  let maxX = -1
+  let maxY = -1
+  let pixelCount = 0
+
+  for (let y = 0; y < info.height; y += 1) {
+    for (let x = 0; x < info.width; x += 1) {
+      const alpha = data[(y * info.width + x) * info.channels + alphaChannel]
+      if (alpha === undefined || alpha < alphaThreshold) {
+        continue
+      }
+      pixelCount += 1
+      minX = Math.min(minX, x)
+      minY = Math.min(minY, y)
+      maxX = Math.max(maxX, x)
+      maxY = Math.max(maxY, y)
+    }
+  }
+
+  if (pixelCount === 0) {
+    return null
+  }
+
+  const xMin = minX / info.width
+  const xMax = (maxX + 1) / info.width
+  const yMin = minY / info.height
+  const yMax = (maxY + 1) / info.height
+  return {
+    centerX: (xMin + xMax) / 2,
+    centerY: (yMin + yMax) / 2,
+    height: yMax - yMin,
+    pixelCount,
+    width: xMax - xMin,
+    xMax,
+    xMin,
+    yMax,
+    yMin,
+  }
+}
+
+function boundsIntersectionOverUnion(
+  first: NormalizedAlphaBounds,
+  second: NormalizedAlphaBounds,
+): number {
+  const intersectionWidth = Math.max(
+    0,
+    Math.min(first.xMax, second.xMax) - Math.max(first.xMin, second.xMin),
+  )
+  const intersectionHeight = Math.max(
+    0,
+    Math.min(first.yMax, second.yMax) - Math.max(first.yMin, second.yMin),
+  )
+  const intersectionArea = intersectionWidth * intersectionHeight
+  const firstArea = first.width * first.height
+  const secondArea = second.width * second.height
+  return intersectionArea / (firstArea + secondArea - intersectionArea)
+}
 
 async function openMuseum(
   page: Page,
@@ -1805,6 +1886,197 @@ test.describe('responsive first-model reveal', () => {
       await expect(page.locator('.model-still')).toHaveCount(0)
       await expect(viewerHost).toHaveCSS('opacity', '1')
       await expectNoHorizontalOverflow(page)
+    })
+  }
+})
+
+test.describe('first-frame preview silhouette', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  const previewViewports = [
+    {
+      height: 768,
+      name: 'desktop-standard-1024x768',
+      poster: 'preview-desktop-standard',
+      profile: 'desktopStandard',
+      width: 1024,
+    },
+    {
+      height: 1024,
+      name: 'tablet-portrait-768x1024',
+      poster: 'preview-tablet-portrait',
+      profile: 'tabletPortrait',
+      width: 768,
+    },
+  ] as const
+
+  for (const viewport of previewViewports) {
+    test(`${viewport.name} keeps Pachycephalosaurus aligned through its first reveal`, async ({
+      page,
+    }) => {
+      test.setTimeout(60_000)
+      await page.setViewportSize(viewport)
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+
+      let releaseModel: () => void = () => {
+        throw new Error('The model request gate was not initialised.')
+      }
+      const modelGate = new Promise<void>((resolve) => {
+        releaseModel = resolve
+      })
+      await page.route('**/*.glb', async (route) => {
+        await modelGate
+        await route.continue()
+      })
+
+      const response = await page.goto(
+        './en/?animal=pachycephalosaurus',
+        { waitUntil: 'domcontentloaded' },
+      )
+      expect(response?.ok()).toBe(true)
+      await expect(
+        page.getByRole('heading', {
+          level: 2,
+          name: 'Pachycephalosaurus',
+        }),
+      ).toBeVisible()
+
+      await page.addStyleTag({
+        content: `
+          html,
+          body,
+          #root,
+          .museum-experience,
+          .stage-panel,
+          .viewer-stage,
+          .model-viewport,
+          .viewer-host,
+          .model-composition-frame {
+            background: transparent !important;
+          }
+          html::before,
+          html::after,
+          body::before,
+          body::after,
+          .museum-experience > :not(.stage-panel),
+          .stage-panel > :not(.viewer-stage),
+          .stage-loading,
+          .model-gesture-hint,
+          .model-fallback {
+            visibility: hidden !important;
+          }
+          .viewer-host::after {
+            opacity: 0 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+          }
+        `,
+      })
+
+      const compositionFrame = page.locator('.model-composition-frame')
+      const modelStill = page.locator('.model-still')
+      const canvas = page.locator('.viewer-canvas')
+      await expect(compositionFrame).toBeVisible()
+      await expect(modelStill).toBeVisible()
+      await expect(page.locator('.model-viewport')).toHaveAttribute(
+        'data-preview-profile',
+        viewport.profile,
+      )
+      await expect
+        .poll(() =>
+          page
+            .locator('.model-still img')
+            .evaluate((image) => {
+              const source = Reflect.get(image, 'currentSrc') as string
+              return image instanceof HTMLImageElement &&
+                image.complete &&
+                image.naturalWidth > 0
+                ? source
+                : ''
+            }),
+        )
+        .toContain(viewport.poster)
+      await expect
+        .poll(() =>
+          canvas.evaluate(
+            (element) =>
+              typeof Reflect.get(
+                element,
+                '__museumReviewSetAnimationTime',
+              ),
+          ),
+        )
+        .toBe('function')
+
+      const stillPng = await compositionFrame.screenshot({
+        animations: 'disabled',
+        omitBackground: true,
+        scale: 'css',
+        type: 'png',
+      })
+
+      releaseModel()
+      await expect(page.locator('#museum-experience')).toHaveAttribute(
+        'data-ready-animal-id',
+        'pachycephalosaurus',
+        { timeout: 20_000 },
+      )
+      await expect(canvas).toHaveAttribute('data-first-frame-rendered', 'true')
+      const frozeInitialFrame = await canvas.evaluate((element) => {
+        const freeze = Reflect.get(
+          element,
+          '__museumReviewSetAnimationTime',
+        ) as ((time: number | null) => boolean) | undefined
+        return freeze?.(0) ?? false
+      })
+      expect(frozeInitialFrame).toBe(true)
+      await expect(modelStill).toHaveCount(0)
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          }),
+      )
+
+      const webglPng = await compositionFrame.screenshot({
+        animations: 'disabled',
+        omitBackground: true,
+        scale: 'css',
+        type: 'png',
+      })
+      const [stillBounds, webglBounds] = await Promise.all([
+        normalizedAlphaBounds(stillPng),
+        normalizedAlphaBounds(webglPng),
+      ])
+      expect(
+        stillBounds?.pixelCount ?? 0,
+        `${viewport.name} static preview should contain visible pixels`,
+      ).toBeGreaterThan(0)
+      expect(
+        webglBounds?.pixelCount ?? 0,
+        `${viewport.name} WebGL frame should contain visible pixels`,
+      ).toBeGreaterThan(0)
+      if (!stillBounds || !webglBounds) {
+        throw new Error(`${viewport.name} did not produce two silhouettes.`)
+      }
+
+      const diagnostics = JSON.stringify({ stillBounds, webglBounds })
+      for (const dimension of ['width', 'height'] as const) {
+        expect(
+          Math.abs(stillBounds[dimension] - webglBounds[dimension]),
+          `${viewport.name} ${dimension} mismatch: ${diagnostics}`,
+        ).toBeLessThanOrEqual(0.03)
+      }
+      for (const center of ['centerX', 'centerY'] as const) {
+        expect(
+          Math.abs(stillBounds[center] - webglBounds[center]),
+          `${viewport.name} ${center} mismatch: ${diagnostics}`,
+        ).toBeLessThanOrEqual(0.03)
+      }
+      expect(
+        boundsIntersectionOverUnion(stillBounds, webglBounds),
+        `${viewport.name} bounding-box IoU: ${diagnostics}`,
+      ).toBeGreaterThanOrEqual(0.85)
     })
   }
 })
