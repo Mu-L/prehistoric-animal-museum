@@ -1,7 +1,10 @@
 import {
   buildLocaleUrl,
+  localeCookiePath,
   localePreferenceStorageKey,
   resolveLocale,
+  serializeClearedLocaleCookie,
+  serializeLocaleCookie,
   systemLocale,
 } from '../src/i18n/locale'
 import { formatSizeFact } from '../src/i18n/messages'
@@ -14,12 +17,18 @@ describe('locale negotiation', () => {
     },
   )
 
-  it.each(['en-US', 'fr-FR', 'ja-JP', ''])(
-    'uses English when the system locale %s is not Chinese',
+  it.each(['en', 'en-US', 'en-GB'])(
+    'uses English for the supported system locale %s',
     (language) => {
       expect(systemLocale([language])).toBe('en')
     },
   )
+
+  it('uses the first supported browser language and otherwise defaults to Chinese', () => {
+    expect(systemLocale(['fr-FR', 'en-GB', 'zh-CN'])).toBe('en')
+    expect(systemLocale(['fr-FR', 'ja-JP', ''])).toBe('zh-CN')
+    expect(systemLocale([])).toBe('zh-CN')
+  })
 
   it('lets an explicit locale path control only the current visit', () => {
     expect(
@@ -32,6 +41,16 @@ describe('locale negotiation', () => {
     expect(
       resolveLocale({
         pathname: '/museum/en/index.html',
+        savedPreference: 'zh-CN',
+        navigatorLanguages: ['zh-CN'],
+      }),
+    ).toEqual({ locale: 'en', source: 'path' })
+  })
+
+  it('recognises the locale of a nested animal detail path', () => {
+    expect(
+      resolveLocale({
+        pathname: '/museum/en/animals/mosasaurus/',
         savedPreference: 'zh-CN',
         navigatorLanguages: ['zh-CN'],
       }),
@@ -63,7 +82,7 @@ describe('locale negotiation', () => {
         savedPreference: 'pirate',
         navigatorLanguages: ['de-DE'],
       }),
-    ).toEqual({ locale: 'en', source: 'system' })
+    ).toEqual({ locale: 'zh-CN', source: 'system' })
   })
 })
 
@@ -81,6 +100,15 @@ describe('shareable locale URLs', () => {
         'zh-CN',
       ),
     ).toBe('/museum/zh-CN/?animal=stegosaurus#viewer')
+  })
+
+  it('switches the locale of a nested animal detail path in place', () => {
+    expect(
+      buildLocaleUrl(
+        'https://example.test/museum/en/animals/mosasaurus/#model',
+        'zh-CN',
+      ),
+    ).toBe('/museum/zh-CN/animals/mosasaurus/#model')
   })
 
   it('removes the locale path when following the system', () => {
@@ -115,6 +143,19 @@ describe('shareable locale URLs', () => {
 
   it('uses one stable persistence key', () => {
     expect(localePreferenceStorageKey).toBe('museum.locale')
+  })
+
+  it('scopes the language cookie to both forms of the museum entry', () => {
+    expect(localeCookiePath('/museum/zh-CN/animals/mosasaurus/')).toBe(
+      '/museum',
+    )
+    expect(localeCookiePath('/museum/en/')).toBe('/museum')
+    expect(serializeLocaleCookie('en', '/museum/zh-CN/')).toBe(
+      'museum_locale=en; Max-Age=31536000; Path=/museum; SameSite=Lax; Secure',
+    )
+    expect(serializeClearedLocaleCookie('/museum/en/')).toBe(
+      'museum_locale=; Max-Age=0; Path=/museum; SameSite=Lax; Secure',
+    )
   })
 })
 

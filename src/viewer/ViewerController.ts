@@ -33,6 +33,10 @@ import {
 import { disposeObject3D } from './dispose'
 import type { ModelCache } from './model-cache'
 import { createModelPreviewPresentationSignature } from './model-preview-contract'
+import {
+  MODEL_PREVIEW_CAMERA_FIELD_OF_VIEW_DEGREES,
+  MODEL_PREVIEW_MAX_PIXEL_RATIO,
+} from './model-preview-profiles'
 import type { ViewerModelDescriptor } from './viewer-model-descriptor'
 
 export type { ViewerModelDescriptor } from './viewer-model-descriptor'
@@ -438,7 +442,12 @@ function findClip(clips: AnimationClip[], name: string): AnimationClip | undefin
 }
 
 export class ViewerController {
-  private readonly camera = new PerspectiveCamera(34, 1, 0.01, 100)
+  private readonly camera = new PerspectiveCamera(
+    MODEL_PREVIEW_CAMERA_FIELD_OF_VIEW_DEGREES,
+    1,
+    0.01,
+    100,
+  )
   private readonly scene = new Scene()
   private readonly renderer: WebGLRenderer
   private readonly controls: OrbitControls
@@ -516,7 +525,9 @@ export class ViewerController {
     this.renderer.toneMappingExposure = DEFAULT_TONE_MAPPING_EXPOSURE
     this.renderer.setClearColor(0x000000, 0)
     this.renderer.setClearAlpha(0)
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    this.renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, MODEL_PREVIEW_MAX_PIXEL_RATIO),
+    )
     this.renderer.domElement.className = 'viewer-canvas'
     this.renderer.domElement.setAttribute('role', 'img')
     this.renderer.domElement.setAttribute('aria-hidden', 'true')
@@ -813,13 +824,15 @@ export class ViewerController {
 
   /**
    * Freezes the active clip at an exact time for deterministic local-review
-   * screenshots. Passing null resumes normal playback. ViewerStage only
-   * exposes this hook in Vite's local `review` and `model-still` modes.
+   * and end-to-end screenshots. Passing null resumes normal playback.
+   * ViewerStage only exposes this hook in Vite's `review`, `model-still`, and
+   * `e2e` modes.
    */
   setReviewAnimationTime(timeSeconds: number | null): boolean {
     if (
       import.meta.env.MODE !== 'review' &&
-      import.meta.env.MODE !== 'model-still'
+      import.meta.env.MODE !== 'model-still' &&
+      import.meta.env.MODE !== 'e2e'
     ) {
       return false
     }

@@ -4,13 +4,14 @@ import {
   modelPreviewProfiles,
   selectModelPreviewProfile,
 } from '../src/viewer/model-preview-profiles'
+import { createModelPreviewPresentationSignature } from '../src/viewer/model-preview-contract'
 
 // Keep Vitest focused on the fast, in-memory contract. The production build
 // runs scripts/validate-model-previews.ts for the full 108-image decode,
 // transparency, dimension, source-signature, and manifest audit.
 describe('model preview contract', () => {
   it('keeps the shared profile catalog stable and unambiguous', () => {
-    expect(MODEL_PREVIEW_CONTRACT_VERSION).toBe(1)
+    expect(MODEL_PREVIEW_CONTRACT_VERSION).toBe(2)
     expect(MODEL_PREVIEW_MANIFEST_FILE).toBe(
       'model-preview.manifest.json',
     )
@@ -29,6 +30,64 @@ describe('model preview contract', () => {
       expect(profile.referenceWidth).toBeGreaterThan(0)
       expect(profile.referenceHeight).toBeGreaterThan(0)
     }
+  })
+
+  it('binds previews to the live renderer and responsive layout contract', () => {
+    const signature = JSON.parse(
+      createModelPreviewPresentationSignature({
+        animation: {
+          clip: 'Idle',
+          loop: 'repeat',
+          speed: 0.8,
+        },
+        presentation: {
+          initialYawDegrees: -90,
+          safeAreaPadding: {
+            landscape: 0.08,
+            portrait: 0.1,
+          },
+          shadow: {
+            opacity: 0.56,
+            scale: 0.7,
+          },
+        },
+      }),
+    ) as {
+      contractVersion?: number
+      layout?: {
+        coordinateSystem?: string
+        previewObjectFit?: string
+        referenceViewports?: Array<{
+          height?: number
+          key?: string
+          width?: number
+        }>
+      }
+      renderer?: {
+        cameraFieldOfViewDegrees?: number
+        maxPixelRatio?: number
+      }
+    }
+
+    expect(signature).toMatchObject({
+      contractVersion: 2,
+      renderer: {
+        cameraFieldOfViewDegrees: 34,
+        maxPixelRatio: 2,
+      },
+      layout: {
+        coordinateSystem: 'fixed-fullscreen-canvas+composition-frame-v1',
+        previewObjectFit: 'contain',
+        referenceViewports: [
+          { height: 390, key: 'landscapeCompact', width: 844 },
+          { height: 720, key: 'desktopWide', width: 1280 },
+          { height: 640, key: 'phonePortraitCompact', width: 360 },
+          { height: 844, key: 'phonePortraitTall', width: 390 },
+          { height: 1024, key: 'tabletPortrait', width: 768 },
+          { height: 900, key: 'desktopStandard', width: 1440 },
+        ],
+      },
+    })
   })
 
   it('selects the first matching profile and uses desktop standard as fallback', () => {

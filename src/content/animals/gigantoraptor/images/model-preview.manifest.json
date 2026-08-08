@@ -1,49 +1,49 @@
 {
   "animalId": "gigantoraptor",
-  "contractVersion": 1,
-  "generatedAt": "2026-08-05T02:29:43.397Z",
-  "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.9},\"presentation\":{\"cameraLightScale\":1,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.14,\"portrait\":0.14},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.42,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
+  "contractVersion": 2,
+  "generatedAt": "2026-08-08T12:49:17.377Z",
+  "presentationSignature": "{\"contractVersion\":2,\"renderer\":{\"cameraFieldOfViewDegrees\":34,\"maxPixelRatio\":2},\"layout\":{\"coordinateSystem\":\"fixed-fullscreen-canvas+composition-frame-v1\",\"previewObjectFit\":\"contain\",\"referenceViewports\":[{\"key\":\"landscapeCompact\",\"width\":844,\"height\":390},{\"key\":\"desktopWide\",\"width\":1280,\"height\":720},{\"key\":\"phonePortraitCompact\",\"width\":360,\"height\":640},{\"key\":\"phonePortraitTall\",\"width\":390,\"height\":844},{\"key\":\"tabletPortrait\",\"width\":768,\"height\":1024},{\"key\":\"desktopStandard\",\"width\":1440,\"height\":900}]},\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.9},\"presentation\":{\"cameraLightScale\":1,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.14,\"portrait\":0.14},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.42,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
   "profiles": {
     "landscapeCompact": {
-      "bytes": 93832,
+      "bytes": 92576,
       "fileName": "preview-landscape-compact.webp",
       "height": 650,
-      "sha256": "2ca8f5b10bfbcc8a547219d4c744fc920916a9970bbf2b9854ef04014da91350",
+      "sha256": "d7d95769c29a2ce4a4329a5394f598612c838400c81764b33079a379924eeb4a",
       "width": 1250
     },
     "desktopWide": {
-      "bytes": 147746,
+      "bytes": 148610,
       "fileName": "preview-desktop-wide.webp",
       "height": 800,
-      "sha256": "7be0d5c95693260d9a192434b5fcc93c99505419d3119fd22186089f172053a2",
+      "sha256": "dc7b53575c8ddda7b72ffe2444d6b40ca333d1e171fa785ddd69e4eda59c5d3c",
       "width": 1200
     },
     "phonePortraitCompact": {
-      "bytes": 103606,
+      "bytes": 106090,
       "fileName": "preview-phone-compact.webp",
       "height": 1000,
-      "sha256": "35fe05f7149e7bed120aca21db170de44ce6de9fa13dc3bd0cbd4c78eb6bb430",
+      "sha256": "99900161bf54c1e6cdfbbe20a5d1e473b4fa2092d82b4ced9f3c2a22be4ab6d5",
       "width": 875
     },
     "phonePortraitTall": {
-      "bytes": 70478,
+      "bytes": 71024,
       "fileName": "preview-phone-tall.webp",
       "height": 1000,
-      "sha256": "ebe5acbeceaf2272c9b436f870bb9d24d78b32056ec609e98cde29406714daf5",
+      "sha256": "eb98261a921eb2282e308349b5d26d6911c316763a1f4d626bc4f16015c10208",
       "width": 640
     },
     "tabletPortrait": {
-      "bytes": 124234,
+      "bytes": 126150,
       "fileName": "preview-tablet-portrait.webp",
       "height": 960,
-      "sha256": "e74ec31d51a2b596dc0ae912def10334e6f9b79422b790755dbde5d53839dffb",
+      "sha256": "15c4e58fac77b34dd8039b282a84edda5c0955c3c276195ad220318560e256ee",
       "width": 900
     },
     "desktopStandard": {
-      "bytes": 197220,
+      "bytes": 200474,
       "fileName": "preview-desktop-standard.webp",
       "height": 960,
-      "sha256": "5f77f1bfb703bcb6e7a51cd9a8faf6020eeebbdbdfe64b52a3aabbb3f80214e2",
+      "sha256": "936fe5d4b080a8d42bdad3a2345015be2eead4b8bc9f5386d3e9beea7765b508",
       "width": 1200
     }
   },

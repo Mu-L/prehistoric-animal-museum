@@ -15,6 +15,16 @@ const canonicalDefinitionModules = import.meta.glob<AnimalDefinitionModule>(
   '../src/content/animals/*/package.ts',
   { eager: true },
 )
+const locales = ['zh-CN', 'en'] as const
+const canonicalDefinitionsById = new Map(
+  Object.values(canonicalDefinitionModules).map(({ animalDefinition }) => [
+    animalDefinition.id,
+    animalDefinition,
+  ]),
+)
+const detailCases = locales.flatMap((locale) =>
+  mainCollection.animalIds.map((animalId) => ({ animalId, locale })),
+)
 
 const builtAppHtml = `<!doctype html>
 <html lang="zh-CN">
@@ -51,14 +61,8 @@ describe('multilingual SEO artifacts', () => {
   })
 
   it('derives every crawlable ID, localized name and gallery from canonical content', () => {
-    const definitionsById = new Map(
-      Object.values(canonicalDefinitionModules).map(({ animalDefinition }) => [
-        animalDefinition.id,
-        animalDefinition,
-      ]),
-    )
     const canonicalAnimals = mainCollection.animalIds.map((id) => {
-      const definition = definitionsById.get(id)
+      const definition = canonicalDefinitionsById.get(id)
       if (!definition || definition.status !== 'published') {
         throw new Error(`Missing canonical published animal ${id}`)
       }
@@ -90,26 +94,15 @@ describe('multilingual SEO artifacts', () => {
     }
   })
 
-  it('renders an x-default root shell with both crawlable language links', () => {
+  it('renders a Chinese museum template as the fail-open entry', () => {
     const document = parseHtml(artifactSource(artifacts, 'index.html'))
 
-    expect(document.documentElement.lang).toBe('en')
-    expect(document.title).toBe(
-      'Prehistoric Animal Museum | 史前动物博物馆',
+    expect(document.documentElement.lang).toBe('zh-CN')
+    expect(document.title).toBe('史前动物博物馆 | 亲子 3D 史前动物展')
+    expect(document.querySelector('h1')?.textContent).toBe('史前动物博物馆')
+    expect(document.querySelectorAll('[data-seo-catalogue] li')).toHaveLength(
+      mainCollection.animalIds.length,
     )
-    expect(document.querySelector('h1')?.textContent).toContain(
-      'Prehistoric Animal Museum',
-    )
-    expect(document.querySelector('h1')?.textContent).toContain('史前动物博物馆')
-    expect(
-      document.querySelector('h1 [lang="zh-CN"]')?.textContent,
-    ).toBe('史前动物博物馆')
-    expect(
-      document.querySelectorAll('[data-seo-catalogue] [lang="zh-CN"]'),
-    ).toHaveLength(mainCollection.animalIds.length + 3)
-    expect(
-      document.querySelectorAll('[data-seo-catalogue] [lang="en"]'),
-    ).toHaveLength(mainCollection.animalIds.length + 3)
     expect(
       document.querySelector<HTMLAnchorElement>('a[hreflang="zh-CN"]')?.getAttribute(
         'href',
@@ -122,7 +115,17 @@ describe('multilingual SEO artifacts', () => {
     ).toBe('./en/')
     expect(
       document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+    ).toBe('https://example.test/museum/zh-CN/')
+    expect(
+      document.querySelector('link[rel="alternate"][hreflang="x-default"]')
+        ?.getAttribute('href'),
     ).toBe('https://example.test/museum/')
+    expect(
+      document.querySelector('script[type="module"]')?.getAttribute('src'),
+    ).toBe('./assets/app-123.js')
+    expect(
+      document.querySelector('link[rel="stylesheet"]')?.getAttribute('href'),
+    ).toBe('./assets/app-123.css')
   })
 
   it('keeps the no-JS static shell viewport-height and independently scrollable', () => {
@@ -218,6 +221,147 @@ describe('multilingual SEO artifacts', () => {
     },
   )
 
+  it.each(detailCases)(
+    'prepares a hydratable $locale $animalId detail document for museum SSR',
+    ({ locale, animalId }) => {
+      const fileName = `${locale}/animals/${animalId}/index.html`
+      const source = artifactSource(artifacts, fileName)
+      const document = parseHtml(source)
+      const definition = canonicalDefinitionsById.get(animalId)
+      if (!definition || definition.status !== 'published') {
+        throw new Error(`Missing canonical published animal ${animalId}`)
+      }
+      const content = definition.content[locale]
+      const otherLocale = locale === 'zh-CN' ? 'en' : 'zh-CN'
+      const canonical = `https://example.test/museum/${locale}/animals/${animalId}/`
+      const otherCanonical = `https://example.test/museum/${otherLocale}/animals/${animalId}/`
+      const root = document.querySelector('#root')
+      const fallback = root?.querySelector(
+        `[data-animal-detail="${animalId}"]`,
+      )
+      const description =
+        document
+          .querySelector('meta[name="description"]')
+          ?.getAttribute('content') ?? ''
+
+      expect(document.documentElement.lang).toBe(locale)
+      expect(description).not.toBe('')
+      expect(description.length).toBeLessThanOrEqual(160)
+      expect(root).not.toBeNull()
+      expect(source).toMatch(
+        /<div id="root"><!--museum-root-start-->[\s\S]*<!--museum-root-end--><\/div>/,
+      )
+      expect(fallback).not.toBeNull()
+      expect(fallback?.textContent).toContain(content.name)
+      expect(fallback?.textContent).toContain(content.narration.sentences[0])
+      expect(fallback?.textContent).toContain(content.visibleFeature)
+      expect(
+        document
+          .querySelector<HTMLImageElement>(
+            `[data-animal-detail="${animalId}"] img[alt="${content.name}"]`,
+          )
+          ?.getAttribute('src'),
+      ).toBe(`../../../animals/${animalId}/hero.webp`)
+      expect(document.querySelector('#animal-detail-fallback-style')).not.toBeNull()
+      expect(
+        document.querySelectorAll('link[data-animal-detail-fallback]'),
+      ).toHaveLength(2)
+      expect(
+        document.querySelector<HTMLScriptElement>('script[type="module"]')
+          ?.getAttribute('src'),
+      ).toBe('../../../assets/app-123.js')
+      expect(
+        document.querySelector<HTMLLinkElement>('link[rel="stylesheet"]')
+          ?.getAttribute('href'),
+      ).toBe('../../../assets/app-123.css')
+      expect(
+        document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+      ).toBe(canonical)
+      expect(
+        document
+          .querySelector(`link[rel="alternate"][hreflang="${locale}"]`)
+          ?.getAttribute('href'),
+      ).toBe(canonical)
+      expect(
+        document
+          .querySelector(`link[rel="alternate"][hreflang="${otherLocale}"]`)
+          ?.getAttribute('href'),
+      ).toBe(otherCanonical)
+
+      const structuredDataSource = document.querySelector(
+        '#animal-structured-data',
+      )?.textContent
+      expect(structuredDataSource).toBeTypeOf('string')
+      const structuredData = JSON.parse(structuredDataSource ?? '{}') as {
+        '@type'?: string
+        breadcrumb?: {
+          itemListElement?: Array<{ item?: string; name?: string }>
+        }
+        description?: string
+        inLanguage?: string
+        name?: string
+        url?: string
+      }
+      expect(structuredData).toMatchObject({
+        '@type': 'WebPage',
+        description,
+        inLanguage: locale,
+        name: content.name,
+        url: canonical,
+      })
+      expect(structuredData.breadcrumb?.itemListElement).toEqual([
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name:
+            locale === 'zh-CN'
+              ? '史前动物博物馆'
+              : 'Prehistoric Animal Museum',
+          item: `https://example.test/museum/${locale}/`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: content.name,
+          item: canonical,
+        },
+      ])
+    },
+  )
+
+  it('emits exactly one localized detail artifact for all 18 animals', () => {
+    const expectedDetailArtifacts = detailCases
+      .map(
+        ({ animalId, locale }) =>
+          `${locale}/animals/${animalId}/index.html`,
+      )
+      .sort()
+
+    expect(
+      [...artifacts.keys()]
+        .filter((fileName) => fileName.includes('/animals/'))
+        .sort(),
+    ).toEqual(expectedDetailArtifacts)
+  })
+
+  it('links the localized catalogue to every published detail page', () => {
+    for (const locale of locales) {
+      const document = parseHtml(
+        artifactSource(artifacts, `${locale}/index.html`),
+      )
+
+      for (const animalId of mainCollection.animalIds) {
+        expect(
+          document
+            .querySelector<HTMLAnchorElement>(
+              `[data-animal-id="${animalId}"] a`,
+            )
+            ?.getAttribute('href'),
+        ).toBe(`./animals/${animalId}/`)
+      }
+    }
+  })
+
   it('declares the complete reciprocal hreflang set on every page', () => {
     for (const fileName of ['index.html', 'zh-CN/index.html', 'en/index.html']) {
       const document = parseHtml(artifactSource(artifacts, fileName))
@@ -257,7 +401,7 @@ describe('multilingual SEO artifacts', () => {
   })
 
   it.each([
-    ['x-default', 'index.html', 'museum.png'],
+    ['entry-fallback', 'index.html', 'museum.zh-CN.png'],
     ['zh-CN', 'zh-CN/index.html', 'museum.zh-CN.png'],
     ['en', 'en/index.html', 'museum.en.png'],
   ] as const)(
@@ -311,12 +455,21 @@ describe('multilingual SEO artifacts', () => {
     )
 
     const sitemap = artifactSource(artifacts, 'sitemap.xml')
-    expect(sitemap).toContain('<loc>https://example.test/museum/</loc>')
-    expect(sitemap).toContain(
-      '<loc>https://example.test/museum/zh-CN/</loc>',
-    )
-    expect(sitemap).toContain('<loc>https://example.test/museum/en/</loc>')
-    expect(sitemap.match(/<url>/g)).toHaveLength(3)
+    const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
+      .map((match) => match[1])
+      .sort()
+    const expectedSitemapUrls = [
+      'https://example.test/museum/zh-CN/',
+      'https://example.test/museum/en/',
+      ...detailCases.map(
+        ({ animalId, locale }) =>
+          `https://example.test/museum/${locale}/animals/${animalId}/`,
+      ),
+    ].sort()
+
+    expect(sitemapUrls).toEqual(expectedSitemapUrls)
+    expect(sitemapUrls).toHaveLength(38)
+    expect(sitemapUrls).not.toContain('https://example.test/museum/')
 
     const notFound = parseHtml(artifactSource(artifacts, '404.html'))
     expect(

@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Footprints } from 'lucide-react'
 import { useI18n } from '../i18n/I18nProvider'
-import {
+import type {
   ViewerController,
-  ViewerUnavailableError,
-  type ViewerFailure,
+  ViewerFailure,
 } from '../viewer/ViewerController'
 import type { ModelCache } from '../viewer/model-cache'
+import { modelPreviewProfiles } from '../viewer/model-preview-profiles'
 import { modelPreviewFor } from '../viewer/responsive-model-stills'
 import { useModelPreviewProfile } from '../viewer/use-model-preview-profile'
 
@@ -62,6 +62,14 @@ export function ViewerStage({
     (previewProfile.height > previewProfile.width
       ? posterPortraitUrl
       : posterUrl)
+  const responsivePreviewSources = modelPreviewProfiles.slice(0, -1).map(
+    (profile) => ({
+      media: profile.media,
+      srcSet:
+        modelPreviewFor(animalId, profile.fileName) ??
+        (profile.height > profile.width ? posterPortraitUrl : posterUrl),
+    }),
+  )
 
   useLayoutEffect(() => {
     const stage = stageRef.current
@@ -118,43 +126,72 @@ export function ViewerStage({
       return
     }
 
-    let controller: ViewerController
-    try {
-      controller = new ViewerController(container, {
-        ...(compositionFrameRef.current
-          ? { compositionFrame: compositionFrameRef.current }
-          : {}),
-        modelCache,
-        onFailure: onViewerFailure,
-        onModelReady: onFirstFrameRendered,
-      })
-    } catch (error) {
-      if (!(error instanceof ViewerUnavailableError)) {
-        console.error(error)
+    let cancelled = false
+    let controller: ViewerController | null = null
+    let reviewCanvas: ReviewCanvas | null = null
+
+    const initialise = async () => {
+      try {
+        const { ViewerController, ViewerUnavailableError } = await import(
+          '../viewer/ViewerController'
+        )
+        if (cancelled) {
+          return
+        }
+        try {
+          controller = new ViewerController(container, {
+            ...(compositionFrameRef.current
+              ? { compositionFrame: compositionFrameRef.current }
+              : {}),
+            modelCache,
+            onFailure: onViewerFailure,
+            onModelReady: onFirstFrameRendered,
+          })
+        } catch (error) {
+          if (!(error instanceof ViewerUnavailableError)) {
+            console.error(error)
+          }
+          onControllerReady(null)
+          return
+        }
+        if (cancelled) {
+          controller.destroy()
+          controller = null
+          return
+        }
+        onControllerReady(controller)
+        reviewCanvas = container.querySelector<ReviewCanvas>('.viewer-canvas')
+        if (
+          reviewCanvas &&
+          (import.meta.env.MODE === 'review' ||
+            import.meta.env.MODE === 'model-still' ||
+            import.meta.env.MODE === 'e2e')
+        ) {
+          reviewCanvas.__museumReviewSetAnimationTime = (time) =>
+            controller?.setReviewAnimationTime(time) ?? false
+        }
+      } catch (error) {
+        if (!cancelled) {
+          onControllerReady(null)
+          onViewerFailure({
+            cause: error,
+            kind: 'webgl-unavailable',
+            message: '3D viewer code could not be loaded.',
+          })
+        }
       }
-      onControllerReady(null)
-      return
     }
-    onControllerReady(controller)
-    const reviewCanvas = container.querySelector<ReviewCanvas>(
-      '.viewer-canvas',
-    )
-    if (
-      import.meta.env.MODE === 'review' ||
-      import.meta.env.MODE === 'model-still'
-    ) {
-      if (reviewCanvas) {
-        reviewCanvas.__museumReviewSetAnimationTime = (time) =>
-          controller.setReviewAnimationTime(time)
-      }
-    }
+    void initialise()
 
     return () => {
+      cancelled = true
       if (reviewCanvas) {
         delete reviewCanvas.__museumReviewSetAnimationTime
       }
-      onControllerReady(null)
-      controller.destroy()
+      if (controller) {
+        onControllerReady(null)
+        controller.destroy()
+      }
     }
   }, [
     modelCache,
@@ -187,14 +224,21 @@ export function ViewerStage({
       <div
         className="model-composition-frame"
         ref={compositionFrameRef}
-        style={{
-          height: viewportSize?.height ?? 1,
-          visibility: viewportSize ? 'visible' : 'hidden',
-          width: viewportSize?.width ?? 1,
-        }}
+        style={
+          viewportSize
+            ? { height: viewportSize.height, width: viewportSize.width }
+            : undefined
+        }
       >
         {showModelStill ? (
           <picture aria-hidden="true" className="model-still">
+            {responsivePreviewSources.map((source) => (
+              <source
+                key={source.media}
+                media={source.media}
+                srcSet={source.srcSet}
+              />
+            ))}
             <img
               alt={messages.viewer.stillAlt(label)}
               decoding="async"

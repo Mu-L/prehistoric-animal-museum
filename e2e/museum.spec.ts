@@ -1,15 +1,106 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import sharp from 'sharp'
 import { GITHUB_STAR_PROMPT_STORAGE_KEY } from '../src/github'
 import { MODEL_DATA_REMINDER_STORAGE_KEY } from '../src/model-policy'
 
 const nestedPath = '/prehistoric-animal-museum/'
+
+interface NormalizedAlphaBounds {
+  readonly centerX: number
+  readonly centerY: number
+  readonly height: number
+  readonly pixelCount: number
+  readonly visualCenterX: number
+  readonly visualCenterY: number
+  readonly xMax: number
+  readonly xMin: number
+  readonly yMax: number
+  readonly yMin: number
+  readonly width: number
+}
+
+async function normalizedAlphaBounds(
+  png: Buffer,
+  alphaThreshold = 16,
+): Promise<NormalizedAlphaBounds | null> {
+  const { data, info } = await sharp(png)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+  const alphaChannel = info.channels - 1
+  let minX = info.width
+  let minY = info.height
+  let maxX = -1
+  let maxY = -1
+  let pixelCount = 0
+  let alphaWeight = 0
+  let weightedX = 0
+  let weightedY = 0
+
+  for (let y = 0; y < info.height; y += 1) {
+    for (let x = 0; x < info.width; x += 1) {
+      const alpha = data[(y * info.width + x) * info.channels + alphaChannel]
+      if (alpha === undefined || alpha < alphaThreshold) {
+        continue
+      }
+      pixelCount += 1
+      alphaWeight += alpha
+      weightedX += (x + 0.5) * alpha
+      weightedY += (y + 0.5) * alpha
+      minX = Math.min(minX, x)
+      minY = Math.min(minY, y)
+      maxX = Math.max(maxX, x)
+      maxY = Math.max(maxY, y)
+    }
+  }
+
+  if (pixelCount === 0) {
+    return null
+  }
+
+  const xMin = minX / info.width
+  const xMax = (maxX + 1) / info.width
+  const yMin = minY / info.height
+  const yMax = (maxY + 1) / info.height
+  return {
+    centerX: (xMin + xMax) / 2,
+    centerY: (yMin + yMax) / 2,
+    height: yMax - yMin,
+    pixelCount,
+    visualCenterX: weightedX / alphaWeight / info.width,
+    visualCenterY: weightedY / alphaWeight / info.height,
+    width: xMax - xMin,
+    xMax,
+    xMin,
+    yMax,
+    yMin,
+  }
+}
+
+function boundsIntersectionOverUnion(
+  first: NormalizedAlphaBounds,
+  second: NormalizedAlphaBounds,
+): number {
+  const intersectionWidth = Math.max(
+    0,
+    Math.min(first.xMax, second.xMax) - Math.max(first.xMin, second.xMin),
+  )
+  const intersectionHeight = Math.max(
+    0,
+    Math.min(first.yMax, second.yMax) - Math.max(first.yMin, second.yMin),
+  )
+  const intersectionArea = intersectionWidth * intersectionHeight
+  const firstArea = first.width * first.height
+  const secondArea = second.width * second.height
+  return intersectionArea / (firstArea + secondArea - intersectionArea)
+}
 
 async function openMuseum(
   page: Page,
   query = '',
   options: { waitForModel?: boolean } = {},
 ): Promise<Locator> {
-  const response = await page.goto(`.${query}`)
+  const response = await page.goto(`./zh-CN/${query}`)
   expect(response?.ok()).toBe(true)
   await expect(
     page.getByRole('heading', { level: 1, name: '史前动物博物馆' }),
@@ -44,16 +135,16 @@ async function expectNoHorizontalOverflow(page: Page): Promise<void> {
 }
 
 async function expectPrimaryTargetsAtLeast48Px(page: Page): Promise<void> {
-  const buttons = page.locator('button:visible')
-  const count = await buttons.count()
+  const targets = page.locator('button:visible, a.animal-card:visible')
+  const count = await targets.count()
   expect(count).toBeGreaterThan(0)
 
   for (let index = 0; index < count; index += 1) {
-    const button = buttons.nth(index)
-    const name = await button.getAttribute('aria-label')
-      ?? (await button.textContent())
+    const target = targets.nth(index)
+    const name = await target.getAttribute('aria-label')
+      ?? (await target.textContent())
       ?? `button ${index}`
-    const box = await button.boundingBox()
+    const box = await target.boundingBox()
     expect(box, `${name} should have a layout box`).not.toBeNull()
     expect(box?.width ?? 0, `${name} width`).toBeGreaterThanOrEqual(48)
     expect(box?.height ?? 0, `${name} height`).toBeGreaterThanOrEqual(48)
@@ -337,13 +428,13 @@ test('loads from the nested static base with Chinese semantics and accessible to
 }) => {
   const museum = await openMuseum(page)
 
-  expect(new URL(page.url()).pathname).toBe(nestedPath)
+  expect(new URL(page.url()).pathname).toBe(`${nestedPath}zh-CN/`)
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
   await expect(page.locator('html')).toHaveAttribute('data-locale', 'zh-CN')
   const moduleScriptUrl = await page
     .locator('script[type="module"]')
     .getAttribute('src')
-  expect(moduleScriptUrl).toMatch(/^\.\/assets\//)
+  expect(moduleScriptUrl).toMatch(/^\.\.\/assets\//)
 
   await expect(
     page.getByText('看看它背上的两排骨板，像不像一列起伏的小山？', {
@@ -359,7 +450,7 @@ test('loads from the nested static base with Chinese semantics and accessible to
     page.getByRole('button', { name: '听它的介绍' }),
   ).toBeEnabled()
   await expect(
-    page.getByRole('button', { name: '查看剑龙' }),
+    page.getByRole('link', { name: '查看剑龙' }),
   ).toHaveAttribute('aria-current', 'true')
   await expect(museum).toHaveAttribute(
     'data-requested-animal-id',
@@ -546,7 +637,11 @@ test('preloads only the adjacent model binaries after the quiet-period gate', as
   expect(failedModelUrls).toEqual([])
 
   const requestsBeforeAdjacentSelection = modelRequestCount
-  await page.getByRole('button', { name: '查看无齿翼龙' }).click()
+  await page
+    .locator(
+      'a[data-animal-detail-link][data-animal-id="pteranodon"]',
+    )
+    .click()
   await expect(page.locator('#museum-experience')).toHaveAttribute(
     'data-ready-animal-id',
     'pteranodon',
@@ -573,7 +668,11 @@ test('shows an adjacent in-memory model without fading the WebGL canvas', async 
     .toBe(3)
   await installModelTransitionProbe(page)
 
-  await page.getByRole('button', { name: '查看无齿翼龙' }).click()
+  await page
+    .locator(
+      'a[data-animal-detail-link][data-animal-id="pteranodon"]',
+    )
+    .click()
   await expect(museum).toHaveAttribute(
     'data-ready-animal-id',
     'pteranodon',
@@ -610,7 +709,11 @@ test('shows a browser-cached model without fading after a hard refresh', async (
   )
   await installModelTransitionProbe(page)
 
-  await page.getByRole('button', { name: '查看无齿翼龙' }).click()
+  await page
+    .locator(
+      'a[data-animal-detail-link][data-animal-id="pteranodon"]',
+    )
+    .click()
   await expect(museum).toHaveAttribute(
     'data-ready-animal-id',
     'pteranodon',
@@ -851,7 +954,7 @@ test('keeps every initial model surface transparent across a hard refresh', asyn
     expect(paints.clearAlpha).toBe(0)
   }
 
-  await page.goto('.')
+  await page.goto('./zh-CN/')
   await assertTransparentStage()
   await page.reload({ waitUntil: 'domcontentloaded' })
   await assertTransparentStage()
@@ -1585,7 +1688,7 @@ test('all English animal titles stay whole at every required viewport', async ({
 }) => {
   test.setTimeout(90_000)
   await page.setViewportSize(requiredViewports[0])
-  const response = await page.goto('.')
+  const response = await page.goto('./zh-CN/')
   expect(response?.ok()).toBe(true)
   await expect(page.getByRole('heading', { level: 2, name: '剑龙' })).toBeVisible()
   await switchToEnglish(page)
@@ -1609,7 +1712,7 @@ test('mobile portrait grows the story card around a three-line animal introducti
 }) => {
   const viewport = { width: 400, height: 704 }
   await page.setViewportSize(viewport)
-  const response = await page.goto('.?animal=plesiosaurus')
+  const response = await page.goto('./zh-CN/?animal=plesiosaurus')
   expect(response?.ok()).toBe(true)
 
   await expect(page.getByRole('heading', { name: '蛇颈龙类' })).toBeVisible()
@@ -1682,7 +1785,7 @@ test('mobile portrait keeps a five-character animal name aligned with its introd
   page,
 }) => {
   await page.setViewportSize({ width: 400, height: 704 })
-  const response = await page.goto('.?animal=mammoth')
+  const response = await page.goto('./zh-CN/?animal=mammoth')
   expect(response?.ok()).toBe(true)
 
   await expect(page.getByRole('heading', { name: '长毛猛犸象' })).toBeVisible()
@@ -1797,6 +1900,259 @@ test.describe('responsive first-model reveal', () => {
   }
 })
 
+test.describe('first-frame preview silhouette', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  const previewViewports = [
+    {
+      height: 768,
+      name: 'desktop-standard-1024x768',
+      poster: 'preview-desktop-standard',
+      profile: 'desktopStandard',
+      width: 1024,
+    },
+    {
+      height: 1024,
+      name: 'tablet-portrait-768x1024',
+      poster: 'preview-tablet-portrait',
+      profile: 'tabletPortrait',
+      width: 768,
+    },
+    {
+      height: 1329,
+      name: 'detail-tablet-portrait-844x1329',
+      path: './en/animals/pachycephalosaurus/',
+      poster: 'preview-tablet-portrait',
+      profile: 'tabletPortrait',
+      width: 844,
+    },
+  ] as const
+
+  for (const viewport of previewViewports) {
+    test(`${viewport.name} keeps Pachycephalosaurus aligned through its first reveal`, async ({
+      page,
+    }) => {
+      test.setTimeout(60_000)
+      await page.setViewportSize(viewport)
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+
+      let releaseModel: () => void = () => {
+        throw new Error('The model request gate was not initialised.')
+      }
+      const modelGate = new Promise<void>((resolve) => {
+        releaseModel = resolve
+      })
+      await page.route('**/*.glb', async (route) => {
+        await modelGate
+        await route.continue()
+      })
+
+      const response = await page.goto(
+        'path' in viewport
+          ? viewport.path
+          : './en/?animal=pachycephalosaurus',
+        { waitUntil: 'domcontentloaded' },
+      )
+      expect(response?.ok()).toBe(true)
+      await expect(
+        page.getByRole('heading', {
+          level: 'path' in viewport ? 1 : 2,
+          name: 'Pachycephalosaurus',
+        }),
+      ).toBeVisible()
+
+      await page.addStyleTag({
+        content: `
+          html,
+          body,
+          #root,
+          .museum-experience,
+          .stage-panel,
+          .viewer-stage,
+          .model-viewport,
+          .viewer-host,
+          .model-composition-frame {
+            background: transparent !important;
+          }
+          html::before,
+          html::after,
+          body::before,
+          body::after,
+          .museum-experience > :not(.stage-panel),
+          .stage-panel > :not(.viewer-stage),
+          .stage-loading,
+          .model-gesture-hint,
+          .model-fallback {
+            visibility: hidden !important;
+          }
+          .viewer-host::after {
+            opacity: 0 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+          }
+        `,
+      })
+
+      const compositionFrame = page.locator('.model-composition-frame')
+      const modelStill = page.locator('.model-still')
+      const canvas = page.locator('.viewer-canvas')
+      await expect(compositionFrame).toBeVisible()
+      const stillCompositionBox = await compositionFrame.boundingBox()
+      expect(stillCompositionBox).not.toBeNull()
+      await expect(modelStill).toBeVisible()
+      await expect(page.locator('.model-viewport')).toHaveAttribute(
+        'data-preview-profile',
+        viewport.profile,
+      )
+      await expect
+        .poll(() =>
+          page
+            .locator('.model-still img')
+            .evaluate((image) => {
+              const source = Reflect.get(image, 'currentSrc') as string
+              return image instanceof HTMLImageElement &&
+                image.complete &&
+                image.naturalWidth > 0
+                ? source
+                : ''
+            }),
+        )
+        .toContain(viewport.poster)
+      await expect
+        .poll(() =>
+          canvas.evaluate(
+            (element) =>
+              typeof Reflect.get(
+                element,
+                '__museumReviewSetAnimationTime',
+              ),
+          ),
+        )
+        .toBe('function')
+
+      const stillPng = await compositionFrame.screenshot({
+        animations: 'disabled',
+        omitBackground: true,
+        scale: 'css',
+        type: 'png',
+      })
+
+      releaseModel()
+      await expect(page.locator('#museum-experience')).toHaveAttribute(
+        'data-ready-animal-id',
+        'pachycephalosaurus',
+        { timeout: 20_000 },
+      )
+      await expect(canvas).toHaveAttribute('data-first-frame-rendered', 'true')
+      const frozeInitialFrame = await canvas.evaluate((element) => {
+        const freeze = Reflect.get(
+          element,
+          '__museumReviewSetAnimationTime',
+        ) as ((time: number | null) => boolean) | undefined
+        return freeze?.(0) ?? false
+      })
+      expect(frozeInitialFrame).toBe(true)
+      await expect(modelStill).toHaveCount(0)
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          }),
+      )
+
+      const webglCompositionBox = await compositionFrame.boundingBox()
+      expect(webglCompositionBox).not.toBeNull()
+
+      const webglPng = await compositionFrame.screenshot({
+        animations: 'disabled',
+        omitBackground: true,
+        scale: 'css',
+        type: 'png',
+      })
+      const [stillBounds, webglBounds] = await Promise.all([
+        normalizedAlphaBounds(stillPng),
+        normalizedAlphaBounds(webglPng),
+      ])
+      expect(
+        stillBounds?.pixelCount ?? 0,
+        `${viewport.name} static preview should contain visible pixels`,
+      ).toBeGreaterThan(0)
+      expect(
+        webglBounds?.pixelCount ?? 0,
+        `${viewport.name} WebGL frame should contain visible pixels`,
+      ).toBeGreaterThan(0)
+      if (!stillBounds || !webglBounds) {
+        throw new Error(`${viewport.name} did not produce two silhouettes.`)
+      }
+      if (!stillCompositionBox || !webglCompositionBox) {
+        throw new Error(`${viewport.name} did not produce two composition boxes.`)
+      }
+
+      const diagnostics = JSON.stringify({
+        stillBounds,
+        stillCompositionBox,
+        webglBounds,
+        webglCompositionBox,
+      })
+      for (const dimension of ['width', 'height'] as const) {
+        expect(
+          Math.abs(stillBounds[dimension] - webglBounds[dimension]),
+          `${viewport.name} ${dimension} mismatch: ${diagnostics}`,
+        ).toBeLessThanOrEqual(0.03)
+      }
+      for (const center of ['centerX', 'centerY'] as const) {
+        expect(
+          Math.abs(stillBounds[center] - webglBounds[center]),
+          `${viewport.name} ${center} mismatch: ${diagnostics}`,
+        ).toBeLessThanOrEqual(0.03)
+      }
+      expect(
+        boundsIntersectionOverUnion(stillBounds, webglBounds),
+        `${viewport.name} bounding-box IoU: ${diagnostics}`,
+      ).toBeGreaterThanOrEqual(0.85)
+      if (viewport.profile === 'tabletPortrait') {
+        for (const bounds of [stillBounds, webglBounds]) {
+          expect(
+            bounds.visualCenterX,
+            `${viewport.name} visual centre: ${diagnostics}`,
+          ).toBeGreaterThanOrEqual(0.47)
+          expect(
+            bounds.visualCenterX,
+            `${viewport.name} visual centre: ${diagnostics}`,
+          ).toBeLessThanOrEqual(0.52)
+        }
+      }
+      if ('path' in viewport) {
+        for (const [bounds, box] of [
+          [stillBounds, stillCompositionBox],
+          [webglBounds, webglCompositionBox],
+        ] as const) {
+          const absoluteVisualCenterX =
+            (box.x + bounds.visualCenterX * box.width) / viewport.width
+          const absoluteVisualCenterY =
+            (box.y + bounds.visualCenterY * box.height) / viewport.height
+          expect(
+            absoluteVisualCenterX,
+            `${viewport.name} absolute horizontal centre: ${diagnostics}`,
+          ).toBeGreaterThanOrEqual(0.47)
+          expect(
+            absoluteVisualCenterX,
+            `${viewport.name} absolute horizontal centre: ${diagnostics}`,
+          ).toBeLessThanOrEqual(0.52)
+          expect(
+            absoluteVisualCenterY,
+            `${viewport.name} absolute vertical centre: ${diagnostics}`,
+          ).toBeGreaterThanOrEqual(0.56)
+          expect(
+            absoluteVisualCenterY,
+            `${viewport.name} absolute vertical centre: ${diagnostics}`,
+          ).toBeLessThanOrEqual(0.62)
+        }
+      }
+    })
+  }
+})
+
 test.describe('required responsive viewports', () => {
   test.describe.configure({ mode: 'serial' })
 
@@ -1804,6 +2160,7 @@ test.describe('required responsive viewports', () => {
     test(`${viewport.name} has safe controls, rail, drawer, and model focus`, async ({
       page,
     }) => {
+      test.setTimeout(60_000)
       await page.setViewportSize({
         width: viewport.width,
         height: viewport.height,

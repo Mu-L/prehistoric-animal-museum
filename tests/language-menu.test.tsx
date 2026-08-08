@@ -22,6 +22,7 @@ describe('LanguageMenu', () => {
   beforeEach(() => {
     window.localStorage.clear()
     window.history.replaceState({}, '', '/museum/')
+    document.cookie = 'museum_locale=; Max-Age=0; Path=/museum'
     document.documentElement.removeAttribute('data-locale')
     document.documentElement.lang = ''
   })
@@ -145,7 +146,58 @@ describe('LanguageMenu', () => {
     expect(parentKeyDown).not.toHaveBeenCalled()
   })
 
-  it('clears the saved choice and locale path when returning to the system language', async () => {
+  it('persists a manual language and keeps the equivalent nested route', async () => {
+    const cookieSetter = vi.spyOn(document, 'cookie', 'set')
+    window.history.replaceState(
+      {},
+      '',
+      '/museum/zh-CN/animals/mosasaurus/?view=model#sources',
+    )
+    const user = userEvent.setup()
+    renderLanguageMenu()
+
+    await user.click(
+      screen.getByRole('button', {
+        name: '切换语言，当前简体中文',
+      }),
+    )
+    await user.click(
+      screen.getByRole('menuitemradio', { name: 'English' }),
+    )
+
+    expect(window.location.pathname).toBe('/museum/en/animals/mosasaurus/')
+    expect(window.location.search).toBe('?view=model')
+    expect(window.location.hash).toBe('#sources')
+    expect(cookieSetter).toHaveBeenCalledWith(
+      'museum_locale=en; Max-Age=31536000; Path=/museum; SameSite=Lax; Secure',
+    )
+  })
+
+  it('still writes the language cookie when local storage is unavailable', async () => {
+    const cookieSetter = vi.spyOn(document, 'cookie', 'set')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage is unavailable.', 'SecurityError')
+    })
+    window.history.replaceState({}, '', '/museum/zh-CN/')
+    const user = userEvent.setup()
+    renderLanguageMenu()
+
+    await user.click(
+      screen.getByRole('button', {
+        name: '切换语言，当前简体中文',
+      }),
+    )
+    await user.click(
+      screen.getByRole('menuitemradio', { name: 'English' }),
+    )
+
+    expect(cookieSetter).toHaveBeenCalledWith(
+      'museum_locale=en; Max-Age=31536000; Path=/museum; SameSite=Lax; Secure',
+    )
+  })
+
+  it('follows the system without returning to the edge entry route', async () => {
+    const cookieSetter = vi.spyOn(document, 'cookie', 'set')
     vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(['zh-TW'])
     vi.spyOn(window.navigator, 'language', 'get').mockReturnValue('zh-TW')
     window.localStorage.setItem(localePreferenceStorageKey, 'en')
@@ -165,9 +217,12 @@ describe('LanguageMenu', () => {
     )
 
     expect(window.localStorage.getItem(localePreferenceStorageKey)).toBeNull()
-    expect(window.location.pathname).toBe('/museum/')
+    expect(window.location.pathname).toBe('/museum/zh-CN/')
     expect(window.location.search).toBe('?animal=stegosaurus')
     expect(window.location.hash).toBe('#model')
+    expect(cookieSetter).toHaveBeenCalledWith(
+      'museum_locale=; Max-Age=0; Path=/museum; SameSite=Lax; Secure',
+    )
     expect(screen.getByText('zh-CN:system')).toBeVisible()
     await waitFor(() => {
       expect(document.documentElement).toHaveAttribute('lang', 'zh-CN')
@@ -208,7 +263,51 @@ describe('LanguageMenu', () => {
       expect(screen.getByText('zh-CN:system')).toBeVisible()
       expect(document.documentElement).toHaveAttribute('lang', 'zh-CN')
     })
-    expect(window.location.pathname).toBe('/museum/')
+    expect(window.location.pathname).toBe('/museum/zh-CN/')
     expect(window.localStorage.getItem(localePreferenceStorageKey)).toBeNull()
+  })
+
+  it('keeps following the system after refreshing a prerendered locale URL', async () => {
+    let languages: string[] = ['en-GB']
+    vi.spyOn(window.navigator, 'languages', 'get').mockImplementation(
+      () => languages,
+    )
+    vi.spyOn(window.navigator, 'language', 'get').mockImplementation(
+      () => languages[0] ?? '',
+    )
+    window.localStorage.setItem(localePreferenceStorageKey, 'en')
+    window.history.replaceState({}, '', '/museum/en/')
+    const firstRender = renderLanguageMenu()
+    const user = userEvent.setup()
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Change language, current English',
+      }),
+    )
+    await user.click(
+      screen.getByRole('menuitemradio', {
+        name: 'Follow system (currently English)',
+      }),
+    )
+    firstRender.unmount()
+
+    render(
+      <I18nProvider
+        initialState={{ locale: 'en', preference: 'en' }}
+      >
+        <LocaleProbe />
+      </I18nProvider>,
+    )
+
+    expect(screen.getByText('en:system')).toBeVisible()
+
+    languages = ['zh-HK']
+    window.dispatchEvent(new Event('languagechange'))
+
+    await waitFor(() => {
+      expect(screen.getByText('zh-CN:system')).toBeVisible()
+    })
+    expect(window.location.pathname).toBe('/museum/zh-CN/')
   })
 })

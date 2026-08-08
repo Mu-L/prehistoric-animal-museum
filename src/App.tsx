@@ -27,6 +27,11 @@ import {
 } from 'react'
 import { NarrationController, getNarrationControlLabel } from './audio'
 import {
+  animalDetailIdFromPath,
+  type AppPageKind,
+  type InitialAppState,
+} from './app-bootstrap'
+import {
   AnimalCollectionSheet,
   type CollectionAnimal,
 } from './components/AnimalCollectionSheet'
@@ -43,10 +48,12 @@ import { ResponsiveAnimalTitle } from './components/ResponsiveAnimalTitle'
 import { SceneAtmosphere } from './components/SceneAtmosphere'
 import { ViewerStage } from './components/ViewerStage'
 import { mainAnimals } from './content/catalog'
+import { animalSeoDescription } from './content/animal-seo'
 import { credits } from './content/credits.generated'
+import { staticAnimalDetailIds } from './content/static-animal-details'
 import type { PublishedAnimalPackage } from './content/types'
 import { I18nProvider, useI18n } from './i18n/I18nProvider'
-import type { Locale } from './i18n/locale'
+import { localeFromPath, type Locale } from './i18n/locale'
 import { updateLocalizedMetadata } from './i18n/metadata'
 import { dietLabel, formatSizeFact, messagesFor } from './i18n/messages'
 import { localReviewAnimals } from 'virtual:local-review-catalog'
@@ -133,6 +140,29 @@ interface ModelLoadingProgress {
 const LARGE_MODEL_NOTICE_DELAY_MS = 600
 const MODEL_PROGRESS_STEP = 5
 const NARRATION_IDLE_PRELOAD_DELAY_MS = 2_000
+const staticAnimalDetailIdSet = new Set<string>(staticAnimalDetailIds)
+
+function animalDetailHref(
+  locale: Locale,
+  animalId: string,
+  rootFallback: boolean,
+  pageKind: AppPageKind,
+): string {
+  if (pageKind === 'animal-detail') {
+    return `../${animalId}/`
+  }
+  const needsLocaleSegment =
+    typeof window === 'undefined'
+      ? rootFallback
+      : localeFromPath(window.location.pathname) === null
+  return needsLocaleSegment
+    ? `./${locale}/animals/${animalId}/`
+    : `./animals/${animalId}/`
+}
+
+function museumExhibitHref(locale: Locale, animalId: string): string {
+  return `../../../${locale}/?animal=${encodeURIComponent(animalId)}`
+}
 
 interface WindowWithIdleCallback {
   readonly requestIdleCallback?: (
@@ -195,9 +225,7 @@ function RailThumbnail({
   readonly src: string
 }) {
   const imageRef = useRef<HTMLImageElement>(null)
-  const [shouldLoad, setShouldLoad] = useState(
-    () => priority || typeof IntersectionObserver === 'undefined',
-  )
+  const [shouldLoad, setShouldLoad] = useState(priority)
   const loadImage = priority || shouldLoad
 
   useEffect(() => {
@@ -380,7 +408,9 @@ function readInitialAnimal(
   animals: readonly RuntimeAnimal[],
   fallback: RuntimeAnimal,
 ): RuntimeAnimal {
-  const requestedId = new URLSearchParams(window.location.search).get('animal')
+  const requestedId =
+    animalDetailIdFromPath(window.location.pathname) ??
+    new URLSearchParams(window.location.search).get('animal')
   return (
     animals.find((animal) => animal.id === requestedId) ??
     animals[0] ??
@@ -388,10 +418,21 @@ function readInitialAnimal(
   )
 }
 
-function replaceAnimalUrl(animalId: string): void {
+function replaceAnimalUrl(
+  animalId: string,
+  pageKind: AppPageKind,
+): void {
   const url = new URL(window.location.href)
-  url.searchParams.set('animal', animalId)
-  window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+  if (pageKind === 'animal-detail') {
+    url.searchParams.delete('animal')
+  } else {
+    url.searchParams.set('animal', animalId)
+  }
+  window.history.replaceState(
+    window.history.state,
+    '',
+    `${url.pathname}${url.search}${url.hash}`,
+  )
 }
 
 function makeE2EFixtures(
@@ -608,13 +649,21 @@ function preloadImageAsset(
 }
 
 function readE2EFixturesEnabled(): boolean {
-  return (
-    import.meta.env.MODE === 'e2e' &&
-    new URLSearchParams(window.location.search).get('fixtures') === '1'
-  )
+  if (import.meta.env.MODE !== 'e2e' || typeof window === 'undefined') {
+    return false
+  }
+  return new URLSearchParams(window.location.search).get('fixtures') === '1'
 }
 
-function MuseumApp() {
+function MuseumApp({
+  initialAnimalId,
+  initialPageKind,
+  rootFallback = false,
+}: {
+  readonly initialAnimalId?: string
+  readonly initialPageKind?: AppPageKind
+  readonly rootFallback?: boolean
+}) {
   const { locale, messages } = useI18n()
   const e2eFixturesEnabled = useMemo(() => readE2EFixturesEnabled(), [])
   const productionAnimals = useMemo(
@@ -648,9 +697,24 @@ function MuseumApp() {
     () => new Map(animals.map((animal) => [animal.id, animal])),
     [animals],
   )
+  const inferredDetailAnimalId = useMemo(
+    () =>
+      typeof window === 'undefined'
+        ? null
+        : animalDetailIdFromPath(window.location.pathname),
+    [],
+  )
+  const resolvedInitialPageKind =
+    initialPageKind ?? (inferredDetailAnimalId ? 'animal-detail' : 'museum')
+  const requestedInitialAnimalId = initialAnimalId ?? inferredDetailAnimalId
   const initialAnimal = useMemo(
-    () => readInitialAnimal(animals, defaultAnimal),
-    [animals, defaultAnimal],
+    () =>
+      (requestedInitialAnimalId
+        ? animals.find(
+            (animal) => animal.id === requestedInitialAnimalId,
+          )
+        : undefined) ?? readInitialAnimal(animals, defaultAnimal),
+    [animals, defaultAnimal, requestedInitialAnimalId],
   )
   const modelCache = useMemo(() => new ModelCache(), [])
   const [idlePreloadTargets] = useState(() =>
@@ -687,6 +751,10 @@ function MuseumApp() {
   const animalIndexRef = useRef(animalIndex)
   const messagesRef = useRef(messages)
   const liveMessageLocaleRef = useRef(locale)
+  const pageKindRef = useRef<AppPageKind>(resolvedInitialPageKind)
+  const detailAnimalIdRef = useRef(
+    resolvedInitialPageKind === 'animal-detail' ? initialAnimal.id : null,
+  )
   useLayoutEffect(() => {
     animalIndexRef.current = animalIndex
   }, [animalIndex])
@@ -714,7 +782,7 @@ function MuseumApp() {
   const requestTokenRef = useRef(0)
   const viewerRequiresRemountRef = useRef(false)
   const drawerTriggerRef = useRef<HTMLButtonElement>(null)
-  const collectionTriggerRef = useRef<HTMLButtonElement>(null)
+  const collectionTriggerRef = useRef<HTMLElement>(null)
   const aboutTriggerRef = useRef<HTMLButtonElement>(null)
   const focusTriggerRef = useRef<HTMLButtonElement>(null)
   const focusExitRef = useRef<HTMLButtonElement>(null)
@@ -723,6 +791,12 @@ function MuseumApp() {
   const [viewerController, setViewerController] = useState<ViewerController | null>(null)
   const [viewerRetryKey, setViewerRetryKey] = useState(0)
   const [activeAnimalId, setActiveAnimalId] = useState(initialAnimal.id)
+  const [pageKind, setPageKind] = useState<AppPageKind>(
+    resolvedInitialPageKind,
+  )
+  useLayoutEffect(() => {
+    pageKindRef.current = pageKind
+  }, [pageKind])
   const [outgoingAnimal, setOutgoingAnimal] = useState<RuntimeAnimal | null>(null)
   const [backgroundTransitionReady, setBackgroundTransitionReady] =
     useState(false)
@@ -744,6 +818,7 @@ function MuseumApp() {
   const [liveMessage, setLiveMessage] = useState(
     messages.loading.initialExhibit(initialAnimal.name),
   )
+  const initialQueryAppliedRef = useRef(false)
 
   const narration = useMemo(() => new NarrationController(), [])
   const narrationSnapshot = useSyncExternalStore(
@@ -755,6 +830,38 @@ function MuseumApp() {
   useEffect(() => {
     activeAnimalRef.current = activeAnimal
   }, [activeAnimal])
+  useEffect(() => {
+    if (
+      pageKindRef.current === 'animal-detail' ||
+      !initialAnimalId ||
+      initialQueryAppliedRef.current
+    ) {
+      return
+    }
+    const requestedAnimalId = new URLSearchParams(window.location.search).get(
+      'animal',
+    )
+    const requestedAnimal = requestedAnimalId
+      ? animalIndex.get(requestedAnimalId)
+      : undefined
+    if (!requestedAnimal || requestedAnimal.id === initialAnimalId) {
+      return
+    }
+
+    // Static prerenders have to use one deterministic animal so hydration can
+    // match byte-for-byte. Apply a deep-link selection immediately after that
+    // first render, before the viewer coordinator starts its initial request.
+    queueMicrotask(() => {
+      if (initialQueryAppliedRef.current) {
+        return
+      }
+      initialQueryAppliedRef.current = true
+      activeAnimalRef.current = requestedAnimal
+      visibleBackgroundRef.current = requestedAnimal
+      setActiveAnimalId(requestedAnimal.id)
+      setLiveMessage(messages.loading.initialExhibit(requestedAnimal.name))
+    })
+  }, [animalIndex, initialAnimalId, messages.loading])
   const overlayOpen = drawerOpen || collectionOpen || aboutOpen
   const collectionAnimals = useMemo<CollectionAnimal[]>(
     () =>
@@ -768,15 +875,26 @@ function MuseumApp() {
   )
 
   useEffect(() => {
+    const animalDetail =
+      pageKind === 'animal-detail'
+        ? {
+            description: animalSeoDescription(activeAnimal.narrationScript),
+            id: activeAnimal.id,
+            name: activeAnimal.name,
+          }
+        : undefined
     updateLocalizedMetadata({
       locale,
-      documentTitle: messages.documentTitle,
+      documentTitle: animalDetail
+        ? `${activeAnimal.name} | ${messages.museumName}`
+        : messages.documentTitle,
       museumTitle: messages.museumName,
       creatorBrand: messages.creatorBrand,
       description: messages.seo.description(animals.length),
       socialImageAlt: messages.seo.socialImageAlt,
+      ...(animalDetail ? { animalDetail } : {}),
     })
-  }, [animals.length, locale, messages])
+  }, [activeAnimal.id, activeAnimal.name, activeAnimal.narrationScript, animals.length, locale, messages, pageKind])
 
   useEffect(() => {
     viewerController?.setAccessibilityLabel(
@@ -1318,7 +1436,7 @@ function MuseumApp() {
           setModelLoadingProgress(null)
         }
         setViewerFailure(null)
-        replaceAnimalUrl(localizedAnimal.id)
+        replaceAnimalUrl(localizedAnimal.id, pageKindRef.current)
         narration.commit({
           animalId: localizedAnimal.id,
           source: localizedAnimal.assets.narration,
@@ -1373,6 +1491,31 @@ function MuseumApp() {
     scheduleLargeModelNotice,
     viewerController,
   ])
+
+  useEffect(() => {
+    if (pageKindRef.current === 'animal-detail') {
+      return
+    }
+    const requestedAnimalId = new URLSearchParams(window.location.search).get(
+      'animal',
+    )
+    const coordinator = coordinatorRef.current
+    if (
+      !requestedAnimalId ||
+      !animalIndex.has(requestedAnimalId) ||
+      !coordinator
+    ) {
+      return
+    }
+    const snapshot = coordinator.getSnapshot()
+    if (
+      snapshot.requestedAnimalId === requestedAnimalId &&
+      snapshot.phase !== 'failed'
+    ) {
+      return
+    }
+    void coordinator.request(requestedAnimalId)
+  }, [animalIndex, viewerController])
 
   useEffect(() => {
     const followRequestedAnimal =
@@ -1441,6 +1584,23 @@ function MuseumApp() {
     }
   }, [focusMode])
 
+  const leaveAnimalDetailRoute = useCallback(
+    (animalId: string) => {
+      if (pageKindRef.current !== 'animal-detail') {
+        return
+      }
+      pageKindRef.current = 'museum'
+      detailAnimalIdRef.current = null
+      window.history.replaceState(
+        window.history.state,
+        '',
+        museumExhibitHref(locale, animalId),
+      )
+      setPageKind('museum')
+    },
+    [locale],
+  )
+
   const requestAnimal = (animalId: string) => {
     const coordinator = coordinatorRef.current
     if (!coordinator) {
@@ -1453,6 +1613,12 @@ function MuseumApp() {
         snapshot.requestedAnimalId === animalId)
     ) {
       return
+    }
+    if (
+      pageKindRef.current === 'animal-detail' &&
+      animalId !== detailAnimalIdRef.current
+    ) {
+      leaveAnimalDetailRoute(animalId)
     }
     idlePreloadCoordinatorRef.current?.cancelAll()
     clearLargeModelNotice()
@@ -1626,6 +1792,7 @@ function MuseumApp() {
       data-atmosphere={activeAnimal.atmosphere}
       data-habitat={activeAnimal.habitat}
       data-locale={locale}
+      data-page-kind={pageKind}
       data-ready-animal-id={loadSnapshot.readyAnimalId ?? ''}
       data-review-mode={localReviewMode || undefined}
       data-request-token={loadSnapshot.requestToken}
@@ -1657,15 +1824,27 @@ function MuseumApp() {
         <section aria-hidden={overlayOpen} className="story-panel" inert={overlayOpen}>
           <div className="story-card">
             <div className="museum-header">
-              <h1 className="museum-kicker">
-                <span className="museum-mark" aria-hidden="true">
-                  <Leaf size={16} strokeWidth={2.3} />
-                </span>
-                <span>{messages.museumName}</span>
-                {localReviewMode ? (
-                  <span className="review-mode-label">{messages.localReview}</span>
-                ) : null}
-              </h1>
+              {pageKind === 'animal-detail' ? (
+                <div className="museum-kicker">
+                  <span className="museum-mark" aria-hidden="true">
+                    <Leaf size={16} strokeWidth={2.3} />
+                  </span>
+                  <span>{messages.museumName}</span>
+                  {localReviewMode ? (
+                    <span className="review-mode-label">{messages.localReview}</span>
+                  ) : null}
+                </div>
+              ) : (
+                <h1 className="museum-kicker">
+                  <span className="museum-mark" aria-hidden="true">
+                    <Leaf size={16} strokeWidth={2.3} />
+                  </span>
+                  <span>{messages.museumName}</span>
+                  {localReviewMode ? (
+                    <span className="review-mode-label">{messages.localReview}</span>
+                  ) : null}
+                </h1>
+              )}
               <button
                 aria-label={messages.creatorAboutLabel}
                 className="creator-signature-button"
@@ -1697,7 +1876,10 @@ function MuseumApp() {
                     </span>
                   ) : null}
                 </div>
-                <ResponsiveAnimalTitle locale={locale}>
+                <ResponsiveAnimalTitle
+                  as={pageKind === 'animal-detail' ? 'h1' : 'h2'}
+                  locale={locale}
+                >
                   {activeAnimal.name}
                 </ResponsiveAnimalTitle>
                 <p className="child-intro">
@@ -1761,20 +1943,53 @@ function MuseumApp() {
               <BookOpen aria-hidden="true" size={21} strokeWidth={2.1} />
               <span>{messages.parentInfoShort}</span>
             </button>
-            <button
-              aria-label={messages.openCollection}
-              className="collection-open-button"
-              onClick={() => {
-                setDrawerOpen(false)
-                setAboutOpen(false)
-                setCollectionOpen(true)
-              }}
-              ref={collectionTriggerRef}
-              type="button"
-            >
-              <LayoutGrid aria-hidden="true" size={21} strokeWidth={2.1} />
-              <span>{messages.collectionShort}</span>
-            </button>
+            {pageKind === 'animal-detail' ? (
+              <a
+                aria-label={messages.returnToMuseum}
+                className="collection-open-button"
+                data-museum-return=""
+                href={museumExhibitHref(locale, activeAnimal.id)}
+                onClick={(event) => {
+                  if (
+                    event.button !== 0 ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey
+                  ) {
+                    return
+                  }
+                  event.preventDefault()
+                  leaveAnimalDetailRoute(activeAnimal.id)
+                  setDrawerOpen(false)
+                  setAboutOpen(false)
+                  setCollectionOpen(true)
+                }}
+                ref={(element) => {
+                  collectionTriggerRef.current = element
+                }}
+              >
+                <LayoutGrid aria-hidden="true" size={21} strokeWidth={2.1} />
+                <span>{messages.returnToMuseumShort}</span>
+              </a>
+            ) : (
+              <button
+                aria-label={messages.openCollection}
+                className="collection-open-button"
+                onClick={() => {
+                  setDrawerOpen(false)
+                  setAboutOpen(false)
+                  setCollectionOpen(true)
+                }}
+                ref={(element) => {
+                  collectionTriggerRef.current = element
+                }}
+                type="button"
+              >
+                <LayoutGrid aria-hidden="true" size={21} strokeWidth={2.1} />
+                <span>{messages.collectionShort}</span>
+              </button>
+            )}
           </div>
         </section>
       ) : null}
@@ -1877,73 +2092,117 @@ function MuseumApp() {
                 loadSnapshot.phase === 'failed' &&
                 loadSnapshot.requestedAnimalId === animal.id
               const selected = loadSnapshot.readyAnimalId === animal.id
-              return (
-                <div className="animal-card-slot" key={animal.id} role="listitem">
-                  <button
-                    aria-current={selected ? 'true' : undefined}
-                    aria-label={messages.viewAnimal(
-                      animal.name,
-                      localReviewMode && animal.review
-                        ? animal.review.displayLabel
-                        : '',
-                      failed,
-                    )}
-                    className="animal-card"
-                    data-animal-id={animal.id}
-                    data-failed={failed}
-                    data-loading={loading}
-                    data-selected={selected}
-                    onClick={() => {
-                      if (failed) {
-                        retryAnimal()
-                      } else {
-                        requestAnimal(animal.id)
+              const activateAnimal = () => {
+                if (failed) {
+                  retryAnimal()
+                } else {
+                  requestAnimal(animal.id)
+                }
+              }
+              const cardAttributes = {
+                'aria-current': selected ? ('true' as const) : undefined,
+                'aria-label': messages.viewAnimal(
+                  animal.name,
+                  localReviewMode && animal.review
+                    ? animal.review.displayLabel
+                    : '',
+                  failed,
+                ),
+                className: 'animal-card',
+                'data-animal-id': animal.id,
+                'data-failed': failed,
+                'data-loading': loading,
+                'data-selected': selected,
+              }
+              const cardContents = (
+                <>
+                  <span className="thumbnail-frame">
+                    <RailThumbnail
+                      priority={
+                        animal.id === activeAnimal.id ||
+                        animal.id === loadSnapshot.requestedAnimalId
                       }
-                    }}
-                    type="button"
-                  >
-                    <span className="thumbnail-frame">
-                      <RailThumbnail
-                        priority={
-                          animal.id === activeAnimal.id ||
-                          animal.id === loadSnapshot.requestedAnimalId
-                        }
-                        rootRef={railRef}
-                        src={animal.assets.thumbnail}
-                      />
-                      {localReviewMode && animal.review ? (
-                        <span
-                          aria-hidden="true"
-                          className="review-thumbnail-badge"
-                          data-package-status={animal.review.packageStatus}
-                        >
-                          {animal.review.stateLabel}
-                        </span>
-                      ) : null}
-                      {loading ? <span aria-hidden="true" className="loading-orbit" /> : null}
-                    </span>
-                    <strong>{animal.name}</strong>
-                    {loading &&
-                    !initialLoading &&
-                    loadSnapshot.showDelayedLabel ? (
-                      <span className="card-status">
-                        {loadingPhase === 'preparing'
-                          ? messages.loading.opening
-                          : loadingPercent === null
-                            ? messages.loading.inviting
-                            : messages.loading.downloading(loadingPercent)}
+                      rootRef={railRef}
+                      src={animal.assets.thumbnail}
+                    />
+                    {localReviewMode && animal.review ? (
+                      <span
+                        aria-hidden="true"
+                        className="review-thumbnail-badge"
+                        data-package-status={animal.review.packageStatus}
+                      >
+                        {animal.review.stateLabel}
                       </span>
                     ) : null}
-                    {failed ? (
-                      <span className="card-status">{messages.loading.retry}</span>
+                    {loading ? (
+                      <span aria-hidden="true" className="loading-orbit" />
                     ) : null}
-                    {!failed &&
-                    (!loading || !loadSnapshot.showDelayedLabel) &&
-                    localReviewMode &&
-                    animal.review ? (
-                      <span className="card-review-status">{messages.localReview}</span>
-                    ) : null}
-                  </button>
+                  </span>
+                  <strong>{animal.name}</strong>
+                  {loading &&
+                  !initialLoading &&
+                  loadSnapshot.showDelayedLabel ? (
+                    <span className="card-status">
+                      {loadingPhase === 'preparing'
+                        ? messages.loading.opening
+                        : loadingPercent === null
+                          ? messages.loading.inviting
+                          : messages.loading.downloading(loadingPercent)}
+                    </span>
+                  ) : null}
+                  {failed ? (
+                    <span className="card-status">{messages.loading.retry}</span>
+                  ) : null}
+                  {!failed &&
+                  (!loading || !loadSnapshot.showDelayedLabel) &&
+                  localReviewMode &&
+                  animal.review ? (
+                    <span className="card-review-status">
+                      {messages.localReview}
+                    </span>
+                  ) : null}
+                </>
+              )
+              const detailHref = staticAnimalDetailIdSet.has(animal.id)
+                ? animalDetailHref(
+                    locale,
+                    animal.id,
+                    rootFallback,
+                    pageKind,
+                  )
+                : null
+              return (
+                <div className="animal-card-slot" key={animal.id} role="listitem">
+                  {detailHref ? (
+                    <a
+                      {...cardAttributes}
+                      data-animal-detail-link=""
+                      href={detailHref}
+                      onClick={(event) => {
+                        if (
+                          event.button !== 0 ||
+                          event.metaKey ||
+                          event.ctrlKey ||
+                          event.shiftKey ||
+                          event.altKey
+                        ) {
+                          return
+                        }
+                        event.preventDefault()
+                        activateAnimal()
+                      }}
+                    >
+                      {cardContents}
+                    </a>
+                  ) : (
+                    <button
+                      {...cardAttributes}
+                      onClick={activateAnimal}
+                      type="button"
+                    >
+                      {cardContents}
+                    </button>
+                  )}
                 </div>
               )
             })}
@@ -2028,10 +2287,27 @@ function MuseumApp() {
   )
 }
 
-export function App() {
+export function App({
+  initialState,
+}: {
+  readonly initialState?: InitialAppState
+} = {}) {
   return (
-    <I18nProvider>
-      <MuseumApp />
+    <I18nProvider
+      {...(initialState
+        ? {
+            initialState: {
+              locale: initialState.locale,
+              preference: initialState.preference,
+            },
+          }
+        : {})}
+    >
+      <MuseumApp
+        {...(initialState ? { initialAnimalId: initialState.animalId } : {})}
+        {...(initialState ? { initialPageKind: initialState.pageKind } : {})}
+        rootFallback={initialState?.rootFallback ?? false}
+      />
     </I18nProvider>
   )
 }

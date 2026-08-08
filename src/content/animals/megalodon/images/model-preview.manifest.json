@@ -1,49 +1,49 @@
 {
   "animalId": "megalodon",
-  "contractVersion": 1,
-  "generatedAt": "2026-08-05T02:30:17.153Z",
-  "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":1},\"presentation\":{\"cameraLightScale\":2.1,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":true,\"safeAreaPadding\":{\"landscape\":0.12,\"portrait\":0.16},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.34,\"verticalOffset\":{\"landscape\":0.04,\"portrait\":0.04}}}",
+  "contractVersion": 2,
+  "generatedAt": "2026-08-08T12:50:09.287Z",
+  "presentationSignature": "{\"contractVersion\":2,\"renderer\":{\"cameraFieldOfViewDegrees\":34,\"maxPixelRatio\":2},\"layout\":{\"coordinateSystem\":\"fixed-fullscreen-canvas+composition-frame-v1\",\"previewObjectFit\":\"contain\",\"referenceViewports\":[{\"key\":\"landscapeCompact\",\"width\":844,\"height\":390},{\"key\":\"desktopWide\",\"width\":1280,\"height\":720},{\"key\":\"phonePortraitCompact\",\"width\":360,\"height\":640},{\"key\":\"phonePortraitTall\",\"width\":390,\"height\":844},{\"key\":\"tabletPortrait\",\"width\":768,\"height\":1024},{\"key\":\"desktopStandard\",\"width\":1440,\"height\":900}]},\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":1},\"presentation\":{\"cameraLightScale\":2.1,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":true,\"safeAreaPadding\":{\"landscape\":0.12,\"portrait\":0.16},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.34,\"verticalOffset\":{\"landscape\":0.04,\"portrait\":0.04}}}",
   "profiles": {
     "landscapeCompact": {
-      "bytes": 80552,
+      "bytes": 84868,
       "fileName": "preview-landscape-compact.webp",
       "height": 650,
-      "sha256": "de3b08a9332ffdba1d316d6248823cfef0d0a31d80bfe0ca5f459e5781f4bfb6",
+      "sha256": "6c35ae9b0819b295ae5bdbc7b7dddc0c72ec74f47ef1e1462c669f0902509d96",
       "width": 1250
     },
     "desktopWide": {
-      "bytes": 88710,
+      "bytes": 94190,
       "fileName": "preview-desktop-wide.webp",
       "height": 800,
-      "sha256": "f2d1ac391888aad70aef764f8561af2c4985d53de5ad316a43132b674fee3226",
+      "sha256": "6fb20109c8a39d277169923486570b74c78ec5c52452b2f48cc1cad605377f41",
       "width": 1200
     },
     "phonePortraitCompact": {
-      "bytes": 43408,
+      "bytes": 46182,
       "fileName": "preview-phone-compact.webp",
       "height": 1000,
-      "sha256": "0040c505dc15094b176fa526227912fdb0dac6f99dc0134c17da13810a70c408",
+      "sha256": "13d8383de8d9ec719bfb2f3a51ce41ceb02c151bbeca61de75147d26d3b9fc6e",
       "width": 875
     },
     "phonePortraitTall": {
-      "bytes": 31974,
+      "bytes": 33056,
       "fileName": "preview-phone-tall.webp",
       "height": 1000,
-      "sha256": "d2eaa98acbd426d979535421114299ade05389d032a5cbf83f14fb87b8d4ed82",
+      "sha256": "ab9995abb6044442788847c84d834ba4227310168b2cd6dfb206460606d37b64",
       "width": 640
     },
     "tabletPortrait": {
-      "bytes": 52356,
+      "bytes": 54586,
       "fileName": "preview-tablet-portrait.webp",
       "height": 960,
-      "sha256": "96389e6af379cad44245a090d16cf226cc5b2a61b054d1f0aa493544707aa596",
+      "sha256": "8d868326c4850b9727da6c8ca2989710a43ac555d9d9e800b3f9c632ef1bd021",
       "width": 900
     },
     "desktopStandard": {
-      "bytes": 93926,
+      "bytes": 97108,
       "fileName": "preview-desktop-standard.webp",
       "height": 960,
-      "sha256": "c967df36c21d7808d8315a79496f02b8cd36196a15a496d3a2fec16d389e7497",
+      "sha256": "2f66385272123a76b2b860625dcba77c254ba09c30aa738d502e6555a98faf78",
       "width": 1200
     }
   },

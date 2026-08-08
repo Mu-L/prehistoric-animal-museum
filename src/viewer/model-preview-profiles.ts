@@ -1,5 +1,17 @@
-export const MODEL_PREVIEW_CONTRACT_VERSION = 1
+export const MODEL_PREVIEW_CONTRACT_VERSION = 2
 export const MODEL_PREVIEW_MANIFEST_FILE = 'model-preview.manifest.json'
+
+/**
+ * These values are part of the generated-preview camera/layout contract.
+ * Bump MODEL_PREVIEW_CONTRACT_VERSION and regenerate every preview whenever
+ * the full-screen canvas, composition frame, camera, pixel ratio, or preview
+ * object-fit behavior changes.
+ */
+export const MODEL_PREVIEW_CAMERA_FIELD_OF_VIEW_DEGREES = 34
+export const MODEL_PREVIEW_MAX_PIXEL_RATIO = 2
+export const MODEL_PREVIEW_LAYOUT_COORDINATE_SYSTEM =
+  'fixed-fullscreen-canvas+composition-frame-v1'
+export const MODEL_PREVIEW_OBJECT_FIT = 'contain'
 
 /**
  * A preview profile describes the stable inner model viewport, not the full

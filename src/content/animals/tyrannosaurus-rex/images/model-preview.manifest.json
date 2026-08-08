@@ -1,8 +1,8 @@
 {
   "animalId": "tyrannosaurus-rex",
-  "contractVersion": 1,
-  "generatedAt": "2026-08-08T14:00:15.135Z",
-  "presentationSignature": "{\"contractVersion\":1,\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.9},\"presentation\":{\"cameraLightScale\":1.3,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.12,\"portrait\":0.12},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.42,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.12,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
+  "contractVersion": 2,
+  "generatedAt": "2026-08-08T16:08:58.971Z",
+  "presentationSignature": "{\"contractVersion\":2,\"renderer\":{\"cameraFieldOfViewDegrees\":34,\"maxPixelRatio\":2},\"layout\":{\"coordinateSystem\":\"fixed-fullscreen-canvas+composition-frame-v1\",\"previewObjectFit\":\"contain\",\"referenceViewports\":[{\"key\":\"landscapeCompact\",\"width\":844,\"height\":390},{\"key\":\"desktopWide\",\"width\":1280,\"height\":720},{\"key\":\"phonePortraitCompact\",\"width\":360,\"height\":640},{\"key\":\"phonePortraitTall\",\"width\":390,\"height\":844},{\"key\":\"tabletPortrait\",\"width\":768,\"height\":1024},{\"key\":\"desktopStandard\",\"width\":1440,\"height\":900}]},\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.9},\"presentation\":{\"cameraLightScale\":1.3,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.12,\"portrait\":0.12},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.42,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.12,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
   "profiles": {
     "landscapeCompact": {
       "bytes": 120814,

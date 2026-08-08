@@ -93,11 +93,18 @@ describe('static multilingual delivery', () => {
     const sourceDirectory = join(fixtureRoot, 'dist')
     const outputDirectory = join(fixtureRoot, 'cloudflare-dist')
     await mkdir(join(sourceDirectory, 'en'), { recursive: true })
+    await mkdir(join(sourceDirectory, 'en/animals/stegosaurus'), {
+      recursive: true,
+    })
     await mkdir(join(sourceDirectory, 'zh-CN'), { recursive: true })
     await mkdir(join(sourceDirectory, 'assets'), { recursive: true })
     await Promise.all([
       writeFile(join(sourceDirectory, 'index.html'), 'ROOT'),
       writeFile(join(sourceDirectory, 'en/index.html'), 'ENGLISH'),
+      writeFile(
+        join(sourceDirectory, 'en/animals/stegosaurus/index.html'),
+        'STEGOSAURUS DETAIL',
+      ),
       writeFile(join(sourceDirectory, 'zh-CN/index.html'), 'CHINESE'),
       writeFile(join(sourceDirectory, 'assets/app.js'), 'APP'),
       writeFile(join(sourceDirectory, 'robots.txt'), 'ROBOTS'),
@@ -116,6 +123,15 @@ describe('static multilingual delivery', () => {
     expect(
       await readFile(join(outputDirectory, 'museum/zh-CN/index.html'), 'utf8'),
     ).toBe('CHINESE')
+    expect(
+      await readFile(
+        join(
+          outputDirectory,
+          'museum/en/animals/stegosaurus/index.html',
+        ),
+        'utf8',
+      ),
+    ).toBe('STEGOSAURUS DETAIL')
     expect(await readFile(join(outputDirectory, 'robots.txt'), 'utf8')).toBe(
       'ROBOTS',
     )
@@ -132,16 +148,43 @@ describe('static multilingual delivery', () => {
       '/ /museum/ 301',
     )
     const redirects = await readFile(join(outputDirectory, '_redirects'), 'utf8')
+    expect(redirects).not.toContain('/museum /museum/ 301')
     expect(redirects).toContain('/museum/index.html /museum/ 301')
     expect(redirects).toContain(
       '/museum/zh-CN/index.html /museum/zh-CN/ 301',
     )
     expect(redirects).toContain('/museum/en/index.html /museum/en/ 301')
+    expect(redirects).toContain(
+      '/museum/en/animals/stegosaurus /museum/en/animals/stegosaurus/ 301',
+    )
+    expect(redirects).toContain(
+      '/museum/en/animals/stegosaurus/index.html /museum/en/animals/stegosaurus/ 301',
+    )
     const headers = await readFile(join(outputDirectory, '_headers'), 'utf8')
     expect(headers).toContain('/museum/assets/*')
     expect(headers).toContain('/museum/zh-CN/')
     expect(headers).toContain('/museum/en/')
+    for (const locale of ['zh-CN', 'en']) {
+      expect(headers).toContain(`/museum/${locale}/animals/*
+  Cache-Control: public, max-age=0, must-revalidate`)
+    }
+    const headerRules = headers
+      .split(/\r?\n/u)
+      .filter((line) => line.startsWith('/'))
+    const perDetailHeaderRules = headerRules.filter((rule) =>
+      /^\/museum\/(?:zh-CN|en)\/animals\/(?!\*$)/u.test(rule),
+    )
+    expect(perDetailHeaderRules).toEqual([])
+    expect(headerRules.length).toBeLessThan(50)
     expect(headers).not.toContain('\n/museum/*\n')
+
+    expect(
+      JSON.parse(await readFile(join(outputDirectory, '_routes.json'), 'utf8')),
+    ).toEqual({
+      version: 1,
+      include: ['/museum', '/museum/'],
+      exclude: [],
+    })
   })
 
   it('serves locale directory indexes and returns the real 404 document', async () => {

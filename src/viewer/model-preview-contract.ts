@@ -1,5 +1,12 @@
 import type { ViewerModelDescriptor } from './viewer-model-descriptor'
-import { MODEL_PREVIEW_CONTRACT_VERSION } from './model-preview-profiles'
+import {
+  MODEL_PREVIEW_CAMERA_FIELD_OF_VIEW_DEGREES,
+  MODEL_PREVIEW_CONTRACT_VERSION,
+  MODEL_PREVIEW_LAYOUT_COORDINATE_SYSTEM,
+  MODEL_PREVIEW_MAX_PIXEL_RATIO,
+  MODEL_PREVIEW_OBJECT_FIT,
+  modelPreviewProfiles,
+} from './model-preview-profiles'
 
 type PreviewDescriptor = Pick<ViewerModelDescriptor, 'animation' | 'presentation'>
 
@@ -13,6 +20,22 @@ export function createModelPreviewPresentationSignature(
   const { animation, presentation } = descriptor
   return JSON.stringify({
     contractVersion: MODEL_PREVIEW_CONTRACT_VERSION,
+    renderer: {
+      cameraFieldOfViewDegrees:
+        MODEL_PREVIEW_CAMERA_FIELD_OF_VIEW_DEGREES,
+      maxPixelRatio: MODEL_PREVIEW_MAX_PIXEL_RATIO,
+    },
+    layout: {
+      coordinateSystem: MODEL_PREVIEW_LAYOUT_COORDINATE_SYSTEM,
+      previewObjectFit: MODEL_PREVIEW_OBJECT_FIT,
+      referenceViewports: modelPreviewProfiles.map(
+        ({ key, referenceHeight, referenceWidth }) => ({
+          key,
+          width: referenceWidth,
+          height: referenceHeight,
+        }),
+      ),
+    },
     animation: animation
       ? {
           clip: animation.clip,
