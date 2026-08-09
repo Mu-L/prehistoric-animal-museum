@@ -2,30 +2,35 @@ Background generation record
 ============================
 
 Tool: OpenAI built-in image_gen
-Generated: 2026-07-29; portrait revised 2026-07-31
+Generated: 2026-08-09
 Use: project-specific responsive museum backgrounds
 
 Prompt direction:
-Precisely edit the accepted Morrison floodplain while preserving its
-layered-paper and soft-gouache style, warm palette, mesas, conifers, tree
-ferns, textures, and side framing. The landscape keeps its horizon near 42%.
-For the revised portrait, move the distant horizon and beginning of the open
-valley ground upward about 7–9% of image height, extending the central dirt
-path behind an Apatosaurus whose feet sit around 57% image height. Keep one
-continuous solid ground plane with no platform, ledge, hard seam, or new focal
-object. No animal, person, text, UI, logo, watermark, shadow, or baked-in
-particles.
+Generate a believable empty Late-Jurassic Morrison Formation floodplain as a
+photorealistic natural-history environment plate. Match the cool gray-olive
+Apatosaurus material and soft upper-left lighting without rendering the
+animal. Use smooth warm-gray sandy loam, restrained dusty clay, desaturated
+sage vegetation, distant blue-gray haze, and subdued mesas. Keep the distant
+tree line low so the sauropod retains its scale. Provide one continuous level
+ground plane with the horizon near 41% and the foot band near 64% in landscape
+and 61-64% in portrait.
 
-The accepted 16:9 and 9:16 images were edited independently rather than
-cropped from one another.
+Explicitly avoid all-over cracked mud, pebble carpets, dense dots, repeated
+cellular or honeycomb texture, sharp gravel everywhere, saturated yellow-orange
+wash, narrowing roads, platforms, ledges, footprints, baked-in shadows,
+animals, people, text, UI, logos, and watermarks.
+
+The final 16:9 and 9:16 images were generated as separate compositions. The
+transparent model previews were used only as colour, material, scale, and
+lighting references.
 
 Landscape source PNG:
-- bytes: 2599138
-- SHA-256: 347e585b06cf58292c1a56c9150e5325a51b8fe43bd6125d3a313fb3c1c0b111
+- bytes: 2190064
+- SHA-256: 6c544f1a9a0260d243bbd9fe750bc0a7342567fcfb72877f19a383231f340457
 
 Portrait source PNG:
-- bytes: 2601546
-- SHA-256: 82c6fe696b2bb1993241d95be0902906200790522a902901b570cea6c4a316a6
+- bytes: 2136494
+- SHA-256: 6b7f397290ecfeb8c92fc769f6795a5443c77a00fcbc0c2bfae2c9c6ddb0c2b1
 
-The runtime copies were converted to WebP at quality 82 with metadata removed. Public
-release remains subject to the repository owner's final rights review.
+The runtime copies were converted to WebP at quality 82 with metadata removed.
+Public release remains subject to the repository owner's final rights review.

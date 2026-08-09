@@ -651,6 +651,20 @@ describe('local collection review catalog', () => {
     })
   })
 
+  it('keeps the Apatosaurus contact shadow under its four-foot cluster', () => {
+    const apatosaurus = localReviewAnimals.find(
+      ({ id }) => id === 'apatosaurus',
+    )
+
+    expect(apatosaurus?.presentation).toMatchObject({
+      shadow: 'ground',
+      shadowDepthScale: 0.9,
+      shadowHorizontalOffset: -0.62,
+      shadowOpacity: 0.46,
+      shadowScale: 0.34,
+    })
+  })
+
   it('keeps each two-sentence narration exactly aligned with the visible feature', () => {
     for (const animal of localReviewAnimals) {
       const content = animal.content['zh-CN']

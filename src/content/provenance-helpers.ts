@@ -31,23 +31,26 @@ const sharedBackgroundPrompt =
 const habitatBackgroundPrompt =
   'Refined layered paper-cut picture-book art with soft gouache texture, tactile matte paper, and shallow soft shadows; an empty scientifically era-appropriate habitat behind a full-body 3D animal; quiet central safe area; no animal, person, text, UI, logo, watermark, photorealism, or baked-in particles because CSS supplies the atmosphere.'
 
+const naturalisticBackgroundPrompt =
+  'Photorealistic natural-history environment plate with believable atmospheric depth, soft cloud-filtered daylight from high camera-left, physically plausible soil and vegetation, and a quiet continuous staging plane behind a live full-body 3D animal. Keep ground detail broad, sparse, and true to real-world scale; no all-over cracks, pebble carpet, dense dots, repeated cellular texture, animal, person, footprint, bone, text, UI, logo, watermark, platform, or baked-in shadow.'
+
 export const reviewedBackgroundSources = {
   apatosaurus: {
     landscape: {
       title: 'Apatosaurus Morrison floodplain — landscape',
-      generatedOn: '2026-07-29',
-      prompt: `${habitatBackgroundPrompt} Preserve the accepted Late-Jurassic Morrison alluvial plain, but raise the distant horizon to about 42% of the 16:9 frame and recompose the terrain so the central sauropod staging band is continuous solid ground.`,
-      bytes: 2_599_138,
+      generatedOn: '2026-08-09',
+      prompt: `${naturalisticBackgroundPrompt} True 16:9 Late-Jurassic Morrison Formation floodplain after the wet season, with smooth compacted warm-gray sandy loam, sparse low plants, distant subdued mesas, and a low conifer, cycad, and tree-fern line. Keep the horizon near 41% and the central 44–76% as uninterrupted level ground; the feet meet near 64%. Match a cool charcoal-gray and muted-olive Apatosaurus without a yellow-orange wash.`,
+      bytes: 2_190_064,
       sha256:
-        '347e585b06cf58292c1a56c9150e5325a51b8fe43bd6125d3a313fb3c1c0b111',
+        '6c544f1a9a0260d243bbd9fe750bc0a7342567fcfb72877f19a383231f340457',
     },
     portrait: {
       title: 'Apatosaurus Morrison floodplain — portrait',
-      generatedOn: '2026-07-31',
-      prompt: `${habitatBackgroundPrompt} Precise portrait edit: change only the scene depth; move the distant horizon and start of the open valley ground upward about 7–9% of the image height so the central dirt path reaches farther into the distance and remains continuous beneath an Apatosaurus whose feet sit around 57% image height. Preserve the accepted 9:16 Morrison valley, sky, border trees, palms, cliffs, foreground plants, rocks, palette, lighting, texture, and perspective; no platform, ledge, hard seam, or new focal object.`,
-      bytes: 2_601_546,
+      generatedOn: '2026-08-09',
+      prompt: `${naturalisticBackgroundPrompt} Separately compose a 9:16 Morrison Formation alluvial terrace with smooth warm-gray sandy loam, sparse edge vegetation, distant gray-mauve bluffs, and a low misty conifer, cycad, and tree-fern line. Keep the horizon near 41%, continuous ground from 43–88%, and the 61–64% foot band level and unobstructed. Match a huge cool gray-olive Apatosaurus without a narrowing road or saturated desert color.`,
+      bytes: 2_136_494,
       sha256:
-        '82c6fe696b2bb1993241d95be0902906200790522a902901b570cea6c4a316a6',
+        '6b7f397290ecfeb8c92fc769f6795a5443c77a00fcbc0c2bfae2c9c6ddb0c2b1',
     },
   },
   gigantoraptor: {
@@ -221,19 +224,19 @@ export const reviewedBackgroundSources = {
   tyrannosaurusRex: {
     landscape: {
       title: 'Tyrannosaurus wooded floodplain — landscape',
-      generatedOn: '2026-07-29',
-      prompt: `${habitatBackgroundPrompt} Precisely preserve the accepted raised-horizon late-Cretaceous wooded floodplain composition while brightening the central staging band by about 20–25%, shifting muddy brown ground toward pale cool sandy taupe, and softening the mid-forest to desaturated sage and misty blue-green so a dark-brown Tyrannosaurus remains clearly separated.`,
-      bytes: 3_413_758,
+      generatedOn: '2026-08-09',
+      prompt: `${naturalisticBackgroundPrompt} True 16:9 Late-Cretaceous humid conifer-and-fern forest-edge floodplain with smooth compacted brown-gray silt, sparse leaf litter, and misty cool-green depth. Keep the horizon near 42% and the central 45–76% as uninterrupted gently level ground; the feet meet near 63%. Use neutral sky fill and restrained earth bounce so a warm rust-brown Tyrannosaurus belongs in the light while remaining visible.`,
+      bytes: 2_417_533,
       sha256:
-        '6a0974c6ca3eedf4ad7eec4419284bdd8b261cdf037d40728b04d577b565e003',
+        '9ced85212157c6be75b5d2774391eee05fb27a76209a7f98eaf8aea4fefaaac5',
     },
     portrait: {
       title: 'Tyrannosaurus wooded floodplain — portrait',
-      generatedOn: '2026-07-29',
-      prompt: `${habitatBackgroundPrompt} Precisely preserve the accepted 9:16 raised-horizon wooded floodplain composition while brightening the central model corridor by about 20–25%, replacing muddy brown with pale cool gray-taupe ground, and desaturating the mid-forest toward sage and misty blue-green for stronger separation from a dark-brown Tyrannosaurus.`,
-      bytes: 3_301_976,
+      generatedOn: '2026-08-09',
+      prompt: `${naturalisticBackgroundPrompt} Separately compose a 9:16 humid Late-Cretaceous forest-edge floodplain with smooth compacted brown-gray silt, layered conifers and ferns, and cool atmospheric haze. Keep the horizon near 40%, the central 43–72% open and level, and the 61% foot band unobstructed, with calm top and bottom zones for the interface. Match the warm rust-brown Tyrannosaurus without orange cast or dense central foliage.`,
+      bytes: 2_240_079,
       sha256:
-        '63fd5fb62ca7ed1b413a569aab3682a59c16abd70af3b1a11a7fd1913895cb7a',
+        '616fe8773795aa9605c8a858dffb46789375674f0a4b866cb32eefff0422ff8a',
     },
   },
 } as const satisfies Readonly<

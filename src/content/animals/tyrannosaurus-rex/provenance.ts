@@ -36,22 +36,22 @@ const baseProvenance = createPublishedAssetProvenance({
       'Normalized the Blender export to one closed-loop Idle clip with ten rotation-only channels, then validator-checked and reviewed the derivative in the shared museum viewer.',
     ],
   },
-  derivedImagesGeneratedOn: '2026-07-30',
+  derivedImagesGeneratedOn: '2026-08-09',
   backgrounds: {
     landscape: {
       source: reviewedBackgroundSources.tyrannosaurusRex.landscape,
       runtime: {
-        bytes: 442_240,
+        bytes: 190_444,
         sha256:
-          'cec9d34c53add94b69722070e6c6770e0c895b74e3b5b7c5baaa44594651a07f',
+          'ef60247a15fd552a68107c29cfccb8167663c428909a509b81ec4d4bb5d922a3',
       },
     },
     portrait: {
       source: reviewedBackgroundSources.tyrannosaurusRex.portrait,
       runtime: {
-        bytes: 375_250,
+        bytes: 164_330,
         sha256:
-          '22401aa059bc68043519cd28237267231ebcb5dd2ba3cc6f3c8dab3e18cf22d8',
+          '90ab91e1dd75f820a0ec7779ffb0ba76548831d62a4fe09f941356124f921bc7',
       },
     },
   },
@@ -66,9 +66,9 @@ const baseProvenance = createPublishedAssetProvenance({
       '4064ae7a5b0a32a8610d3da2040e3befe0ad9a6a39c29b0dab9c234d1f89bdaa',
   },
   thumbnail: {
-    bytes: 46_364,
+    bytes: 12_774,
     sha256:
-      'a41c9c5790795248bb18bce769a70a65e6ef4d27623578718d0cbd4d443989b5',
+      '0be90f85797b10c5390bafd8652e80a472701d123fef91db904440e724f42a46',
   },
   narration: {
     generatedOn: '2026-07-28',

@@ -2,31 +2,35 @@ Background generation record
 ============================
 
 Tool: OpenAI built-in image_gen
-Generated: 2026-07-29
+Generated: 2026-08-09
 Use: project-specific responsive museum backgrounds
 
 Prompt direction:
-Precise-object-edit of the accepted raised-horizon late-Cretaceous wooded
-floodplain, using the reviewed runtime screenshot only as a supporting
-placement and contrast reference. Preserve the composition, perspective,
-objects, textures, paper-cut/gouache style, warm light, and dark edge framing.
-Brighten the central model band and mid-forest by about 20–25%; shift muddy
-brown ground toward pale cool sandy gray-taupe; soften foliage toward
-desaturated sage and misty blue-green; reduce yellow-brown saturation and
-central contrast so the dark-brown Tyrannosaurus reads clearly. No animal,
-person, text, UI, logo, watermark, shadow, or baked-in particles.
+Generate a believable empty Late-Cretaceous humid forest-edge floodplain as a
+photorealistic natural-history environment plate. Match the warm rust-brown
+Tyrannosaurus material and soft upper-left lighting without rendering the
+animal. Use muted cool forest greens, blue-green atmospheric haze, and neutral
+brown-gray silt. Keep the central staging area continuous and level, with the
+horizon near 42% in landscape and 40% in portrait and the foot band near 63%
+and 61% respectively. The ground uses broad, smooth tonal variation with only
+sparse edge leaf litter and a few isolated stones.
 
-The accepted 16:9 and 9:16 images were edited independently. The one-pixel
-portrait height discrepancy from ImageGen was normalized to the documented
-runtime dimensions before encoding.
+Explicitly avoid all-over cracked mud, pebble carpets, dense dots, repeated
+cellular or honeycomb texture, sharp micro-detail, paper-cut illustration,
+orange cast, platforms, ledges, footprints, baked-in shadows, animals, people,
+text, UI, logos, and watermarks.
+
+The final 16:9 and 9:16 images were generated as separate compositions. The
+transparent model previews were used only as colour, material, scale, and
+lighting references.
 
 Landscape source PNG:
-- bytes: 3413758
-- SHA-256: 6a0974c6ca3eedf4ad7eec4419284bdd8b261cdf037d40728b04d577b565e003
+- bytes: 2417533
+- SHA-256: 9ced85212157c6be75b5d2774391eee05fb27a76209a7f98eaf8aea4fefaaac5
 
 Portrait source PNG:
-- bytes: 3301976
-- SHA-256: 63fd5fb62ca7ed1b413a569aab3682a59c16abd70af3b1a11a7fd1913895cb7a
+- bytes: 2240079
+- SHA-256: 616fe8773795aa9605c8a858dffb46789375674f0a4b866cb32eefff0422ff8a
 
-The runtime copies were converted to WebP at quality 82 with metadata removed. Public
-release remains subject to the repository owner's final rights review.
+The runtime copies were converted to WebP at quality 82 with metadata removed.
+Public release remains subject to the repository owner's final rights review.

@@ -1,14 +1,25 @@
 Poster, preview and thumbnail derivation record
 ===============================================
 
-Generated: 2026-08-05
+Transparent poster pair generated: 2026-08-05
+Responsive previews and thumbnail refreshed: 2026-08-09
 
-The transparent poster pair and six shared responsive preview profiles were
-rendered from the deterministic first frame of the accepted replacement
-Apatosaurus in the shared museum viewer. They preserve transparent pixels
-outside the model and contain no text, controls, logos or watermarks.
+The transparent poster pair remains the accepted deterministic first frame of
+the replacement Apatosaurus, with transparent pixels outside the model and no
+text, controls, logos, or watermarks.
 
-The collection thumbnail was rendered from the same accepted model in its
-plains exhibit background, then cropped for card readability. The model
-attribution and CC BY 4.0 terms in model-license.txt continue to apply to all
-derived images; the project background retains its separately recorded terms.
+The six shared responsive model previews and their manifest were regenerated
+after tightening the live contact shadow around the four-foot cluster. The
+shadow uses a 0.34 horizontal scale, 0.9 depth scale, -0.62 horizontal offset,
+and 0.46 opacity. The animal geometry remains grounded at y=0; the change only
+corrects the shadow footprint and presentation signature.
+
+The collection thumbnail was refreshed in the new habitat. The deterministic
+first animation frame was rendered in the 1440 x 900 production viewer with
+interface chrome hidden. Pixel comparison against the same frame with the
+WebGL canvas hidden located the model, and a 765 x 765 crop at x=549,y=41 was
+resized to 320 x 320 and encoded as WebP at quality 82.
+
+The model attribution and CC BY 4.0 terms in model-license.txt continue to
+apply to all derived images. The project background retains its separately
+recorded terms.

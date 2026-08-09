@@ -32,22 +32,22 @@ const baseProvenance = createPublishedAssetProvenance({
       'Verified zero foot drift, ground penetration, seam separation, new BVH overlap, collapsed triangles, and flipped triangles, then validator-checked and reviewed the derivative in the shared museum viewer.',
     ],
   },
-  derivedImagesGeneratedOn: '2026-08-05',
+  derivedImagesGeneratedOn: '2026-08-09',
   backgrounds: {
     landscape: {
       source: reviewedBackgroundSources.apatosaurus.landscape,
       runtime: {
-        bytes: 245_350,
+        bytes: 157_522,
         sha256:
-          '1235b6d22d73e032caccb3b52eea06a0e5388dacde020d53f4bb0c346635867f',
+          '95191068aded19c3681a4a8584bcbbf27a0d46dd4a9e1acc83b120ab0a066413',
       },
     },
     portrait: {
       source: reviewedBackgroundSources.apatosaurus.portrait,
       runtime: {
-        bytes: 238_436,
+        bytes: 135_960,
         sha256:
-          '6338039f9ec99739328af1e6095d90f9fe0178e5a28e0d4c80530f84e52feecf',
+          'a1d24fe324bb4bd9610a8a1b1af4583faea8a28e658665d12bafcdb04cf94828',
       },
     },
   },
@@ -62,9 +62,9 @@ const baseProvenance = createPublishedAssetProvenance({
       'a63885f1e8ffde809a84d285e62518190d3bed699b0cbe4ad4744b9204282150',
   },
   thumbnail: {
-    bytes: 13_988,
+    bytes: 12_242,
     sha256:
-      '905e57b6204e47d5486e25c1862b4d9a4c1fb3786dc19743b0a12ec5f3e7dc80',
+      'dd98594bf7165b0b2cabcc8f693fc903f7b60d4ceaeab06a73dfebad71e0b385',
   },
   narration: {
     generatedOn: '2026-07-28',
