@@ -31,23 +31,26 @@ const sharedBackgroundPrompt =
 const habitatBackgroundPrompt =
   'Refined layered paper-cut picture-book art with soft gouache texture, tactile matte paper, and shallow soft shadows; an empty scientifically era-appropriate habitat behind a full-body 3D animal; quiet central safe area; no animal, person, text, UI, logo, watermark, photorealism, or baked-in particles because CSS supplies the atmosphere.'
 
+const brightChildBackgroundPrompt =
+  'Bright premium semi-realistic children\'s natural-history illustration, using the approved Stegosaurus habitat as the composition and tonal reference: a high vegetation-to-ground boundary, abundant tall plants framing the sides, pale blue cloud-filtered daylight, and a continuous calm ground plane behind a live full-body 3D animal. No dark or gloomy lighting, low horizon, plant-covered foot band, all-over cracks, pebble carpet, dense dots, repeated cellular texture, animal, person, footprint, bone, text, UI, logo, watermark, platform, or baked-in shadow.'
+
 export const reviewedBackgroundSources = {
   apatosaurus: {
     landscape: {
-      title: 'Apatosaurus Morrison floodplain — landscape',
-      generatedOn: '2026-07-29',
-      prompt: `${habitatBackgroundPrompt} Preserve the accepted Late-Jurassic Morrison alluvial plain, but raise the distant horizon to about 42% of the 16:9 frame and recompose the terrain so the central sauropod staging band is continuous solid ground.`,
-      bytes: 2_599_138,
+      title: 'Apatosaurus green Morrison gallery forest — landscape',
+      generatedOn: '2026-08-09',
+      prompt: `${brightChildBackgroundPrompt} True 16:9 Late-Jurassic Morrison river-corridor clearing with towering araucarian-like conifers and ginkgoes, tree ferns, cycads, fern beds, and horsetails. Use a consistent low-saturation moss, sage, and gray-green palette that complements a cool gray Apatosaurus. Keep the vegetation-to-ground boundary near 47–49% and preserve uninterrupted level ground through the 55–63% foot band. Render genuine compact moist woodland loam with broad irregular gray-brown soil and thin sage-moss patches, sparse low-contrast non-repeating grain, and no cement-like flat field or dense patterned texture.`,
+      bytes: 2_628_083,
       sha256:
-        '347e585b06cf58292c1a56c9150e5325a51b8fe43bd6125d3a313fb3c1c0b111',
+        'db41886d28add93a817ea7a7d4b17bd2c6222d7b6b4e33daff946ccce1e4ba92',
     },
     portrait: {
-      title: 'Apatosaurus Morrison floodplain — portrait',
-      generatedOn: '2026-07-31',
-      prompt: `${habitatBackgroundPrompt} Precise portrait edit: change only the scene depth; move the distant horizon and start of the open valley ground upward about 7–9% of the image height so the central dirt path reaches farther into the distance and remains continuous beneath an Apatosaurus whose feet sit around 57% image height. Preserve the accepted 9:16 Morrison valley, sky, border trees, palms, cliffs, foreground plants, rocks, palette, lighting, texture, and perspective; no platform, ledge, hard seam, or new focal object.`,
-      bytes: 2_601_546,
+      title: 'Apatosaurus green Morrison gallery forest — portrait',
+      generatedOn: '2026-08-09',
+      prompt: `${brightChildBackgroundPrompt} Separately compose a 9:16 Late-Jurassic Morrison gallery-forest clearing with very tall araucarian-like conifers, ginkgoes, tree ferns, cycads, ferns, and horsetails. Match the landscape's low-saturation moss, sage, and gray-green palette instead of mustard yellow. Keep the vegetation-to-ground boundary near 50–52% and preserve uninterrupted level ground through the 59–65% centred foot band. Render genuine compact moist woodland loam with broad irregular gray-brown soil and thin sage-moss patches, sparse low-contrast non-repeating grain, and no cement-like flat field or dense patterned texture.`,
+      bytes: 2_840_653,
       sha256:
-        '82c6fe696b2bb1993241d95be0902906200790522a902901b570cea6c4a316a6',
+        '79a3135c86652a7278ceafc719c05b334e5b2966f8c9dc73860b38f11fbe642d',
     },
   },
   gigantoraptor: {
@@ -220,20 +223,20 @@ export const reviewedBackgroundSources = {
   },
   tyrannosaurusRex: {
     landscape: {
-      title: 'Tyrannosaurus wooded floodplain — landscape',
-      generatedOn: '2026-07-29',
-      prompt: `${habitatBackgroundPrompt} Precisely preserve the accepted raised-horizon late-Cretaceous wooded floodplain composition while brightening the central staging band by about 20–25%, shifting muddy brown ground toward pale cool sandy taupe, and softening the mid-forest to desaturated sage and misty blue-green so a dark-brown Tyrannosaurus remains clearly separated.`,
-      bytes: 3_413_758,
+      title: 'Tyrannosaurus bright Hell Creek woodland — landscape',
+      generatedOn: '2026-08-09',
+      prompt: `${brightChildBackgroundPrompt} True 16:9 late-Maastrichtian Hell Creek riverbank woodland with irregular broadleaf trees, some tall swamp conifers, ferns, shrubs, and wetland plants. Keep the vegetation-to-ground boundary between 43–46%, begin uninterrupted level ground by 46%, and keep the 52–65% foot band clear for a warm rust-brown Tyrannosaurus.`,
+      bytes: 2_969_995,
       sha256:
-        '6a0974c6ca3eedf4ad7eec4419284bdd8b261cdf037d40728b04d577b565e003',
+        'bd34865c23d3eae3ea613bd53be3994582afe9df42e44d245a3e4423049e6d95',
     },
     portrait: {
-      title: 'Tyrannosaurus wooded floodplain — portrait',
-      generatedOn: '2026-07-29',
-      prompt: `${habitatBackgroundPrompt} Precisely preserve the accepted 9:16 raised-horizon wooded floodplain composition while brightening the central model corridor by about 20–25%, replacing muddy brown with pale cool gray-taupe ground, and desaturating the mid-forest toward sage and misty blue-green for stronger separation from a dark-brown Tyrannosaurus.`,
-      bytes: 3_301_976,
+      title: 'Tyrannosaurus bright Hell Creek woodland — portrait',
+      generatedOn: '2026-08-09',
+      prompt: `${brightChildBackgroundPrompt} Separately compose a 9:16 late-Maastrichtian Hell Creek riverbank woodland with bright layered broadleaf trees, some swamp conifers, ferns, shrubs, and wetland plants. Keep the vegetation-to-ground boundary between 42–46%, begin uninterrupted level ground by 46%, and keep the 53–68% centred foot band completely clear.`,
+      bytes: 2_788_568,
       sha256:
-        '63fd5fb62ca7ed1b413a569aab3682a59c16abd70af3b1a11a7fd1913895cb7a',
+        '120421c8eaf21622cd3437f6542fe98cc7af54d25d6676cf78a91bd841c9b9c0',
     },
   },
 } as const satisfies Readonly<

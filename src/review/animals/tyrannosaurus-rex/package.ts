@@ -12,11 +12,11 @@ export const animal = {
     'zh-CN': zhCN,
   },
   presentation: {
-    cameraLightScale: 1.3,
+    cameraLightScale: 0.95,
     initialYawDegrees: -90,
     safeAreaPadding: 0.12,
     shadow: 'ground',
-    toneMappingExposure: 1.12,
+    toneMappingExposure: 1.15,
   },
   animation: {
     clip: 'Idle',
