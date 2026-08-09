@@ -31,26 +31,26 @@ const sharedBackgroundPrompt =
 const habitatBackgroundPrompt =
   'Refined layered paper-cut picture-book art with soft gouache texture, tactile matte paper, and shallow soft shadows; an empty scientifically era-appropriate habitat behind a full-body 3D animal; quiet central safe area; no animal, person, text, UI, logo, watermark, photorealism, or baked-in particles because CSS supplies the atmosphere.'
 
-const naturalisticBackgroundPrompt =
-  'Photorealistic natural-history environment plate with believable atmospheric depth, soft cloud-filtered daylight from high camera-left, physically plausible soil and vegetation, and a quiet continuous staging plane behind a live full-body 3D animal. Keep ground detail broad, sparse, and true to real-world scale; no all-over cracks, pebble carpet, dense dots, repeated cellular texture, animal, person, footprint, bone, text, UI, logo, watermark, platform, or baked-in shadow.'
+const brightChildBackgroundPrompt =
+  'Bright premium semi-realistic children\'s natural-history illustration, using the approved Stegosaurus habitat as the composition and tonal reference: a high vegetation-to-ground boundary, abundant tall plants framing the sides, pale blue cloud-filtered daylight, and a continuous calm ground plane behind a live full-body 3D animal. No dark or gloomy lighting, low horizon, plant-covered foot band, all-over cracks, pebble carpet, dense dots, repeated cellular texture, animal, person, footprint, bone, text, UI, logo, watermark, platform, or baked-in shadow.'
 
 export const reviewedBackgroundSources = {
   apatosaurus: {
     landscape: {
-      title: 'Apatosaurus Morrison floodplain — landscape',
+      title: 'Apatosaurus bright Morrison gallery forest — landscape',
       generatedOn: '2026-08-09',
-      prompt: `${naturalisticBackgroundPrompt} True 16:9 Late-Jurassic Morrison Formation floodplain after the wet season, with smooth compacted warm-gray sandy loam, sparse low plants, distant subdued mesas, and a low conifer, cycad, and tree-fern line. Keep the horizon near 41% and the central 44–76% as uninterrupted level ground; the feet meet near 64%. Match a cool charcoal-gray and muted-olive Apatosaurus without a yellow-orange wash.`,
-      bytes: 2_190_064,
+      prompt: `${brightChildBackgroundPrompt} True 16:9 Late-Jurassic Morrison river-corridor clearing with towering araucarian-like conifers and ginkgoes, tree ferns, cycads, fern beds, and horsetails. Keep the vegetation-to-ground boundary between 42–45%, begin uninterrupted level ground by 45%, and keep the 51–65% foot band clear for a cool gray-olive Apatosaurus.`,
+      bytes: 2_809_612,
       sha256:
-        '6c544f1a9a0260d243bbd9fe750bc0a7342567fcfb72877f19a383231f340457',
+        '8b2ea05347c10958132c45591fa73b678acce0aa4ec9aaf4db8bbb99f0e7c322',
     },
     portrait: {
-      title: 'Apatosaurus Morrison floodplain — portrait',
+      title: 'Apatosaurus bright Morrison gallery forest — portrait',
       generatedOn: '2026-08-09',
-      prompt: `${naturalisticBackgroundPrompt} Separately compose a 9:16 Morrison Formation alluvial terrace with smooth warm-gray sandy loam, sparse edge vegetation, distant gray-mauve bluffs, and a low misty conifer, cycad, and tree-fern line. Keep the horizon near 41%, continuous ground from 43–88%, and the 61–64% foot band level and unobstructed. Match a huge cool gray-olive Apatosaurus without a narrowing road or saturated desert color.`,
-      bytes: 2_136_494,
+      prompt: `${brightChildBackgroundPrompt} Separately compose a 9:16 Late-Jurassic Morrison gallery-forest clearing with very tall araucarian-like conifers, ginkgoes, tree ferns, cycads, ferns, and horsetails. Keep the vegetation-to-ground boundary between 41–45%, begin uninterrupted level ground by 45%, and keep the 52–68% centred foot band completely clear.`,
+      bytes: 2_593_061,
       sha256:
-        '6b7f397290ecfeb8c92fc769f6795a5443c77a00fcbc0c2bfae2c9c6ddb0c2b1',
+        'eb454a5134a68d524ce36220a9e48394a63596d88351a94f02ebdf137d28bde3',
     },
   },
   gigantoraptor: {
@@ -223,20 +223,20 @@ export const reviewedBackgroundSources = {
   },
   tyrannosaurusRex: {
     landscape: {
-      title: 'Tyrannosaurus wooded floodplain — landscape',
+      title: 'Tyrannosaurus bright Hell Creek woodland — landscape',
       generatedOn: '2026-08-09',
-      prompt: `${naturalisticBackgroundPrompt} True 16:9 Late-Cretaceous humid conifer-and-fern forest-edge floodplain with smooth compacted brown-gray silt, sparse leaf litter, and misty cool-green depth. Keep the horizon near 42% and the central 45–76% as uninterrupted gently level ground; the feet meet near 63%. Use neutral sky fill and restrained earth bounce so a warm rust-brown Tyrannosaurus belongs in the light while remaining visible.`,
-      bytes: 2_417_533,
+      prompt: `${brightChildBackgroundPrompt} True 16:9 late-Maastrichtian Hell Creek riverbank woodland with irregular broadleaf trees, some tall swamp conifers, ferns, shrubs, and wetland plants. Keep the vegetation-to-ground boundary between 43–46%, begin uninterrupted level ground by 46%, and keep the 52–65% foot band clear for a warm rust-brown Tyrannosaurus.`,
+      bytes: 2_969_995,
       sha256:
-        '9ced85212157c6be75b5d2774391eee05fb27a76209a7f98eaf8aea4fefaaac5',
+        'bd34865c23d3eae3ea613bd53be3994582afe9df42e44d245a3e4423049e6d95',
     },
     portrait: {
-      title: 'Tyrannosaurus wooded floodplain — portrait',
+      title: 'Tyrannosaurus bright Hell Creek woodland — portrait',
       generatedOn: '2026-08-09',
-      prompt: `${naturalisticBackgroundPrompt} Separately compose a 9:16 humid Late-Cretaceous forest-edge floodplain with smooth compacted brown-gray silt, layered conifers and ferns, and cool atmospheric haze. Keep the horizon near 40%, the central 43–72% open and level, and the 61% foot band unobstructed, with calm top and bottom zones for the interface. Match the warm rust-brown Tyrannosaurus without orange cast or dense central foliage.`,
-      bytes: 2_240_079,
+      prompt: `${brightChildBackgroundPrompt} Separately compose a 9:16 late-Maastrichtian Hell Creek riverbank woodland with bright layered broadleaf trees, some swamp conifers, ferns, shrubs, and wetland plants. Keep the vegetation-to-ground boundary between 42–46%, begin uninterrupted level ground by 46%, and keep the 53–68% centred foot band completely clear.`,
+      bytes: 2_788_568,
       sha256:
-        '616fe8773795aa9605c8a858dffb46789375674f0a4b866cb32eefff0422ff8a',
+        '120421c8eaf21622cd3437f6542fe98cc7af54d25d6676cf78a91bd841c9b9c0',
     },
   },
 } as const satisfies Readonly<

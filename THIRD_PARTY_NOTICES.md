@@ -50,20 +50,20 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `backgrounds/landscape.webp`
 
 - Asset type: background
-- Source: Apatosaurus Morrison floodplain — landscape, generated with OpenAI built-in image_gen on 2026-08-09
+- Source: Apatosaurus bright Morrison gallery forest — landscape, generated with OpenAI built-in image_gen on 2026-08-09
 - License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - Attribution: Project-generated 迷惑龙 landscape created with OpenAI ImageGen.
-- Runtime SHA-256: `95191068aded19c3681a4a8584bcbbf27a0d46dd4a9e1acc83b120ab0a066413`
+- Runtime SHA-256: `127911897c463d68930bf410859f1f5266a6f48a9ecd0f9fbfae5603cd719530`
 - Modifications:
   - Converted the reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
 ### `backgrounds/portrait.webp`
 
 - Asset type: background
-- Source: Apatosaurus Morrison floodplain — portrait, generated with OpenAI built-in image_gen on 2026-08-09
+- Source: Apatosaurus bright Morrison gallery forest — portrait, generated with OpenAI built-in image_gen on 2026-08-09
 - License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - Attribution: Project-generated 迷惑龙 portrait created with OpenAI ImageGen.
-- Runtime SHA-256: `a1d24fe324bb4bd9610a8a1b1af4583faea8a28e658665d12bafcdb04cf94828`
+- Runtime SHA-256: `ccf6b54755a41c91fc2ea37301f5fae8e1a2336e7299e2da23901b3de6a4cb90`
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
@@ -93,7 +93,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: 迷惑龙 collection thumbnail, derived on 2026-08-09
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `dd98594bf7165b0b2cabcc8f693fc903f7b60d4ceaeab06a73dfebad71e0b385`
+- Runtime SHA-256: `b49df1bfc7837a8b9a14c1054d9b5e898734e9ef9caae59541c37f3bc91d63cf`
 - Modifications:
   - Selected a card-size crop that keeps the animal readable.
   - Exported without embedded text, controls, labels, logos, or watermarks.
@@ -1505,20 +1505,20 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `backgrounds/landscape.webp`
 
 - Asset type: background
-- Source: Tyrannosaurus wooded floodplain — landscape, generated with OpenAI built-in image_gen on 2026-08-09
+- Source: Tyrannosaurus bright Hell Creek woodland — landscape, generated with OpenAI built-in image_gen on 2026-08-09
 - License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - Attribution: Project-generated 霸王龙 landscape created with OpenAI ImageGen.
-- Runtime SHA-256: `ef60247a15fd552a68107c29cfccb8167663c428909a509b81ec4d4bb5d922a3`
+- Runtime SHA-256: `a5e44c070c1915a08a09a4c40cffc6e62f56ac6455b771b396ea1f25418102c1`
 - Modifications:
   - Converted the reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
 ### `backgrounds/portrait.webp`
 
 - Asset type: background
-- Source: Tyrannosaurus wooded floodplain — portrait, generated with OpenAI built-in image_gen on 2026-08-09
+- Source: Tyrannosaurus bright Hell Creek woodland — portrait, generated with OpenAI built-in image_gen on 2026-08-09
 - License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - Attribution: Project-generated 霸王龙 portrait created with OpenAI ImageGen.
-- Runtime SHA-256: `90ab91e1dd75f820a0ec7779ffb0ba76548831d62a4fe09f941356124f921bc7`
+- Runtime SHA-256: `2c0a0969faf61d7f931f672a9add46ac597ac24643ef4728dffa1e9333c2cd1e`
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
@@ -1548,7 +1548,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: 霸王龙 collection thumbnail, derived on 2026-08-09
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `0be90f85797b10c5390bafd8652e80a472701d123fef91db904440e724f42a46`
+- Runtime SHA-256: `730afbc1056c1e541288b58017edf18a12b76e77847b324c120a43e8b1edffb3`
 - Modifications:
   - Selected a card-size crop that keeps the animal readable.
   - Exported without embedded text, controls, labels, logos, or watermarks.

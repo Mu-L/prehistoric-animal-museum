@@ -6,15 +6,17 @@ import { PlainsAtmosphere } from './PlainsAtmosphere'
 import { UnderwaterAtmosphere } from './UnderwaterAtmosphere'
 
 export function SceneAtmosphere({
+  diffuseForestLight = false,
   kind,
 }: {
+  readonly diffuseForestLight?: boolean
   readonly kind: AtmosphereKind
 }) {
   switch (kind) {
     case 'air':
       return <AirAtmosphere />
     case 'forest':
-      return <ForestAtmosphere />
+      return <ForestAtmosphere diffuseLight={diffuseForestLight} />
     case 'ice':
       return <IceAtmosphere />
     case 'plains':

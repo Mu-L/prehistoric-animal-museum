@@ -2,17 +2,25 @@ const dustCount = 12
 const leafCount = 4
 
 /**
- * Forest light is the richest land treatment, but the bounded particle count
- * keeps it calm and leaves the Three.js model unobstructed.
+ * Forest air keeps a little drifting life while diffuse-light habitats can
+ * suppress the optional decorative beams authored for sunnier exhibits.
  */
-export function ForestAtmosphere() {
+export function ForestAtmosphere({
+  diffuseLight = false,
+}: {
+  readonly diffuseLight?: boolean
+}) {
   return (
     <div
       aria-hidden="true"
       className="scene-atmosphere forest-atmosphere"
     >
-      <span className="forest-sunbeam forest-sunbeam--wide" />
-      <span className="forest-sunbeam forest-sunbeam--narrow" />
+      {diffuseLight ? null : (
+        <>
+          <span className="forest-sunbeam forest-sunbeam--wide" />
+          <span className="forest-sunbeam forest-sunbeam--narrow" />
+        </>
+      )}
       <span className="forest-dust">
         {Array.from({ length: dustCount }, (_, index) => (
           <span

@@ -41,17 +41,17 @@ const baseProvenance = createPublishedAssetProvenance({
     landscape: {
       source: reviewedBackgroundSources.tyrannosaurusRex.landscape,
       runtime: {
-        bytes: 190_444,
+        bytes: 327_102,
         sha256:
-          'ef60247a15fd552a68107c29cfccb8167663c428909a509b81ec4d4bb5d922a3',
+          'a5e44c070c1915a08a09a4c40cffc6e62f56ac6455b771b396ea1f25418102c1',
       },
     },
     portrait: {
       source: reviewedBackgroundSources.tyrannosaurusRex.portrait,
       runtime: {
-        bytes: 164_330,
+        bytes: 284_798,
         sha256:
-          '90ab91e1dd75f820a0ec7779ffb0ba76548831d62a4fe09f941356124f921bc7',
+          '2c0a0969faf61d7f931f672a9add46ac597ac24643ef4728dffa1e9333c2cd1e',
       },
     },
   },
@@ -66,9 +66,9 @@ const baseProvenance = createPublishedAssetProvenance({
       '4064ae7a5b0a32a8610d3da2040e3befe0ad9a6a39c29b0dab9c234d1f89bdaa',
   },
   thumbnail: {
-    bytes: 12_774,
+    bytes: 25_592,
     sha256:
-      '0be90f85797b10c5390bafd8652e80a472701d123fef91db904440e724f42a46',
+      '730afbc1056c1e541288b58017edf18a12b76e77847b324c120a43e8b1edffb3',
   },
   narration: {
     generatedOn: '2026-07-28',

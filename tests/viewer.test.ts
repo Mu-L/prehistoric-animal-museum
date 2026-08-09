@@ -275,7 +275,7 @@ describe('model bounds and contact shadow', () => {
   it('places the Apatosaurus shadow under its four-foot cluster', () => {
     const layout = computeContactShadowLayout(
       new Vector3(3.2, 0.882, 0.432),
-      0.34,
+      0.38,
       {
         depthScale: 0.9,
         horizontalOffset: -0.62,
@@ -283,7 +283,7 @@ describe('model bounds and contact shadow', () => {
     )
 
     expect(layout.position.toArray()).toEqual([-0.62, 0.006, 0])
-    expect(layout.scale.x).toBeCloseTo(1.088)
+    expect(layout.scale.x).toBeCloseTo(1.216)
     expect(layout.scale.y).toBeCloseTo(0.3888)
     expect(layout.scale.z).toBe(1)
   })

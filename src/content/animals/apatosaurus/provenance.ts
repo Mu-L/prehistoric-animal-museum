@@ -37,17 +37,17 @@ const baseProvenance = createPublishedAssetProvenance({
     landscape: {
       source: reviewedBackgroundSources.apatosaurus.landscape,
       runtime: {
-        bytes: 157_522,
+        bytes: 288_162,
         sha256:
-          '95191068aded19c3681a4a8584bcbbf27a0d46dd4a9e1acc83b120ab0a066413',
+          '127911897c463d68930bf410859f1f5266a6f48a9ecd0f9fbfae5603cd719530',
       },
     },
     portrait: {
       source: reviewedBackgroundSources.apatosaurus.portrait,
       runtime: {
-        bytes: 135_960,
+        bytes: 243_128,
         sha256:
-          'a1d24fe324bb4bd9610a8a1b1af4583faea8a28e658665d12bafcdb04cf94828',
+          'ccf6b54755a41c91fc2ea37301f5fae8e1a2336e7299e2da23901b3de6a4cb90',
       },
     },
   },
@@ -62,9 +62,9 @@ const baseProvenance = createPublishedAssetProvenance({
       'a63885f1e8ffde809a84d285e62518190d3bed699b0cbe4ad4744b9204282150',
   },
   thumbnail: {
-    bytes: 12_242,
+    bytes: 21_368,
     sha256:
-      'dd98594bf7165b0b2cabcc8f693fc903f7b60d4ceaeab06a73dfebad71e0b385',
+      'b49df1bfc7837a8b9a14c1054d9b5e898734e9ef9caae59541c37f3bc91d63cf',
   },
   narration: {
     generatedOn: '2026-07-28',

@@ -657,11 +657,15 @@ describe('local collection review catalog', () => {
     )
 
     expect(apatosaurus?.presentation).toMatchObject({
+      cameraLightScale: 1.05,
+      landscapeVerticalOffset: 0.035,
+      portraitVerticalOffset: 0.05,
       shadow: 'ground',
       shadowDepthScale: 0.9,
       shadowHorizontalOffset: -0.62,
-      shadowOpacity: 0.46,
-      shadowScale: 0.34,
+      shadowOpacity: 0.56,
+      shadowScale: 0.38,
+      toneMappingExposure: 1.28,
     })
   })
 

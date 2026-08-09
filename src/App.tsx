@@ -1817,6 +1817,7 @@ function MuseumApp({
         transitionReady={backgroundTransitionReady}
       />
       <SceneAtmosphere
+        diffuseForestLight={activeAnimal.id === 'tyrannosaurus-rex'}
         key={`atmosphere-${activeAnimal.id}`}
         kind={activeAnimal.atmosphere}
       />
