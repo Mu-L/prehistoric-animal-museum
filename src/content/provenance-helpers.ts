@@ -37,20 +37,20 @@ const brightChildBackgroundPrompt =
 export const reviewedBackgroundSources = {
   apatosaurus: {
     landscape: {
-      title: 'Apatosaurus bright Morrison gallery forest — landscape',
+      title: 'Apatosaurus green Morrison gallery forest — landscape',
       generatedOn: '2026-08-09',
-      prompt: `${brightChildBackgroundPrompt} True 16:9 Late-Jurassic Morrison river-corridor clearing with towering araucarian-like conifers and ginkgoes, tree ferns, cycads, fern beds, and horsetails. Keep the vegetation-to-ground boundary between 42–45%, begin uninterrupted level ground by 45%, and keep the 51–65% foot band clear for a cool gray-olive Apatosaurus.`,
-      bytes: 2_809_612,
+      prompt: `${brightChildBackgroundPrompt} True 16:9 Late-Jurassic Morrison river-corridor clearing with towering araucarian-like conifers and ginkgoes, tree ferns, cycads, fern beds, and horsetails. Use a consistent low-saturation moss, sage, and gray-green palette that complements a cool gray Apatosaurus. Keep the vegetation-to-ground boundary near 47–49% and preserve uninterrupted level ground through the 55–63% foot band. Render genuine compact moist woodland loam with broad irregular gray-brown soil and thin sage-moss patches, sparse low-contrast non-repeating grain, and no cement-like flat field or dense patterned texture.`,
+      bytes: 2_628_083,
       sha256:
-        '8b2ea05347c10958132c45591fa73b678acce0aa4ec9aaf4db8bbb99f0e7c322',
+        'db41886d28add93a817ea7a7d4b17bd2c6222d7b6b4e33daff946ccce1e4ba92',
     },
     portrait: {
-      title: 'Apatosaurus bright Morrison gallery forest — portrait',
+      title: 'Apatosaurus green Morrison gallery forest — portrait',
       generatedOn: '2026-08-09',
-      prompt: `${brightChildBackgroundPrompt} Separately compose a 9:16 Late-Jurassic Morrison gallery-forest clearing with very tall araucarian-like conifers, ginkgoes, tree ferns, cycads, ferns, and horsetails. Keep the vegetation-to-ground boundary between 41–45%, begin uninterrupted level ground by 45%, and keep the 52–68% centred foot band completely clear.`,
-      bytes: 2_593_061,
+      prompt: `${brightChildBackgroundPrompt} Separately compose a 9:16 Late-Jurassic Morrison gallery-forest clearing with very tall araucarian-like conifers, ginkgoes, tree ferns, cycads, ferns, and horsetails. Match the landscape's low-saturation moss, sage, and gray-green palette instead of mustard yellow. Keep the vegetation-to-ground boundary near 50–52% and preserve uninterrupted level ground through the 59–65% centred foot band. Render genuine compact moist woodland loam with broad irregular gray-brown soil and thin sage-moss patches, sparse low-contrast non-repeating grain, and no cement-like flat field or dense patterned texture.`,
+      bytes: 2_840_653,
       sha256:
-        'eb454a5134a68d524ce36220a9e48394a63596d88351a94f02ebdf137d28bde3',
+        '79a3135c86652a7278ceafc719c05b334e5b2966f8c9dc73860b38f11fbe642d',
     },
   },
   gigantoraptor: {

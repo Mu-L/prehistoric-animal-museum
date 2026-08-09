@@ -16,11 +16,12 @@ tone-mapping exposure is 1.28, and the landscape and portrait vertical offsets
 are 0.035 and 0.05. The animal geometry remains grounded at y=0; these changes
 strengthen the four-foot contact cue without changing the GLB.
 
-The collection thumbnail was refreshed in the new habitat. The deterministic
-first animation frame was rendered in the 1440 x 900 production viewer with
-interface chrome hidden. Pixel comparison against the same frame with the
-WebGL canvas hidden located the model, and a 764 x 764 crop at x=549,y=50 was
-resized to 320 x 320 and encoded as WebP at quality 82.
+The collection thumbnail was refreshed after the habitat ground was changed
+from a flat gray-green field to natural compact woodland loam with broad moss
+variation. The deterministic first animation frame was rendered in the 1440 x
+900 production viewer with interface chrome hidden. Pixel comparison against
+the same frame with the WebGL canvas hidden located the model, and a 764 x 764
+crop at x=549,y=49 was resized to 320 x 320 and encoded as WebP at quality 82.
 
 The model attribution and CC BY 4.0 terms in model-license.txt continue to
 apply to all derived images. The project background retains its separately

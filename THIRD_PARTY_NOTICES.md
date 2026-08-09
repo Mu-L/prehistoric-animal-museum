@@ -50,20 +50,20 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `backgrounds/landscape.webp`
 
 - Asset type: background
-- Source: Apatosaurus bright Morrison gallery forest — landscape, generated with OpenAI built-in image_gen on 2026-08-09
+- Source: Apatosaurus green Morrison gallery forest — landscape, generated with OpenAI built-in image_gen on 2026-08-09
 - License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - Attribution: Project-generated 迷惑龙 landscape created with OpenAI ImageGen.
-- Runtime SHA-256: `127911897c463d68930bf410859f1f5266a6f48a9ecd0f9fbfae5603cd719530`
+- Runtime SHA-256: `7221069b1c33fc389a03d93c5c508ec6696ae269951ebc74ccd9101d2b910a27`
 - Modifications:
   - Converted the reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
 ### `backgrounds/portrait.webp`
 
 - Asset type: background
-- Source: Apatosaurus bright Morrison gallery forest — portrait, generated with OpenAI built-in image_gen on 2026-08-09
+- Source: Apatosaurus green Morrison gallery forest — portrait, generated with OpenAI built-in image_gen on 2026-08-09
 - License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - Attribution: Project-generated 迷惑龙 portrait created with OpenAI ImageGen.
-- Runtime SHA-256: `ccf6b54755a41c91fc2ea37301f5fae8e1a2336e7299e2da23901b3de6a4cb90`
+- Runtime SHA-256: `c70e720ee3ce56507cf1b1b49986a976f1ef04ea0d37190a52b5ef2e1daff9bc`
 - Modifications:
   - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
   - Removed ancillary metadata without applying a runtime tint or filter.
@@ -93,7 +93,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: 迷惑龙 collection thumbnail, derived on 2026-08-09
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `b49df1bfc7837a8b9a14c1054d9b5e898734e9ef9caae59541c37f3bc91d63cf`
+- Runtime SHA-256: `1c6e40ca77d1c08855a62a7f743be4db4ca6bcc5567325d99bf4e163694c964e`
 - Modifications:
   - Selected a card-size crop that keeps the animal readable.
   - Exported without embedded text, controls, labels, logos, or watermarks.
