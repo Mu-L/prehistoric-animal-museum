@@ -3912,6 +3912,10 @@ a:focus-visible {
     position: static;
   }
 
+  .museum-experience[data-page-kind="animal-detail"] .story-card {
+    position: relative;
+  }
+
   .title-lockup {
     position: static;
     margin-top: 8px;

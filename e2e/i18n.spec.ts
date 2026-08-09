@@ -924,6 +924,89 @@ test('keeps representative English stories readable across responsive breakpoint
   }
 })
 
+test('keeps Chinese exhibit metadata clear of the actions in mobile desktop-site mode', async ({
+  baseURL,
+  browser,
+}) => {
+  if (!baseURL) {
+    throw new Error(
+      'Playwright baseURL is required for the desktop-site layout test.',
+    )
+  }
+  const context = await browser.newContext({
+    deviceScaleFactor: 3,
+    hasTouch: true,
+    locale: 'zh-CN',
+    viewport: { width: 980, height: 1920 },
+  })
+  const page = await context.newPage()
+  try {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.route('**/*.glb', (route) => route.abort())
+    const response = await page.goto(
+      `${baseURL}zh-CN/animals/stegosaurus/`,
+    )
+    expect(response?.ok()).toBe(true)
+    await waitForMuseumShell(page, '剑龙', 1)
+    await expect(page.locator('#museum-experience')).toHaveAttribute(
+      'data-page-kind',
+      'animal-detail',
+    )
+    await page.evaluate(() => document.fonts.ready.then(() => undefined))
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        }),
+    )
+
+    const layout = await page.evaluate(() => {
+      const requireElement = (selector: string): HTMLElement => {
+        const element = document.querySelector(selector)
+        if (!(element instanceof HTMLElement)) {
+          throw new Error(`Missing desktop-site element: ${selector}`)
+        }
+        return element
+      }
+      const rect = (element: Element): LayoutRect => {
+        const box = element.getBoundingClientRect()
+        return {
+          bottom: box.bottom,
+          height: box.height,
+          left: box.left,
+          right: box.right,
+          top: box.top,
+          width: box.width,
+        }
+      }
+
+      return {
+        actions: rect(requireElement('.story-actions')),
+        card: rect(requireElement('.story-card')),
+        eyebrow: rect(requireElement('.animal-eyebrow')),
+      }
+    })
+
+    expectRectInside(
+      layout.eyebrow,
+      layout.card,
+      'mobile desktop-site mode: exhibit metadata',
+    )
+    const horizontalOverlap =
+      Math.min(layout.eyebrow.right, layout.actions.right) -
+      Math.max(layout.eyebrow.left, layout.actions.left)
+    const verticalOverlap =
+      Math.min(layout.eyebrow.bottom, layout.actions.bottom) -
+      Math.max(layout.eyebrow.top, layout.actions.top)
+    expect(
+      horizontalOverlap <= 1 || verticalOverlap <= 1,
+      'mobile desktop-site mode: exhibit metadata must not overlap the actions',
+    ).toBe(true)
+  } finally {
+    await context.close()
+  }
+})
+
 test('keeps the reported Retina phone and tablet layouts readable with touch input', async ({
   baseURL,
   browser,
