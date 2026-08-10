@@ -36,6 +36,7 @@ import { createModelPreviewPresentationSignature } from './model-preview-contrac
 import {
   MODEL_PREVIEW_CAMERA_FIELD_OF_VIEW_DEGREES,
   MODEL_PREVIEW_MAX_PIXEL_RATIO,
+  modelScaleForViewport,
 } from './model-preview-profiles'
 import type { ViewerModelDescriptor } from './viewer-model-descriptor'
 
@@ -223,6 +224,11 @@ export interface CameraRelativeLightingPose {
   readonly viewDirection: Vector3
 }
 
+export interface ViewerZoomProfile {
+  readonly minDistanceFactor: number
+  readonly zoomSpeed: number
+}
+
 const WORLD_UP = new Vector3(0, 1, 0)
 const VERTICAL_VIEW_REFERENCE = new Vector3(0, 0, 1)
 const MIN_LIGHT_DISTANCE = 0.001
@@ -231,6 +237,14 @@ const CAMERA_KEY_INTENSITY = 2.15
 const CAMERA_FILL_INTENSITY = 0.72
 const MODEL_TRANSITION_CAMERA_SWITCH = 0.42
 const INITIAL_STILL_CROSSFADE_MS = 420
+
+export function viewerZoomProfileForPointer(
+  coarsePointer: boolean,
+): ViewerZoomProfile {
+  return coarsePointer
+    ? { minDistanceFactor: 0.6, zoomSpeed: 1.2 }
+    : { minDistanceFactor: 0.68, zoomSpeed: 1 }
+}
 
 export interface ModelTransitionFrame {
   /**
@@ -463,6 +477,7 @@ export class ViewerController {
   private readonly cameraLightTarget = new Group()
   private readonly cameraLightingPose = createCameraRelativeLightingPose()
   private readonly resizeObserver: ResizeObserver
+  private readonly coarsePointerQuery = window.matchMedia('(pointer: coarse)')
   private readonly reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   private readonly handleReducedMotionChange = () => {
     const wasReduced = this.reducedMotion
@@ -1014,6 +1029,13 @@ export class ViewerController {
     const configuredVerticalOffset = isPortrait
       ? (current.descriptor.presentation.verticalOffset?.portrait ?? 0)
       : (current.descriptor.presentation.verticalOffset?.landscape ?? 0)
+    const modelScale = modelScaleForViewport(
+      containerWidth,
+      containerHeight,
+    )
+    const zoomProfile = viewerZoomProfileForPointer(
+      this.coarsePointerQuery.matches,
+    )
     const compositionFieldOfView = computeCompositionFieldOfView(
       this.camera.fov,
       containerHeight,
@@ -1023,6 +1045,7 @@ export class ViewerController {
       aspect: compositionWidth / compositionHeight,
       bounds: current.bounds,
       fieldOfViewDegrees: compositionFieldOfView,
+      modelScale,
       paddingFraction: configuredPadding,
     })
     this.camera.near = fit.near
@@ -1042,6 +1065,11 @@ export class ViewerController {
       String(configuredHorizontalOffset)
     this.renderer.domElement.dataset.compositionVerticalOffset =
       String(configuredVerticalOffset)
+    this.renderer.domElement.dataset.modelScale = String(modelScale)
+    this.renderer.domElement.dataset.minDistanceFactor = String(
+      zoomProfile.minDistanceFactor,
+    )
+    this.renderer.domElement.dataset.zoomSpeed = String(zoomProfile.zoomSpeed)
     this.renderer.domElement.dataset.previewPresentationSignature =
       createModelPreviewPresentationSignature(current.descriptor)
     this.camera.setViewOffset(
@@ -1054,7 +1082,8 @@ export class ViewerController {
     )
     this.camera.updateProjectionMatrix()
     this.controls.target.copy(fit.target)
-    this.controls.minDistance = fit.distance * 0.68
+    this.controls.zoomSpeed = zoomProfile.zoomSpeed
+    this.controls.minDistance = fit.distance * zoomProfile.minDistanceFactor
     this.controls.maxDistance = fit.distance * 2.25
     this.controls.update()
     this.controls.enableDamping = previousDamping

@@ -1,4 +1,4 @@
-export const MODEL_PREVIEW_CONTRACT_VERSION = 2
+export const MODEL_PREVIEW_CONTRACT_VERSION = 3
 export const MODEL_PREVIEW_MANIFEST_FILE = 'model-preview.manifest.json'
 
 /**
@@ -9,9 +9,19 @@ export const MODEL_PREVIEW_MANIFEST_FILE = 'model-preview.manifest.json'
  */
 export const MODEL_PREVIEW_CAMERA_FIELD_OF_VIEW_DEGREES = 34
 export const MODEL_PREVIEW_MAX_PIXEL_RATIO = 2
+export const MODEL_PREVIEW_PHONE_PORTRAIT_SCALE = 1.15
 export const MODEL_PREVIEW_LAYOUT_COORDINATE_SYSTEM =
   'fixed-fullscreen-canvas+composition-frame-v1'
 export const MODEL_PREVIEW_OBJECT_FIT = 'contain'
+
+export function modelScaleForViewport(
+  viewportWidth: number,
+  viewportHeight: number,
+): number {
+  return viewportHeight > viewportWidth && viewportWidth <= 599
+    ? MODEL_PREVIEW_PHONE_PORTRAIT_SCALE
+    : 1
+}
 
 /**
  * A preview profile describes the stable inner model viewport, not the full

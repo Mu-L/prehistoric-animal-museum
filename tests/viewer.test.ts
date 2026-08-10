@@ -23,6 +23,10 @@ import {
   computeCompositionFieldOfView,
   computeCompositionViewOffset,
 } from '../src/viewer/camera-fit'
+import {
+  MODEL_PREVIEW_PHONE_PORTRAIT_SCALE,
+  modelScaleForViewport,
+} from '../src/viewer/model-preview-profiles'
 import { disposeObject3D } from '../src/viewer/dispose'
 import {
   computeContactShadowLayout,
@@ -34,6 +38,7 @@ import {
   requestModelResponse,
   resetStagedModelPose,
   updateCameraRelativeLightingPose,
+  viewerZoomProfileForPointer,
   type ViewerModelDescriptor,
 } from '../src/viewer/ViewerController'
 
@@ -328,6 +333,22 @@ describe('model transition framing', () => {
   })
 })
 
+describe('viewer zoom profile', () => {
+  it('makes touch pinching more responsive and allows a closer view', () => {
+    expect(viewerZoomProfileForPointer(true)).toEqual({
+      minDistanceFactor: 0.6,
+      zoomSpeed: 1.2,
+    })
+  })
+
+  it('leaves precise-pointer zoom behavior unchanged', () => {
+    expect(viewerZoomProfileForPointer(false)).toEqual({
+      minDistanceFactor: 0.68,
+      zoomSpeed: 1,
+    })
+  })
+})
+
 describe('camera-relative viewer lighting', () => {
   it.each([0, 45, 90, 135, 180, 225, 270, 315])(
     'keeps shaped key and fill light on the screen-facing hemisphere at %s°',
@@ -418,6 +439,30 @@ describe('computeCameraFit', () => {
 
     expect(portrait.distance).toBeGreaterThan(landscape.distance)
     expect(portrait.target.toArray()).toEqual([0, 1, 0])
+  })
+
+  it('makes the default phone portrait presentation fifteen percent larger', () => {
+    const bounds = new Box3(new Vector3(-3, 0, -1), new Vector3(3, 2, 1))
+    const defaultFit = computeCameraFit({
+      aspect: 390 / 844,
+      bounds,
+      fieldOfViewDegrees: 34,
+      paddingFraction: 0.1,
+    })
+    const mobileFit = computeCameraFit({
+      aspect: 390 / 844,
+      bounds,
+      fieldOfViewDegrees: 34,
+      modelScale: modelScaleForViewport(390, 844),
+      paddingFraction: 0.1,
+    })
+
+    expect(modelScaleForViewport(390, 844)).toBe(
+      MODEL_PREVIEW_PHONE_PORTRAIT_SCALE,
+    )
+    expect(mobileFit.distance).toBeLessThan(defaultFit.distance)
+    expect(modelScaleForViewport(844, 390)).toBe(1)
+    expect(modelScaleForViewport(768, 1024)).toBe(1)
   })
 
   it('is deterministic for reset calls', () => {

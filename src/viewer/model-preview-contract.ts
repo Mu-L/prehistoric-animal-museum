@@ -5,6 +5,7 @@ import {
   MODEL_PREVIEW_LAYOUT_COORDINATE_SYSTEM,
   MODEL_PREVIEW_MAX_PIXEL_RATIO,
   MODEL_PREVIEW_OBJECT_FIT,
+  MODEL_PREVIEW_PHONE_PORTRAIT_SCALE,
   modelPreviewProfiles,
 } from './model-preview-profiles'
 
@@ -27,6 +28,7 @@ export function createModelPreviewPresentationSignature(
     },
     layout: {
       coordinateSystem: MODEL_PREVIEW_LAYOUT_COORDINATE_SYSTEM,
+      phonePortraitModelScale: MODEL_PREVIEW_PHONE_PORTRAIT_SCALE,
       previewObjectFit: MODEL_PREVIEW_OBJECT_FIT,
       referenceViewports: modelPreviewProfiles.map(
         ({ key, referenceHeight, referenceWidth }) => ({

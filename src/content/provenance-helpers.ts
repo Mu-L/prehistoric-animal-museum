@@ -382,12 +382,29 @@ export interface PublishedAssetProvenanceInput {
   readonly poster: RuntimeFile
   readonly posterPortrait: RuntimeFile
   readonly thumbnail: RuntimeFile
+  readonly thumbnailDerivation?: {
+    readonly generatedOn: IsoDate
+    readonly method: string
+    readonly modifications: readonly [string, ...string[]]
+  }
   readonly derivedImagesGeneratedOn?: IsoDate
   readonly narration: RuntimeFile & {
     readonly generatedOn: IsoDate
     readonly script: string
   }
 }
+
+export const recomposedCollectionThumbnailDerivation = {
+  generatedOn: '2026-08-10',
+  method:
+    'Composited the central square of the accepted landscape background with the complete alpha-preserving transparent poster silhouette, using the reviewed pixel dimensions and placement recorded in derived-images.txt.',
+  modifications: [
+    'Resized and centred the complete silhouette with animal-specific safe margins.',
+    'Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks.',
+  ],
+} as const satisfies NonNullable<
+  PublishedAssetProvenanceInput['thumbnailDerivation']
+>
 
 const modelLicense = {
   spdx: 'CC-BY-4.0',
@@ -570,20 +587,23 @@ export function createPublishedAssetProvenance(
       source: {
         type: 'derived',
         title: `${input.animalName} collection thumbnail`,
-        generatedOn: input.derivedImagesGeneratedOn ?? '2026-07-28',
-        inputAssetPaths: [
-          'model/model.glb',
-          'backgrounds/landscape.webp',
-        ],
+        generatedOn:
+          input.thumbnailDerivation?.generatedOn ??
+          input.derivedImagesGeneratedOn ??
+          '2026-07-28',
+        inputAssetPaths: input.thumbnailDerivation
+          ? ['images/poster.webp', 'backgrounds/landscape.webp']
+          : ['model/model.glb', 'backgrounds/landscape.webp'],
         method:
+          input.thumbnailDerivation?.method ??
           'Deterministic square crop from the accepted desktop review presentation after hiding all interface chrome.',
       },
       license: modelLicense,
       runtime: input.thumbnail,
-      modifications: [
-        'Selected a card-size crop that keeps the animal readable.',
-        'Exported without embedded text, controls, labels, logos, or watermarks.',
-      ],
+      modifications: input.thumbnailDerivation?.modifications ?? [
+          'Selected a card-size crop that keeps the animal readable.',
+          'Exported without embedded text, controls, labels, logos, or watermarks.',
+        ],
       attribution: `${modelAttribution} Scene art generated for this project.`,
       redistributionAllowed: true,
       evidencePaths: [

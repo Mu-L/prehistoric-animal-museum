@@ -1,6 +1,7 @@
 import {
   createPublishedAssetProvenance,
   createReviewedEnglishNarrationProvenance,
+  recomposedCollectionThumbnailDerivation,
   reviewedBackgroundSources,
 } from '../../provenance-helpers'
 import { en } from './content.en'
@@ -34,6 +35,7 @@ const baseProvenance = createPublishedAssetProvenance({
     ],
   },
   derivedImagesGeneratedOn: '2026-07-30',
+  thumbnailDerivation: recomposedCollectionThumbnailDerivation,
   backgrounds: {
     landscape: {
       source: reviewedBackgroundSources.mammoth.landscape,
@@ -63,9 +65,9 @@ const baseProvenance = createPublishedAssetProvenance({
       '60535ab5da8eeef84e24fd72eace080c929809a53210ac2d2ba8c0b030d1f82a',
   },
   thumbnail: {
-    bytes: 29_822,
+    bytes: 23_160,
     sha256:
-      '808ccebb327c45ec80fbd0b76c324a1bb42e8a3b03d391e89a3d0f80d42edb56',
+      'ad80efce6003cb1166dba7e21af3334fe66bed0005e83d0ec24b5746a56c896e',
   },
   narration: {
     generatedOn: '2026-07-28',

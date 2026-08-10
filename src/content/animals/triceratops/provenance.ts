@@ -1,6 +1,7 @@
 import {
   createPublishedAssetProvenance,
   createReviewedEnglishNarrationProvenance,
+  recomposedCollectionThumbnailDerivation,
   reviewedBackgroundSources,
 } from '../../provenance-helpers'
 import { en } from './content.en'
@@ -33,6 +34,7 @@ const baseProvenance = createPublishedAssetProvenance({
     ],
   },
   derivedImagesGeneratedOn: '2026-07-30',
+  thumbnailDerivation: recomposedCollectionThumbnailDerivation,
   backgrounds: {
     landscape: {
       source: reviewedBackgroundSources.triceratops.landscape,
@@ -62,9 +64,9 @@ const baseProvenance = createPublishedAssetProvenance({
       'bb4d9d99916de0328dd706d40bb8eac0f7c2ba991c577e4e7e08792a303b2700',
   },
   thumbnail: {
-    bytes: 22_452,
+    bytes: 17_936,
     sha256:
-      'cbcafa5f695ab674197261316c51052d093ae021f8f2df90725cf0625e92c34c',
+      'f8da987a692eb1ab24fda0606c34de788077ce0de7b3686124a017efa62977be',
   },
   narration: {
     generatedOn: '2026-07-28',

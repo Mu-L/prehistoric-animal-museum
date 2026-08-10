@@ -262,13 +262,13 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 巨盗龙 collection thumbnail, derived on 2026-07-29
+- Source: 巨盗龙 collection thumbnail, derived on 2026-08-10
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `db670ed5f8df366f4c42b0f65524fdff6ca915449a05ad82b037e157f1ae5003`
+- Runtime SHA-256: `2e9ab1baa6c9fc77e461065b481edee1a6a4afe0cbbcb6a02cd2eed3fc911470`
 - Modifications:
-  - Selected a card-size crop that keeps the animal readable.
-  - Exported without embedded text, controls, labels, logos, or watermarks.
+  - Resized and centred the complete silhouette with animal-specific safe margins.
+  - Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks.
 ### `model/model.glb`
 
 - Asset type: model
@@ -519,13 +519,13 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 长毛猛犸象 collection thumbnail, derived on 2026-07-30
+- Source: 长毛猛犸象 collection thumbnail, derived on 2026-08-10
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `808ccebb327c45ec80fbd0b76c324a1bb42e8a3b03d391e89a3d0f80d42edb56`
+- Runtime SHA-256: `ad80efce6003cb1166dba7e21af3334fe66bed0005e83d0ec24b5746a56c896e`
 - Modifications:
-  - Selected a card-size crop that keeps the animal readable.
-  - Exported without embedded text, controls, labels, logos, or watermarks.
+  - Resized and centred the complete silhouette with animal-specific safe margins.
+  - Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks.
 ### `model/model.glb`
 
 - Asset type: model
@@ -946,13 +946,13 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 蛇颈龙类 collection thumbnail, derived on 2026-07-31
+- Source: 蛇颈龙类 collection thumbnail, derived on 2026-08-10
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `d3a8a78427341bd74fd0957aa98704f9b0c12d1a994c54e039a688f2fb67b32e`
+- Runtime SHA-256: `695b4c2a0090b7783acee25a5802fce38e748f74ac6ade0f38305bf63b4e2309`
 - Modifications:
-  - Selected a card-size crop that keeps the animal readable.
-  - Exported without embedded text, controls, labels, logos, or watermarks.
+  - Resized and centred the complete silhouette with animal-specific safe margins.
+  - Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks.
 ### `model/model.glb`
 
 - Asset type: model
@@ -1032,13 +1032,13 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 无齿翼龙 collection thumbnail, derived on 2026-07-29
+- Source: 无齿翼龙 collection thumbnail, derived on 2026-08-10
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `5fac69df7fbd6377d4f454080b3717de7b64f645054c4808725589e1a5f106ac`
+- Runtime SHA-256: `ee445591ed6f30e859e70a3bc15893e631f5a785a4f25acf866ce643365f8706`
 - Modifications:
-  - Selected a card-size crop that keeps the animal readable.
-  - Exported without embedded text, controls, labels, logos, or watermarks.
+  - Resized and centred the complete silhouette with animal-specific safe margins.
+  - Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks.
 ### `model/model.glb`
 
 - Asset type: model
@@ -1373,13 +1373,13 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 三角龙 collection thumbnail, derived on 2026-07-30
+- Source: 三角龙 collection thumbnail, derived on 2026-08-10
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `cbcafa5f695ab674197261316c51052d093ae021f8f2df90725cf0625e92c34c`
+- Runtime SHA-256: `f8da987a692eb1ab24fda0606c34de788077ce0de7b3686124a017efa62977be`
 - Modifications:
-  - Selected a card-size crop that keeps the animal readable.
-  - Exported without embedded text, controls, labels, logos, or watermarks.
+  - Resized and centred the complete silhouette with animal-specific safe margins.
+  - Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks.
 ### `model/model.glb`
 
 - Asset type: model

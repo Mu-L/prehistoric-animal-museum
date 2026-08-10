@@ -12,6 +12,7 @@ export interface CameraFitOptions {
   aspect: number
   bounds: Box3
   fieldOfViewDegrees: number
+  modelScale?: number
   paddingFraction: number
   viewDirection?: Vector3
 }
@@ -86,6 +87,7 @@ export function computeCameraFit({
   aspect,
   bounds,
   fieldOfViewDegrees,
+  modelScale = 1,
   paddingFraction,
   viewDirection = new Vector3(0, 0.18, 1),
 }: CameraFitOptions): CameraFit {
@@ -95,7 +97,11 @@ export function computeCameraFit({
   const verticalFieldOfView = MathUtils.degToRad(fieldOfViewDegrees)
   const horizontalFieldOfView = 2 * Math.atan(Math.tan(verticalFieldOfView / 2) * safeAspect)
   const clampedPadding = MathUtils.clamp(paddingFraction, 0, 0.42)
-  const usableFraction = 1 - clampedPadding * 2
+  const clampedModelScale = MathUtils.clamp(modelScale, 0.5, 1.5)
+  const usableFraction = Math.min(
+    (1 - clampedPadding * 2) * clampedModelScale,
+    1,
+  )
   const verticalTangent = Math.max(Math.tan(verticalFieldOfView / 2), MIN_EXTENT)
   const horizontalTangent = Math.max(Math.tan(horizontalFieldOfView / 2), MIN_EXTENT)
   const direction = viewDirection.clone()
