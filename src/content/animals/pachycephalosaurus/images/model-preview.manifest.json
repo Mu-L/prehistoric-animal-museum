@@ -1,8 +1,8 @@
 {
   "animalId": "pachycephalosaurus",
-  "contractVersion": 2,
-  "generatedAt": "2026-08-08T13:09:28.238Z",
-  "presentationSignature": "{\"contractVersion\":2,\"renderer\":{\"cameraFieldOfViewDegrees\":34,\"maxPixelRatio\":2},\"layout\":{\"coordinateSystem\":\"fixed-fullscreen-canvas+composition-frame-v1\",\"previewObjectFit\":\"contain\",\"referenceViewports\":[{\"key\":\"landscapeCompact\",\"width\":844,\"height\":390},{\"key\":\"desktopWide\",\"width\":1280,\"height\":720},{\"key\":\"phonePortraitCompact\",\"width\":360,\"height\":640},{\"key\":\"phonePortraitTall\",\"width\":390,\"height\":844},{\"key\":\"tabletPortrait\",\"width\":768,\"height\":1024},{\"key\":\"desktopStandard\",\"width\":1440,\"height\":900}]},\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.8},\"presentation\":{\"cameraLightScale\":1,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0.08},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.1,\"portrait\":0.1},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.6,\"scale\":0.6,\"yOffset\":0},\"toneMappingExposure\":1,\"verticalOffset\":{\"landscape\":0.05,\"portrait\":0.07}}}",
+  "contractVersion": 3,
+  "generatedAt": "2026-08-10T04:09:37.874Z",
+  "presentationSignature": "{\"contractVersion\":3,\"renderer\":{\"cameraFieldOfViewDegrees\":34,\"maxPixelRatio\":2},\"layout\":{\"coordinateSystem\":\"fixed-fullscreen-canvas+composition-frame-v1\",\"phonePortraitModelScale\":1.15,\"previewObjectFit\":\"contain\",\"referenceViewports\":[{\"key\":\"landscapeCompact\",\"width\":844,\"height\":390},{\"key\":\"desktopWide\",\"width\":1280,\"height\":720},{\"key\":\"phonePortraitCompact\",\"width\":360,\"height\":640},{\"key\":\"phonePortraitTall\",\"width\":390,\"height\":844},{\"key\":\"tabletPortrait\",\"width\":768,\"height\":1024},{\"key\":\"desktopStandard\",\"width\":1440,\"height\":900}]},\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.8},\"presentation\":{\"cameraLightScale\":1,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0.08},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.1,\"portrait\":0.1},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.6,\"scale\":0.6,\"yOffset\":0},\"toneMappingExposure\":1,\"verticalOffset\":{\"landscape\":0.05,\"portrait\":0.07}}}",
   "profiles": {
     "landscapeCompact": {
       "bytes": 129850,
@@ -19,17 +19,17 @@
       "width": 1200
     },
     "phonePortraitCompact": {
-      "bytes": 110230,
+      "bytes": 137892,
       "fileName": "preview-phone-compact.webp",
       "height": 1000,
-      "sha256": "030626af4bf45a86777250c6778162b19b990605004e2d511fb05da34065ce7e",
+      "sha256": "a762bf1f17d43c05c59d35895721297c12fd92e9fd177fb3f3a57a4893dcbf94",
       "width": 875
     },
     "phonePortraitTall": {
-      "bytes": 74664,
+      "bytes": 93564,
       "fileName": "preview-phone-tall.webp",
       "height": 1000,
-      "sha256": "c7d7186add84033a27461a6804d2a540e52e00b2031b951b9519f874daab78ed",
+      "sha256": "07da7c7044ee88429e402c6881685abe698fa6fdaca40ac6ad837c691b3464a5",
       "width": 640
     },
     "tabletPortrait": {

@@ -1,8 +1,8 @@
 {
   "animalId": "meganeura",
-  "contractVersion": 2,
-  "generatedAt": "2026-08-08T12:50:23.649Z",
-  "presentationSignature": "{\"contractVersion\":2,\"renderer\":{\"cameraFieldOfViewDegrees\":34,\"maxPixelRatio\":2},\"layout\":{\"coordinateSystem\":\"fixed-fullscreen-canvas+composition-frame-v1\",\"previewObjectFit\":\"contain\",\"referenceViewports\":[{\"key\":\"landscapeCompact\",\"width\":844,\"height\":390},{\"key\":\"desktopWide\",\"width\":1280,\"height\":720},{\"key\":\"phonePortraitCompact\",\"width\":360,\"height\":640},{\"key\":\"phonePortraitTall\",\"width\":390,\"height\":844},{\"key\":\"tabletPortrait\",\"width\":768,\"height\":1024},{\"key\":\"desktopStandard\",\"width\":1440,\"height\":900}]},\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":1},\"presentation\":{\"cameraLightScale\":1.15,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-18,\"preciseBounds\":true,\"safeAreaPadding\":{\"landscape\":0.1,\"portrait\":0.18},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":0.9,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
+  "contractVersion": 3,
+  "generatedAt": "2026-08-10T04:09:14.272Z",
+  "presentationSignature": "{\"contractVersion\":3,\"renderer\":{\"cameraFieldOfViewDegrees\":34,\"maxPixelRatio\":2},\"layout\":{\"coordinateSystem\":\"fixed-fullscreen-canvas+composition-frame-v1\",\"phonePortraitModelScale\":1.15,\"previewObjectFit\":\"contain\",\"referenceViewports\":[{\"key\":\"landscapeCompact\",\"width\":844,\"height\":390},{\"key\":\"desktopWide\",\"width\":1280,\"height\":720},{\"key\":\"phonePortraitCompact\",\"width\":360,\"height\":640},{\"key\":\"phonePortraitTall\",\"width\":390,\"height\":844},{\"key\":\"tabletPortrait\",\"width\":768,\"height\":1024},{\"key\":\"desktopStandard\",\"width\":1440,\"height\":900}]},\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":1},\"presentation\":{\"cameraLightScale\":1.15,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-18,\"preciseBounds\":true,\"safeAreaPadding\":{\"landscape\":0.1,\"portrait\":0.18},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":0.9,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
   "profiles": {
     "landscapeCompact": {
       "bytes": 125084,
@@ -19,17 +19,17 @@
       "width": 1200
     },
     "phonePortraitCompact": {
-      "bytes": 127236,
+      "bytes": 159586,
       "fileName": "preview-phone-compact.webp",
       "height": 1000,
-      "sha256": "897f3fc3a70e08ed08392210eac22fc58462577df7d46f6309e4163c36b1a348",
+      "sha256": "921e6de395d7c0a1f674077f6dcfc3eda9c0c46f30ad1a9ea69e7af598400963",
       "width": 875
     },
     "phonePortraitTall": {
-      "bytes": 82618,
+      "bytes": 103580,
       "fileName": "preview-phone-tall.webp",
       "height": 1000,
-      "sha256": "075559d472fb38a6a18753943f5243333c53c2abca7be7a8156e1483da98ceb9",
+      "sha256": "ca5363c4923535bea14ff894d0290a5f788ded23b5716ce418385060a6754e96",
       "width": 640
     },
     "tabletPortrait": {

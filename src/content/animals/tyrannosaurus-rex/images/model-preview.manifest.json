@@ -1,8 +1,8 @@
 {
   "animalId": "tyrannosaurus-rex",
-  "contractVersion": 2,
-  "generatedAt": "2026-08-09T06:51:00.873Z",
-  "presentationSignature": "{\"contractVersion\":2,\"renderer\":{\"cameraFieldOfViewDegrees\":34,\"maxPixelRatio\":2},\"layout\":{\"coordinateSystem\":\"fixed-fullscreen-canvas+composition-frame-v1\",\"previewObjectFit\":\"contain\",\"referenceViewports\":[{\"key\":\"landscapeCompact\",\"width\":844,\"height\":390},{\"key\":\"desktopWide\",\"width\":1280,\"height\":720},{\"key\":\"phonePortraitCompact\",\"width\":360,\"height\":640},{\"key\":\"phonePortraitTall\",\"width\":390,\"height\":844},{\"key\":\"tabletPortrait\",\"width\":768,\"height\":1024},{\"key\":\"desktopStandard\",\"width\":1440,\"height\":900}]},\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.9},\"presentation\":{\"cameraLightScale\":0.95,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.12,\"portrait\":0.12},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.42,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.15,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
+  "contractVersion": 3,
+  "generatedAt": "2026-08-10T04:11:23.518Z",
+  "presentationSignature": "{\"contractVersion\":3,\"renderer\":{\"cameraFieldOfViewDegrees\":34,\"maxPixelRatio\":2},\"layout\":{\"coordinateSystem\":\"fixed-fullscreen-canvas+composition-frame-v1\",\"phonePortraitModelScale\":1.15,\"previewObjectFit\":\"contain\",\"referenceViewports\":[{\"key\":\"landscapeCompact\",\"width\":844,\"height\":390},{\"key\":\"desktopWide\",\"width\":1280,\"height\":720},{\"key\":\"phonePortraitCompact\",\"width\":360,\"height\":640},{\"key\":\"phonePortraitTall\",\"width\":390,\"height\":844},{\"key\":\"tabletPortrait\",\"width\":768,\"height\":1024},{\"key\":\"desktopStandard\",\"width\":1440,\"height\":900}]},\"animation\":{\"clip\":\"Idle\",\"loop\":\"repeat\",\"speed\":0.9},\"presentation\":{\"cameraLightScale\":0.95,\"horizontalOffset\":{\"landscape\":0,\"portrait\":0},\"initialYawDegrees\":-90,\"preciseBounds\":false,\"safeAreaPadding\":{\"landscape\":0.12,\"portrait\":0.12},\"shadow\":{\"depthOffset\":0,\"depthScale\":1,\"horizontalOffset\":0,\"opacity\":0.42,\"scale\":0.62,\"yOffset\":0},\"toneMappingExposure\":1.15,\"verticalOffset\":{\"landscape\":0,\"portrait\":0}}}",
   "profiles": {
     "landscapeCompact": {
       "bytes": 116974,
@@ -19,17 +19,17 @@
       "width": 1200
     },
     "phonePortraitCompact": {
-      "bytes": 62886,
+      "bytes": 79800,
       "fileName": "preview-phone-compact.webp",
       "height": 1000,
-      "sha256": "092aecd0bcc307f95a53f06c7aaae6bdb9b5668fe127a922b9ee8aaa9b069f75",
+      "sha256": "c8a16d8f33603b955dfd8fd864ba008b0f8f9fc6561572e642accd820ece7b72",
       "width": 875
     },
     "phonePortraitTall": {
-      "bytes": 43694,
+      "bytes": 55864,
       "fileName": "preview-phone-tall.webp",
       "height": 1000,
-      "sha256": "dcd68abe3de694431ef796f0021bfb01744bc24f2787df613a635833c9128831",
+      "sha256": "c26b8b38185295113b33126591d990cc0a060730f5f9e0643341552c82b4fad7",
       "width": 640
     },
     "tabletPortrait": {

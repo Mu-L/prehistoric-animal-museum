@@ -353,8 +353,8 @@ export const credits = [
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
     "attribution": "“Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
     "modifications": [
-      "Selected a card-size crop that keeps the animal readable.",
-      "Exported without embedded text, controls, labels, logos, or watermarks."
+      "Resized and centred the complete silhouette with animal-specific safe margins.",
+      "Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -727,8 +727,8 @@ export const credits = [
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
     "attribution": "“3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
     "modifications": [
-      "Selected a card-size crop that keeps the animal readable.",
-      "Exported without embedded text, controls, labels, logos, or watermarks."
+      "Resized and centred the complete silhouette with animal-specific safe margins.",
+      "Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1349,8 +1349,8 @@ export const credits = [
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
     "attribution": "“Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
     "modifications": [
-      "Selected a card-size crop that keeps the animal readable.",
-      "Exported without embedded text, controls, labels, logos, or watermarks."
+      "Resized and centred the complete silhouette with animal-specific safe margins.",
+      "Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1474,8 +1474,8 @@ export const credits = [
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
     "attribution": "“Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
     "modifications": [
-      "Selected a card-size crop that keeps the animal readable.",
-      "Exported without embedded text, controls, labels, logos, or watermarks."
+      "Resized and centred the complete silhouette with animal-specific safe margins.",
+      "Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks."
     ]
   },
   {
@@ -1971,8 +1971,8 @@ export const credits = [
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
     "attribution": "“Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
     "modifications": [
-      "Selected a card-size crop that keeps the animal readable.",
-      "Exported without embedded text, controls, labels, logos, or watermarks."
+      "Resized and centred the complete silhouette with animal-specific safe margins.",
+      "Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks."
     ]
   },
   {

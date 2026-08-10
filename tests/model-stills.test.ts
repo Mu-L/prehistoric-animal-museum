@@ -11,7 +11,7 @@ import { createModelPreviewPresentationSignature } from '../src/viewer/model-pre
 // transparency, dimension, source-signature, and manifest audit.
 describe('model preview contract', () => {
   it('keeps the shared profile catalog stable and unambiguous', () => {
-    expect(MODEL_PREVIEW_CONTRACT_VERSION).toBe(2)
+    expect(MODEL_PREVIEW_CONTRACT_VERSION).toBe(3)
     expect(MODEL_PREVIEW_MANIFEST_FILE).toBe(
       'model-preview.manifest.json',
     )
@@ -56,6 +56,7 @@ describe('model preview contract', () => {
       contractVersion?: number
       layout?: {
         coordinateSystem?: string
+        phonePortraitModelScale?: number
         previewObjectFit?: string
         referenceViewports?: Array<{
           height?: number
@@ -70,13 +71,14 @@ describe('model preview contract', () => {
     }
 
     expect(signature).toMatchObject({
-      contractVersion: 2,
+      contractVersion: 3,
       renderer: {
         cameraFieldOfViewDegrees: 34,
         maxPixelRatio: 2,
       },
       layout: {
         coordinateSystem: 'fixed-fullscreen-canvas+composition-frame-v1',
+        phonePortraitModelScale: 1.15,
         previewObjectFit: 'contain',
         referenceViewports: [
           { height: 390, key: 'landscapeCompact', width: 844 },
