@@ -343,13 +343,13 @@ const zhCN: Readonly<Record<ScaleEncounterAnimalId, Omit<ScaleEncounterContent, 
   },
   gigantoraptor: {
     animalId: 'gigantoraptor',
-    sceneLabel: '戈壁洪泛盆地 · 小朋友眼睛视角',
+    sceneLabel: '森林相遇 · 小朋友眼睛视角',
     transitionDurationMs: 8_331,
     copy: {
       title: '和巨盗龙比一比',
       measurement: '从头到尾约 8 米',
       intro:
-        '小朋友，准备好了吗？我们走进开阔的戈壁洪泛盆地，去见一只大约八米长的巨盗龙。它用两条后腿站立，身体比你想象得大得多。',
+        '小朋友，准备好了吗？背上小包，我们走进白垩纪的森林，去寻找巨盗龙。它从嘴尖到尾巴有八米，比你想象中大得多。',
       transition:
         '背好小包，慢慢向前走。先看它长长的双腿，再往上找身体、脖子和小小的脑袋。',
       arrival:
@@ -471,13 +471,13 @@ const zhCN: Readonly<Record<ScaleEncounterAnimalId, Omit<ScaleEncounterContent, 
   },
   meganeura: {
     animalId: 'meganeura',
-    sceneLabel: '石炭纪湿地森林 · 小朋友眼睛视角',
+    sceneLabel: '森林相遇 · 小朋友眼睛视角',
     transitionDurationMs: 8_457,
     copy: {
       title: '和巨脉蜻蜓比一比',
       measurement: '双翼展开约 70 厘米',
       intro:
-        '小朋友，准备好了吗？这次不用仰头找巨兽。我们走进潮湿的石炭纪森林，近距离看看一只翼展约七十厘米的巨脉蜻蜓。',
+        '小朋友，准备好了吗？我们走进远古森林里的开阔地，去寻找巨脉蜻蜓。它的双翼展开有七十厘米，你能在树叶间发现它吗？',
       transition:
         '背好小包，站在原地仔细看。它正在和你眼睛差不多高的地方飞，四片翅膀一闪一闪。',
       arrival:
@@ -487,13 +487,13 @@ const zhCN: Readonly<Record<ScaleEncounterAnimalId, Omit<ScaleEncounterContent, 
   },
   dilophosaurus: {
     animalId: 'dilophosaurus',
-    sceneLabel: '季节性洪泛平原 · 小朋友眼睛视角',
+    sceneLabel: '森林相遇 · 小朋友眼睛视角',
     transitionDurationMs: 7_867,
     copy: {
       title: '和双冠龙比一比',
       measurement: '从头到尾约 6.5 米',
       intro:
-        '小朋友，准备好了吗？我们沿着季节性河道走进洪泛平原，去见一只六米多长的双冠龙。它头顶的两片薄冠很容易认出来。',
+        '小朋友，准备好了吗？背上小包，我们走进侏罗纪的森林，去寻找双冠龙。它从嘴尖到尾巴有六点五米，头顶还有两片特别的冠。',
       transition:
         '背好小包，慢慢向前走。先看它站立的双腿，再抬头找找头顶并排的两片冠。',
       arrival:
@@ -767,13 +767,13 @@ const en: Readonly<Record<ScaleEncounterAnimalId, Omit<ScaleEncounterContent, 'a
   },
   gigantoraptor: {
     animalId: 'gigantoraptor',
-    sceneLabel: 'Gobi floodplain basin · child eye level',
+    sceneLabel: 'Forest encounter · child eye level',
     transitionDurationMs: 7_307,
     copy: {
       title: 'Compare with Gigantoraptor',
       measurement: 'About 8 m from head to tail',
       intro:
-        'Ready, explorer? Let’s cross an open Gobi floodplain basin and meet a Gigantoraptor about eight metres long. It stood on two legs and was far larger than its name might make you imagine.',
+        'Ready, explorer? Pack your day bag and enter a Cretaceous forest in search of Gigantoraptor. It is eight metres from beak to tail, far bigger than you might expect.',
       transition:
         'Walk forward slowly. Start with the long legs, then look up toward the body, neck and small head.',
       arrival:
@@ -889,13 +889,13 @@ const en: Readonly<Record<ScaleEncounterAnimalId, Omit<ScaleEncounterContent, 'a
   },
   meganeura: {
     animalId: 'meganeura',
-    sceneLabel: 'Carboniferous wetland forest · child eye level',
+    sceneLabel: 'Forest encounter · child eye level',
     transitionDurationMs: 7_818,
     copy: {
       title: 'Compare with Meganeura',
       measurement: 'About 70 cm across the wings',
       intro:
-        'Ready, explorer? This time we enter a humid Carboniferous wetland forest and look closely at a Meganeura with a wingspan of about seventy centimetres.',
+        'Ready, explorer? Enter an open patch of ancient forest in search of Meganeura. Its wings stretch seventy centimetres across. Can you spot it between the leaves?',
       transition:
         'Keep your daypack on and stand still. It is flying near eye level, with four wings flashing as they move.',
       arrival:
@@ -905,13 +905,13 @@ const en: Readonly<Record<ScaleEncounterAnimalId, Omit<ScaleEncounterContent, 'a
   },
   dilophosaurus: {
     animalId: 'dilophosaurus',
-    sceneLabel: 'Seasonal floodplain · child eye level',
+    sceneLabel: 'Forest encounter · child eye level',
     transitionDurationMs: 7_947,
     copy: {
       title: 'Compare with Dilophosaurus',
       measurement: 'About 6.5 m from head to tail',
       intro:
-        'Ready, explorer? Let’s follow a seasonal channel onto the floodplain and meet a Dilophosaurus more than six metres long. The pair of thin crests on its head makes it easy to recognise.',
+        'Ready, explorer? Pack your day bag and enter a Jurassic forest in search of Dilophosaurus. It is six and a half metres from nose to tail, with two special crests on its head.',
       transition:
         'Walk forward slowly. Start with its two standing legs, then look up for the pair of crests side by side.',
       arrival:

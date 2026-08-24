@@ -9,73 +9,54 @@ import {
   createScaleEncounterEnvironment,
 } from '../src/viewer/scale-encounter-environment'
 import { SCALE_ENCOUNTER_DEFINITIONS } from '../src/viewer/scale-encounter'
-import { loadPreparedScaleEncounterLandBiome } from '../src/scale-encounter/environments/land-biomes/load'
 
 describe('scale encounter reusable environment theme registry', () => {
   it.each([
-    [
-      'gigantoraptor',
-      'gobi',
-      '戈壁',
-      [
-        'procedural-sky',
-        'procedural-terrain',
-        'procedural-surface',
-        'procedural-ecology',
-      ],
-    ],
-    [
-      'dilophosaurus',
-      'floodplain',
-      '洪泛平原',
-      [
-        'procedural-sky',
-        'procedural-terrain',
-        'procedural-surface',
-        'procedural-ecology',
-        'procedural-water',
-      ],
-    ],
-    [
-      'meganeura',
-      'carboniferous-wetland-forest',
-      '石炭纪湿地森林',
-      [
-        'procedural-sky',
-        'procedural-terrain',
-        'procedural-surface',
-        'procedural-ecology',
-        'procedural-water',
-      ],
-    ],
+    'gigantoraptor',
+    'dilophosaurus',
+    'meganeura',
   ] as const)(
-    'keeps %s registered against its approved %s package',
-    (animalId, expectedThemeId, expectedLabel, expectedContract) => {
+    'keeps %s on the forest selected by the final product review',
+    (animalId) => {
       const plan = scaleEncounterEnvironmentThemePlanFor(
         animalId,
         SCALE_ENCOUNTER_DEFINITIONS[animalId].environmentTheme,
       )
 
       expect(plan.target).toMatchObject({
-        id: expectedThemeId,
-        labels: { zhCN: expectedLabel },
+        id: 'cretaceous-forest',
+        labels: { zhCN: '白垩纪森林' },
         assetStatus: 'active',
-        fallbackThemeId: 'cretaceous-forest',
+        fallbackThemeId: null,
         loadPolicy: 'selected-theme-only',
         revealPolicy: 'keep-current-scene-until-baseline-ready',
-        runtimePanoramaTheme: null,
-        runtimeKind: 'procedural-biome',
+        runtimePanoramaTheme: 'land-cretaceous',
+        runtimeKind: 'panorama-pbr',
       })
-      expect(plan.target.baselineAssetContract).toEqual(expectedContract)
       expect(plan.runtime).toMatchObject({
-        id: expectedThemeId,
+        id: 'cretaceous-forest',
         assetStatus: 'active',
-        runtimeKind: 'procedural-biome',
-        runtimePanoramaTheme: null,
+        runtimeKind: 'panorama-pbr',
+        runtimePanoramaTheme: 'land-cretaceous',
       })
       expect(plan.usingCompatibilityFallback).toBe(false)
     },
   )
+
+  it('keeps the three unselected procedural packages available for later iteration', () => {
+    for (const themeId of [
+      'gobi',
+      'floodplain',
+      'carboniferous-wetland-forest',
+    ] as const) {
+      expect(SCALE_ENCOUNTER_ENVIRONMENT_THEMES[themeId]).toMatchObject({
+        id: themeId,
+        assetStatus: 'active',
+        fallbackThemeId: 'cretaceous-forest',
+        runtimeKind: 'procedural-biome',
+      })
+    }
+  })
 
   it('keeps every existing animal resolvable through one reusable theme contract', () => {
     for (const animalId of SCALE_ENCOUNTER_ANIMAL_IDS) {
@@ -96,15 +77,13 @@ describe('scale encounter reusable environment theme registry', () => {
     expect(Object.keys(SCALE_ENCOUNTER_ENVIRONMENT_THEMES)).toHaveLength(7)
   })
 
-  it('publishes the approved target and runtime on the scene graph', async () => {
+  it('publishes the restored forest target and runtime on the scene graph', () => {
     const panorama = new Texture()
-    const preparedLandBiome =
-      await loadPreparedScaleEncounterLandBiome('gobi')
     const environment = createScaleEncounterEnvironment(
       'land',
       'production-slice',
       panorama,
-      { animalId: 'gigantoraptor', preparedLandBiome },
+      { animalId: 'gigantoraptor' },
     )
 
     expect(environment?.root.userData).toMatchObject({
@@ -112,11 +91,15 @@ describe('scale encounter reusable environment theme registry', () => {
       scaleEncounterEnvironmentLoadPolicy: 'selected-theme-only',
       scaleEncounterEnvironmentRevealPolicy:
         'keep-current-scene-until-baseline-ready',
-      scaleEncounterEnvironmentRuntimeTheme: 'gobi',
-      scaleEncounterEnvironmentTargetTheme: 'gobi',
+      scaleEncounterEnvironmentRuntimeTheme: 'cretaceous-forest',
+      scaleEncounterEnvironmentTargetTheme: 'cretaceous-forest',
       scaleEncounterEnvironmentUsingCompatibilityFallback: false,
     })
-    expect(environment?.sceneCandidateSemantic).toBe('land-biome')
+    expect(
+      environment?.root.getObjectByName(
+        'scale-encounter-accepted-forested-mountain-basin',
+      ),
+    ).toBeTruthy()
     disposeScaleEncounterEnvironment(environment)
     panorama.dispose()
   })

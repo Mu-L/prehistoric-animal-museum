@@ -169,11 +169,12 @@ export const SCALE_ENCOUNTER_ENVIRONMENT_THEMES: Readonly<
 
 const TARGET_THEME_OVERRIDES: Readonly<
   Partial<Record<ScaleEncounterAnimalId, ScaleEncounterEnvironmentThemeId>>
-> = {
-  gigantoraptor: 'gobi',
-  dilophosaurus: 'floodplain',
-  meganeura: 'carboniferous-wetland-forest',
-}
+> = {}
+
+// The Gobi, floodplain and Carboniferous packages remain reusable candidates,
+// but the final product review restored Gigantoraptor, Dilophosaurus and
+// Meganeura to the accepted forest. Do not assign those candidates here until
+// a later scene review explicitly replaces that shipping decision.
 
 const DEFAULT_THEME_BY_RENDERER_FAMILY: Readonly<
   Record<ScaleEncounterEnvironmentTheme, ScaleEncounterEnvironmentThemeId>

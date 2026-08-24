@@ -253,32 +253,28 @@ describe('scale encounter procedural land biomes', () => {
     },
   )
 
-  it('uses the approved selected biome on the public environment route', async () => {
-    const preparedLandBiome = await loadPreparedScaleEncounterLandBiome('gobi')
+  it('does not route an unselected procedural candidate into the public forest encounter', () => {
     const panorama = new Texture()
     const environment = createScaleEncounterEnvironment(
       'land',
       'production-slice',
       panorama,
-      {
-        animalId: 'gigantoraptor',
-        preparedLandBiome,
-      },
+      { animalId: 'gigantoraptor' },
     )
 
     expect(environment?.root.userData).toMatchObject({
-      scaleEncounterEnvironmentRuntimeTheme: 'gobi',
-      scaleEncounterEnvironmentTargetTheme: 'gobi',
+      scaleEncounterEnvironmentRuntimeTheme: 'cretaceous-forest',
+      scaleEncounterEnvironmentTargetTheme: 'cretaceous-forest',
       scaleEncounterEnvironmentUsingCompatibilityFallback: false,
     })
     expect(
       environment?.root.getObjectByName('scale-encounter-gobi-terrain'),
-    ).toBeTruthy()
+    ).toBeFalsy()
     expect(
       environment?.root.getObjectByName(
         'scale-encounter-accepted-forested-mountain-basin',
       ),
-    ).toBeFalsy()
+    ).toBeTruthy()
     disposeScaleEncounterEnvironment(environment)
     panorama.dispose()
   })

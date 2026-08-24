@@ -146,8 +146,24 @@ describe('scale encounter content', () => {
     expect(plesiosaur.copy.intro).not.toContain('蛇颈龙类')
     expect(plesiosaur.copy.transition).toContain('我们轻轻摆动脚蹼')
     expect(plesiosaur.copy.transition).toContain('蛇颈龙正从对面游来')
-    expect(meganeura.sceneLabel).toContain('石炭纪湿地森林')
+    expect(meganeura.sceneLabel).toBe('森林相遇')
     expect(meganeura.copy.arrival).toContain('七十厘米')
+  })
+
+  it('keeps the three restored land encounters aligned with their forest narration', () => {
+    for (const animalId of [
+      'gigantoraptor',
+      'dilophosaurus',
+      'meganeura',
+    ] as const) {
+      const zh = scaleEncounterContentFor(animalId, 'zh-CN')
+      const english = scaleEncounterContentFor(animalId, 'en')
+
+      expect(zh.sceneLabel).toBe('森林相遇')
+      expect(zh.copy.intro).toMatch(/森林/)
+      expect(english.sceneLabel).toBe('Forest encounter')
+      expect(english.copy.intro).toMatch(/forest/i)
+    }
   })
 
   it('keeps the English narration on the same child-first exploration path', () => {
