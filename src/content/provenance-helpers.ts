@@ -73,20 +73,22 @@ export const reviewedBackgroundSources = {
   },
   mammoth: {
     landscape: {
-      title: 'Woolly mammoth steppe-tundra — landscape',
-      generatedOn: '2026-07-29',
-      prompt: `${habitatBackgroundPrompt} Ice Age mammoth-steppe with tawny sedges and shrubs through light snow, a distant glacier valley, rounded snow mountains, and sparse conifers; dry open true 16:9 ground rather than deep snow.`,
-      bytes: 2_879_403,
+      title: 'Clarified woolly mammoth steppe-tundra — landscape',
+      generatedOn: '2026-08-16',
+      prompt:
+        "Use case: precise-object-edit\nAsset type: responsive museum exhibit background, landscape 16:9\nInput image 1: edit target and composition reference\nPrimary request: Restore clarity and believable environmental detail throughout this Ice Age mammoth-steppe background. Remove the excessive soft-focus, hazy gouache blur, and oversized paper texture. Make the snowy mountain ridges, glacier faces, scattered conifers, rocks, frozen shrubs, residual snow and dry tundra soil cleanly legible, with a natural foreground-to-midground-to-distance depth progression. Keep a refined educational illustration look with realistic materials and crisp controlled edges, not a photograph and not a flat children's paper-cut scene.\nComposition/framing: Preserve the original wide composition exactly. Keep the broad open central ground and the current horizon height so the live 3D mammoth can stand in the center-right and a large information card can cover the lower-left. Preserve the framing trees and rocks along the outside edges.\nLighting/mood: Clear cold daylight, gentle atmospheric perspective only in the farthest distance, no artificial depth-of-field.\nColor palette: Cold blue-white snow and ice, restrained tan-gray frozen soil, muted conifers and shrubs.\nConstraints: Edit only the background rendering and detail. No mammoth, no animal, no person, no text, no interface, no logo, no watermark, no platform or hard ground seam. Keep every major landform and the empty staging area.\nAvoid: blur, bloom, fog veil, shallow depth of field, dreamy soft focus, painterly smearing, plastic 3D look, high-saturation fantasy color, repeated vegetation patterns.",
+      bytes: 3_131_168,
       sha256:
-        'b8047f909d465bc47d66232b79a4f8dd47d953c53dcb3a7d5529b1d105f8c9e8',
+        'd7a5d95a736b8742aec9959ea09ebd105590688db4a02d2116502e334b458e79',
     },
     portrait: {
-      title: 'Woolly mammoth steppe-tundra — portrait',
-      generatedOn: '2026-07-31',
-      prompt: `${habitatBackgroundPrompt} Precise portrait edit: change only the scene depth; move the distant horizon and beginning of the open tundra ground upward about 8–10% of the image height so the valley floor extends behind a woolly mammoth whose feet sit around 59% image height. Preserve the accepted 9:16 sky, clouds, mountains, glacier, right-side pine grove, foreground rocks and grasses, palette, lighting, paper texture, and perspective; keep the glacier distant and continue a broad snow-dusted walkable ground plane through the centre with no ice shelf, ledge, hard seam, or new focal object.`,
-      bytes: 2_526_208,
+      title: 'Clarified woolly mammoth steppe-tundra — portrait',
+      generatedOn: '2026-08-16',
+      prompt:
+        "Use case: precise-object-edit\nAsset type: responsive museum exhibit background, portrait 9:16\nInput image 1: edit target and composition reference\nPrimary request: Match the newly clarified landscape direction by restoring crisp, believable environmental detail throughout this Ice Age mammoth-steppe background. Remove excessive soft-focus, hazy gouache blur, oversized paper texture, and flat paper-cut softness. Make the snowy mountain ridges, glacier face, conifers, rocks, frozen shrubs, residual snow and dry tundra soil cleanly legible, with a natural foreground-to-midground-to-distance depth progression. Keep a refined educational illustration look with realistic materials and crisp controlled edges, not a photograph.\nComposition/framing: Preserve the original portrait composition exactly. Keep the broad open central ground, current horizon height and upper-sky breathing room so the live 3D mammoth can stand around the middle-lower area and mobile interface elements remain readable. Preserve the framing conifers, rocks and shrubs along the outside edges.\nLighting/mood: Clear cold daylight, gentle atmospheric perspective only in the farthest distance, no artificial depth-of-field.\nColor palette: Cold blue-white snow and ice, restrained tan-gray frozen soil, muted conifers and shrubs.\nConstraints: Edit only the background rendering and detail. No mammoth, no animal, no person, no text, no interface, no logo, no watermark, no platform or hard ground seam. Keep every major landform and the empty staging area.\nAvoid: blur, bloom, fog veil, shallow depth of field, dreamy soft focus, painterly smearing, plastic 3D look, high-saturation fantasy color, repeated vegetation patterns.",
+      bytes: 2_456_282,
       sha256:
-        '9508399ee924f9dfae784d7af0e10951c834bf514a6371a6bdf87b5df231a28a',
+        '13af5d95f704c61893e3ce550bd2d467c4786a3eeb57581e8fbf19d9e269d700',
     },
   },
   maiasaura: {
@@ -373,10 +375,12 @@ export interface PublishedAssetProvenanceInput {
     readonly landscape: {
       readonly source: BackgroundSource
       readonly runtime: RuntimeFile
+      readonly runtimeModifications?: readonly [string, ...string[]]
     }
     readonly portrait: {
       readonly source: BackgroundSource
       readonly runtime: RuntimeFile
+      readonly runtimeModifications?: readonly [string, ...string[]]
     }
   }
   readonly poster: RuntimeFile
@@ -503,10 +507,10 @@ export function createPublishedAssetProvenance(
       },
       license: generatedImageLicense,
       runtime: input.backgrounds.landscape.runtime,
-      modifications: [
-        'Converted the reviewed PNG to lossy WebP at quality 82.',
-        'Removed ancillary metadata without applying a runtime tint or filter.',
-      ],
+      modifications: input.backgrounds.landscape.runtimeModifications ?? [
+          'Converted the reviewed PNG to lossy WebP at quality 82.',
+          'Removed ancillary metadata without applying a runtime tint or filter.',
+        ],
       attribution: `Project-generated ${input.animalName} landscape created with OpenAI ImageGen.`,
       redistributionAllowed: true,
       evidencePaths: ['provenance/LICENSES/background-generation.txt'],
@@ -525,10 +529,10 @@ export function createPublishedAssetProvenance(
       },
       license: generatedImageLicense,
       runtime: input.backgrounds.portrait.runtime,
-      modifications: [
-        'Converted the separately composed reviewed PNG to lossy WebP at quality 82.',
-        'Removed ancillary metadata without applying a runtime tint or filter.',
-      ],
+      modifications: input.backgrounds.portrait.runtimeModifications ?? [
+          'Converted the separately composed reviewed PNG to lossy WebP at quality 82.',
+          'Removed ancillary metadata without applying a runtime tint or filter.',
+        ],
       attribution: `Project-generated ${input.animalName} portrait created with OpenAI ImageGen.`,
       redistributionAllowed: true,
       evidencePaths: ['provenance/LICENSES/background-generation.txt'],

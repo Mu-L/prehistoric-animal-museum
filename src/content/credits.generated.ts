@@ -499,6 +499,8 @@ export const credits = [
       "Re-UVed the accepted body and authored a 2K dark-dorsal/light-ventral aquatic base colour with irregular mottling and tangent-space surface detail plus a 1K roughness map; the skin remains matte and does not imitate fish scales.",
       "Reduced the source teeth from approximately 69,632 triangles to approximately 12,500 while preserving their readable silhouette.",
       "Built a project-authored fourteen-bone Blender rig and one six-second in-place Idle: a six-segment tail chain carries two continuous travelling waves, the front fins move by approximately eight degrees, the rear fins by approximately 4.5 degrees, and the root remains stationary.",
+      "Shifted the Idle to begin at exactly zero seconds, made every rotation track close on the same quaternion, and periodically smoothed the head, neck, and body tracks so loop wraparound cannot produce a sudden head shake.",
+      "Cleared stale normalized flags after promoting repaired quaternion accessors to floating point so the runtime GLTF loader receives spec-valid animation data.",
       "Normalized the derivative to one closed-loop Idle, repacked it, validated it with zero Khronos errors and warnings before runtime compression, and reviewed it in the shared museum viewer."
     ]
   },
@@ -661,14 +663,14 @@ export const credits = [
     "animalId": "mammoth",
     "assetPath": "backgrounds/landscape.webp",
     "assetKind": "background",
-    "sourceTitle": "Woolly mammoth steppe-tundra — landscape",
+    "sourceTitle": "Clarified woolly mammoth steppe-tundra — landscape",
     "author": "OpenAI built-in image_gen",
     "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
     "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
     "attribution": "Project-generated 长毛猛犸象 landscape created with OpenAI ImageGen.",
     "modifications": [
-      "Converted the reviewed PNG to lossy WebP at quality 82.",
-      "Removed ancillary metadata without applying a runtime tint or filter."
+      "Downscaled the reviewed 4096 × 2304 clarity derivative to 2048 × 1152 with Sharp Lanczos3 resampling.",
+      "Encoded as WebP at quality 82 and effort 6 with ancillary metadata removed and no runtime tint or blur."
     ]
   },
   {
@@ -676,14 +678,14 @@ export const credits = [
     "animalId": "mammoth",
     "assetPath": "backgrounds/portrait.webp",
     "assetKind": "background",
-    "sourceTitle": "Woolly mammoth steppe-tundra — portrait",
+    "sourceTitle": "Clarified woolly mammoth steppe-tundra — portrait",
     "author": "OpenAI built-in image_gen",
     "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
     "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
     "attribution": "Project-generated 长毛猛犸象 portrait created with OpenAI ImageGen.",
     "modifications": [
-      "Converted the separately composed reviewed PNG to lossy WebP at quality 82.",
-      "Removed ancillary metadata without applying a runtime tint or filter."
+      "Downscaled the reviewed 2304 × 4096 clarity derivative to 1152 × 2048 with Sharp Lanczos3 resampling.",
+      "Encoded as WebP at quality 82 and effort 6 with ancillary metadata removed and no runtime tint or blur."
     ]
   },
   {
@@ -873,7 +875,9 @@ export const credits = [
       "Retained the source skinned hierarchy, repacked the GLB, and applied a desaturated non-metallic matte aquatic material treatment.",
       "Replaced the source mouth-focused action with a project-authored eight-second in-place full-body swimming Idle at 24 frames per second.",
       "Kept the four head-chain joints nearly stable at approximately 0.15–0.30 degrees while increasing the travelling propulsion wave from roughly 1.2 degrees at the tail root to 8.5 degrees at the tail tip.",
-      "Added restrained paired-fin pose changes, exported one closed-loop Idle, validator-checked the result, and reviewed the animated skinned bounds in the shared museum viewer."
+      "Added restrained paired-fin pose changes, exported one closed-loop Idle, validator-checked the result, and reviewed the animated skinned bounds in the shared museum viewer.",
+      "Resampled the propulsion chain to a uniform 24 fps periodic curve, smoothed the tail acceleration through the loop seam, and mirrored each left pectoral-fin quaternion onto its right-side partner so both fins sweep inward and outward together.",
+      "Cleared stale normalized flags after promoting repaired quaternion accessors to floating point so the runtime GLTF loader receives spec-valid animation data."
     ]
   },
   {
@@ -1122,7 +1126,9 @@ export const credits = [
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
       "Authored and validator-checked one closed eight-second marine-tail Idle for the shared museum viewer.",
-      "Included the human-reviewed source-rig partial mouth relaxation in the same Idle loop."
+      "Included the human-reviewed source-rig partial mouth relaxation in the same Idle loop.",
+      "Replaced the source tail morph's sign-reversing S curve with two mirrored, length-preserving single-curvature arc targets. Each stroke now begins at the muscular tail root, increases continuously toward the tip, and returns through a neutral straight pose without folding back on itself; retained the symmetric four-flipper swimming targets.",
+      "Cleared stale normalized flags after promoting repaired morph and animation accessors to floating point so the runtime GLTF loader receives spec-valid data."
     ]
   },
   {

@@ -16,6 +16,24 @@ export const privateLocalMaterialDeny = [
   '**/tools/**',
 ] as const
 
+export function privateLocalMaterialDenyForRoot(
+  projectRoot: string,
+): readonly string[] {
+  const normalizedRoot = projectRoot.replaceAll('\\', '/')
+  if (!normalizedRoot.includes('/.wayfinder/worktrees/')) {
+    return privateLocalMaterialDeny
+  }
+
+  // Vite applies deny globs to absolute paths before checking fs.allow. A
+  // Wayfinder worktree therefore matches **/.wayfinder/** for every source
+  // file, including index.html. The project root is already the fs boundary;
+  // retain every nested private-material deny while removing only the parent
+  // path pattern that would otherwise make the review server unusable.
+  return privateLocalMaterialDeny.filter(
+    (pattern) => pattern !== '**/.wayfinder/**',
+  )
+}
+
 export function parseAllowedHosts(value: string | undefined): string[] {
   return [
     ...new Set(

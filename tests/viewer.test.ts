@@ -31,6 +31,10 @@ import { disposeObject3D } from '../src/viewer/dispose'
 import {
   computeContactShadowLayout,
   classifyModelResourceTiming,
+  computeScaleEncounterOrbitedEyePosition,
+  computeScaleEncounterOrbitedGazeTarget,
+  computeScaleEncounterOverviewFieldOfView,
+  computeScaleEncounterPovEyePosition,
   computeModelTransitionFrame,
   computeModelBounds,
   createCameraRelativeLightingPose,
@@ -38,9 +42,613 @@ import {
   requestModelResponse,
   resetStagedModelPose,
   updateCameraRelativeLightingPose,
+  ViewerController,
   viewerZoomProfileForPointer,
   type ViewerModelDescriptor,
 } from '../src/viewer/ViewerController'
+import {
+  SCALE_ENCOUNTER_DEFINITIONS,
+  computeScaleEncounterAvatarGroundedEyeHeight,
+  createScaleEncounterPlacement,
+  positionOnScaleEncounterRail,
+  scaleEncounterSubjectLayoutForAspect,
+  type ScaleEncounterAvatarFactory,
+} from '../src/viewer/scale-encounter'
+
+describe('scale encounter avatar grounding', () => {
+  it('measures the eye from the rendered shoe sole instead of the GLB root', () => {
+    const root = new Group()
+    const body = new Mesh(
+      new BoxGeometry(0.42, 1.05, 0.28),
+      new MeshBasicMaterial(),
+    )
+    body.position.y = 0.0045 + 1.05 / 2
+    const eyeAnchor = new Group()
+    eyeAnchor.position.y = 0.9895
+    root.add(body, eyeAnchor)
+
+    expect(
+      computeScaleEncounterAvatarGroundedEyeHeight({
+        eyeAnchor,
+        root,
+        visual: new Group(),
+      }),
+    ).toBeCloseTo(0.985, 7)
+
+    body.geometry.dispose()
+    body.material.dispose()
+  })
+})
+
+describe('scale encounter overview optical zoom', () => {
+  it('uses a responsive comparison axis only for the sky encounter', () => {
+    expect(scaleEncounterSubjectLayoutForAspect('pteranodon', 1.6)).toBe(
+      'side-by-side',
+    )
+    expect(scaleEncounterSubjectLayoutForAspect('pteranodon', 1)).toBe(
+      'stacked',
+    )
+    expect(scaleEncounterSubjectLayoutForAspect('pteranodon', 390 / 844)).toBe(
+      'stacked',
+    )
+    expect(scaleEncounterSubjectLayoutForAspect('mosasaurus', 1)).toBe(
+      'authored',
+    )
+  })
+
+  it.each([0.64, 0.74, 0.82, 0.9, 1, 1.08, 1.18])(
+    'maps zoom %s through camera FOV so the panorama and subjects scale together',
+    (zoom) => {
+      const baseFieldOfView = 58
+      const zoomedFieldOfView = computeScaleEncounterOverviewFieldOfView(
+        baseFieldOfView,
+        zoom,
+      )
+      const baseTangent = Math.tan(
+        MathUtils.degToRad(baseFieldOfView) / 2,
+      )
+      const zoomedTangent = Math.tan(
+        MathUtils.degToRad(zoomedFieldOfView) / 2,
+      )
+
+      expect(zoomedTangent / baseTangent).toBeCloseTo(zoom, 12)
+      if (zoom < 1) expect(zoomedFieldOfView).toBeLessThan(baseFieldOfView)
+      if (zoom > 1) expect(zoomedFieldOfView).toBeGreaterThan(baseFieldOfView)
+    },
+  )
+
+  it('eases click targets and advances held zoom at a constant rate', () => {
+    const harness = createGroundedPovController(1440 / 900)
+    harness.encounter.view = 'overview'
+    harness.encounter.overviewZoom = 1
+    harness.encounter.targetOverviewZoom = 1
+    Object.assign(harness.controller as unknown as Record<string, unknown>, {
+      applyScaleEncounterOverviewPose: vi.fn(),
+      publishScaleEncounterSnapshot: vi.fn(),
+      scaleEncounterDistanceSnapshotUpdatedAt: Number.NEGATIVE_INFINITY,
+    })
+    const internals = harness.controller as unknown as {
+      updateScaleEncounterDistance: (
+        deltaSeconds: number,
+        now: number,
+      ) => void
+    }
+
+    harness.controller.adjustScaleEncounterDistance(1)
+    expect(harness.encounter.targetOverviewZoom).toBeCloseTo(0.92, 10)
+    expect(harness.encounter.overviewZoom).toBe(1)
+    internals.updateScaleEncounterDistance(1 / 60, 16)
+    expect(harness.encounter.overviewZoom).toBeLessThan(1)
+    expect(harness.encounter.overviewZoom).toBeGreaterThan(0.92)
+    for (let frame = 2; frame <= 60; frame += 1) {
+      internals.updateScaleEncounterDistance(1 / 60, frame * 16)
+    }
+    expect(harness.encounter.overviewZoom).toBeCloseTo(0.92, 3)
+
+    harness.encounter.overviewZoom = 1.1
+    harness.encounter.targetOverviewZoom = 1.1
+    harness.controller.setScaleEncounterDistanceMotion(1)
+    for (let frame = 0; frame < 5; frame += 1) {
+      internals.updateScaleEncounterDistance(0.1, 1_000 + frame * 100)
+    }
+    expect(harness.encounter.overviewZoom).toBeCloseTo(1.025, 6)
+    harness.controller.setScaleEncounterDistanceMotion(0)
+  })
+
+  it('keeps a closer shared range while giving the mammoth a deeper close-up', () => {
+    const harness = createGroundedPovController(1440 / 900)
+    harness.encounter.view = 'overview'
+    harness.encounter.overviewZoom = 0.75
+    harness.encounter.targetOverviewZoom = 0.75
+    harness.controller.adjustScaleEncounterDistance(1)
+    expect(harness.encounter.targetOverviewZoom).toBe(0.74)
+
+    Object.assign(harness.encounter, {
+      definition: SCALE_ENCOUNTER_DEFINITIONS.mammoth,
+      overviewZoom: 0.62,
+      targetOverviewZoom: 0.62,
+    })
+    harness.controller.adjustScaleEncounterDistance(1)
+    expect(harness.encounter.targetOverviewZoom).toBe(0.58)
+  })
+})
+
+describe('scale encounter 360-degree observer orbit', () => {
+  it.each([
+    ['land', 'tyrannosaurus-rex'],
+    ['air', 'pteranodon'],
+    ['water', 'mosasaurus'],
+  ] as const)(
+    'preserves the animal-centre radius and eye height through a full %s orbit',
+    (habitat, animalId) => {
+      const definition = SCALE_ENCOUNTER_DEFINITIONS[animalId]
+      const placement = createScaleEncounterPlacement(
+        animalId,
+        new Vector3(-5, -1, -1),
+        new Vector3(7, 6, 1),
+        0.985,
+      )
+      const initial = computeScaleEncounterOrbitedEyePosition(
+        placement,
+        habitat,
+        definition.defaultDistance,
+        0,
+      )
+      const quarterTurn = computeScaleEncounterOrbitedEyePosition(
+        placement,
+        habitat,
+        definition.defaultDistance,
+        Math.PI / 2,
+      )
+      const fullTurn = computeScaleEncounterOrbitedEyePosition(
+        placement,
+        habitat,
+        definition.defaultDistance,
+        Math.PI * 2,
+      )
+
+      expect(initial.distanceTo(placement.target)).toBeCloseTo(
+        definition.defaultDistance,
+        8,
+      )
+      expect(quarterTurn.distanceTo(placement.orbitCenter)).toBeCloseTo(
+        initial.distanceTo(placement.orbitCenter),
+        8,
+      )
+      expect(
+        quarterTurn.distanceTo(
+          initial
+            .clone()
+            .sub(placement.orbitCenter)
+            .applyAxisAngle(new Vector3(0, 1, 0), Math.PI / 2)
+            .add(placement.orbitCenter),
+        ),
+      ).toBeLessThan(1e-8)
+      expect(quarterTurn.y).toBeCloseTo(initial.y, 8)
+      expect(fullTurn.distanceTo(initial)).toBeLessThan(1e-8)
+    },
+  )
+
+  it('centres the whole mammoth once the child circles away from the authored head view', () => {
+    const placement = createScaleEncounterPlacement(
+      'mammoth',
+      new Vector3(-0.75, 0, -0.7),
+      new Vector3(4.35, 3.25, 0.7),
+      1.05,
+    )
+
+    expect(
+      computeScaleEncounterOrbitedGazeTarget(placement, 0).distanceTo(
+        placement.target,
+      ),
+    ).toBeLessThan(1e-10)
+    expect(
+      computeScaleEncounterOrbitedGazeTarget(
+        placement,
+        MathUtils.degToRad(30),
+      ).distanceTo(placement.orbitCenter),
+    ).toBeLessThan(1e-10)
+  })
+
+  it('moves to the next 30-degree side at a bounded arc speed and turns the child onto the tangent', () => {
+    const harness = createGroundedPovController(1440 / 900)
+    const internals = harness.controller as unknown as {
+      computeScaleEncounterCameraPose: (view: 'pov') => {
+        readonly position: Vector3
+        readonly quaternion: PerspectiveCamera['quaternion']
+      }
+      updateScaleEncounterAvatarMotion: (deltaSeconds: number) => void
+      updateScaleEncounterOrbit: (deltaSeconds: number, now: number) => void
+    }
+
+    harness.controller.adjustScaleEncounterOrbit(1)
+    expect(harness.encounter.targetOrbitAngleRadians).toBeCloseTo(
+      MathUtils.degToRad(30),
+      10,
+    )
+    let finalTravel = new Vector3()
+    let frame = 1
+    for (; frame <= 360; frame += 1) {
+      const previousEye = harness.encounter.avatarPreviousEyePosition.clone()
+      internals.updateScaleEncounterOrbit(1 / 60, frame * 16)
+      internals.updateScaleEncounterAvatarMotion(1 / 60)
+      finalTravel = harness.encounter.avatarPreviousEyePosition
+        .clone()
+        .sub(previousEye)
+      if (
+        Math.abs(
+          harness.encounter.orbitAngleRadians -
+            harness.encounter.targetOrbitAngleRadians,
+        ) < 1e-10
+      ) {
+        break
+      }
+    }
+
+    expect(frame).toBeGreaterThan(90)
+    expect(frame).toBeLessThan(360)
+    expect(harness.encounter.orbitAngleRadians).toBeCloseTo(
+      MathUtils.degToRad(30),
+      4,
+    )
+    const expectedEye = computeScaleEncounterOrbitedEyePosition(
+      harness.placement,
+      'land',
+      harness.encounter.observerDistance,
+      harness.encounter.orbitAngleRadians,
+    )
+    const expectedCamera = internals.computeScaleEncounterCameraPose('pov')
+    expect(
+      harness.avatarEye.getWorldPosition(new Vector3()).distanceTo(expectedEye),
+    ).toBeLessThan(1e-8)
+    expect(
+      harness.camera.position.distanceTo(expectedCamera.position),
+    ).toBeLessThan(1e-8)
+    expect(
+      harness.camera.quaternion.angleTo(expectedCamera.quaternion),
+    ).toBeLessThan(1e-8)
+    expect(harness.encounter.avatar.root.visible).toBe(true)
+    const renderedForward = new Vector3(1, 0, 0)
+      .applyQuaternion(harness.encounter.avatar.root.quaternion)
+      .normalize()
+    expect(finalTravel.length()).toBeGreaterThan(0)
+    expect(renderedForward.dot(finalTravel.normalize())).toBeGreaterThan(0.99)
+    expect(
+      Number(
+        harness.encounter.avatar.root.userData
+          .scaleEncounterAvatarTravelSpeed,
+      ),
+    ).toBeLessThanOrEqual(2.8 + 1e-6)
+  })
+
+  it('ignores orbit input while the encounter is in the overview', () => {
+    const harness = createGroundedPovController(390 / 844)
+    harness.encounter.view = 'overview'
+
+    harness.controller.adjustScaleEncounterOrbit(1)
+    harness.controller.setScaleEncounterOrbitMotion(1)
+
+    expect(harness.encounter.orbitAngleRadians).toBe(0)
+    expect(harness.encounter.targetOrbitAngleRadians).toBe(0)
+    expect(harness.encounter.orbitMotionDirection).toBe(0)
+  })
+
+  it('returns the child and trailing camera to their original orbit before revealing the overview', async () => {
+    const harness = createGroundedPovController(390 / 844)
+    const internals = harness.controller as unknown as {
+      applyScaleEncounterPovPose: () => void
+      computeScaleEncounterCameraPose: (view: 'pov') => {
+        readonly position: Vector3
+        readonly quaternion: PerspectiveCamera['quaternion']
+      }
+      updateScaleEncounterTransition: (now: number) => void
+    }
+    harness.encounter.orbitAngleRadians = Math.PI
+    harness.encounter.targetOrbitAngleRadians = Math.PI
+    internals.applyScaleEncounterPovPose()
+
+    const returnPromise = harness.controller.transitionScaleEncounterView(
+      'overview',
+      2_000,
+    )
+    const transition = harness.encounter.transition as {
+      readonly duration: number
+      readonly keyframes: readonly {
+        readonly at: number
+        readonly cameraStage: string
+      }[]
+      readonly orbitReturn: {
+        readonly endAt: number
+        readonly holdEndAt: number
+        readonly startAngleRadians: number
+        readonly startDistance: number
+      }
+      readonly startedAt: number
+    }
+
+    expect(transition.keyframes.map(({ cameraStage }) => cameraStage)).toEqual([
+      'follow-orbit',
+      'follow-orbit',
+      'follow-orbit',
+      'child-rear',
+      'overview',
+    ])
+    expect(transition.orbitReturn.startAngleRadians).toBeCloseTo(Math.PI, 10)
+    expect(transition.keyframes[1]?.at).toBe(transition.orbitReturn.endAt)
+
+    internals.updateScaleEncounterTransition(
+      transition.startedAt +
+        transition.duration * transition.orbitReturn.endAt * 0.5,
+    )
+    const expectedHalfwayEye = computeScaleEncounterOrbitedEyePosition(
+      harness.placement,
+      'land',
+      harness.encounter.observerDistance,
+      Math.PI / 2,
+    )
+    expect(harness.encounter.orbitAngleRadians).toBeCloseTo(Math.PI / 2, 8)
+    expect(harness.camera.position.distanceTo(expectedHalfwayEye)).toBeGreaterThan(
+      8,
+    )
+    expect(
+      harness.avatarEye
+        .getWorldPosition(new Vector3())
+        .distanceTo(expectedHalfwayEye),
+    ).toBeLessThan(1e-8)
+    const expectedHalfwayCamera = internals.computeScaleEncounterCameraPose('pov')
+    expect(
+      harness.camera.position.distanceTo(expectedHalfwayCamera.position),
+    ).toBeLessThan(1e-8)
+    expect(
+      harness.camera.quaternion.angleTo(expectedHalfwayCamera.quaternion),
+    ).toBeLessThan(1e-6)
+    const halfwayCameraPosition = harness.camera.position.clone()
+    const halfwayAvatarPosition = harness.encounter.avatar.root.position.clone()
+    harness.container.clientWidth = 844
+    harness.container.clientHeight = 390
+    harness.controller.resize()
+    expect(harness.encounter.orbitAngleRadians).toBeCloseTo(Math.PI / 2, 8)
+    expect(
+      harness.camera.position.distanceTo(halfwayCameraPosition),
+    ).toBeLessThan(1e-8)
+    expect(
+      harness.encounter.avatar.root.position.distanceTo(
+        halfwayAvatarPosition,
+      ),
+    ).toBeLessThan(1e-8)
+    expect(harness.encounter.avatar.root.visible).toBe(true)
+
+    internals.updateScaleEncounterTransition(
+      transition.startedAt +
+        transition.duration * transition.orbitReturn.endAt,
+    )
+    const originalEye = computeScaleEncounterOrbitedEyePosition(
+      harness.placement,
+      'land',
+      harness.encounter.observerDistance,
+      0,
+    )
+    expect(harness.encounter.orbitAngleRadians).toBe(0)
+    expect(
+      harness.avatarEye
+        .getWorldPosition(new Vector3())
+        .distanceTo(originalEye),
+    ).toBeLessThan(1e-8)
+    const expectedOriginalCamera = internals.computeScaleEncounterCameraPose('pov')
+    expect(
+      harness.camera.position.distanceTo(expectedOriginalCamera.position),
+    ).toBeLessThan(1e-8)
+    expect(harness.encounter.avatar.root.visible).toBe(true)
+
+    const rearAt = transition.keyframes[3]!.at
+    internals.updateScaleEncounterTransition(
+      transition.startedAt +
+        transition.duration *
+          MathUtils.lerp(transition.orbitReturn.holdEndAt, rearAt, 0.5),
+    )
+    expect(harness.encounter.avatar.root.visible).toBe(true)
+
+    harness.controller.finishScaleEncounterTransition()
+    await returnPromise
+    expect(harness.encounter.view).toBe('overview')
+    expect(harness.encounter.orbitAngleRadians).toBe(0)
+  })
+})
+
+describe('scale encounter avatar locomotion', () => {
+  it('turns and walks outward when the child moves farther, then stays idle for overview optical zoom', () => {
+    const harness = createGroundedPovController(1440 / 900)
+    const internals = harness.controller as unknown as {
+      applyScaleEncounterPovPose: () => void
+      publishScaleEncounterAvatarMotionDiagnostics: () => void
+      updateScaleEncounterAvatarMotion: (deltaSeconds: number) => void
+      updateScaleEncounterDistance: (
+        deltaSeconds: number,
+        now: number,
+      ) => void
+    }
+    internals.applyScaleEncounterPovPose()
+    harness.encounter.avatarPreviousEyePosition.copy(
+      harness.avatarEye.getWorldPosition(new Vector3()),
+    )
+
+    harness.controller.adjustScaleEncounterDistance(-1)
+    let lastTravel = new Vector3()
+    for (let frame = 1; frame <= 60; frame += 1) {
+      const previousEye = harness.encounter.avatarPreviousEyePosition.clone()
+      internals.updateScaleEncounterDistance(1 / 60, frame * 16)
+      internals.updateScaleEncounterAvatarMotion(1 / 60)
+      lastTravel = harness.encounter.avatarPreviousEyePosition
+        .clone()
+        .sub(previousEye)
+      if (
+        harness.encounter.observerDistance ===
+        harness.encounter.targetObserverDistance
+      ) {
+        break
+      }
+    }
+
+    const renderedForward = new Vector3(1, 0, 0)
+      .applyQuaternion(harness.encounter.avatar.root.quaternion)
+      .normalize()
+    expect(lastTravel.length()).toBeGreaterThan(0)
+    expect(renderedForward.dot(lastTravel.normalize())).toBeGreaterThan(0.98)
+    expect(
+      harness.encounter.avatar.root.userData.scaleEncounterAvatarMotion,
+    ).toBe('walk')
+    expect(
+      Number(
+        harness.encounter.avatar.root.userData
+          .scaleEncounterAvatarTravelSpeed,
+      ),
+    ).toBeLessThanOrEqual(1.4 + 1e-6)
+
+    harness.encounter.view = 'overview'
+    harness.encounter.overviewZoom = 1
+    harness.encounter.targetOverviewZoom = 1
+    harness.encounter.avatarPreviousEyePosition.copy(
+      harness.avatarEye.getWorldPosition(new Vector3()),
+    )
+    harness.controller.adjustScaleEncounterDistance(1)
+    internals.updateScaleEncounterDistance(1 / 60, 2_000)
+    internals.updateScaleEncounterAvatarMotion(1 / 60)
+    internals.publishScaleEncounterAvatarMotionDiagnostics()
+
+    expect(
+      harness.encounter.avatar.root.userData.scaleEncounterAvatarMotion,
+    ).toBe('idle')
+    expect(
+      harness.renderer.domElement.dataset
+        .scaleEncounterAvatarSpeedMetersPerSecond,
+    ).toBe('0.000')
+    expect(
+      harness.renderer.domElement.dataset.scaleEncounterAvatarMotion,
+    ).toBe('idle')
+  })
+})
+
+describe('scale encounter context action', () => {
+  it('runs a terrain-relative land parabola and ends the package jump pose on landing', () => {
+    const harness = createGroundedPovController(1440 / 900)
+    const setActionState = (
+      harness.encounter.avatar as typeof harness.encounter.avatar & {
+        setActionState: ReturnType<typeof vi.fn>
+      }
+    ).setActionState
+    const internals = harness.controller as unknown as {
+      applyScaleEncounterPovPose: () => void
+      updateScaleEncounterContextAction: (deltaSeconds: number) => void
+    }
+    internals.applyScaleEncounterPovPose()
+    const groundedEyeY = harness.avatarEye.getWorldPosition(new Vector3()).y
+
+    expect(harness.controller.triggerScaleEncounterJump()).toBe(true)
+    expect(harness.controller.triggerScaleEncounterJump()).toBe(false)
+    expect(setActionState).toHaveBeenCalledWith('jump', true)
+    expect(harness.encounter.jumpPhase).toBe('anticipation')
+
+    internals.updateScaleEncounterContextAction(0.1)
+    expect(harness.avatarEye.getWorldPosition(new Vector3()).y).toBeLessThan(
+      groundedEyeY,
+    )
+    expect(harness.renderer.domElement.dataset.scaleEncounterJump).toBe(
+      'anticipation',
+    )
+
+    let maximumEyeY = groundedEyeY
+    for (let frame = 0; frame < 120; frame += 1) {
+      internals.updateScaleEncounterContextAction(1 / 60)
+      maximumEyeY = Math.max(
+        maximumEyeY,
+        harness.avatarEye.getWorldPosition(new Vector3()).y,
+      )
+      if (!harness.encounter.jumpActive) break
+    }
+
+    expect(maximumEyeY - groundedEyeY).toBeGreaterThanOrEqual(0.11)
+    expect(harness.avatarEye.getWorldPosition(new Vector3()).y).toBeCloseTo(
+      groundedEyeY,
+      6,
+    )
+    expect(setActionState).toHaveBeenLastCalledWith('jump', false)
+    expect(harness.renderer.domElement.dataset.scaleEncounterJump).toBe(
+      'grounded',
+    )
+  })
+
+  it.each([
+    ['pteranodon', 1.6],
+    ['mosasaurus', 1.4],
+  ] as const)('smoothly applies the %s hold-to-boost cap', (animalId, cap) => {
+    const harness = createGroundedPovController(1440 / 900)
+    harness.encounter.definition = SCALE_ENCOUNTER_DEFINITIONS[animalId]
+    const setIntensity = vi.fn()
+    harness.encounter.boostFlow = { setIntensity }
+    const internals = harness.controller as unknown as {
+      updateScaleEncounterContextAction: (deltaSeconds: number) => void
+    }
+
+    expect(harness.controller.setScaleEncounterBoost(true)).toBe(true)
+    internals.updateScaleEncounterContextAction(1)
+    expect(harness.encounter.actionBoostMultiplier).toBeCloseTo(cap, 3)
+    expect(
+      Number(
+        harness.renderer.domElement.dataset.scaleEncounterBoostMultiplier,
+      ),
+    ).toBeCloseTo(cap, 3)
+    expect(setIntensity).toHaveBeenLastCalledWith(expect.closeTo(1, 3))
+    expect(
+      Number(
+        harness.renderer.domElement.dataset
+          .scaleEncounterBoostFlowIntensity,
+      ),
+    ).toBeCloseTo(1, 3)
+
+    expect(harness.controller.setScaleEncounterBoost(false)).toBe(true)
+    internals.updateScaleEncounterContextAction(1)
+    expect(harness.encounter.actionBoostMultiplier).toBeCloseTo(1, 3)
+    expect(setIntensity).toHaveBeenLastCalledWith(expect.closeTo(0, 3))
+    expect(
+      Number(
+        harness.renderer.domElement.dataset
+          .scaleEncounterBoostFlowIntensity,
+      ),
+    ).toBeCloseTo(0, 3)
+  })
+})
+
+describe('scale encounter canonical avatar source', () => {
+  it('requires an installed reviewed factory and never restores the procedural child', () => {
+    const controller = Object.create(
+      ViewerController.prototype,
+    ) as ViewerController
+    const internals = controller as unknown as {
+      scaleEncounter: unknown
+      scaleEncounterAvatarFactory: (...args: unknown[]) => unknown
+    }
+    internals.scaleEncounter = null
+
+    controller.setScaleEncounterAvatarFactory(null)
+    expect(() => internals.scaleEncounterAvatarFactory()).toThrow(
+      'scale-encounter-avatar-factory-unavailable',
+    )
+
+    const reviewedFactory = vi.fn(() => ({ source: 'reviewed-base' }))
+    controller.setScaleEncounterAvatarFactory(
+      reviewedFactory as unknown as ScaleEncounterAvatarFactory,
+    )
+    expect(internals.scaleEncounterAvatarFactory()).toEqual({
+      source: 'reviewed-base',
+    })
+
+    internals.scaleEncounter = {}
+    controller.setScaleEncounterAvatarFactory(null)
+    expect(internals.scaleEncounterAvatarFactory()).toEqual({
+      source: 'reviewed-base',
+    })
+  })
+})
 
 describe('model response loading', () => {
   afterEach(() => {
@@ -160,6 +768,1050 @@ describe('model response loading', () => {
   })
 })
 
+describe('scale encounter resize continuity', () => {
+  it('caps the layered mammoth prototype on ultra-wide high-DPI displays', () => {
+    const devicePixelRatio = vi
+      .spyOn(window, 'devicePixelRatio', 'get')
+      .mockReturnValue(2)
+    const camera = new PerspectiveCamera(52, 1, 0.03, 240)
+    const renderer = {
+      domElement: { dataset: {} as Record<string, string> },
+      setPixelRatio: vi.fn(),
+      setSize: vi.fn(),
+    }
+    const controller = Object.create(
+      ViewerController.prototype,
+    ) as ViewerController
+    Object.assign(controller as unknown as Record<string, unknown>, {
+      applyScaleEncounterOverviewPose: vi.fn(),
+      camera,
+      container: { clientHeight: 2_304, clientWidth: 4_096 },
+      destroyed: false,
+      renderer,
+      scaleEncounter: {
+        definition: SCALE_ENCOUNTER_DEFINITIONS.mammoth,
+        transition: null,
+        view: 'overview',
+      },
+      scaleEncounterSceneCandidateVariant: 'C',
+    })
+
+    controller.resize()
+
+    expect(renderer.setPixelRatio).toHaveBeenLastCalledWith(1.5)
+    expect(renderer.domElement.dataset.scaleEncounterRenderPixelRatio).toBe(
+      '1.50',
+    )
+    expect(renderer.setSize).toHaveBeenLastCalledWith(4_096, 2_304, false)
+
+    Object.assign(controller as unknown as Record<string, unknown>, {
+      scaleEncounterSceneCandidateVariant: 'B',
+    })
+    controller.resize()
+    expect(renderer.setPixelRatio).toHaveBeenLastCalledWith(2)
+    devicePixelRatio.mockRestore()
+  })
+
+  it('refreshes only the final keyframe without completing or jumping an active transition', async () => {
+    let resolveTransition = (): void => undefined
+    let transitionSettled = false
+    const transitionPromise = new Promise<void>((resolve) => {
+      resolveTransition = resolve
+    }).then(() => {
+      transitionSettled = true
+    })
+    const camera = new PerspectiveCamera(52, 1, 0.03, 240)
+    const originalFinalPosition = new Vector3(8, 4, 2)
+    const refreshedFinalPosition = new Vector3(10, 5, 3)
+    const transition = {
+      duration: 9_638,
+      keyframes: [
+        {
+          at: 0,
+          cameraStage: 'child-rear' as const,
+          fieldOfView: 52,
+          position: new Vector3(2, 3, 4),
+          quaternion: camera.quaternion.clone(),
+        },
+        {
+          at: 1,
+          cameraStage: 'pov' as const,
+          fieldOfView: 60,
+          position: originalFinalPosition,
+          quaternion: camera.quaternion.clone(),
+        },
+      ],
+      promise: transitionPromise,
+      resolve: resolveTransition,
+      startedAt: 1_000,
+      targetView: 'pov' as const,
+    }
+    const encounter = {
+      cameraStage: 'child-rear' as const,
+      definition: SCALE_ENCOUNTER_DEFINITIONS.pteranodon,
+      transition,
+      view: 'overview' as const,
+    }
+    const finalPose = {
+      fieldOfView: 60,
+      position: refreshedFinalPosition,
+      quaternion: camera.quaternion.clone(),
+    }
+    const computeFinalPose = vi.fn(() => finalPose)
+    const completeView = vi.fn((targetView: 'overview' | 'pov') => {
+      Object.assign(encounter, {
+        cameraStage: targetView,
+        transition: null,
+        view: targetView,
+      })
+    })
+    const renderer = {
+      setPixelRatio: vi.fn(),
+      setSize: vi.fn(),
+    }
+    const controller = Object.create(
+      ViewerController.prototype,
+    ) as ViewerController
+    Object.assign(controller as unknown as Record<string, unknown>, {
+      camera,
+      completeScaleEncounterView: completeView,
+      computeScaleEncounterCameraPose: computeFinalPose,
+      container: { clientHeight: 390, clientWidth: 844 },
+      destroyed: false,
+      renderer,
+      scaleEncounter: encounter,
+    })
+
+    controller.resize()
+    await Promise.resolve()
+
+    expect(renderer.setSize).toHaveBeenCalledWith(844, 390, false)
+    expect(camera.aspect).toBeCloseTo(844 / 390)
+    expect(computeFinalPose).toHaveBeenCalledWith('pov')
+    expect(encounter.view).toBe('overview')
+    expect(encounter.cameraStage).toBe('child-rear')
+    expect(completeView).not.toHaveBeenCalled()
+    expect(transitionSettled).toBe(false)
+    expect(encounter.transition).not.toBe(transition)
+    expect(encounter.transition?.promise).toBe(transitionPromise)
+    expect(encounter.transition?.startedAt).toBe(1_000)
+    expect(encounter.transition?.keyframes.at(-1)).toMatchObject({
+      at: 1,
+      cameraStage: 'pov',
+      fieldOfView: 60,
+      position: refreshedFinalPosition,
+    })
+
+    controller.finishScaleEncounterTransition()
+    await transitionPromise
+
+    expect(completeView).toHaveBeenCalledOnce()
+    expect(completeView).toHaveBeenCalledWith('pov')
+    expect(transitionSettled).toBe(true)
+    expect(encounter.view).toBe('pov')
+    expect(encounter.cameraStage).toBe('pov')
+  })
+
+  it('creates a real return transition when POV is cancelled before its stage label changes', async () => {
+    const oldResolve = vi.fn()
+    const oldTransition = {
+      duration: 8_204,
+      keyframes: [],
+      promise: Promise.resolve(),
+      resolve: oldResolve,
+      startedAt: 1_000,
+      targetView: 'pov' as const,
+    }
+    const target = new Vector3(3, 2, 1)
+    const avatarRoot = new Group()
+    const startingAvatarQuaternion = avatarRoot.quaternion.clone()
+    const encounter = {
+      avatar: { root: avatarRoot },
+      avatarBaseYawRadians: 0.2,
+      cameraStage: 'overview' as const,
+      definition: {
+        ...SCALE_ENCOUNTER_DEFINITIONS['tyrannosaurus-rex'],
+        defaultDistance: 12.5,
+      },
+      observerDistance: 12.5,
+      orbitAngleRadians: MathUtils.degToRad(90),
+      orbitMotionDirection: 0 as const,
+      placement: {
+        defaultEyePosition: new Vector3(-9, 1, 0),
+        observerRailDirection: new Vector3(-1, 0, 0),
+        orbitCenter: target.clone(),
+        target,
+      },
+      targetOrbitAngleRadians: MathUtils.degToRad(120),
+      transition: oldTransition,
+      view: 'overview' as const,
+    }
+    const returnPromiseResolve = vi.fn()
+    const keyframes = [
+      {
+        at: 0,
+        cameraStage: 'overview' as const,
+        fieldOfView: 52,
+        position: new Vector3(1, 2, 3),
+        quaternion: new PerspectiveCamera().quaternion.clone(),
+      },
+      {
+        at: 1,
+        cameraStage: 'overview' as const,
+        fieldOfView: 29,
+        position: new Vector3(4, 5, 6),
+        quaternion: new PerspectiveCamera().quaternion.clone(),
+      },
+    ]
+    const controller = Object.create(
+      ViewerController.prototype,
+    ) as ViewerController
+    const publish = vi.fn()
+    const completeView = vi.fn((targetView: 'overview' | 'pov') => {
+      Object.assign(encounter, {
+        cameraStage: targetView,
+        transition: null,
+        view: targetView,
+      })
+    })
+    Object.assign(controller as unknown as Record<string, unknown>, {
+      completeScaleEncounterView: completeView,
+      controls: { target: new Vector3() },
+      createScaleEncounterTransitionKeyframes: vi.fn(() => keyframes),
+      placeScaleEncounterAvatarEyeAt: vi.fn(),
+      publishScaleEncounterSnapshot: publish,
+      reducedMotion: false,
+      scaleEncounter: encounter,
+    })
+
+    const returnPromise = controller.transitionScaleEncounterView(
+      'overview',
+      1_250,
+    )
+
+    expect(oldResolve).toHaveBeenCalledOnce()
+    expect(encounter.transition).not.toBeNull()
+    expect(encounter.transition).not.toBe(oldTransition)
+    expect(encounter.transition?.targetView).toBe('overview')
+    expect(encounter.transition?.keyframes).toBe(keyframes)
+    expect(encounter.orbitAngleRadians).toBe(0)
+    expect(encounter.targetOrbitAngleRadians).toBe(0)
+    expect(
+      encounter.avatar.root.quaternion.angleTo(startingAvatarQuaternion),
+    ).toBeCloseTo(0, 10)
+    expect(publish).toHaveBeenCalledOnce()
+    expect(returnPromise).not.toBe(oldTransition.promise)
+
+    const observedReturn = returnPromise.then(returnPromiseResolve)
+    controller.finishScaleEncounterTransition()
+    await observedReturn
+    expect(completeView).toHaveBeenCalledWith('overview')
+    expect(returnPromiseResolve).toHaveBeenCalledOnce()
+  })
+})
+
+const LAND_STAGE_GROUND_Y = -0.035
+
+function minimumNearPlaneCornerHeight(camera: PerspectiveCamera): number {
+  camera.updateMatrixWorld(true)
+  const halfHeight =
+    Math.tan(MathUtils.degToRad(camera.fov) / 2) * camera.near
+  const halfWidth = halfHeight * camera.aspect
+  return Math.min(
+    ...[-1, 1].flatMap((xDirection) =>
+      [-1, 1].map(
+        (yDirection) =>
+          new Vector3(
+            xDirection * halfWidth,
+            yDirection * halfHeight,
+            -camera.near,
+          ).applyMatrix4(camera.matrixWorld).y,
+      ),
+    ),
+  )
+}
+
+function createGroundedPovController(aspect: number): {
+  readonly avatarEye: Group
+  readonly camera: PerspectiveCamera
+  readonly container: { clientHeight: number; clientWidth: number }
+  readonly controller: ViewerController
+  readonly encounter: Record<string, unknown> & {
+    actionBoostActive: boolean
+    actionBoostMultiplier: number
+    avatar: {
+      root: Group
+      visual: Group
+      eyeAnchor: Group
+      setActionState: ReturnType<typeof vi.fn>
+    }
+    avatarBaseYawRadians: number
+    avatarPreviousEyePosition: Vector3
+    boostFlow: null | { setIntensity: ReturnType<typeof vi.fn> }
+    distanceMotionDirection: -1 | 0 | 1
+    definition: (typeof SCALE_ENCOUNTER_DEFINITIONS)[keyof typeof SCALE_ENCOUNTER_DEFINITIONS]
+    jumpActive: boolean
+    jumpCrouchDepthMeters: number
+    jumpOffsetMeters: number
+    jumpPhase: 'grounded' | 'anticipation' | 'airborne' | 'landing'
+    jumpPhaseElapsedSeconds: number
+    jumpVelocityMetersPerSecond: number
+    observerDistance: number
+    orbitAngleRadians: number
+    orbitMotionDirection: -1 | 0 | 1
+    overviewZoom: number
+    targetObserverDistance: number
+    targetOrbitAngleRadians: number
+    targetOverviewZoom: number
+    transition: unknown
+    view: 'overview' | 'pov'
+  }
+  readonly placement: ReturnType<typeof createScaleEncounterPlacement>
+  readonly renderer: {
+    readonly domElement: { readonly dataset: Record<string, string> }
+    readonly setPixelRatio: ReturnType<typeof vi.fn>
+    readonly setSize: ReturnType<typeof vi.fn>
+  }
+} {
+  const definition = SCALE_ENCOUNTER_DEFINITIONS['tyrannosaurus-rex']
+  const placement = createScaleEncounterPlacement(
+    definition.id,
+    new Vector3(-3.8, 0, -0.8),
+    new Vector3(8.2, 4, 0.8),
+    0.985,
+  )
+  const avatarRoot = new Group()
+  avatarRoot.name =
+    'scale-encounter-child-girl-land-explorer-review-candidate'
+  const avatarBody = new Mesh(
+    new BoxGeometry(0.42, 1.05, 0.28),
+    new MeshBasicMaterial(),
+  )
+  avatarBody.position.y = 0.525
+  const avatarEye = new Group()
+  avatarEye.position.y = 0.985
+  avatarRoot.add(avatarBody, avatarEye)
+  avatarRoot.rotation.y = placement.avatarYawRadians
+
+  const camera = new PerspectiveCamera(58, aspect, 0.03, 240)
+  const container = {
+    clientHeight: Math.round(900 / aspect),
+    clientWidth: 900,
+  }
+  const renderer = {
+    domElement: { dataset: {} as Record<string, string> },
+    setPixelRatio: vi.fn(),
+    setSize: vi.fn(),
+  }
+  const encounter = {
+    actionBoostActive: false,
+    actionBoostMultiplier: 1,
+    avatar: {
+      root: avatarRoot,
+      visual: new Group(),
+      eyeAnchor: avatarEye,
+      setActionState: vi.fn(),
+    },
+    avatarBaseYawRadians: placement.avatarYawRadians,
+    avatarPreviousEyePosition: placement.defaultEyePosition.clone(),
+    boostFlow: null,
+    cameraStage: 'follow-orbit' as const,
+    definition,
+    observerDistance: definition.defaultDistance,
+    orbitAngleRadians: 0,
+    orbitMotionDirection: 0 as const,
+    metersPerUnit: 1,
+    overviewZoom: 1,
+    perspective: 'child-rear' as const,
+    targetObserverDistance: definition.defaultDistance,
+    targetOrbitAngleRadians: 0,
+    targetOverviewZoom: 1,
+    distanceMotionDirection: 0 as const,
+    jumpActive: false,
+    jumpCrouchDepthMeters: 0,
+    jumpOffsetMeters: 0,
+    jumpPhase: 'grounded' as const,
+    jumpPhaseElapsedSeconds: 0,
+    jumpVelocityMetersPerSecond: 0,
+    placement,
+    profile: {
+      gender: 'girl' as const,
+      heightCm: 100,
+      heightMeters: 1,
+    },
+    transition: null,
+    rawSpanUnits: 12,
+    view: 'pov' as const,
+  }
+  const controller = Object.create(
+    ViewerController.prototype,
+  ) as ViewerController
+  Object.assign(controller as unknown as Record<string, unknown>, {
+    camera,
+    container,
+    controls: { target: new Vector3() },
+    current: { modelRoot: new Group() },
+    destroyed: false,
+    publishScaleEncounterSnapshot: vi.fn(),
+    renderer,
+    scaleEncounter: encounter,
+    scaleEncounterListeners: new Set<() => void>(),
+    updateCameraLighting: vi.fn(),
+  })
+
+  return {
+    avatarEye,
+    camera,
+    container,
+    controller,
+    encounter,
+    placement,
+    renderer,
+  }
+}
+
+describe('scale encounter child viewpoint switch', () => {
+  it('moves between the child eyes and the accepted trailing camera', async () => {
+    const harness = createGroundedPovController(1440 / 900)
+
+    const eyesPromise = harness.controller.transitionScaleEncounterPerspective(
+      'child-eyes',
+      1_600,
+    )
+    expect(harness.encounter.perspective).toBe('child-eyes')
+    expect(
+      (harness.encounter.transition as {
+        targetPerspective?: string
+      } | null)?.targetPerspective,
+    ).toBe('child-eyes')
+    harness.controller.finishScaleEncounterTransition()
+    await eyesPromise
+    expect(harness.encounter.cameraStage).toBe('pov')
+    expect(harness.encounter.avatar.root.visible).toBe(false)
+
+    const rearPromise = harness.controller.transitionScaleEncounterPerspective(
+      'child-rear',
+      1_600,
+    )
+    expect(harness.encounter.perspective).toBe('child-rear')
+    harness.controller.finishScaleEncounterTransition()
+    await rearPromise
+    expect(harness.encounter.cameraStage).toBe('follow-orbit')
+    expect(harness.encounter.avatar.root.visible).toBe(true)
+  })
+
+  it('keeps the close-approach child visible in the phone rear-view keepsake composition', () => {
+    const harness = createGroundedPovController(390 / 844)
+    harness.encounter.profile = {
+      approach: 'close',
+      gender: 'girl',
+      heightCm: 110,
+      heightMeters: 1.1,
+    }
+    harness.encounter.observerDistance = 4.65
+    harness.encounter.targetObserverDistance = 4.65
+    harness.encounter.perspective = 'child-rear'
+    ;(
+      harness.controller as unknown as {
+        applyScaleEncounterPovPose: () => void
+      }
+    ).applyScaleEncounterPovPose()
+    harness.camera.updateMatrixWorld(true)
+
+    const bounds = new Box3().setFromObject(
+      harness.encounter.avatar.root,
+      true,
+    )
+    const centre = bounds.getCenter(new Vector3()).project(harness.camera)
+    expect(Math.abs(centre.x)).toBeLessThan(0.7)
+    expect(centre.y).toBeGreaterThan(-0.72)
+    expect(centre.y).toBeLessThan(0.45)
+    for (const x of [bounds.min.x, bounds.max.x]) {
+      for (const y of [bounds.min.y, bounds.max.y]) {
+        for (const z of [bounds.min.z, bounds.max.z]) {
+          const projected = new Vector3(x, y, z).project(harness.camera)
+          expect(Math.abs(projected.x)).toBeLessThan(0.9)
+          expect(Math.abs(projected.y)).toBeLessThan(0.96)
+        }
+      }
+    }
+  })
+})
+
+describe('narrow scale encounter overview framing', () => {
+  it.each([
+    ['1024 x 1024 square PC', 1],
+    ['1024 x 1365 narrow PC', 1024 / 1365],
+    ['820 x 1024 narrow PC', 820 / 1024],
+  ])('keeps the full child and T. rex inside %s at closest zoom', (_label, aspect) => {
+    const harness = createGroundedPovController(aspect)
+    const animal = new Mesh(
+      new BoxGeometry(12, 4, 2),
+      new MeshBasicMaterial(),
+    )
+    animal.position.set(2.2, 2, 0)
+    const animalRoot = new Group()
+    animalRoot.add(animal)
+    harness.avatarEye.getWorldPosition(new Vector3())
+    harness.encounter.avatar.root.position.copy(
+      harness.placement.defaultEyePosition,
+    ).y -= 0.985
+    harness.encounter.avatar.root.updateMatrixWorld(true)
+    harness.encounter.overviewZoom = 0.82
+    harness.encounter.targetOverviewZoom = 0.82
+    Object.assign(harness.controller as unknown as Record<string, unknown>, {
+      current: { modelRoot: animalRoot },
+    })
+    const computePose = (
+      harness.controller as unknown as {
+        computeScaleEncounterCameraPose: (view: 'overview') => {
+          readonly fieldOfView: number
+          readonly position: Vector3
+          readonly quaternion: PerspectiveCamera['quaternion']
+        }
+      }
+    ).computeScaleEncounterCameraPose.bind(harness.controller)
+    const pose = computePose('overview')
+    harness.camera.fov = pose.fieldOfView
+    harness.camera.position.copy(pose.position)
+    harness.camera.quaternion.copy(pose.quaternion)
+    harness.camera.updateProjectionMatrix()
+    harness.camera.updateMatrixWorld(true)
+
+    for (const subject of [animalRoot, harness.encounter.avatar.root]) {
+      const bounds = new Box3().setFromObject(subject, true)
+      for (const x of [bounds.min.x, bounds.max.x]) {
+        for (const y of [bounds.min.y, bounds.max.y]) {
+          for (const z of [bounds.min.z, bounds.max.z]) {
+            const projected = new Vector3(x, y, z).project(harness.camera)
+            expect(Math.abs(projected.x)).toBeLessThan(0.98)
+            expect(Math.abs(projected.y)).toBeLessThan(0.98)
+          }
+        }
+      }
+    }
+
+    animal.geometry.dispose()
+    animal.material.dispose()
+  })
+
+  it('keeps Gigantoraptor and the child fully inside the default phone overview', () => {
+    const harness = createGroundedPovController(390 / 844)
+    const definition = SCALE_ENCOUNTER_DEFINITIONS.gigantoraptor
+    const animal = new Mesh(
+      new BoxGeometry(8, 3.2, 1.8),
+      new MeshBasicMaterial(),
+    )
+    animal.position.set(2.2, 1.6, 0)
+    const animalRoot = new Group()
+    animalRoot.add(animal)
+    harness.encounter.definition = definition
+    harness.encounter.avatar.root.position.set(-3.8, 0, 0)
+    harness.encounter.avatar.root.updateMatrixWorld(true)
+    harness.encounter.overviewZoom = 0.82
+    harness.encounter.targetOverviewZoom = 0.82
+    Object.assign(harness.controller as unknown as Record<string, unknown>, {
+      current: { modelRoot: animalRoot },
+    })
+    const computePose = (
+      harness.controller as unknown as {
+        computeScaleEncounterCameraPose: (view: 'overview') => {
+          readonly fieldOfView: number
+          readonly position: Vector3
+          readonly quaternion: PerspectiveCamera['quaternion']
+        }
+      }
+    ).computeScaleEncounterCameraPose.bind(harness.controller)
+    const pose = computePose('overview')
+    harness.camera.fov = pose.fieldOfView
+    harness.camera.position.copy(pose.position)
+    harness.camera.quaternion.copy(pose.quaternion)
+    harness.camera.updateProjectionMatrix()
+    harness.camera.updateMatrixWorld(true)
+
+    for (const subject of [animalRoot, harness.encounter.avatar.root]) {
+      const bounds = new Box3().setFromObject(subject, true)
+      for (const x of [bounds.min.x, bounds.max.x]) {
+        for (const y of [bounds.min.y, bounds.max.y]) {
+          for (const z of [bounds.min.z, bounds.max.z]) {
+            const projected = new Vector3(x, y, z).project(harness.camera)
+            expect(Math.abs(projected.x)).toBeLessThan(0.98)
+            expect(Math.abs(projected.y)).toBeLessThan(0.98)
+          }
+        }
+      }
+    }
+
+    animal.geometry.dispose()
+    animal.material.dispose()
+  })
+})
+
+describe('grounded scale encounter POV clearance', () => {
+  it('keeps the T. rex one-axis dolly at the child eye height instead of extending the diagonal rail underground', () => {
+    const childEyeHeight = 0.985
+    const placement = createScaleEncounterPlacement(
+      'tyrannosaurus-rex',
+      new Vector3(-3.8, 0, -0.8),
+      new Vector3(8.2, 4, 0.8),
+      childEyeHeight,
+    )
+    const oldDiagonalFarEye = positionOnScaleEncounterRail(
+      placement.target,
+      placement.observerRailDirection,
+      SCALE_ENCOUNTER_DEFINITIONS['tyrannosaurus-rex'].maximumDistance,
+    )
+    expect(oldDiagonalFarEye.y).toBeLessThan(0.45)
+    expect(oldDiagonalFarEye.y).toBeLessThan(childEyeHeight)
+
+    const distances = [6.5, 12.5, 18]
+    const eyes = distances.map((distance) =>
+      computeScaleEncounterPovEyePosition(placement, 'land', distance),
+    )
+    for (const [index, eye] of eyes.entries()) {
+      expect(eye.y).toBeCloseTo(placement.defaultEyePosition.y, 10)
+      expect(eye.distanceTo(placement.target)).toBeCloseTo(
+        distances[index]!,
+        8,
+      )
+      expect(eye.z).toBeCloseTo(eyes[0]!.z, 10)
+    }
+    const firstSegment = eyes[1]!.clone().sub(eyes[0]!).normalize()
+    const secondSegment = eyes[2]!.clone().sub(eyes[1]!).normalize()
+    expect(firstSegment.distanceTo(secondSegment)).toBeLessThan(1e-10)
+    expect(Math.abs(firstSegment.y)).toBeLessThan(1e-10)
+  })
+
+  it.each([
+    ['desktop', 1440 / 900],
+    ['390 x 844 mobile', 390 / 844],
+  ])(
+    'keeps the child and trailing camera above land at min/default/max on %s',
+    (_label, aspect) => {
+      const harness = createGroundedPovController(aspect)
+      const internals = harness.controller as unknown as {
+        applyScaleEncounterPovPose: () => void
+        computeScaleEncounterCameraPose: (view: 'pov') => {
+          readonly position: Vector3
+          readonly quaternion: PerspectiveCamera['quaternion']
+        }
+      }
+      const applyPov = internals.applyScaleEncounterPovPose.bind(
+        harness.controller,
+      )
+
+      for (const distance of [6.5, 12.5, 18]) {
+        harness.encounter.observerDistance = distance
+        applyPov()
+        const worldEye = harness.avatarEye.getWorldPosition(new Vector3())
+        const expectedEye = computeScaleEncounterOrbitedEyePosition(
+          harness.placement,
+          'land',
+          distance,
+          harness.encounter.orbitAngleRadians,
+        )
+        const expectedCamera = internals.computeScaleEncounterCameraPose('pov')
+        expect(worldEye.distanceTo(expectedEye)).toBeLessThan(1e-9)
+        expect(
+          harness.camera.position.distanceTo(expectedCamera.position),
+        ).toBeLessThan(1e-9)
+        expect(
+          harness.camera.quaternion.angleTo(expectedCamera.quaternion),
+        ).toBeLessThan(1e-6)
+        expect(harness.camera.position.distanceTo(worldEye)).toBeGreaterThan(
+          8,
+        )
+        expect(harness.camera.position.y).toBeGreaterThan(worldEye.y)
+        expect(harness.encounter.avatar.root.visible).toBe(true)
+        expect(
+          new Vector3(0, 0, -1)
+            .applyQuaternion(harness.camera.quaternion)
+            .y,
+        ).toBeLessThan(0)
+        expect(minimumNearPlaneCornerHeight(harness.camera)).toBeGreaterThan(
+          LAND_STAGE_GROUND_Y,
+        )
+      }
+
+      const publishSnapshot = (
+        ViewerController.prototype as unknown as {
+          publishScaleEncounterSnapshot(this: ViewerController): void
+        }
+      ).publishScaleEncounterSnapshot.bind(harness.controller)
+      publishSnapshot()
+      expect(
+        harness.renderer.domElement.dataset.scaleEncounterAvatarVariant,
+      ).toBe('scale-encounter-child-girl-land-explorer-review-candidate')
+      expect(
+        Number(
+          harness.renderer.domElement.dataset.scaleEncounterEyeHeightMeters,
+        ),
+      ).toBeCloseTo(harness.placement.defaultEyePosition.y, 6)
+    },
+  )
+
+  it('keeps every guided keyframe, the transition finish and both portrait/desktop resizes clear of land', () => {
+    const harness = createGroundedPovController(1440 / 900)
+    harness.encounter.observerDistance = 18
+    const internals = harness.controller as unknown as {
+      applyScaleEncounterPovPose: () => void
+      computeScaleEncounterCameraPose: (view: 'pov') => {
+        readonly position: Vector3
+      }
+      createScaleEncounterTransitionKeyframes: (
+        view: 'overview' | 'pov',
+      ) => readonly {
+        readonly at: number
+        readonly cameraStage: string
+        readonly fieldOfView: number
+        readonly position: Vector3
+        readonly quaternion: PerspectiveCamera['quaternion']
+      }[]
+    }
+    internals.applyScaleEncounterPovPose()
+    const keyframes = internals.createScaleEncounterTransitionKeyframes('pov')
+    expect(keyframes.length).toBeGreaterThan(2)
+    for (const keyframe of keyframes) {
+      const keyframeCamera = new PerspectiveCamera(
+        keyframe.fieldOfView,
+        1440 / 900,
+        0.03,
+        240,
+      )
+      keyframeCamera.position.copy(keyframe.position)
+      keyframeCamera.quaternion.copy(keyframe.quaternion)
+      expect(minimumNearPlaneCornerHeight(keyframeCamera)).toBeGreaterThan(
+        LAND_STAGE_GROUND_Y,
+      )
+    }
+
+    const transitionPromise = Promise.resolve()
+    harness.encounter.view = 'overview'
+    harness.encounter.transition = {
+      duration: 8_204,
+      keyframes,
+      promise: transitionPromise,
+      resolve: vi.fn(),
+      startedAt: 1_000,
+      targetView: 'pov' as const,
+    }
+    harness.container.clientWidth = 390
+    harness.container.clientHeight = 844
+    harness.controller.resize()
+    const refreshedTransition = harness.encounter.transition as {
+      readonly keyframes: readonly { readonly position: Vector3 }[]
+    }
+    const portraitPose = internals.computeScaleEncounterCameraPose('pov')
+    expect(
+      refreshedTransition.keyframes.at(-1)?.position.distanceTo(
+        portraitPose.position,
+      ),
+    ).toBeLessThan(1e-9)
+
+    harness.controller.finishScaleEncounterTransition()
+    expect(harness.encounter.view).toBe('pov')
+    expect(harness.encounter.cameraStage).toBe('follow-orbit')
+    expect(harness.encounter.avatar.root.visible).toBe(true)
+    expect(harness.camera.aspect).toBeCloseTo(390 / 844)
+    expect(minimumNearPlaneCornerHeight(harness.camera)).toBeGreaterThan(
+      LAND_STAGE_GROUND_Y,
+    )
+
+    harness.container.clientWidth = 1440
+    harness.container.clientHeight = 900
+    harness.controller.resize()
+    expect(harness.camera.aspect).toBeCloseTo(1440 / 900)
+    const desktopPose = internals.computeScaleEncounterCameraPose('pov')
+    expect(
+      harness.camera.position.distanceTo(desktopPose.position),
+    ).toBeLessThan(1e-9)
+    expect(minimumNearPlaneCornerHeight(harness.camera)).toBeGreaterThan(
+      LAND_STAGE_GROUND_Y,
+    )
+    expect(harness.renderer.setSize).toHaveBeenLastCalledWith(1440, 900, false)
+  })
+
+  it.each([
+    ['desktop', 1440 / 900, 3.2, 0.75],
+    ['390 x 844 mobile', 390 / 844, 3.9, 0.95],
+  ])(
+    'keeps the child clear of the T. rex sight line in the %s rear establishing pose',
+    (_label, aspect, minimumRearDistance, minimumSideOffset) => {
+      const harness = createGroundedPovController(aspect)
+      harness.encounter.view = 'overview'
+      harness.encounter.cameraStage = 'overview'
+      harness.encounter.perspective = 'child-eyes'
+      const internals = harness.controller as unknown as {
+        createScaleEncounterTransitionKeyframes: (
+          view: 'overview' | 'pov',
+        ) => readonly {
+          readonly cameraStage: string
+          readonly fieldOfView: number
+          readonly position: Vector3
+          readonly quaternion: PerspectiveCamera['quaternion']
+        }[]
+      }
+      const rearKeyframes = internals
+        .createScaleEncounterTransitionKeyframes('pov')
+        .filter((keyframe) => keyframe.cameraStage === 'child-rear')
+      expect(rearKeyframes).toHaveLength(2)
+
+      const eye = harness.avatarEye.getWorldPosition(new Vector3())
+      const forward = harness.placement.target.clone().sub(eye).normalize()
+      const horizontalForward = forward.clone().setY(0).normalize()
+      const childRight = horizontalForward
+        .clone()
+        .cross(new Vector3(0, 1, 0))
+        .normalize()
+      const rearOffset = rearKeyframes[0]!.position.clone().sub(eye)
+
+      expect(rearOffset.length()).toBeGreaterThan(minimumRearDistance)
+      expect(Math.abs(rearOffset.dot(childRight))).toBeGreaterThan(
+        minimumSideOffset,
+      )
+      expect(rearKeyframes[0]!.fieldOfView).toBeGreaterThanOrEqual(58)
+    },
+  )
+
+  it('keeps the child visible through the rear bridge, then enters their eyes', () => {
+    const harness = createGroundedPovController(390 / 844)
+    harness.encounter.view = 'overview'
+    harness.encounter.cameraStage = 'child-rear'
+    harness.encounter.perspective = 'child-eyes'
+    harness.encounter.avatar.root.visible = true
+    const internals = harness.controller as unknown as {
+      createScaleEncounterTransitionKeyframes: (
+        view: 'overview' | 'pov',
+      ) => readonly {
+        readonly at: number
+        readonly cameraStage: string
+        readonly fieldOfView: number
+        readonly position: Vector3
+        readonly quaternion: PerspectiveCamera['quaternion']
+      }[]
+      updateScaleEncounterTransition: (now: number) => void
+    }
+    const keyframes = internals.createScaleEncounterTransitionKeyframes('pov')
+    harness.encounter.transition = {
+      duration: 1_000,
+      keyframes,
+      promise: Promise.resolve(),
+      resolve: vi.fn(),
+      startedAt: 0,
+      targetView: 'pov' as const,
+    }
+
+    internals.updateScaleEncounterTransition(620)
+    expect(harness.encounter.cameraStage).toBe('child-rear')
+    expect(harness.encounter.avatar.root.visible).toBe(true)
+
+    internals.updateScaleEncounterTransition(800)
+    expect(harness.encounter.cameraStage).toBe('eye-entry')
+    expect(harness.encounter.avatar.root.visible).toBe(false)
+  })
+
+  it.each([
+    ['desktop wide', 1440 / 900],
+    ['phone portrait', 390 / 844],
+  ])(
+    'holds a dynamically fitted full-body Avatar showcase before rear follow orbit on %s',
+    (_label, aspect) => {
+      const harness = createGroundedPovController(aspect)
+      harness.encounter.view = 'overview'
+      harness.encounter.cameraStage = 'overview'
+      const keyframes = (
+        harness.controller as unknown as {
+          createScaleEncounterTransitionKeyframes: (
+            view: 'pov',
+          ) => readonly {
+            readonly at: number
+            readonly cameraStage: string
+            readonly fieldOfView: number
+            readonly position: Vector3
+            readonly quaternion: PerspectiveCamera['quaternion']
+          }[]
+        }
+      ).createScaleEncounterTransitionKeyframes('pov')
+      const showcases = keyframes.filter(
+        (keyframe) => keyframe.cameraStage === 'full-body-showcase',
+      )
+      expect(showcases.map((keyframe) => keyframe.at)).toEqual([0.18, 0.4])
+      expect(
+        keyframes.findIndex(
+          (keyframe) => keyframe.cameraStage === 'full-body-showcase',
+        ),
+      ).toBeLessThan(
+        keyframes.findIndex(
+          (keyframe) => keyframe.cameraStage === 'follow-orbit',
+        ),
+      )
+
+      const pose = showcases[0]!
+      const showcaseCamera = new PerspectiveCamera(
+        pose.fieldOfView,
+        aspect,
+        0.03,
+        240,
+      )
+      showcaseCamera.position.copy(pose.position)
+      showcaseCamera.quaternion.copy(pose.quaternion)
+      showcaseCamera.updateProjectionMatrix()
+      showcaseCamera.updateMatrixWorld(true)
+      const bounds = new Box3().setFromObject(
+        harness.encounter.avatar.root,
+        true,
+      )
+      for (const x of [bounds.min.x, bounds.max.x]) {
+        for (const y of [bounds.min.y, bounds.max.y]) {
+          for (const z of [bounds.min.z, bounds.max.z]) {
+            const projected = new Vector3(x, y, z).project(showcaseCamera)
+            expect(Math.abs(projected.x)).toBeLessThan(0.88)
+            expect(Math.abs(projected.y)).toBeLessThan(0.88)
+          }
+        }
+      }
+    },
+  )
+
+  it('moves straight into the mobile water side framing without a second orbit correction', () => {
+    const harness = createGroundedPovController(390 / 844)
+    const definition = SCALE_ENCOUNTER_DEFINITIONS.mosasaurus
+    const placement = createScaleEncounterPlacement(
+      definition.id,
+      new Vector3(-5, -1, -1),
+      new Vector3(7, 6, 1),
+      0.985,
+    )
+    const avatar = harness.encounter.avatar
+    avatar.root.rotation.y = placement.avatarYawRadians
+    avatar.root.position.copy(placement.defaultEyePosition)
+    avatar.root.position.y -= avatar.eyeAnchor.position.y
+    avatar.root.updateMatrixWorld(true)
+    Object.assign(harness.encounter, {
+      cameraStage: 'overview',
+      definition,
+      observerDistance: definition.defaultDistance,
+      placement,
+      targetObserverDistance: definition.defaultDistance,
+      view: 'overview',
+    })
+    const animalRoot = new Group()
+    const animal = new Mesh(
+      new BoxGeometry(12, 7, 2),
+      new MeshBasicMaterial(),
+    )
+    animal.position.set(1, 2.5, 0)
+    animalRoot.add(animal)
+    Object.assign(harness.controller as unknown as Record<string, unknown>, {
+      current: { modelRoot: animalRoot },
+    })
+    const overviewPose = (
+      harness.controller as unknown as {
+        computeScaleEncounterCameraPose: (view: 'overview') => {
+          readonly fieldOfView: number
+          readonly position: Vector3
+          readonly quaternion: PerspectiveCamera['quaternion']
+        }
+      }
+    ).computeScaleEncounterCameraPose('overview')
+    harness.camera.fov = overviewPose.fieldOfView
+    harness.camera.position.copy(overviewPose.position)
+    harness.camera.quaternion.copy(overviewPose.quaternion)
+    harness.camera.updateProjectionMatrix()
+
+    const internals = harness.controller as unknown as {
+      createScaleEncounterTransitionKeyframes: (
+        view: 'pov',
+      ) => readonly {
+        readonly at: number
+        readonly cameraStage: string
+        readonly fieldOfView: number
+        readonly focusTarget?: Vector3
+        readonly position: Vector3
+        readonly quaternion: PerspectiveCamera['quaternion']
+      }[]
+      updateScaleEncounterTransition: (now: number) => void
+    }
+    const keyframes = internals.createScaleEncounterTransitionKeyframes('pov')
+    const sideEstablishing = keyframes.filter(
+      (keyframe) => keyframe.cameraStage === 'side-establishing',
+    )
+    const fullBodyShowcase = keyframes.filter(
+      (keyframe) => keyframe.cameraStage === 'full-body-showcase',
+    )
+
+    expect(sideEstablishing).toHaveLength(2)
+    expect(fullBodyShowcase).toHaveLength(2)
+    for (const establishing of sideEstablishing) {
+      expect(
+        establishing.position.distanceTo(fullBodyShowcase[0]!.position),
+      ).toBeLessThan(1e-10)
+      expect(
+        establishing.quaternion.angleTo(fullBodyShowcase[0]!.quaternion),
+      ).toBeLessThan(1e-10)
+      expect(establishing.fieldOfView).toBe(
+        fullBodyShowcase[0]!.fieldOfView,
+      )
+      expect(establishing.focusTarget?.distanceTo(
+        fullBodyShowcase[0]!.focusTarget!,
+      )).toBeLessThan(1e-10)
+    }
+
+    harness.encounter.transition = {
+      duration: 1_000,
+      keyframes,
+      promise: Promise.resolve(),
+      resolve: vi.fn(),
+      startedAt: 0,
+      targetView: 'pov' as const,
+    }
+    const childCentre = new Box3()
+      .setFromObject(avatar.root, true)
+      .getCenter(new Vector3())
+    for (const now of [20, 40, 60, 80]) {
+      internals.updateScaleEncounterTransition(now)
+      harness.camera.updateMatrixWorld(true)
+      const projected = childCentre.clone().project(harness.camera)
+      expect(Math.abs(projected.x)).toBeLessThan(0.95)
+      expect(Math.abs(projected.y)).toBeLessThan(0.95)
+    }
+
+    animal.geometry.dispose()
+    animal.material.dispose()
+  })
+
+  it('leaves the authored air and water observer rails unchanged', () => {
+    for (const animalId of ['pteranodon', 'mosasaurus'] as const) {
+      const definition = SCALE_ENCOUNTER_DEFINITIONS[animalId]
+      const placement = createScaleEncounterPlacement(
+        animalId,
+        new Vector3(-5, -1, -1),
+        new Vector3(7, 6, 1),
+        1,
+      )
+      for (const distance of [
+        definition.minimumDistance,
+        definition.defaultDistance,
+        definition.maximumDistance,
+      ]) {
+        expect(
+          computeScaleEncounterPovEyePosition(
+            placement,
+            definition.habitat,
+            distance,
+          ).distanceTo(
+            positionOnScaleEncounterRail(
+              placement.target,
+              placement.observerRailDirection,
+              distance,
+            ),
+          ),
+        ).toBeLessThan(1e-10)
+      }
+    }
+  })
+})
+
 const stegosaurusDescriptor = {
   id: 'stegosaurus',
   label: '剑龙',
@@ -218,6 +1870,36 @@ describe('viewer presentation pose', () => {
     expect(action.time).toBe(0)
     expect(mixer.time).toBe(0)
     expect(action.isRunning()).toBe(true)
+  })
+
+  it('does not invert an exact 180-degree yaw after quaternion restoration', () => {
+    const modelRoot = new Group()
+    modelRoot.quaternion.setFromAxisAngle(
+      new Vector3(0, 1, 0),
+      Math.PI,
+    )
+    const descriptor = {
+      ...stegosaurusDescriptor,
+      presentation: {
+        ...stegosaurusDescriptor.presentation,
+        initialYawDegrees: 180,
+      },
+    }
+
+    resetStagedModelPose({
+      action: null,
+      descriptor,
+      mixer: null,
+      modelRoot,
+    })
+
+    const headDirection = new Vector3(0, 0, 1).applyQuaternion(
+      modelRoot.quaternion,
+    )
+    expect(modelRoot.rotation.x).toBeCloseTo(0, 12)
+    expect(modelRoot.rotation.y).toBeCloseTo(Math.PI, 12)
+    expect(modelRoot.rotation.z).toBeCloseTo(0, 12)
+    expect(headDirection.z).toBeCloseTo(-1, 12)
   })
 })
 

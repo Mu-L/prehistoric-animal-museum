@@ -19,9 +19,9 @@ const baseProvenance = createPublishedAssetProvenance({
         'e578fe3b1589464526077f33fba1570cf2fc101c354082235f0aaa68dd8cdff4',
     },
     runtime: {
-      bytes: 129_936,
+      bytes: 155_328,
       sha256:
-        '2ac86e4a499a10d02e6ded5667a69a06c70f5371d624a31bef3abcb64dd53253',
+        'dcd9ab8192cd1d38adf1c2ed664e040fed24a8d8498295fca138c887822d2070',
     },
     modifications: [
       'Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.',
@@ -29,6 +29,8 @@ const baseProvenance = createPublishedAssetProvenance({
       'Replaced the source mouth-focused action with a project-authored eight-second in-place full-body swimming Idle at 24 frames per second.',
       'Kept the four head-chain joints nearly stable at approximately 0.15–0.30 degrees while increasing the travelling propulsion wave from roughly 1.2 degrees at the tail root to 8.5 degrees at the tail tip.',
       'Added restrained paired-fin pose changes, exported one closed-loop Idle, validator-checked the result, and reviewed the animated skinned bounds in the shared museum viewer.',
+      'Resampled the propulsion chain to a uniform 24 fps periodic curve, smoothed the tail acceleration through the loop seam, and mirrored each left pectoral-fin quaternion onto its right-side partner so both fins sweep inward and outward together.',
+      'Cleared stale normalized flags after promoting repaired quaternion accessors to floating point so the runtime GLTF loader receives spec-valid animation data.',
     ],
   },
   derivedImagesGeneratedOn: '2026-07-31',

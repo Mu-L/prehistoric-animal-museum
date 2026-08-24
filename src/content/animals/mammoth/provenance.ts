@@ -35,23 +35,34 @@ const baseProvenance = createPublishedAssetProvenance({
     ],
   },
   derivedImagesGeneratedOn: '2026-07-30',
-  thumbnailDerivation: recomposedCollectionThumbnailDerivation,
+  thumbnailDerivation: {
+    ...recomposedCollectionThumbnailDerivation,
+    generatedOn: '2026-08-16',
+  },
   backgrounds: {
     landscape: {
       source: reviewedBackgroundSources.mammoth.landscape,
       runtime: {
-        bytes: 307_886,
+        bytes: 420_388,
         sha256:
-          'd456a3b0f0cfedfcd6dc518199eb8e75cbe8ef043dfade64109299e0255a925f',
+          '2b23ceaf9e6b7f6d270dcb327254f5be27fb764fc2a845c627fa928aa3c01eb4',
       },
+      runtimeModifications: [
+        'Downscaled the reviewed 4096 × 2304 clarity derivative to 2048 × 1152 with Sharp Lanczos3 resampling.',
+        'Encoded as WebP at quality 82 and effort 6 with ancillary metadata removed and no runtime tint or blur.',
+      ],
     },
     portrait: {
       source: reviewedBackgroundSources.mammoth.portrait,
       runtime: {
-        bytes: 212_660,
+        bytes: 268_126,
         sha256:
-          'dc2df002c5dab82c95534a93dcc0e91b2436dcb01be24667453533e6cd917c34',
+          '3b5e795c4abe470c1ca0cfba9d7834397080b76cb261e2ea1d3f1757f0482335',
       },
+      runtimeModifications: [
+        'Downscaled the reviewed 2304 × 4096 clarity derivative to 1152 × 2048 with Sharp Lanczos3 resampling.',
+        'Encoded as WebP at quality 82 and effort 6 with ancillary metadata removed and no runtime tint or blur.',
+      ],
     },
   },
   poster: {
@@ -65,9 +76,9 @@ const baseProvenance = createPublishedAssetProvenance({
       '60535ab5da8eeef84e24fd72eace080c929809a53210ac2d2ba8c0b030d1f82a',
   },
   thumbnail: {
-    bytes: 23_160,
+    bytes: 21_440,
     sha256:
-      'ad80efce6003cb1166dba7e21af3334fe66bed0005e83d0ec24b5746a56c896e',
+      '0d726c166a98708572f559b612068fc7d21d11067d3af94ddf32b9c3f0b73880',
   },
   narration: {
     generatedOn: '2026-07-28',

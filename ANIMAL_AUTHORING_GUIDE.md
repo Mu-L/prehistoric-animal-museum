@@ -188,6 +188,28 @@ Retain model/licence links, script hashes, output hashes, declared voices and
 independent listening decisions. A Chinese-only legacy profile is readable as
 a draft but is deliberately blocked from publication.
 
+The scale-encounter guide has an additional continuity rule. Treat `intro`,
+`transition`, and `arrival` as one narration in each locale. Author the three
+phases in `src/scale-encounter/audio/narration-scripts.json`, submit their
+newline-separated text to Qwen in one input, normalize the resulting lossless
+master once, and only then cut the three runtime MP3s at natural pauses. Never
+generate the three phases as independent batch items, and never normalize the
+three slices separately.
+
+Run the local candidate generator with the shared Qwen environment.
+
+```sh
+../../../../../.runtime/qwen3-tts/venv/bin/python \
+  scripts/generate-scale-encounter-continuous-narration.py
+```
+
+The ignored handoff evidence retains the raw runs, normalized 48 kHz mono WAV
+masters, listening previews, detected pauses, and exact cut samples. The
+checked-in candidate manifest records the same master hash on all three slices,
+their contiguous sample ranges, script hash, final MP3 hash, and pending human
+review. The four shared view-switch prompts remain standalone tracks because
+they are not phases of an animal narration.
+
 ## 7. Provenance and publication
 
 `provenance.ts` must record every runtime asset:
