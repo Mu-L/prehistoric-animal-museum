@@ -303,9 +303,7 @@ describe('scale encounter complete Meshy V4 scene avatars', () => {
     expect(new Set(packages.map((entry) => entry.sourceUrl)).size).toBe(8)
     expect(
       packages.every((entry) =>
-        entry.sourceUrl.startsWith(
-          '/__museum-review-assets/scale-encounter-child-avatar/',
-        ),
+        entry.sourceUrl.includes('/scale-encounter/assets/avatars/'),
       ),
     ).toBe(true)
     expect(
@@ -323,7 +321,7 @@ describe('scale encounter complete Meshy V4 scene avatars', () => {
       packages.every(
         (entry) =>
           entry.filename ===
-          `child-avatar-v4-${entry.gender}-${entry.profile}-review-v01.glb`,
+          `child-avatar-v4-${entry.gender}-${entry.profile}-v01.glb`,
       ),
     ).toBe(true)
     expect(packages.every((entry) => entry.authoredHeightMeters === 1.15)).toBe(

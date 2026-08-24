@@ -42,19 +42,7 @@ interface PanoramaCacheEntry {
   texture: Texture | null
 }
 
-const localEnvironmentRoute =
-  '/__museum-review-assets/scale-encounter-environments'
-
 function reviewCandidateUrl(bundledUrl: URL): string {
-  if (
-    import.meta.env.MODE === 'development' ||
-    import.meta.env.MODE === 'review'
-  ) {
-    const fileName = bundledUrl.pathname.slice(
-      bundledUrl.pathname.lastIndexOf('/') + 1,
-    )
-    return `${localEnvironmentRoute}/${fileName}`
-  }
   return bundledUrl.href
 }
 
@@ -84,57 +72,57 @@ export interface ReviewCandidateEnvironmentLease {
 const panoramaUrls = {
   'land-cretaceous': {
     low: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-land-cretaceous-2048.webp',
+      './assets/environments/panorama-land-cretaceous-2048.webp',
       import.meta.url,
     )),
     medium: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-land-cretaceous-4096.webp',
+      './assets/environments/panorama-land-cretaceous-4096.webp',
       import.meta.url,
     )),
     high: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-land-cretaceous-8192.webp',
+      './assets/environments/panorama-land-cretaceous-8192.webp',
       import.meta.url,
     )),
   },
   'air-cretaceous': {
     low: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-air-cretaceous-2048.webp',
+      './assets/environments/panorama-air-cretaceous-2048.webp',
       import.meta.url,
     )),
     medium: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-air-cretaceous-4096.webp',
+      './assets/environments/panorama-air-cretaceous-4096.webp',
       import.meta.url,
     )),
     high: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-air-cretaceous-8192.webp',
+      './assets/environments/panorama-air-cretaceous-8192.webp',
       import.meta.url,
     )),
   },
   'water-cretaceous': {
     low: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-water-cretaceous-2048.webp',
+      './assets/environments/panorama-water-cretaceous-2048.webp',
       import.meta.url,
     )),
     medium: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-water-cretaceous-4096.webp',
+      './assets/environments/panorama-water-cretaceous-4096.webp',
       import.meta.url,
     )),
     high: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-water-cretaceous-8192.webp',
+      './assets/environments/panorama-water-cretaceous-8192.webp',
       import.meta.url,
     )),
   },
   'snow-ice-age': {
     low: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-snow-ice-age-2048.webp',
+      './assets/environments/panorama-snow-ice-age-2048.webp',
       import.meta.url,
     )),
     medium: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-snow-ice-age-4096.webp',
+      './assets/environments/panorama-snow-ice-age-4096.webp',
       import.meta.url,
     )),
     high: reviewCandidateUrl(new URL(
-      '../../assets/candidates/scale-encounter-environments/panorama-snow-ice-age-8192.webp',
+      './assets/environments/panorama-snow-ice-age-8192.webp',
       import.meta.url,
     )),
   },
@@ -147,17 +135,17 @@ const panoramaUrls = {
 
 const productionSliceLandPanoramaUrls = {
   low: reviewCandidateUrl(new URL(
-    '../../assets/candidates/scale-encounter-environments/panorama-land-cretaceous-v5-farfield-2048.webp',
+    './assets/environments/panorama-land-cretaceous-v5-farfield-2048.webp',
     import.meta.url,
   )),
   medium: reviewCandidateUrl(new URL(
-    '../../assets/candidates/scale-encounter-environments/panorama-land-cretaceous-v5-farfield-4096.webp',
+    './assets/environments/panorama-land-cretaceous-v5-farfield-4096.webp',
     import.meta.url,
   )),
 } as const
 
 const productionSliceLandAlbedoUrl = reviewCandidateUrl(new URL(
-  '../../assets/candidates/scale-encounter-environments/surface-land-v4-humus-albedo-1254.webp',
+  './assets/environments/surface-land-v4-humus-albedo-1254.webp',
   import.meta.url,
 ))
 
@@ -165,17 +153,17 @@ const productionSliceLandAlbedoUrl = reviewCandidateUrl(new URL(
 // costs about 5.3 MiB decoded with mipmaps, rather than adding another 2K PBR
 // triplet. Normal and roughness detail stay shared and synchronized.
 const productionSliceLandDryLitterAlbedoUrl = reviewCandidateUrl(new URL(
-  '../../assets/candidates/scale-encounter-environments/surface-land-albedo-1024.webp',
+  './assets/environments/surface-land-albedo-1024.webp',
   import.meta.url,
 ))
 
 const productionSliceMatureTreeAtlasUrls = {
   high: reviewCandidateUrl(new URL(
-    '../../assets/candidates/scale-encounter-environments/midground-mature-tree-atlas-v1.webp',
+    './assets/environments/midground-mature-tree-atlas-v1.webp',
     import.meta.url,
   )),
   low: reviewCandidateUrl(new URL(
-    '../../assets/candidates/scale-encounter-environments/midground-mature-tree-atlas-v1-1024.webp',
+    './assets/environments/midground-mature-tree-atlas-v1-1024.webp',
     import.meta.url,
   )),
 } as const
@@ -200,7 +188,7 @@ function evictCacheEntry(
   }
 }
 
-/** Test-only cache teardown; this module is absent from production bundles. */
+/** Test-only cache teardown for the bounded runtime asset cache. */
 export function resetReviewCandidateEnvironmentCacheForTests(): void {
   for (const [sourceUrl, entry] of panoramaCache) {
     evictCacheEntry(sourceUrl, entry)
@@ -232,40 +220,40 @@ const surfaceUrls = {
   land: {
     physicalWidthMeters: 2,
     high: {
-      albedo: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-land-albedo-2048.webp', import.meta.url)),
-      normal: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-land-normal-2048.webp', import.meta.url)),
-      roughness: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-land-roughness-2048.webp', import.meta.url)),
+      albedo: reviewCandidateUrl(new URL('./assets/environments/surface-land-albedo-2048.webp', import.meta.url)),
+      normal: reviewCandidateUrl(new URL('./assets/environments/surface-land-normal-2048.webp', import.meta.url)),
+      roughness: reviewCandidateUrl(new URL('./assets/environments/surface-land-roughness-2048.webp', import.meta.url)),
     },
     low: {
-      albedo: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-land-albedo-1024.webp', import.meta.url)),
-      normal: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-land-normal-1024.webp', import.meta.url)),
-      roughness: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-land-roughness-1024.webp', import.meta.url)),
+      albedo: reviewCandidateUrl(new URL('./assets/environments/surface-land-albedo-1024.webp', import.meta.url)),
+      normal: reviewCandidateUrl(new URL('./assets/environments/surface-land-normal-1024.webp', import.meta.url)),
+      roughness: reviewCandidateUrl(new URL('./assets/environments/surface-land-roughness-1024.webp', import.meta.url)),
     },
   },
   water: {
     physicalWidthMeters: 15,
     high: {
-      albedo: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-water-albedo-2048.webp', import.meta.url)),
-      normal: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-water-normal-2048.webp', import.meta.url)),
-      roughness: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-water-roughness-2048.webp', import.meta.url)),
+      albedo: reviewCandidateUrl(new URL('./assets/environments/surface-water-albedo-2048.webp', import.meta.url)),
+      normal: reviewCandidateUrl(new URL('./assets/environments/surface-water-normal-2048.webp', import.meta.url)),
+      roughness: reviewCandidateUrl(new URL('./assets/environments/surface-water-roughness-2048.webp', import.meta.url)),
     },
     low: {
-      albedo: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-water-albedo-1024.webp', import.meta.url)),
-      normal: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-water-normal-1024.webp', import.meta.url)),
-      roughness: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-water-roughness-1024.webp', import.meta.url)),
+      albedo: reviewCandidateUrl(new URL('./assets/environments/surface-water-albedo-1024.webp', import.meta.url)),
+      normal: reviewCandidateUrl(new URL('./assets/environments/surface-water-normal-1024.webp', import.meta.url)),
+      roughness: reviewCandidateUrl(new URL('./assets/environments/surface-water-roughness-1024.webp', import.meta.url)),
     },
   },
   snow: {
     physicalWidthMeters: 2,
     high: {
-      albedo: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-snow-albedo-2048.webp', import.meta.url)),
-      normal: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-snow-normal-2048.webp', import.meta.url)),
-      roughness: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-snow-roughness-2048.webp', import.meta.url)),
+      albedo: reviewCandidateUrl(new URL('./assets/environments/surface-snow-albedo-2048.webp', import.meta.url)),
+      normal: reviewCandidateUrl(new URL('./assets/environments/surface-snow-normal-2048.webp', import.meta.url)),
+      roughness: reviewCandidateUrl(new URL('./assets/environments/surface-snow-roughness-2048.webp', import.meta.url)),
     },
     low: {
-      albedo: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-snow-albedo-1024.webp', import.meta.url)),
-      normal: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-snow-normal-1024.webp', import.meta.url)),
-      roughness: reviewCandidateUrl(new URL('../../assets/candidates/scale-encounter-environments/surface-snow-roughness-1024.webp', import.meta.url)),
+      albedo: reviewCandidateUrl(new URL('./assets/environments/surface-snow-albedo-1024.webp', import.meta.url)),
+      normal: reviewCandidateUrl(new URL('./assets/environments/surface-snow-normal-1024.webp', import.meta.url)),
+      roughness: reviewCandidateUrl(new URL('./assets/environments/surface-snow-roughness-1024.webp', import.meta.url)),
     },
   },
 } as const

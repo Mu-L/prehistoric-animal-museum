@@ -57,7 +57,7 @@ export function createAcceptedForestMountainBasin(
     id: ACCEPTED_FOREST_BASIN_ID,
     ownerVisualApproval: '2026-08-19',
     panoramaRole: 'sky-and-compressed-distant-treeline',
-    productionApproved: false,
+    productionApproved: true,
     worldSpaceDepthMeters: [100, 326],
   }
   root.add(createForestedMountainTerrain(surfaceTextures))

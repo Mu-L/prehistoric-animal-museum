@@ -185,11 +185,8 @@ const bundledAudioUrls = import.meta.glob('./audio/*.mp3', {
 
 function bundledAudioUrl(file: string): string {
   const url = bundledAudioUrls[`./audio/${file}`]
-  // Narration remains a private listening candidate until Leon approves its
-  // public distribution. A clean checkout therefore has no MP3 binaries; the
-  // review route keeps copy, timing and interaction tests deterministic while
-  // local review worktrees with the ignored files receive Vite asset URLs.
-  return url ?? `/__museum-review-assets/scale-encounter-audio/${file}`
+  if (!url) throw new Error(`missing-scale-encounter-audio:${file}`)
+  return url
 }
 
 const viewSwitchAudioUrls = {

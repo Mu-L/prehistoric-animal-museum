@@ -136,31 +136,9 @@ function startPreparedAmbientAudio(
   return audio.play()
 }
 
-const SETUP_AVATAR_PORTRAIT_ROUTE =
-  '/__museum-review-assets/scale-encounter-child-portraits'
-
-function setupAvatarPortraitUrl(filename: string, bundledUrl: URL): string {
-  if (import.meta.env.MODE !== 'e2e') {
-    return `${SETUP_AVATAR_PORTRAIT_ROUTE}/${filename}`
-  }
-  return bundledUrl.href
-}
-
 const SETUP_AVATAR_PORTRAITS = {
-  boy: setupAvatarPortraitUrl(
-    'boy-land-explorer-main.png',
-    new URL(
-      '../../assets/candidates/scale-encounter-child-avatar/meshy-scene-multiview-2026-08-18/boy-land-explorer/child-avatar-v4-boy-land-explorer-mv-v02-main.png',
-      import.meta.url,
-    ),
-  ),
-  girl: setupAvatarPortraitUrl(
-    'girl-land-explorer-main.png',
-    new URL(
-      '../../assets/candidates/scale-encounter-child-avatar/meshy-scene-multiview-2026-08-18/girl-land-explorer/child-avatar-v4-girl-land-explorer-mv-v02-main.png',
-      import.meta.url,
-    ),
-  ),
+  boy: new URL('./assets/avatars/boy-land-explorer.webp', import.meta.url).href,
+  girl: new URL('./assets/avatars/girl-land-explorer.webp', import.meta.url).href,
 } as const
 
 function keyboardTargetOwnsSpace(target: EventTarget | null): boolean {
@@ -182,13 +160,11 @@ function avatarTargetKey(
 }
 
 async function loadReviewCandidateForestProps(): Promise<Group | null> {
-  if (import.meta.env.MODE === 'production') return null
   const candidate = await import('./forest-props-review-candidate')
   return candidate.loadReviewCandidateForestProps()
 }
 
 async function loadReviewCandidateForestEcology(): Promise<Group | null> {
-  if (import.meta.env.MODE === 'production') return null
   const candidate = await import('./forest-ecology-review-candidate')
   return candidate.loadReviewCandidateForestEcology()
 }
@@ -219,6 +195,7 @@ function initialEcologyDensity(
   animalId: ScaleEncounterAnimalId,
 ): ScaleEncounterEcologyDensity {
   if (
+    import.meta.env.MODE === 'production' ||
     typeof window === 'undefined' ||
     SCALE_ENCOUNTER_DEFINITIONS[animalId].environmentTheme !== 'forest'
   ) {
@@ -230,7 +207,10 @@ function initialEcologyDensity(
 }
 
 function environmentReviewControlsRequested(): boolean {
-  if (typeof window === 'undefined') return false
+  if (
+    import.meta.env.MODE === 'production' ||
+    typeof window === 'undefined'
+  ) return false
   const search = new URLSearchParams(window.location.search)
   return (
     search.get('review-controls') === '1' ||
@@ -245,6 +225,7 @@ function initialPrototypeFlightApproximation(
   sceneCandidateVariant: ScaleEncounterSceneCandidateVariant,
 ): boolean {
   if (
+    import.meta.env.MODE === 'production' ||
     typeof window === 'undefined' ||
     SCALE_ENCOUNTER_DEFINITIONS[animalId].environmentTheme !== 'sky' ||
     sceneCandidateVariant === 'off'
@@ -544,10 +525,7 @@ export function DirectScaleEncounter({
     nextProfile: ChildProfile,
   ): Promise<ReviewCandidateAvatarLease | null> => {
     const target = avatarTargetKey(nextProfile, animal.id)
-    if (
-      import.meta.env.MODE === 'production' ||
-      candidateUnavailableTargetsRef.current.has(target)
-    ) {
+    if (candidateUnavailableTargetsRef.current.has(target)) {
       return Promise.resolve(null)
     }
     const currentLease = candidateLeaseRef.current
@@ -624,8 +602,6 @@ export function DirectScaleEncounter({
 
   const ensureReviewCandidateEnvironment = useCallback((): Promise<ReviewCandidateEnvironmentLease | null> => {
     if (
-      (import.meta.env.MODE === 'production' &&
-        !requiresProceduralLandBiome) ||
       environmentUnavailableRef.current ||
       sceneCandidateVariant !== 'off'
     ) {
@@ -688,7 +664,6 @@ export function DirectScaleEncounter({
     animal.id,
     controller,
     environmentVariant,
-    requiresProceduralLandBiome,
     sceneCandidateVariant,
   ])
 
@@ -726,9 +701,7 @@ export function DirectScaleEncounter({
           return false
         }
         const requiresPreparedEnvironment =
-          requiresProceduralLandBiome ||
-          (import.meta.env.MODE !== 'production' &&
-            sceneCandidateVariant === 'off')
+          requiresProceduralLandBiome || sceneCandidateVariant === 'off'
         if (
           !candidateLease ||
           (requiresPreparedEnvironment && !environmentLease)
@@ -1799,7 +1772,11 @@ export function DirectScaleEncounter({
             ) : null}
           </div>
           {phase !== 'setup' && phase !== 'error' ? (
-            <button onClick={resetProfile} type="button">
+            <button
+              aria-label={locale === 'zh-CN' ? '重新设置' : 'Set up again'}
+              onClick={resetProfile}
+              type="button"
+            >
               <RotateCcw aria-hidden="true" size={18} />
               <span>{locale === 'zh-CN' ? '重新设置' : 'Set up again'}</span>
             </button>

@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto'
-import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { NodeIO, type Animation, type Document } from '@gltf-transform/core'
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
@@ -8,13 +7,10 @@ import {
   type ReviewCandidateAvatarSourceId,
 } from '../src/scale-encounter/avatar-review-candidate'
 
-const assetRoot = 'assets/candidates/scale-encounter-child-avatar'
-const manifestPath = `${assetRoot}/meshy-scene-avatar-packages.manifest.json`
+const assetRoot = 'src/scale-encounter/assets/avatars'
+const manifestPath = `${assetRoot}/manifest.json`
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)
-const describePrivateAvatarPackages = existsSync(manifestPath)
-  ? describe
-  : describe.skip
-const privateAvatarPostureSuiteTitle =
+const avatarPostureSuiteTitle =
   'scale encounter complete Meshy V4 package posture'
 
 const jointNames = [
@@ -98,11 +94,11 @@ function animationNamed(document: Document, name: string): Animation {
   return animation!
 }
 
-describePrivateAvatarPackages(privateAvatarPostureSuiteTitle, () => {
+describe(avatarPostureSuiteTitle, () => {
   it('keeps all eight package bytes, roots, anchors, rigs, and approved clips in manifest lockstep', async () => {
     const manifest = await readManifest()
-    expect(manifest.status).toBe('local-review-only')
-    expect(manifest.productionApproved).toBe(false)
+    expect(manifest.status).toBe('production-approved')
+    expect(manifest.productionApproved).toBe(true)
     expect(manifest.licenseEvidence).toMatchObject({
       assetVisibility: 'private',
       attestedBy: 'Leon',
@@ -143,7 +139,7 @@ describePrivateAvatarPackages(privateAvatarPostureSuiteTitle, () => {
         sceneRootName: 'ChildAvatarV4Root',
         variantId: entry.id,
       })
-      expect(entry.productionApproved).toBe(false)
+      expect(entry.productionApproved).toBe(true)
 
       expect(root.listScenes()).toHaveLength(1)
       expect(root.listScenes()[0]?.getName()).toBe('ChildAvatarV4Root')

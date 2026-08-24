@@ -2,33 +2,22 @@ import type { Group } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 
-const localEnvironmentRoute =
-  '/__museum-review-assets/scale-encounter-environments'
-
-function reviewCandidateUrl(bundledUrl: URL, fileName: string): string {
-  if (
-    import.meta.env.MODE === 'development' ||
-    import.meta.env.MODE === 'review'
-  ) {
-    return `${localEnvironmentRoute}/${fileName}`
-  }
+function reviewCandidateUrl(bundledUrl: URL): string {
   return bundledUrl.href
 }
 
 const sourceUrl = reviewCandidateUrl(
   new URL(
-    '../../assets/candidates/scale-encounter-environments/forest-ecology-real-v2.glb',
+    './assets/environments/forest-ecology-real-v2.glb',
     import.meta.url,
   ),
-  'forest-ecology-real-v2.glb',
 )
 
 const treeSourceUrl = reviewCandidateUrl(
   new URL(
-    '../../assets/candidates/scale-encounter-environments/real-tree-lods-v1.glb',
+    './assets/environments/real-tree-lods-v1.glb',
     import.meta.url,
   ),
-  'real-tree-lods-v1.glb',
 )
 
 let ecologyTemplatePromise: Promise<Group> | null = null

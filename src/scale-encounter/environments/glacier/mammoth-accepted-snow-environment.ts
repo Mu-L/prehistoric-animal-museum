@@ -80,7 +80,7 @@ export function createMammothAcceptedSnowEnvironment(
     elevationSource: 'mapzen-terrarium-z12-2139-1449',
     modernPhotography: false,
     ownerVisualApproval: '2026-08-19',
-    productionApproved: false,
+    productionApproved: true,
   }
 
   const environmentTarget = renderer

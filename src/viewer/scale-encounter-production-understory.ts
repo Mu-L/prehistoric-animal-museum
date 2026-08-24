@@ -59,24 +59,13 @@ export interface ScaleEncounterProductionUnderstoryMetadata {
   readonly totalInstances: number
 }
 
-const LOCAL_ENVIRONMENT_ROUTE =
-  '/__museum-review-assets/scale-encounter-environments'
-
 function reviewCandidateUrl(bundledUrl: URL): string {
-  if (
-    import.meta.env.MODE === 'development' ||
-    import.meta.env.MODE === 'review'
-  ) {
-    return `${LOCAL_ENVIRONMENT_ROUTE}/${bundledUrl.pathname.slice(
-      bundledUrl.pathname.lastIndexOf('/') + 1,
-    )}`
-  }
   return bundledUrl.href
 }
 
 const vegetationAtlasUrl = reviewCandidateUrl(
   new URL(
-    '../../assets/candidates/scale-encounter-environments/midground-vegetation-atlas-v2.webp',
+    '../scale-encounter/assets/environments/midground-vegetation-atlas-v2.webp',
     import.meta.url,
   ),
 )

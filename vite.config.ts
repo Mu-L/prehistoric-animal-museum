@@ -30,6 +30,13 @@ const redistributableNotices = [
   'LICENSES/Three.js-MIT.txt',
 ] as const
 
+const generatedRedistributableNotices = [
+  {
+    fileName: 'SCALE_ENCOUNTER_ASSET_PROVENANCE.md',
+    sourceFile: 'src/scale-encounter/assets/PROVENANCE.md',
+  },
+] as const
+
 const dependencyNodeModulesRoot = fileURLToPath(
   new URL('..', import.meta.resolve('vite/package.json')),
 )
@@ -37,6 +44,7 @@ const dependencyNodeModulesRoot = fileURLToPath(
 const scaleEncounterEnabledModes = new Set([
   'development',
   'e2e',
+  'production',
   'review',
   'test',
 ])
@@ -64,6 +72,16 @@ function bundledNotices(): Plugin {
           type: 'asset',
           fileName,
           source: readFileSync(new URL(fileName, import.meta.url), 'utf8'),
+        })
+      }
+      for (const notice of generatedRedistributableNotices) {
+        this.emitFile({
+          type: 'asset',
+          fileName: notice.fileName,
+          source: readFileSync(
+            new URL(notice.sourceFile, import.meta.url),
+            'utf8',
+          ),
         })
       }
     },
@@ -314,11 +332,7 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       scaleEncounterGlacierAssetUrls(
-        command === 'serve'
-          ? 'review'
-          : mode === 'e2e'
-            ? 'bundled'
-            : 'disabled',
+        scaleEncounterEnabledModes.has(mode) ? 'bundled' : 'disabled',
       ),
       bundledNotices(),
       multilingualSeoPlugin(),

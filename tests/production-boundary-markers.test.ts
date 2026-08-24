@@ -4,18 +4,25 @@ import { join } from 'node:path'
 
 import {
   findForbiddenProductionMarkers,
-  scaleEncounterChildReviewVariantIds,
 } from '../scripts/production-boundary-markers'
 
 const privateScaleEncounterMutations = [
-  ...(['land', 'water', 'snow'] as const).map((theme) => ({
-    expectedMarker: `surface-${theme}-`,
-    injected: `surface-${theme}-albedo-2048.webp`,
-  })),
-  { expectedMarker: 'avatar-review-candidate', injected: 'avatar-review-candidate' },
+  { expectedMarker: 'assets/candidates', injected: 'assets/candidates/file.glb' },
   {
-    expectedMarker: 'environment-review-candidate',
-    injected: 'environment-review-candidate',
+    expectedMarker: '/__museum-review-assets',
+    injected: '/__museum-review-assets/private.glb',
+  },
+  { expectedMarker: '.handoff/', injected: '.handoff/private-review' },
+  { expectedMarker: '/private/tmp/', injected: '/private/tmp/source.glb' },
+  { expectedMarker: 'meshy-scene-models-', injected: 'meshy-scene-models-run' },
+  {
+    expectedMarker: 'meshy-scene-multiview-',
+    injected: 'meshy-scene-multiview-source',
+  },
+  { expectedMarker: 'source-polyhaven-', injected: 'source-polyhaven-scan.jpg' },
+  {
+    expectedMarker: 'source-blender-water-',
+    injected: 'source-blender-water-master.png',
   },
   {
     expectedMarker: 'child-avatar-v3-',
@@ -25,16 +32,6 @@ const privateScaleEncounterMutations = [
     expectedMarker: 'child-avatar-review-candidates',
     injected: 'child-avatar-review-candidates.glb',
   },
-  ...scaleEncounterChildReviewVariantIds.flatMap((variantId) => [
-    {
-      expectedMarker: `child-avatar-v4-${variantId}-review-v01`,
-      injected: `child-avatar-v4-${variantId}-review-v01.glb`,
-    },
-    {
-      expectedMarker: `scale-encounter-child-${variantId}-review-candidate`,
-      injected: `scale-encounter-child-${variantId}-review-candidate`,
-    },
-  ]),
 ] as const
 
 describe('production boundary private scale-encounter markers', () => {

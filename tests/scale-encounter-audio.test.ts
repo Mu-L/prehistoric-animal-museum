@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import {
   scaleEncounterContentFor,
@@ -8,6 +8,7 @@ import {
 } from '../src/scale-encounter/content'
 import type { Locale } from '../src/i18n/locale'
 import { SCALE_ENCOUNTER_ANIMAL_IDS } from '../src/scale-encounter/types'
+import { animalDefinition as staticTyrannosaurus } from '../src/content/animals/tyrannosaurus-rex/package'
 
 interface NarrationTrack {
   readonly continuousMasterEvidence?: string
@@ -101,7 +102,7 @@ describe('scale encounter narration candidates', () => {
 
   it('keeps all 112 Serena files byte-for-byte tied to their recorded hashes', () => {
     expect(manifest.schemaVersion).toBe(2)
-    expect(manifest.status).toBe('prototype-listening-candidates')
+    expect(manifest.status).toBe('production-approved')
     expect(manifest.engine).toMatchObject({
       model: 'Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice',
       modelRevision:
@@ -121,14 +122,6 @@ describe('scale encounter narration candidates', () => {
     expect(manifest.tracks).toHaveLength(112)
     expect(new Set(manifest.tracks.map((track) => track.file)).size).toBe(112)
 
-    const presentTrackCount = manifest.tracks.filter((track) =>
-      existsSync(resolve(audioDirectory, track.file)),
-    ).length
-    // Public checkouts intentionally omit the pending listening candidates.
-    // A local review package must be complete before its hashes are trusted.
-    expect([0, manifest.tracks.length]).toContain(presentTrackCount)
-    if (presentTrackCount === 0) return
-
     for (const track of manifest.tracks) {
       const bytes = readFileSync(resolve(audioDirectory, track.file))
       expect(createHash('sha256').update(bytes).digest('hex')).toBe(
@@ -136,6 +129,19 @@ describe('scale encounter narration candidates', () => {
       )
       expect(track.durationSeconds).toBeGreaterThan(0)
     }
+  })
+
+  it('uses the same Serena voice contract as the static museum', () => {
+    expect(manifest.engine).toMatchObject({
+      model: 'Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice',
+      modelRevision:
+        '85e237c12c027371202489a0ec509ded67b5e4b5',
+      speaker: staticTyrannosaurus.narration['zh-CN'].speaker,
+    })
+    expect(staticTyrannosaurus.narration.en.speaker).toBe('Serena')
+    expect(manifest.engine.postProcessing).toMatch(
+      /tempo 1\.04x.*no pitch shift/i,
+    )
   })
 
   it('keeps recorded scripts tied to the authored scene concepts and records listening review', () => {
@@ -189,13 +195,17 @@ describe('scale encounter narration candidates', () => {
     expect(staleRecordedCopy).toEqual([])
     for (const animalId of animalIds) {
       expect(manifest.humanListeningReview[animalId]).toMatchObject({
-        status: 'pending',
-        scriptReview: 'pending',
+        status: 'approved',
+        reviewedBy: 'Leon',
+        reviewedOn: '2026-08-24',
+        scriptApprovedOn: '2026-08-24',
       })
     }
     expect(manifest.humanListeningReview['view-switch']).toMatchObject({
-      status: 'pending',
-      scriptReview: 'pending',
+      status: 'approved',
+      reviewedBy: 'Leon',
+      reviewedOn: '2026-08-24',
+      scriptApprovedOn: '2026-08-24',
     })
     for (const locale of locales) {
       const content = scaleEncounterContentFor('mammoth', locale)
@@ -204,7 +214,7 @@ describe('scale encounter narration candidates', () => {
         /从头到脚|绕到你身后|来到你的眼睛|camera|move behind|arrive at your eyes/i,
       )
     }
-    expect(manifest.publicDistributionDecision).toBe('pending')
+    expect(manifest.publicDistributionDecision).toBe('approved')
   })
 
   it('keeps every animal and locale contiguous on one normalized master', () => {

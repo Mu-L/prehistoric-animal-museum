@@ -1,22 +1,15 @@
-# Dormant procedural land-biome candidate boundary
+# Production procedural land-biome boundary
 
-The Gobi, Kayenta floodplain and Carboniferous wetland presets remain pure-data
-modules, but they are not part of the visible comparison runtime. Their theme
-registrations currently resolve through the reviewed Cretaceous forest
-compatibility fallback. The encounter therefore loads only the forest package;
-none of these three candidate modules or their textures are requested when the
-comparison route opens.
+The Gobi, Kayenta floodplain and Carboniferous wetland presets are production
+pure-data modules. Each target animal dynamically imports only its selected
+preset and loads that theme's ground/depth package; the other two packages are
+not requested.
 
-The candidate loader remains available for isolated review. When called from a
-review or test harness it dynamically imports one selected preset and loads only
-that theme's ground/depth package, never all three at once. Promotion back into
-the product requires a new complete visual-quality review.
-
-The dormant renderer does not enlarge a generated landscape illustration over an
-equirectangular sphere. A shared licensed 8K pure-sky plate contributes only
-clouds and distant atmospheric radiance. Readable basin ridges, terrain,
-riverbanks, water, scanned props and vegetation are depth-writing world-space
-geometry, so their sharpness and parallax do not depend on panorama resolution.
+The renderer does not treat a generated landscape plate as walkable ground.
+The 4K/2K equirectangular plate supplies distant composition and atmospheric
+radiance. Readable basin ridges, terrain, riverbanks, water, scanned props and
+vegetation are depth-writing world-space geometry, so their sharpness and
+parallax do not depend on panorama resolution.
 
 The Kayenta theme uses a terrain-cut, meandering seasonal reach with integrated
 wet-mud banks. The Carboniferous theme uses separate irregular peat pools
@@ -36,8 +29,8 @@ built from sparse emergent lycopsids, calamite/sphenopsid and three overlapping
 supported tree-fern depth bands. It deliberately contains no modern flowering
 broadleaf canopy.
 
-Scientific source URLs live beside each preset. The pure-sky, scanned ecology
-and atlas sources are recorded in the repository environment provenance file.
+Scientific source URLs live beside each preset. Generated plates, scanned
+ecology and atlas sources are recorded in the repository runtime provenance.
 Borrowed cache textures are detached before ordinary scene-graph disposal;
 locally generated water normals, geometry and materials are disposed with the
 active environment.

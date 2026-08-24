@@ -84,25 +84,13 @@ const FAR_TREE_PROFILE_COUNT = 8
 // tree and were the pale vertical needles visible in the previous QA pass.
 // The reviewed root-to-tip silhouettes provide eight distinct mature forms.
 const USE_SCANNED_FAR_SAPLINGS = false
-const LOCAL_ENVIRONMENT_ROUTE =
-  '/__museum-review-assets/scale-encounter-environments'
-
 function reviewCandidateUrl(bundledUrl: URL): string {
-  if (
-    import.meta.env.MODE === 'development' ||
-    import.meta.env.MODE === 'review'
-  ) {
-    const fileName = bundledUrl.pathname.slice(
-      bundledUrl.pathname.lastIndexOf('/') + 1,
-    )
-    return `${LOCAL_ENVIRONMENT_ROUTE}/${fileName}`
-  }
   return bundledUrl.href
 }
 
 const farTreeAtlasUrl = reviewCandidateUrl(
   new URL(
-    '../../assets/candidates/scale-encounter-environments/midground-mature-tree-atlas-v1-1024.webp',
+    '../scale-encounter/assets/environments/midground-mature-tree-atlas-v1-1024.webp',
     import.meta.url,
   ),
 )

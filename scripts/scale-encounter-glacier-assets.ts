@@ -32,7 +32,7 @@ export function scaleEncounterGlacierAssetUrls(
             const localName = `glacierAsset${index}`
             const absolutePath = fileURLToPath(
               new URL(
-                `../assets/candidates/scale-encounter-environments/glacier/${fileName}`,
+                `../src/scale-encounter/assets/environments/glacier/${fileName}`,
                 import.meta.url,
               ),
             )

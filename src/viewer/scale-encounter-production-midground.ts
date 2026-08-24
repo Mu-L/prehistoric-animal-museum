@@ -147,39 +147,27 @@ const WORLD_UP = new Vector3(0, 1, 0)
 // terrain and the crowns were correctly perceived as ferns floating in air.
 // A missing reviewed GLB now falls through to complete, bottom-grounded atlas
 // silhouettes instead of ever rebuilding that invalid representation.
-const LOCAL_ENVIRONMENT_ROUTE =
-  '/__museum-review-assets/scale-encounter-environments'
-
 function reviewCandidateUrl(bundledUrl: URL): string {
-  if (
-    import.meta.env.MODE === 'development' ||
-    import.meta.env.MODE === 'review'
-  ) {
-    const fileName = bundledUrl.pathname.slice(
-      bundledUrl.pathname.lastIndexOf('/') + 1,
-    )
-    return `${LOCAL_ENVIRONMENT_ROUTE}/${fileName}`
-  }
   return bundledUrl.href
 }
 
 const vegetationAtlasUrl = reviewCandidateUrl(
   new URL(
-    '../../assets/candidates/scale-encounter-environments/midground-vegetation-atlas-v2.webp',
+    '../scale-encounter/assets/environments/midground-vegetation-atlas-v2.webp',
     import.meta.url,
   ),
 )
 
 const frondComponentAtlasUrl = reviewCandidateUrl(
   new URL(
-    '../../assets/candidates/scale-encounter-environments/midground-frond-components-v4-final.webp',
+    '../scale-encounter/assets/environments/midground-frond-components-v4-final.webp',
     import.meta.url,
   ),
 )
 
 const araucariaComponentAtlasUrl = reviewCandidateUrl(
   new URL(
-    '../../assets/candidates/scale-encounter-environments/midground-araucaria-components-v4.webp',
+    '../scale-encounter/assets/environments/midground-araucaria-components-v4.webp',
     import.meta.url,
   ),
 )
@@ -187,13 +175,13 @@ const araucariaComponentAtlasUrl = reviewCandidateUrl(
 const matureTreeAtlasUrls = {
   high: reviewCandidateUrl(
     new URL(
-      '../../assets/candidates/scale-encounter-environments/midground-mature-tree-atlas-v1.webp',
+      '../scale-encounter/assets/environments/midground-mature-tree-atlas-v1.webp',
       import.meta.url,
     ),
   ),
   low: reviewCandidateUrl(
     new URL(
-      '../../assets/candidates/scale-encounter-environments/midground-mature-tree-atlas-v1-1024.webp',
+      '../scale-encounter/assets/environments/midground-mature-tree-atlas-v1-1024.webp',
       import.meta.url,
     ),
   ),

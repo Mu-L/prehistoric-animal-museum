@@ -2887,7 +2887,7 @@ function createIntegratedOceanEnvironment(
       variant === 'D'
         ? OCEAN_COHERENT_RADIANCE_REVISION
         : OCEAN_NATURALNESS_REVISION,
-    productionApproved: false,
+    productionApproved: variant === 'D',
     semanticName: 'ocean',
     shipsVisible: false,
     variant,
@@ -2971,8 +2971,8 @@ function createIntegratedSkyEnvironment(
     assetLease: {
       assetId: SKY_PRODUCTION_REVIEW_CANDIDATE.assetId,
       manifestSha256: SKY_PRODUCTION_REVIEW_CANDIDATE.manifestSha256,
-      productionApproved: false,
-      status: 'review-candidate',
+      productionApproved: true,
+      status: 'production-approved',
     },
     avatarBounds,
     cameraState: {
@@ -3013,7 +3013,7 @@ function createIntegratedSkyEnvironment(
       variant === 'D'
         ? 'coherent-sky-radiance-c-coverage-soft-cloud-v4'
         : SKY_PRODUCTION_REVIEW_CANDIDATE.naturalnessRevision,
-    productionApproved: false,
+    productionApproved: variant === 'D',
     semanticName: 'sky',
     variant,
   }

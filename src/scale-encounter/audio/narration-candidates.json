@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "status": "prototype-listening-candidates",
+  "status": "production-approved",
   "generatedOn": "2026-08-23",
   "engine": {
     "model": "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
@@ -20,103 +20,141 @@
   },
   "humanListeningReview": {
     "tyrannosaurus-rex": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "pteranodon": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "mosasaurus": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "mammoth": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "view-switch": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Both shared viewpoint lines were regenerated as one continuous Serena master per locale with the same 1.04x whole-master pace lift, then cut at the natural pause. Listening review is pending."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "stegosaurus": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "pachycephalosaurus": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "ichthyosaur": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "rhamphorhynchus": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "triceratops": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "apatosaurus": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "plesiosaurus": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "gigantoraptor": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "tupandactylus": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "megalodon": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "maiasaura": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "sauropelta": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "meganeura": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     },
     "dilophosaurus": {
-      "status": "pending",
-      "scriptReview": "pending",
-      "evidence": "Selected intro, transition and arrival slices were rebuilt from one uninterrupted Serena master per locale, using the same built-in voice as the static museum and a subtle 1.04x whole-master pace lift. Script, pronunciation, pacing, cut points and in-context timing require Leon's review."
+      "status": "approved",
+      "reviewedBy": "Leon",
+      "reviewedOn": "2026-08-24",
+      "scriptApprovedOn": "2026-08-24",
+      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
     }
   },
-  "publicDistributionDecision": "pending",
-  "note": "All animal-guided tracks are local review candidates rebuilt from one continuous master per animal and locale. The shared viewpoint lines are likewise cut from one master per locale. Nothing is approved for public distribution.",
+  "publicDistributionDecision": "approved",
+  "note": "Leon explicitly approved the selected narration tracks for inclusion and public distribution on 2026-08-24. All animal-guided tracks are cut from one continuous Serena master per animal and locale; the shared viewpoint lines are cut from one master per locale.",
   "tracks": [
     {
       "file": "tyrannosaurus-rex-intro-v3.zh-CN.mp3",
@@ -1527,5 +1565,7 @@
       "view-switch.zh-CN"
     ],
     "instructionSupport": "CustomVoice Serena preserves the static-museum timbre; the light exploration feel comes from a subtle whole-master pace lift."
-  }
+  },
+  "approvedBy": "Leon",
+  "approvedOn": "2026-08-24"
 }

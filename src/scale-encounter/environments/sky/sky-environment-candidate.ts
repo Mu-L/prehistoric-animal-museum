@@ -840,7 +840,7 @@ const SKY_MAXIMUM_WAVE_DISPLACEMENT_METERS = 0.32 + 0.24 + 0.18
 const AERIAL_ISLAND_SEGMENTS = 64
 const AERIAL_ISLAND_RADIAL_RINGS = 8
 const AERIAL_ISLAND_ATLAS_TEXTURE_URL = new URL(
-  '../../../../assets/candidates/scale-encounter-environments/sky/aerial-island-atlas-v1.webp',
+  '../../assets/environments/sky/aerial-island-atlas-v1.webp',
   import.meta.url,
 ).href
 
@@ -1863,7 +1863,7 @@ export const SKY_CANDIDATE_ART_DIRECTION = {
     'No foreground or enclosing coast. One active set of six compact, low-relief landforms sits roughly 65 metres below the subjects, with separate landscape and portrait sea-footprint arrangements following the corresponding overview camera axes; smaller portrait radii, dense coast geometry, six distinct photoreal top-down prehistoric island cutouts, restrained distance haze, and narrow submerged shore slopes make them read as remote aerial geography rather than nearby paper cutouts or floating rocks.',
   seaLevelY: SKY_REFERENCE_Y_METERS,
   sunDirection: SUN_DIRECTION.toArray(),
-  sunDirectionStatus: 'candidate-pending-leon-confirmation',
+  sunDirectionStatus: 'owner-approved-2026-08-24',
 } as const
 
 export function inspectSkyCandidateAltitudeContract(

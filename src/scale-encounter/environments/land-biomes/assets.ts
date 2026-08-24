@@ -35,19 +35,19 @@ interface ScaleEncounterLandBiomeArtLease {
 }
 
 const sharedNormalSourceUrl = new URL(
-  '../../../../assets/candidates/scale-encounter-environments/surface-land-normal-1024.webp',
+  '../../assets/environments/surface-land-normal-1024.webp',
   import.meta.url,
 ).href
 const sharedRoughnessSourceUrl = new URL(
-  '../../../../assets/candidates/scale-encounter-environments/surface-land-roughness-1024.webp',
+  '../../assets/environments/surface-land-roughness-1024.webp',
   import.meta.url,
 ).href
 const matureTreeAtlasSourceUrl = new URL(
-  '../../../../assets/candidates/scale-encounter-environments/midground-mature-tree-atlas-v1.webp',
+  '../../assets/environments/midground-mature-tree-atlas-v1.webp',
   import.meta.url,
 ).href
 const carboniferousFrondAtlasSourceUrl = new URL(
-  '../../../../assets/candidates/scale-encounter-environments/midground-frond-components-v4-final.webp',
+  '../../assets/environments/midground-frond-components-v4-final.webp',
   import.meta.url,
 ).href
 

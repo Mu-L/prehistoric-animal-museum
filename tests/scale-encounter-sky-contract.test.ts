@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
   Box3,
@@ -18,6 +19,7 @@ import {
   SKY_LOCKED_AVATAR_BASES,
   SKY_LOCKED_CAMERA,
   SKY_LOCKED_SUBJECT,
+  SKY_PRODUCTION_REVIEW_CANDIDATE,
   SKY_REFERENCE_Y_METERS,
   SKY_RUNTIME_AVATAR_PRESENTATION,
   SKY_VARIANTS,
@@ -37,13 +39,10 @@ import {
 
 const skyReviewManifestPath = resolve(
   process.cwd(),
-  'assets/candidates/scale-encounter-environments/sky/sky-review-candidate.manifest.json',
+  'src/scale-encounter/assets/environments/sky/manifest.json',
 )
-const testPrivateSkyReviewManifest = existsSync(skyReviewManifestPath)
-  ? it
-  : it.skip
-const privateSkyReviewManifestTestTitle =
-  'records D as the Leon-accepted local default without claiming production promotion'
+const skyManifestTestTitle =
+  'records D as the Leon-approved production default'
 
 describe('scale encounter sky phase-two contract', () => {
   it('locks the existing Pteranodon scale and camera without copying forest values', () => {
@@ -107,7 +106,7 @@ describe('scale encounter sky phase-two contract', () => {
     expect(skyBandForAltitude(24)?.id).toBe('far-cloud')
   })
 
-  it('keeps the historical base lock and marks new wingsuit bounds for re-review', () => {
+  it('keeps the historical base lock and records the approved wingsuit bounds', () => {
     expect(SKY_LOCKED_AVATAR_BASES).toMatchObject({
       animation: 'Idle_Land',
       authoredHeightMeters: 1.15,
@@ -119,19 +118,21 @@ describe('scale encounter sky phase-two contract', () => {
     expect(SKY_LOCKED_AVATAR_BASES.girl.filename).not.toContain('wingsuit')
     expect(SKY_RUNTIME_AVATAR_PRESENTATION).toMatchObject({
       bodyOrientation: 'prone',
-      environmentEvidenceReusable: false,
+      environmentEvidenceReusable: true,
       equipment: 'helmeted-wingsuit-and-parachute',
-      outfitSafetyBounds: 'pending-dynamic-bounds-review',
+      outfitSafetyBounds: 'reviewed-dynamic-bounds-v4',
       pose: 'prone-wingsuit-glide',
       profile: 'air-wingsuit',
-      status: 'implementation-candidate',
+      status: 'production-approved',
     })
   })
 
-  testPrivateSkyReviewManifest(privateSkyReviewManifestTestTitle, () => {
-    const manifest = JSON.parse(
-      readFileSync(skyReviewManifestPath, 'utf8'),
-    ) as {
+  it(skyManifestTestTitle, () => {
+    const manifestBytes = readFileSync(skyReviewManifestPath)
+    expect(createHash('sha256').update(manifestBytes).digest('hex')).toBe(
+      SKY_PRODUCTION_REVIEW_CANDIDATE.manifestSha256,
+    )
+    const manifest = JSON.parse(manifestBytes.toString('utf8')) as {
       readonly defaultCandidate: boolean
       readonly leonApproved: boolean
       readonly mainIntegration: {
@@ -168,13 +169,13 @@ describe('scale encounter sky phase-two contract', () => {
         readonly outfitSafetyBounds: unknown
       }
     }
-    expect(manifest.status).toBe('review-candidate')
+    expect(manifest.status).toBe('production-approved')
     expect(manifest.runtimeIntegrated).toBe(true)
     expect(manifest.defaultCandidate).toBe(true)
     expect(manifest.leonApproved).toBe(true)
-    expect(manifest.productionApproved).toBe(false)
+    expect(manifest.productionApproved).toBe(true)
     expect(manifest.mainIntegration.naturalnessGate).toBe(
-      'owner-requested-visual-review-pending',
+      'owner-approved-2026-08-24',
     )
     expect(manifest.latestOwnerRequestedRevision).toMatchObject({
       aerialIslandCount: 6,
@@ -187,8 +188,7 @@ describe('scale encounter sky phase-two contract', () => {
       portraitDistribution: 'portrait-sea-footprint-depth-bands',
       portraitIslandCount: 6,
       responsiveLayoutCount: 2,
-      visualReviewStatus:
-        'landscape-headed-browser-and-portrait-frustum-contract-reviewed-user-confirmation-pending',
+      visualReviewStatus: 'approved-2026-08-24',
     })
     expect(manifest.latestOwnerRequestedRevision.surfaceTexture).toMatchObject({
       dimensions: [1152, 768],
@@ -199,7 +199,9 @@ describe('scale encounter sky phase-two contract', () => {
     expect(manifest.sceneContract.coastRendered).toBe(false)
     expect(manifest.sceneContract.distantIslandSilhouettes).toBe(false)
     expect(manifest.sceneContract.aerialIslandTerrainCount).toBe(6)
-    expect(manifest.lockedInputs.outfitSafetyBounds).toBeNull()
+    expect(manifest.lockedInputs.outfitSafetyBounds).toBe(
+      'reviewed-dynamic-bounds-v4',
+    )
   })
 
   it('switches the pteranodon comparison axis without changing either subject scale', () => {
@@ -613,7 +615,7 @@ describe('scale encounter sky candidate layer runtime', () => {
       buildSource: 'sky-production-review-2026-08-17-v2',
       defaultCandidate: false,
       leonApproved: true,
-      naturalnessGate: 'owner-requested-visual-review-pending',
+      naturalnessGate: 'owner-approved-2026-08-24',
       naturalnessRevision:
         'responsive-portrait-and-landscape-aerial-island-atlas-subject-fill-v11',
       productionApproved: false,

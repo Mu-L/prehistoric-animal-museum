@@ -1,29 +1,17 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 
-export const scaleEncounterChildReviewVariantIds = [
-  'boy-land-explorer',
-  'girl-land-explorer',
-  'boy-snow-expedition',
-  'girl-snow-expedition',
-  'boy-air-wingsuit',
-  'girl-air-wingsuit',
-  'boy-water-diver',
-  'girl-water-diver',
-] as const
-
 export const scaleEncounterPrivateReviewMarkers = [
-  'surface-land-',
-  'surface-water-',
-  'surface-snow-',
-  'avatar-review-candidate',
-  'environment-review-candidate',
+  'assets/candidates',
+  '/__museum-review-assets',
+  '.handoff/',
+  '/private/tmp/',
+  'meshy-scene-models-',
+  'meshy-scene-multiview-',
+  'source-polyhaven-',
+  'source-blender-water-',
   'child-avatar-v3-',
   'child-avatar-review-candidates',
-  ...scaleEncounterChildReviewVariantIds.flatMap((variantId) => [
-    `child-avatar-v4-${variantId}-review-v01`,
-    `scale-encounter-child-${variantId}-review-candidate`,
-  ]),
 ] as const
 
 export interface ForbiddenProductionMarkerFinding {

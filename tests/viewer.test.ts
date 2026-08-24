@@ -1082,7 +1082,7 @@ function createGroundedPovController(aspect: number): {
   )
   const avatarRoot = new Group()
   avatarRoot.name =
-    'scale-encounter-child-girl-land-explorer-review-candidate'
+    'scale-encounter-child-girl-land-explorer-runtime-v1'
   const avatarBody = new Mesh(
     new BoxGeometry(0.42, 1.05, 0.28),
     new MeshBasicMaterial(),
@@ -1441,7 +1441,7 @@ describe('grounded scale encounter POV clearance', () => {
       publishSnapshot()
       expect(
         harness.renderer.domElement.dataset.scaleEncounterAvatarVariant,
-      ).toBe('scale-encounter-child-girl-land-explorer-review-candidate')
+      ).toBe('scale-encounter-child-girl-land-explorer-runtime-v1')
       expect(
         Number(
           harness.renderer.domElement.dataset.scaleEncounterEyeHeightMeters,

@@ -67,6 +67,11 @@ describe('complete eighteen-animal scale encounter catalog', () => {
       sky: 'air-cretaceous',
       ocean: 'water-cretaceous',
     } as const
+    const animalsWithDedicatedProceduralBiomes = new Set([
+      'dilophosaurus',
+      'gigantoraptor',
+      'meganeura',
+    ])
     for (const animalId of SCALE_ENCOUNTER_ANIMAL_IDS) {
       const definition = SCALE_ENCOUNTER_DEFINITIONS[animalId]
       const presentation = scaleEncounterAvatarPresentationFor(
@@ -76,7 +81,9 @@ describe('complete eighteen-animal scale encounter catalog', () => {
       )
       expect(presentation.profile).toBe(definition.avatarProfile)
       expect(scaleEncounterPanoramaThemeFor(animalId)).toBe(
-        panoramaByTheme[definition.environmentTheme],
+        animalsWithDedicatedProceduralBiomes.has(animalId)
+          ? null
+          : panoramaByTheme[definition.environmentTheme],
       )
     }
   })

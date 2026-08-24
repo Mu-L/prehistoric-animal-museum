@@ -25,7 +25,7 @@ const THEME_CASES = [
     animalId: 'gigantoraptor',
     absentMarkers: ['seasonal-channel-water', 'swamp-pool', 'distant-mesa-batch'],
     markers: ['terrain', 'drought-shrub-batch', 'gravel-batch'],
-    panoramaFile: 'panorama-air-cretaceous-8192.webp',
+    panoramaFile: 'panorama-gobi-irendabas-photoreal-v1-4096.webp',
     profile: 'gobi-braided-basin',
     themeId: 'gobi',
     groundFile: 'surface-gobi-gravel-albedo-v1.webp',
@@ -40,7 +40,7 @@ const THEME_CASES = [
       'riparian-stem-batch',
       'fern-frond-batch',
     ],
-    panoramaFile: 'panorama-air-cretaceous-8192.webp',
+    panoramaFile: 'panorama-floodplain-kayenta-photoreal-v1-4096.webp',
     profile: 'kayenta-seasonal-floodplain',
     themeId: 'floodplain',
     groundFile: 'surface-floodplain-red-silt-albedo-v1.webp',
@@ -58,7 +58,8 @@ const THEME_CASES = [
       'calamites-leaf-sprays',
       'fern-frond-batch',
     ],
-    panoramaFile: 'panorama-air-cretaceous-8192.webp',
+    panoramaFile:
+      'panorama-carboniferous-wetland-photoreal-v1-4096.webp',
     profile: 'carboniferous-coal-swamp',
     themeId: 'carboniferous-wetland-forest',
     groundFile: 'surface-carboniferous-peat-albedo-v1.webp',
@@ -86,7 +87,7 @@ describe('scale encounter procedural land biomes', () => {
   })
 
   it.each(THEME_CASES)(
-    'loads only the exact $themeId ground/depth package plus the shared pure sky',
+    'loads only the exact approved $themeId ground and far-field package',
     async ({ groundFile, panoramaFile, profile, themeId }) => {
       const textureLoad = vi
         .spyOn(TextureLoader.prototype, 'loadAsync')
@@ -108,7 +109,7 @@ describe('scale encounter procedural land biomes', () => {
         expect(requestedUrls.some((url) => url.includes(fileName))).toBe(false)
       })
       expect(lease.texture).toBeInstanceOf(Texture)
-      expect(lease.panoramaWidth).toBe(8192)
+      expect(lease.panoramaWidth).toBe(4096)
       expect(lease.sourceUrl).toContain(panoramaFile)
       expect(lease.surfaceTextures).toMatchObject({
         physicalWidthMeters: 2,
@@ -182,13 +183,15 @@ describe('scale encounter procedural land biomes', () => {
     )
 
     expect(lease.quality).toBe('low')
-    expect(lease.panoramaWidth).toBe(4096)
+    expect(lease.panoramaWidth).toBe(2048)
     expect(lease.sourceUrl).toContain(
-      'panorama-air-cretaceous-4096.webp',
+      'panorama-gobi-irendabas-photoreal-v1-2048.webp',
     )
     expect(
       textureLoad.mock.calls.some(([sourceUrl]) =>
-        String(sourceUrl).includes('panorama-air-cretaceous-8192.webp'),
+        String(sourceUrl).includes(
+          'panorama-gobi-irendabas-photoreal-v1-4096.webp',
+        ),
       ),
     ).toBe(false)
     lease.release()
@@ -250,7 +253,7 @@ describe('scale encounter procedural land biomes', () => {
     },
   )
 
-  it('keeps the dormant candidates out of the public environment route', async () => {
+  it('uses the approved selected biome on the public environment route', async () => {
     const preparedLandBiome = await loadPreparedScaleEncounterLandBiome('gobi')
     const panorama = new Texture()
     const environment = createScaleEncounterEnvironment(
@@ -264,18 +267,18 @@ describe('scale encounter procedural land biomes', () => {
     )
 
     expect(environment?.root.userData).toMatchObject({
-      scaleEncounterEnvironmentRuntimeTheme: 'cretaceous-forest',
+      scaleEncounterEnvironmentRuntimeTheme: 'gobi',
       scaleEncounterEnvironmentTargetTheme: 'gobi',
-      scaleEncounterEnvironmentUsingCompatibilityFallback: true,
+      scaleEncounterEnvironmentUsingCompatibilityFallback: false,
     })
     expect(
       environment?.root.getObjectByName('scale-encounter-gobi-terrain'),
-    ).toBeUndefined()
+    ).toBeTruthy()
     expect(
       environment?.root.getObjectByName(
         'scale-encounter-accepted-forested-mountain-basin',
       ),
-    ).toBeTruthy()
+    ).toBeFalsy()
     disposeScaleEncounterEnvironment(environment)
     panorama.dispose()
   })

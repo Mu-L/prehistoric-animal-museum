@@ -34,7 +34,6 @@ export async function loadReviewCandidateAvatarLease(
   animalId: ScaleEncounterAnimalId,
   signal: AbortSignal,
 ): Promise<ReviewCandidateAvatarLease | null> {
-  if (import.meta.env.MODE === 'production') return null
   const { acquireReviewCandidateAvatarFactory } = await import(
     './avatar-review-candidate'
   )
@@ -64,7 +63,6 @@ export async function loadReviewCandidateEnvironmentLease(
       maximumTextureSize,
     )
   }
-  if (import.meta.env.MODE === 'production') return null
   const { acquireReviewCandidateEnvironment } = await import(
     './environment-review-candidate'
   )
@@ -84,6 +82,7 @@ export function initialScaleEncounterEnvironmentVariant(
   if (SCALE_ENCOUNTER_DEFINITIONS[animalId].environmentTheme !== 'forest') {
     return 'baseline'
   }
+  if (import.meta.env.MODE === 'production') return 'production-slice'
   if (typeof window === 'undefined') return 'production-slice'
   const requested = new URLSearchParams(window.location.search).get('variant')
   return SCALE_ENCOUNTER_ENVIRONMENT_VARIANTS.includes(
@@ -97,6 +96,9 @@ export function initialScaleEncounterSceneCandidateVariant(
   animalId: ScaleEncounterAnimalId,
 ): ScaleEncounterSceneCandidateVariant {
   if (!sceneCandidateSupportedFor(animalId)) return 'off'
+  if (import.meta.env.MODE === 'production') {
+    return defaultScaleEncounterSceneCandidateVariant(animalId)
+  }
   if (typeof window === 'undefined') {
     return defaultScaleEncounterSceneCandidateVariant(animalId)
   }

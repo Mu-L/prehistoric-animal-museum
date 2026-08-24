@@ -26,7 +26,6 @@ __pycache__/
 .wayfinder/
 assets/candidates/
 assets/review-generated
-src/scale-encounter/audio/*.mp3
 docs/handoff/
 docs/research/
 docs/specification/

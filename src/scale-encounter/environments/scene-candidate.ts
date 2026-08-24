@@ -4,9 +4,9 @@ import {
 } from '../../viewer/scale-encounter'
 
 /**
- * Review-only selector for the three phase-two environments. An absent or
- * invalid URL value resolves to `off`. Product defaults are selected
- * separately so an explicit review URL can still request the legacy scene.
+ * Development-only selector for the phase-two environment comparisons. An
+ * absent or invalid URL value resolves to `off`; production always selects
+ * the approved default and ignores prototype query parameters.
  */
 // PROTOTYPE — four environment treatments on the existing scale-encounter
 // route, shareable through ?scene-variant=A|B|C|D|E. E is the accepted
@@ -46,7 +46,7 @@ export function parseScaleEncounterSceneCandidateVariant(
   return parsed === 'E' ? 'off' : parsed
 }
 
-/** Owner-approved local defaults for the four formal encounter scenes. */
+/** Owner-approved production defaults for the four formal encounter scenes. */
 export function defaultScaleEncounterSceneCandidateVariant(
   animalId: ScaleEncounterAnimalId,
 ): ScaleEncounterSceneCandidateVariant {

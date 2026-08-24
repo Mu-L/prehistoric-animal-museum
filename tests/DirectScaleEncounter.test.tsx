@@ -683,13 +683,13 @@ describe('DirectScaleEncounter', () => {
     expect(setupPortraits[0]).toHaveAttribute(
       'src',
       expect.stringContaining(
-        '/scale-encounter-child-portraits/boy-land-explorer-main.png',
+        '/scale-encounter/assets/avatars/boy-land-explorer.webp',
       ),
     )
     expect(setupPortraits[1]).toHaveAttribute(
       'src',
       expect.stringContaining(
-        '/scale-encounter-child-portraits/girl-land-explorer-main.png',
+        '/scale-encounter/assets/avatars/girl-land-explorer.webp',
       ),
     )
     expect(within(heightGroup).getByRole('slider')).toHaveValue('110')

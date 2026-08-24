@@ -28,7 +28,6 @@ export async function preloadDirectScaleEncounterAssets({
   signal,
 }: DirectScaleEncounterPreloadOptions): Promise<void> {
   if (
-    import.meta.env.MODE === 'production' ||
     signal.aborted ||
     !shouldPreloadScaleEncounterRichAssets()
   ) {

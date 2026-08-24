@@ -4,20 +4,20 @@ import type { ScaleEncounterPreparedLandBiome } from './types'
 const FLOODPLAIN_BIOME = {
   assets: {
     groundAlbedoSourceUrl: new URL(
-      '../../../../assets/candidates/scale-encounter-environments/surface-floodplain-red-silt-albedo-v1.webp',
+      '../../assets/environments/surface-floodplain-red-silt-albedo-v1.webp',
       import.meta.url,
     ).href,
     groundPhysicalWidthMeters: 2,
     panoramaLowSourceUrl: new URL(
-      '../../../../assets/candidates/scale-encounter-environments/panorama-air-cretaceous-4096.webp',
+      '../../assets/environments/panorama-floodplain-kayenta-photoreal-v1-2048.webp',
       import.meta.url,
     ).href,
-    panoramaLowWidth: 4096,
+    panoramaLowWidth: 2048,
     panoramaSourceUrl: new URL(
-      '../../../../assets/candidates/scale-encounter-environments/panorama-air-cretaceous-8192.webp',
+      '../../assets/environments/panorama-floodplain-kayenta-photoreal-v1-4096.webp',
       import.meta.url,
     ).href,
-    panoramaWidth: 8192,
+    panoramaWidth: 4096,
     panoramaYawRadians: -Math.PI / 2,
     scannedPropProfile: 'river-margin',
   },

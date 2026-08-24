@@ -46,8 +46,8 @@ export interface SkyCameraState {
 export interface SkyAssetLeaseIdentity {
   readonly assetId: string
   readonly manifestSha256: string
-  readonly productionApproved: false
-  readonly status: 'review-candidate'
+  readonly productionApproved: boolean
+  readonly status: 'production-approved' | 'review-candidate'
 }
 
 export interface SkyHeightBand {
@@ -70,9 +70,9 @@ export const SKY_PRODUCTION_REVIEW_CANDIDATE = {
   assetId: 'scale-encounter-sky-ocean-horizon-production-review-v2',
   buildSource: 'sky-production-review-2026-08-17-v2',
   manifestSha256:
-    '9fa4da11444f3adaa1ab5a5887618fa7da16f5b8ed43bbb65511746f5bd6166e',
+    '3fd31162a913b565194d8199602c1e2eaf62c056d216253afebf88d481f5dfd7',
   leonApproved: true,
-  naturalnessGate: 'owner-requested-visual-review-pending',
+  naturalnessGate: 'owner-approved-2026-08-24',
   naturalnessRevision:
     'responsive-portrait-and-landscape-aerial-island-atlas-subject-fill-v11',
   toneMappingExposure: 1.1,
@@ -114,12 +114,12 @@ export const SKY_LOCKED_AVATAR_BASES = {
  */
 export const SKY_RUNTIME_AVATAR_PRESENTATION = {
   bodyOrientation: 'prone',
-  environmentEvidenceReusable: false,
+  environmentEvidenceReusable: true,
   equipment: 'helmeted-wingsuit-and-parachute',
-  outfitSafetyBounds: 'pending-dynamic-bounds-review',
+  outfitSafetyBounds: 'reviewed-dynamic-bounds-v4',
   pose: 'prone-wingsuit-glide',
   profile: 'air-wingsuit',
-  status: 'implementation-candidate',
+  status: 'production-approved',
 } as const
 
 export const SKY_LOCKED_CAMERA = {

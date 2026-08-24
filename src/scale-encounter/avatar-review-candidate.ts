@@ -119,19 +119,6 @@ export interface ReviewCandidateAvatarGltf {
   readonly scene: Group
 }
 
-const localAvatarRoute =
-  '/__museum-review-assets/scale-encounter-child-avatar'
-
-function reviewCandidateAvatarUrl(
-  filename: string,
-  bundledUrl: URL,
-): string {
-  if (import.meta.env.MODE !== 'e2e') {
-    return `${localAvatarRoute}/${filename}`
-  }
-  return bundledUrl.href
-}
-
 const BASE_AUTHORED_HEIGHT_METERS = 1.15
 const CENTIMETRE_TRANSLATION_DETECTION_THRESHOLD = 5
 const CENTIMETRE_TO_METRE = 0.01
@@ -205,7 +192,7 @@ function avatarPackage(
   packageSha256: string,
   bundledUrl: URL,
 ): ReviewCandidateAvatarPackage {
-  const filename = `child-avatar-v4-${gender}-${profile}-review-v01.glb`
+  const filename = `child-avatar-v4-${gender}-${profile}-v01.glb`
   const clipPolicy = CLIPS_BY_PROFILE[profile]
   return {
     ...clipPolicy,
@@ -218,7 +205,7 @@ function avatarPackage(
     habitat,
     profile,
     sceneRootName: 'ChildAvatarV4Root',
-    sourceUrl: reviewCandidateAvatarUrl(filename, bundledUrl),
+    sourceUrl: bundledUrl.href,
     variantId,
   }
 }
@@ -235,7 +222,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     BASE_AUTHORED_HEIGHT_METERS,
     '003dcd5344c3094562f39a5a56a090fe388168fe83da0d0010107320834799f7',
     new URL(
-      '../../assets/candidates/scale-encounter-child-avatar/child-avatar-v4-boy-land-explorer-review-v01.glb',
+      './assets/avatars/child-avatar-v4-boy-land-explorer-v01.glb',
       import.meta.url,
     ),
   ),
@@ -247,7 +234,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     BASE_AUTHORED_HEIGHT_METERS,
     'bea3c113a62286861dc1da9d2b18311f244abc3295c1e462f69f486cd0d08bed',
     new URL(
-      '../../assets/candidates/scale-encounter-child-avatar/child-avatar-v4-girl-land-explorer-review-v01.glb',
+      './assets/avatars/child-avatar-v4-girl-land-explorer-v01.glb',
       import.meta.url,
     ),
   ),
@@ -259,7 +246,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     BASE_AUTHORED_HEIGHT_METERS,
     '34a9a162fe632a68f98c0eccc66a53d31a9fa794d351432620bd2c734469e872',
     new URL(
-      '../../assets/candidates/scale-encounter-child-avatar/child-avatar-v4-boy-snow-expedition-review-v01.glb',
+      './assets/avatars/child-avatar-v4-boy-snow-expedition-v01.glb',
       import.meta.url,
     ),
   ),
@@ -271,7 +258,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     BASE_AUTHORED_HEIGHT_METERS,
     '361f8d43f2925eeacd6ae33e1efce602129b4c2aab8933f4304bbc0ba8f2b937',
     new URL(
-      '../../assets/candidates/scale-encounter-child-avatar/child-avatar-v4-girl-snow-expedition-review-v01.glb',
+      './assets/avatars/child-avatar-v4-girl-snow-expedition-v01.glb',
       import.meta.url,
     ),
   ),
@@ -283,7 +270,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     BASE_AUTHORED_HEIGHT_METERS,
     'b2d48dacde98091d48edfc3fb330fb5bfd0bdf6590986a3d30b2a4e5348b3e9b',
     new URL(
-      '../../assets/candidates/scale-encounter-child-avatar/child-avatar-v4-boy-air-wingsuit-review-v01.glb',
+      './assets/avatars/child-avatar-v4-boy-air-wingsuit-v01.glb',
       import.meta.url,
     ),
   ),
@@ -295,7 +282,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     BASE_AUTHORED_HEIGHT_METERS,
     'df8454c36e41ad0e94cc7906ba3b13daa7fffc8f5e75a4b0ee4ae9d4f054a1c4',
     new URL(
-      '../../assets/candidates/scale-encounter-child-avatar/child-avatar-v4-girl-air-wingsuit-review-v01.glb',
+      './assets/avatars/child-avatar-v4-girl-air-wingsuit-v01.glb',
       import.meta.url,
     ),
   ),
@@ -307,7 +294,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     BASE_AUTHORED_HEIGHT_METERS,
     '1e8f3a3efadd3c4a7a1fb355ab28920bab351419c6eeae509bc65eda41d58806',
     new URL(
-      '../../assets/candidates/scale-encounter-child-avatar/child-avatar-v4-boy-water-diver-review-v01.glb',
+      './assets/avatars/child-avatar-v4-boy-water-diver-v01.glb',
       import.meta.url,
     ),
   ),
@@ -319,7 +306,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     BASE_AUTHORED_HEIGHT_METERS,
     '5e381e53823766cf564685d17618d8db658cb1d5c981bc64baa6ebe41a5c00bb',
     new URL(
-      '../../assets/candidates/scale-encounter-child-avatar/child-avatar-v4-girl-water-diver-review-v01.glb',
+      './assets/avatars/child-avatar-v4-girl-water-diver-v01.glb',
       import.meta.url,
     ),
   ),
@@ -956,7 +943,8 @@ export function createReviewCandidateAvatarLoader(
 
         const root = new Group()
         root.name =
-          `scale-encounter-child-${presentation.id}-review-candidate`
+          `scale-encounter-child-${presentation.id}-runtime-v1`
+        root.userData.scaleEncounterProductionApproved = true
         root.userData.scaleEncounterAvatarEquipment = presentation.equipment
         root.userData.scaleEncounterAvatarPose = presentation.pose
         root.userData.scaleEncounterAvatarPresentation = presentation.id

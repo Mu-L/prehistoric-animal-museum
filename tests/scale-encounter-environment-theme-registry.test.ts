@@ -9,6 +9,7 @@ import {
   createScaleEncounterEnvironment,
 } from '../src/viewer/scale-encounter-environment'
 import { SCALE_ENCOUNTER_DEFINITIONS } from '../src/viewer/scale-encounter'
+import { loadPreparedScaleEncounterLandBiome } from '../src/scale-encounter/environments/land-biomes/load'
 
 describe('scale encounter reusable environment theme registry', () => {
   it.each([
@@ -48,7 +49,7 @@ describe('scale encounter reusable environment theme registry', () => {
       ],
     ],
   ] as const)(
-    'keeps %s registered against %s while the reviewed forest is restored',
+    'keeps %s registered against its approved %s package',
     (animalId, expectedThemeId, expectedLabel, expectedContract) => {
       const plan = scaleEncounterEnvironmentThemePlanFor(
         animalId,
@@ -58,7 +59,7 @@ describe('scale encounter reusable environment theme registry', () => {
       expect(plan.target).toMatchObject({
         id: expectedThemeId,
         labels: { zhCN: expectedLabel },
-        assetStatus: 'awaiting-baseline-assets',
+        assetStatus: 'active',
         fallbackThemeId: 'cretaceous-forest',
         loadPolicy: 'selected-theme-only',
         revealPolicy: 'keep-current-scene-until-baseline-ready',
@@ -67,12 +68,12 @@ describe('scale encounter reusable environment theme registry', () => {
       })
       expect(plan.target.baselineAssetContract).toEqual(expectedContract)
       expect(plan.runtime).toMatchObject({
-        id: 'cretaceous-forest',
+        id: expectedThemeId,
         assetStatus: 'active',
-        runtimeKind: 'panorama-pbr',
-        runtimePanoramaTheme: 'land-cretaceous',
+        runtimeKind: 'procedural-biome',
+        runtimePanoramaTheme: null,
       })
-      expect(plan.usingCompatibilityFallback).toBe(true)
+      expect(plan.usingCompatibilityFallback).toBe(false)
     },
   )
 
@@ -95,30 +96,27 @@ describe('scale encounter reusable environment theme registry', () => {
     expect(Object.keys(SCALE_ENCOUNTER_ENVIRONMENT_THEMES)).toHaveLength(7)
   })
 
-  it('publishes the dormant target and restored forest runtime on the scene graph', () => {
+  it('publishes the approved target and runtime on the scene graph', async () => {
     const panorama = new Texture()
+    const preparedLandBiome =
+      await loadPreparedScaleEncounterLandBiome('gobi')
     const environment = createScaleEncounterEnvironment(
       'land',
       'production-slice',
       panorama,
-      { animalId: 'gigantoraptor' },
+      { animalId: 'gigantoraptor', preparedLandBiome },
     )
 
     expect(environment?.root.userData).toMatchObject({
-      scaleEncounterEnvironmentAssetStatus: 'awaiting-baseline-assets',
+      scaleEncounterEnvironmentAssetStatus: 'active',
       scaleEncounterEnvironmentLoadPolicy: 'selected-theme-only',
       scaleEncounterEnvironmentRevealPolicy:
         'keep-current-scene-until-baseline-ready',
-      scaleEncounterEnvironmentRuntimeTheme: 'cretaceous-forest',
+      scaleEncounterEnvironmentRuntimeTheme: 'gobi',
       scaleEncounterEnvironmentTargetTheme: 'gobi',
-      scaleEncounterEnvironmentUsingCompatibilityFallback: true,
+      scaleEncounterEnvironmentUsingCompatibilityFallback: false,
     })
-    expect(
-      environment?.root.getObjectByName(
-        'scale-encounter-accepted-forested-mountain-basin',
-      ),
-    ).toBeTruthy()
-    expect(environment?.sceneCandidateSemantic).toBeNull()
+    expect(environment?.sceneCandidateSemantic).toBe('land-biome')
     disposeScaleEncounterEnvironment(environment)
     panorama.dispose()
   })
