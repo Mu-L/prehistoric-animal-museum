@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import path from 'node:path'
 import sharp from 'sharp'
 import {
@@ -22,13 +23,24 @@ import {
   type ScaleEncounterProductionMidgroundMetadata,
 } from '../src/viewer/scale-encounter-production-midground'
 
+const frondComponentsPath = path.resolve(
+  process.cwd(),
+  'assets/candidates/scale-encounter-environments/midground-frond-components-v4-final.webp',
+)
+const vegetationAtlasPath = path.resolve(
+  process.cwd(),
+  'assets/candidates/scale-encounter-environments/midground-vegetation-atlas-v2.webp',
+)
+const testFrondComponents = existsSync(frondComponentsPath) ? it : it.skip
+const testVegetationAtlas = existsSync(vegetationAtlasPath) ? it : it.skip
+const frondComponentsTestTitle =
+  'keeps the chroma-key crown edge narrower than the runtime alpha cutoff'
+const vegetationAtlasTestTitle =
+  'uses a genuine alpha atlas plus explicit grounded support geometry'
+
 describe('scale encounter production midground depth', () => {
-  it('keeps the chroma-key crown edge narrower than the runtime alpha cutoff', async () => {
-    const atlasPath = path.resolve(
-      process.cwd(),
-      'assets/candidates/scale-encounter-environments/midground-frond-components-v4-final.webp',
-    )
-    const { data, info } = await sharp(atlasPath)
+  testFrondComponents(frondComponentsTestTitle, async () => {
+    const { data, info } = await sharp(frondComponentsPath)
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true })
@@ -47,12 +59,8 @@ describe('scale encounter production midground depth', () => {
     expect(partiallyVisiblePixels / visiblePixels).toBeLessThan(0.065)
   })
 
-  it('uses a genuine alpha atlas plus explicit grounded support geometry', async () => {
-    const atlasPath = path.resolve(
-      process.cwd(),
-      'assets/candidates/scale-encounter-environments/midground-vegetation-atlas-v2.webp',
-    )
-    const { data, info } = await sharp(atlasPath)
+  testVegetationAtlas(vegetationAtlasTestTitle, async () => {
+    const { data, info } = await sharp(vegetationAtlasPath)
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true })

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { NodeIO, type Animation, type Document } from '@gltf-transform/core'
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
@@ -10,6 +11,11 @@ import {
 const assetRoot = 'assets/candidates/scale-encounter-child-avatar'
 const manifestPath = `${assetRoot}/meshy-scene-avatar-packages.manifest.json`
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)
+const describePrivateAvatarPackages = existsSync(manifestPath)
+  ? describe
+  : describe.skip
+const privateAvatarPostureSuiteTitle =
+  'scale encounter complete Meshy V4 package posture'
 
 const jointNames = [
   'Hips',
@@ -92,7 +98,7 @@ function animationNamed(document: Document, name: string): Animation {
   return animation!
 }
 
-describe('scale encounter complete Meshy V4 package posture', () => {
+describePrivateAvatarPackages(privateAvatarPostureSuiteTitle, () => {
   it('keeps all eight package bytes, roots, anchors, rigs, and approved clips in manifest lockstep', async () => {
     const manifest = await readManifest()
     expect(manifest.status).toBe('local-review-only')

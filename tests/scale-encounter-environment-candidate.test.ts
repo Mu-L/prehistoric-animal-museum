@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import sharp from 'sharp'
 import {
@@ -41,6 +41,20 @@ interface EnvironmentManifest {
     readonly medium: Delivery
   }[]
 }
+
+const candidateDirectory = resolve(
+  process.cwd(),
+  'assets/candidates/scale-encounter-environments',
+)
+const candidateManifestPath = resolve(
+  candidateDirectory,
+  'environment-review-candidates.manifest.json',
+)
+const testPrivateEnvironmentDeliveries = existsSync(candidateManifestPath)
+  ? it
+  : it.skip
+const privateEnvironmentDeliveriesTestTitle =
+  'ties every delivery to the manifest, native dimensions and bounded transfer sizes'
 
 function textureFor(url: string): Texture<HTMLImageElement> {
   const texture = new Texture(document.createElement('img'))
@@ -374,16 +388,9 @@ describe('scale encounter review panorama candidate', () => {
     disposals.forEach((dispose) => expect(dispose).toHaveBeenCalledOnce())
   })
 
-  it('ties every delivery to the manifest, native dimensions and bounded transfer sizes', async () => {
-    const candidateDirectory = resolve(
-      process.cwd(),
-      'assets/candidates/scale-encounter-environments',
-    )
+  testPrivateEnvironmentDeliveries(privateEnvironmentDeliveriesTestTitle, async () => {
     const manifest = JSON.parse(
-      readFileSync(
-        resolve(candidateDirectory, 'environment-review-candidates.manifest.json'),
-        'utf8',
-      ),
+      readFileSync(candidateManifestPath, 'utf8'),
     ) as EnvironmentManifest
 
     expect(manifest.productionApproved).toBe(false)

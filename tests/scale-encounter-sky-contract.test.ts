@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
   Box3,
@@ -34,6 +34,16 @@ import {
   SCALE_ENCOUNTER_DEFINITIONS,
   scaleEncounterSubjectLayoutForAspect,
 } from '../src/viewer/scale-encounter'
+
+const skyReviewManifestPath = resolve(
+  process.cwd(),
+  'assets/candidates/scale-encounter-environments/sky/sky-review-candidate.manifest.json',
+)
+const testPrivateSkyReviewManifest = existsSync(skyReviewManifestPath)
+  ? it
+  : it.skip
+const privateSkyReviewManifestTestTitle =
+  'records D as the Leon-accepted local default without claiming production promotion'
 
 describe('scale encounter sky phase-two contract', () => {
   it('locks the existing Pteranodon scale and camera without copying forest values', () => {
@@ -118,15 +128,9 @@ describe('scale encounter sky phase-two contract', () => {
     })
   })
 
-  it('records D as the Leon-accepted local default without claiming production promotion', () => {
+  testPrivateSkyReviewManifest(privateSkyReviewManifestTestTitle, () => {
     const manifest = JSON.parse(
-      readFileSync(
-        resolve(
-          process.cwd(),
-          'assets/candidates/scale-encounter-environments/sky/sky-review-candidate.manifest.json',
-        ),
-        'utf8',
-      ),
+      readFileSync(skyReviewManifestPath, 'utf8'),
     ) as {
       readonly defaultCandidate: boolean
       readonly leonApproved: boolean
