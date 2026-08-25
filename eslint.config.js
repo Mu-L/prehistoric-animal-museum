@@ -13,6 +13,7 @@ export default tseslint.config(
       'coverage',
       'playwright-report',
       'test-results',
+      '.codex',
       '.handoff',
       '.wayfinder',
       'assets/candidates',

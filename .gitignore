@@ -6,8 +6,11 @@ coverage/
 playwright-report/
 test-results/
 .vite/
+.codex/
 .DS_Store
 *.log
+__pycache__/
+*.pyc
 
 # Local handoff inputs from the private design workspace.
 # The Goal may read these files, but must only commit reviewed runtime outputs.
@@ -22,7 +25,7 @@ test-results/
 !.agents/skills/prehistoric-animal-onboarding/
 .wayfinder/
 assets/candidates/
-assets/review-generated/
+assets/review-generated
 docs/handoff/
 docs/research/
 docs/specification/

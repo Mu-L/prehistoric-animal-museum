@@ -4,7 +4,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import type {
   ViewerController,
   ViewerFailure,
-} from '../viewer/ViewerController'
+} from 'virtual:viewer-controller'
 import type { ModelCache } from '../viewer/model-cache'
 import { modelPreviewProfiles } from '../viewer/model-preview-profiles'
 import { modelPreviewFor } from '../viewer/responsive-model-stills'
@@ -133,7 +133,7 @@ export function ViewerStage({
     const initialise = async () => {
       try {
         const { ViewerController, ViewerUnavailableError } = await import(
-          '../viewer/ViewerController'
+          'virtual:viewer-controller'
         )
         if (cancelled) {
           return

@@ -21,8 +21,8 @@ export const provenance = [
       "url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "runtime": {
-      "bytes": 3172348,
-      "sha256": "5071da06a8a12bf0e3396d84bd3bfd86a3f9f378f322cda53bd69cc3541aa47d"
+      "bytes": 3392200,
+      "sha256": "c36e49446fb6f34a25deb1e1421118d24aaf608fde1654c2f667437702863e59"
     },
     "modifications": [
       "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
@@ -30,7 +30,9 @@ export const provenance = [
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
       "Authored and validator-checked one closed eight-second marine-tail Idle for the shared museum viewer.",
-      "Included the human-reviewed source-rig partial mouth relaxation in the same Idle loop."
+      "Included the human-reviewed source-rig partial mouth relaxation in the same Idle loop.",
+      "Replaced the source tail morph's sign-reversing S curve with two mirrored, length-preserving single-curvature arc targets. Each stroke now begins at the muscular tail root, increases continuously toward the tip, and returns through a neutral straight pose without folding back on itself; retained the symmetric four-flipper swimming targets.",
+      "Cleared stale normalized flags after promoting repaired morph and animation accessors to floating point so the runtime GLTF loader receives spec-valid data."
     ],
     "attribution": "“Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum.",
     "redistributionAllowed": true,

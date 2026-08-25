@@ -1,5 +1,6 @@
 import { createReadStream, readFileSync, statSync } from 'node:fs'
 import type { ServerResponse } from 'node:http'
+import { fileURLToPath } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import type { Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -11,9 +12,10 @@ import {
   assertReviewModeIsServeOnly,
   isPrivateLocalMaterialRequest,
   parseAllowedHosts,
-  privateLocalMaterialDeny,
+  privateLocalMaterialDenyForRoot,
 } from './scripts/review-server-security'
 import { multilingualSeoPlugin } from './scripts/multilingual-seo'
+import { scaleEncounterGlacierAssetUrls } from './scripts/scale-encounter-glacier-assets'
 
 const redistributableNotices = [
   'LICENSE',
@@ -28,6 +30,39 @@ const redistributableNotices = [
   'LICENSES/Three.js-MIT.txt',
 ] as const
 
+const generatedRedistributableNotices = [
+  {
+    fileName: 'SCALE_ENCOUNTER_ASSET_PROVENANCE.md',
+    sourceFile: 'src/scale-encounter/assets/PROVENANCE.md',
+  },
+] as const
+
+const dependencyNodeModulesRoot = fileURLToPath(
+  new URL('..', import.meta.resolve('vite/package.json')),
+)
+
+const scaleEncounterEnabledModes = new Set([
+  'development',
+  'e2e',
+  'production',
+  'review',
+  'test',
+])
+
+function scaleEncounterEntryAlias(mode: string): string {
+  const entryFile = scaleEncounterEnabledModes.has(mode)
+    ? './src/scale-encounter/entry-enabled.ts'
+    : './src/scale-encounter/entry-disabled.ts'
+  return fileURLToPath(new URL(entryFile, import.meta.url))
+}
+
+function viewerControllerEntryAlias(mode: string): string {
+  const entryFile = scaleEncounterEnabledModes.has(mode)
+    ? './src/viewer/ViewerController.ts'
+    : './src/viewer/ViewerController.production.ts'
+  return fileURLToPath(new URL(entryFile, import.meta.url))
+}
+
 function bundledNotices(): Plugin {
   return {
     name: 'bundled-notices',
@@ -37,6 +72,16 @@ function bundledNotices(): Plugin {
           type: 'asset',
           fileName,
           source: readFileSync(new URL(fileName, import.meta.url), 'utf8'),
+        })
+      }
+      for (const notice of generatedRedistributableNotices) {
+        this.emitFile({
+          type: 'asset',
+          fileName: notice.fileName,
+          source: readFileSync(
+            new URL(notice.sourceFile, import.meta.url),
+            'utf8',
+          ),
         })
       }
     },
@@ -278,20 +323,34 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     base: './',
+    resolve: {
+      alias: {
+        'virtual:scale-encounter-entry': scaleEncounterEntryAlias(mode),
+        'virtual:viewer-controller': viewerControllerEntryAlias(mode),
+      },
+    },
     plugins: [
       react(),
+      scaleEncounterGlacierAssetUrls(
+        scaleEncounterEnabledModes.has(mode) ? 'bundled' : 'disabled',
+      ),
       bundledNotices(),
       multilingualSeoPlugin(),
       privateLocalMaterialGuard(),
-      localReview(command === 'serve' && mode === 'review'),
+      localReview(
+        command === 'serve' &&
+          (mode === 'review' || mode === 'development'),
+      ),
     ],
     server: {
       allowedHosts,
       fs: {
-        deny: [...privateLocalMaterialDeny],
+        allow: [process.cwd(), dependencyNodeModulesRoot],
+        deny: [...privateLocalMaterialDenyForRoot(process.cwd())],
       },
     },
     build: {
+      manifest: mode === 'production',
       target: 'es2022',
       sourcemap: mode === 'e2e',
       rolldownOptions: {

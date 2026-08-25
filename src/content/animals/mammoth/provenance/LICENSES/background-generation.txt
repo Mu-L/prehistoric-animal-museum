@@ -2,29 +2,43 @@ Background generation record
 ============================
 
 Tool: OpenAI built-in image_gen
-Generated: 2026-07-29; portrait revised 2026-07-31
-Use: project-specific responsive museum backgrounds
+Original compositions generated: 2026-07-29; portrait depth revised 2026-07-31
+Clarity edits generated: 2026-08-16
+Use: project-specific responsive museum exhibit backgrounds
 
-Prompt direction:
-Refined layered paper-cut picture-book art with soft gouache texture, tactile
-matte paper, and shallow soft shadows. Preserve the empty Ice Age
-mammoth-steppe, then revise only the portrait depth by moving the distant
-horizon and beginning of the open tundra upward about 8–10% of image height.
-Extend broad snow-dusted earth behind a mammoth whose feet sit around 59%
-image height, while keeping the glacier distant and all edge scenery intact.
-No ice shelf, platform, ledge, hard seam, animal, person, text, UI, logo,
-watermark, blizzard, photorealism, or baked-in particles.
+The accepted landscape and portrait compositions were edited separately. The
+2026-08-16 edit preserved the horizon, open staging area and edge framing while
+removing excessive soft-focus, hazy gouache blur, oversized paper texture and
+flat paper-cut softness. Snow mountains, glacier faces, conifers, rocks, frozen
+shrubs, residual snow and dry tundra soil were made legible with a controlled
+foreground-to-midground-to-distance progression. Atmospheric softening is
+limited to the farthest distance. The image remains a refined educational
+illustration rather than a photograph.
 
-The 16:9 landscape and 9:16 portrait images were generated as separate
-compositions. The portrait is not a crop of the landscape.
+Both edits exclude animals, people, text, interface elements, logos,
+watermarks, platforms, hard ground seams, artificial depth of field, bloom,
+fog veils, high-saturation fantasy colour and repeated vegetation patterns.
 
-Landscape source PNG:
-- bytes: 2879403
-- SHA-256: b8047f909d465bc47d66232b79a4f8dd47d953c53dcb3a7d5529b1d105f8c9e8
+Landscape clarity-edit source PNG:
+- path: .handoff/mammoth-exhibit-background-clarity-v2-2026-08-16/imagegen-source/mammoth-exhibit-landscape-v2.png
+- dimensions: 1672 x 941
+- bytes: 3131168
+- SHA-256: d7a5d95a736b8742aec9959ea09ebd105590688db4a02d2116502e334b458e79
 
-Portrait source PNG:
-- bytes: 2526208
-- SHA-256: 9508399ee924f9dfae784d7af0e10951c834bf514a6371a6bdf87b5df231a28a
+Portrait clarity-edit source PNG:
+- path: .handoff/mammoth-exhibit-background-clarity-v2-2026-08-16/imagegen-source/mammoth-exhibit-portrait-v2.png
+- dimensions: 941 x 1672
+- bytes: 2456282
+- SHA-256: 13af5d95f704c61893e3ce550bd2d467c4786a3eeb57581e8fbf19d9e269d700
 
-The runtime copies were converted to WebP at quality 82 with metadata removed. Public
-release remains subject to the repository owner's final rights review.
+The reviewed clarity derivatives were first prepared at 4096 x 2304 and
+2304 x 4096. For the runtime package they were downscaled to 2048 x 1152 and
+1152 x 2048 with Sharp Lanczos3 resampling, then encoded as WebP at quality 82
+and effort 6. Ancillary metadata was removed. The application applies no
+background blur or depth-of-field filter.
+
+The exact landscape and portrait edit prompts are retained in
+.handoff/mammoth-exhibit-background-clarity-v2-2026-08-16/imagegen-prompts.json
+and in the generated asset provenance record.
+
+Public release remains subject to the repository owner's final rights review.

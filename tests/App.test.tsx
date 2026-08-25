@@ -11,6 +11,7 @@ import userEvent from '@testing-library/user-event'
 import { App } from '../src/App'
 import { NARROW_TOUCH_MEDIA_QUERY } from '../src/model-policy'
 import { mainAnimals } from '../src/content/catalog'
+import { SCALE_ENCOUNTER_PROFILE_STORAGE_KEY } from '../src/scale-encounter/profile-storage'
 
 interface Deferred<T> {
   readonly promise: Promise<T>
@@ -22,6 +23,22 @@ interface MockDescriptor {
   readonly id: string
 }
 
+interface MockScaleEncounterSnapshot {
+  readonly active: boolean
+  readonly animalId: null
+  readonly cameraStage: 'overview'
+  readonly distanceMeters: null
+  readonly error: null
+  readonly metersPerUnit: null
+  readonly orbitAngleDegrees: number
+  readonly overviewZoom: number
+  readonly perspective: 'child-eyes' | 'child-rear'
+  readonly profile: null
+  readonly rawSpanUnits: null
+  readonly transitioning: boolean
+  readonly view: 'overview'
+}
+
 interface MockViewerOptions {
   readonly onFailure?: (failure: {
     readonly kind: 'context-lost' | 'webgl-unavailable'
@@ -31,10 +48,14 @@ interface MockViewerOptions {
 }
 
 const viewerMock = vi.hoisted(() => ({
+  adjustScaleEncounterDistance: vi.fn(),
+  adjustScaleEncounterOrbit: vi.fn(),
+  beginScaleEncounter: vi.fn(),
   commitModel: vi.fn(),
   constructorCount: 0,
   destroy: vi.fn(),
   disposeStagedModel: vi.fn(),
+  endScaleEncounter: vi.fn(),
   failConstruction: false,
   failureHandlers: [] as Array<
     (failure: {
@@ -42,10 +63,22 @@ const viewerMock = vi.hoisted(() => ({
       readonly message: string
     }) => void
   >,
+  finishScaleEncounterTransition: vi.fn(),
+  getScaleEncounterSnapshot: vi.fn(),
   reset: vi.fn(),
   setAccessibilityLabel: vi.fn(),
   setFocusMode: vi.fn(),
+  setScaleEncounterAvatarFactory: vi.fn(),
+  setScaleEncounterDistanceMotion: vi.fn(),
+  setScaleEncounterOrbitMotion: vi.fn(),
+  setScaleEncounterEcologyDensity: vi.fn(),
+  setScaleEncounterEnvironmentVariant: vi.fn(),
+  setScaleEncounterPanoramaTexture: vi.fn(),
+  setScaleEncounterPrototypeFlightApproximation: vi.fn(),
+  setScaleEncounterSceneCandidateVariant: vi.fn(),
   stageModel: vi.fn(),
+  transitionScaleEncounterView: vi.fn(),
+  transitionScaleEncounterPerspective: vi.fn(),
 }))
 
 vi.mock('../src/viewer/ViewerController', () => {
@@ -111,6 +144,91 @@ vi.mock('../src/viewer/ViewerController', () => {
       viewerMock.setFocusMode(focused)
     }
 
+    getScaleEncounterSnapshot(): MockScaleEncounterSnapshot {
+      const snapshot: unknown = viewerMock.getScaleEncounterSnapshot()
+      return snapshot as MockScaleEncounterSnapshot
+    }
+
+    setScaleEncounterAvatarFactory(factory: unknown): void {
+      viewerMock.setScaleEncounterAvatarFactory(factory)
+    }
+
+    setScaleEncounterEcologyDensity(density: unknown): void {
+      viewerMock.setScaleEncounterEcologyDensity(density)
+    }
+
+    setScaleEncounterEnvironmentVariant(variant: unknown): void {
+      viewerMock.setScaleEncounterEnvironmentVariant(variant)
+    }
+
+    setScaleEncounterPanoramaTexture(texture: unknown): void {
+      viewerMock.setScaleEncounterPanoramaTexture(texture)
+    }
+
+    setScaleEncounterPrototypeFlightApproximation(enabled: boolean): void {
+      viewerMock.setScaleEncounterPrototypeFlightApproximation(enabled)
+    }
+
+    setScaleEncounterSceneCandidateVariant(variant: unknown): void {
+      viewerMock.setScaleEncounterSceneCandidateVariant(variant)
+    }
+
+    beginScaleEncounter(profile: {
+      readonly gender: 'boy' | 'girl'
+      readonly heightCm: number
+    }): boolean {
+      return viewerMock.beginScaleEncounter(profile) as boolean
+    }
+
+    transitionScaleEncounterView(
+      view: 'overview' | 'pov',
+      durationMs?: number,
+    ): Promise<void> {
+      return Promise.resolve(
+        viewerMock.transitionScaleEncounterView(view, durationMs),
+      )
+    }
+
+    transitionScaleEncounterPerspective(
+      perspective: 'child-eyes' | 'child-rear',
+      durationMs?: number,
+    ): Promise<void> {
+      return Promise.resolve(
+        viewerMock.transitionScaleEncounterPerspective(
+          perspective,
+          durationMs,
+        ),
+      )
+    }
+
+    finishScaleEncounterTransition(): void {
+      viewerMock.finishScaleEncounterTransition()
+    }
+
+    adjustScaleEncounterDistance(direction: 1 | -1): void {
+      viewerMock.adjustScaleEncounterDistance(direction)
+    }
+
+    adjustScaleEncounterOrbit(direction: 1 | -1): void {
+      viewerMock.adjustScaleEncounterOrbit(direction)
+    }
+
+    setScaleEncounterDistanceMotion(direction: 1 | 0 | -1): void {
+      viewerMock.setScaleEncounterDistanceMotion(direction)
+    }
+
+    setScaleEncounterOrbitMotion(direction: 1 | 0 | -1): void {
+      viewerMock.setScaleEncounterOrbitMotion(direction)
+    }
+
+    subscribeScaleEncounter(): () => void {
+      return () => undefined
+    }
+
+    endScaleEncounter(): void {
+      viewerMock.endScaleEncounter()
+    }
+
     destroy(): void {
       viewerMock.destroy()
     }
@@ -118,6 +236,31 @@ vi.mock('../src/viewer/ViewerController', () => {
 
   return { ViewerController, ViewerUnavailableError }
 })
+
+vi.mock('../src/scale-encounter/avatar-review-candidate', () => ({
+  acquireReviewCandidateAvatarFactory: vi.fn(() =>
+    Promise.resolve({
+      factory: vi.fn(),
+      release: vi.fn(),
+    }),
+  ),
+}))
+
+vi.mock('../src/scale-encounter/environment-review-candidate', () => ({
+  acquireReviewCandidateEnvironment: vi.fn(() =>
+    Promise.resolve({
+      panoramaWidth: 4096,
+      preferredQuality: 'medium',
+      quality: 'medium',
+      release: vi.fn(),
+      sourceUrl: '/review-panorama.webp',
+      startPanoramaUpgrade: vi.fn(() => Promise.resolve(null)),
+      surfaceTextures: null,
+      texture: { name: 'review-panorama' },
+      theme: 'air-cretaceous',
+    }),
+  ),
+}))
 
 function deferred<T>(): Deferred<T> {
   let resolvePromise: (value: T) => void = () => undefined
@@ -169,18 +312,53 @@ function expectTooltip(buttonName: string): void {
 
 describe('App', () => {
   beforeEach(() => {
+    viewerMock.adjustScaleEncounterDistance.mockReset()
+    viewerMock.adjustScaleEncounterOrbit.mockReset()
+    viewerMock.beginScaleEncounter.mockReset().mockReturnValue(true)
     viewerMock.commitModel.mockReset()
     viewerMock.constructorCount = 0
     viewerMock.destroy.mockReset()
     viewerMock.disposeStagedModel.mockReset()
+    viewerMock.endScaleEncounter.mockReset()
+    viewerMock.finishScaleEncounterTransition.mockReset()
+    viewerMock.getScaleEncounterSnapshot.mockReset().mockReturnValue({
+      active: false,
+      animalId: null,
+      cameraStage: 'overview',
+      distanceMeters: null,
+      error: null,
+      metersPerUnit: null,
+      orbitAngleDegrees: 0,
+      overviewZoom: 1,
+      perspective: 'child-rear',
+      profile: null,
+      rawSpanUnits: null,
+      transitioning: false,
+      view: 'overview',
+    })
     viewerMock.reset.mockReset()
     viewerMock.setAccessibilityLabel.mockReset()
     viewerMock.setFocusMode.mockReset()
+    viewerMock.setScaleEncounterAvatarFactory.mockReset()
+    viewerMock.setScaleEncounterDistanceMotion.mockReset()
+    viewerMock.setScaleEncounterOrbitMotion.mockReset()
+    viewerMock.setScaleEncounterEcologyDensity.mockReset()
+    viewerMock.setScaleEncounterEnvironmentVariant.mockReset()
+    viewerMock.setScaleEncounterPanoramaTexture.mockReset()
+    viewerMock.setScaleEncounterPrototypeFlightApproximation.mockReset()
+    viewerMock.setScaleEncounterSceneCandidateVariant.mockReset()
     viewerMock.stageModel.mockReset()
+    viewerMock.transitionScaleEncounterView
+      .mockReset()
+      .mockResolvedValue(undefined)
+    viewerMock.transitionScaleEncounterPerspective
+      .mockReset()
+      .mockResolvedValue(undefined)
     viewerMock.failConstruction = false
     viewerMock.failureHandlers.length = 0
     configureSuccessfulViewer()
     window.localStorage.clear()
+    window.sessionStorage.clear()
     window.localStorage.setItem('museum.locale', 'zh-CN')
     window.history.replaceState({}, '', '/')
   })
@@ -250,6 +428,233 @@ describe('App', () => {
     }
   })
 
+  it('opens a supported animal encounter, persists its child profile, and Back restores the exhibit', async () => {
+    const user = userEvent.setup()
+    const audioInstances: AppTestAudio[] = []
+    class AppTestAudio extends EventTarget {
+      autoplay = false
+      currentTime = 0
+      preload = ''
+      readonly load = vi.fn()
+      readonly pause = vi.fn()
+      readonly play = vi.fn(() => Promise.resolve())
+      readonly removeAttribute = vi.fn()
+
+      constructor(readonly src = '') {
+        super()
+        audioInstances.push(this)
+      }
+    }
+    vi.stubGlobal('Audio', AppTestAudio)
+    window.history.replaceState({}, '', '/museum/?animal=pteranodon')
+
+    render(
+      <App
+        initialState={{
+          animalId: 'pteranodon',
+          locale: 'zh-CN',
+          pageKind: 'museum',
+          preference: 'zh-CN',
+        }}
+      />,
+    )
+    await waitFor(() => {
+      expect(document.getElementById('museum-experience')).toHaveAttribute(
+        'data-ready-animal-id',
+        'pteranodon',
+      )
+    })
+    const originalUrl = window.location.href
+    await user.click(screen.getByRole('button', { name: '听它的介绍' }))
+    await waitFor(() => {
+      expect(audioInstances).toHaveLength(1)
+      expect(audioInstances[0]?.play).toHaveBeenCalledOnce()
+    })
+    const exhibitNarration = audioInstances[0]!
+    exhibitNarration.currentTime = 7
+
+    const entry = screen.getByRole('button', {
+      name: '打开和无齿翼龙比一比的等比例相遇场景',
+    })
+    await user.click(entry)
+    const encounter = await screen.findByRole('dialog', {
+      name: '和无齿翼龙比一比',
+    })
+    expect(encounter).toBeVisible()
+    expect(exhibitNarration.pause).toHaveBeenCalled()
+    expect(exhibitNarration.currentTime).toBe(0)
+
+    await user.click(within(encounter).getByRole('radio', { name: /男孩/ }))
+    await user.click(
+      within(encounter).getByRole('button', { name: '身高增加 5 厘米' }),
+    )
+    await user.click(
+      within(encounter).getByRole('button', { name: '进入比一比' }),
+    )
+    expect(viewerMock.beginScaleEncounter).toHaveBeenLastCalledWith({
+      gender: 'boy',
+      heightCm: 115,
+    })
+    expect(window.location.href).toBe(originalUrl)
+    expect(
+      new URL(window.location.href).searchParams.has('heightCm'),
+    ).toBe(false)
+    expect(new URL(window.location.href).searchParams.has('gender')).toBe(false)
+    expect(
+      JSON.parse(
+        window.sessionStorage.getItem(SCALE_ENCOUNTER_PROFILE_STORAGE_KEY) ?? '',
+      ),
+    ).toEqual({
+      profile: { gender: 'boy', heightCm: 115 },
+      version: 1,
+    })
+
+    act(() => window.history.back())
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: '和无齿翼龙比一比' }),
+      ).not.toBeInTheDocument()
+    })
+    expect(window.location.href).toBe(originalUrl)
+    expect(document.getElementById('museum-experience')).toHaveAttribute(
+      'data-ready-animal-id',
+      'pteranodon',
+    )
+    expect(screen.getByRole('heading', { name: '无齿翼龙' })).toBeVisible()
+    await waitFor(() => expect(entry).toHaveFocus())
+
+    await user.click(entry)
+    const reopenedEncounter = await screen.findByRole('dialog', {
+      name: '和无齿翼龙比一比',
+    })
+    await waitFor(() => {
+      expect(reopenedEncounter).toHaveAttribute('data-phase', 'overview')
+    })
+    expect(
+      within(reopenedEncounter).queryByRole('group', {
+        name: '小朋友是男孩还是女孩？',
+      }),
+    ).not.toBeInTheDocument()
+    expect(viewerMock.beginScaleEncounter).toHaveBeenLastCalledWith({
+      gender: 'boy',
+      heightCm: 115,
+    })
+
+    await user.click(
+      within(reopenedEncounter).getByRole('button', { name: '返回展台' }),
+    )
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: '和无齿翼龙比一比' }),
+      ).not.toBeInTheDocument()
+      expect(entry).toBeEnabled()
+    })
+  })
+
+  it('restores the explorer profile after a page refresh and skips setup', async () => {
+    window.sessionStorage.setItem(
+      SCALE_ENCOUNTER_PROFILE_STORAGE_KEY,
+      JSON.stringify({
+        profile: { approach: 'close', gender: 'girl', heightCm: 120 },
+        version: 1,
+      }),
+    )
+    window.history.replaceState({}, '', '/museum/?animal=pteranodon')
+    const user = userEvent.setup()
+
+    render(
+      <App
+        initialState={{
+          animalId: 'pteranodon',
+          locale: 'zh-CN',
+          pageKind: 'museum',
+          preference: 'zh-CN',
+        }}
+      />,
+    )
+    await waitFor(() => {
+      expect(document.getElementById('museum-experience')).toHaveAttribute(
+        'data-ready-animal-id',
+        'pteranodon',
+      )
+    })
+
+    await user.click(
+      screen.getByRole('button', {
+        name: '打开和无齿翼龙比一比的等比例相遇场景',
+      }),
+    )
+    const encounter = await screen.findByRole('dialog', {
+      name: '和无齿翼龙比一比',
+    })
+    await waitFor(() => expect(encounter).toHaveAttribute('data-phase', 'overview'))
+    expect(
+      within(encounter).queryByRole('group', {
+        name: '小朋友是男孩还是女孩？',
+      }),
+    ).not.toBeInTheDocument()
+    expect(viewerMock.beginScaleEncounter).toHaveBeenLastCalledWith({
+      approach: 'close',
+      gender: 'girl',
+      heightCm: 120,
+    })
+  })
+
+  it('opens the same-scale encounter from a shareable query link', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/museum/zh-CN/?animal=mammoth&scene-variant=C&scale-encounter=1',
+    )
+
+    render(
+      <App
+        initialState={{
+          animalId: 'mammoth',
+          locale: 'zh-CN',
+          pageKind: 'museum',
+          preference: 'zh-CN',
+        }}
+      />,
+    )
+
+    const encounter = await screen.findByRole('dialog', {
+      name: '和长毛猛犸象比一比',
+    })
+    expect(encounter).toBeVisible()
+    expect(encounter).toHaveAttribute('data-phase', 'setup')
+    expect(viewerMock.setScaleEncounterSceneCandidateVariant).toHaveBeenCalledWith(
+      'C',
+    )
+  })
+
+  it('treats a scene candidate URL as a direct 3D prototype destination', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/museum/zh-CN/?animal=pteranodon&scene-variant=D',
+    )
+
+    render(
+      <App
+        initialState={{
+          animalId: 'pteranodon',
+          locale: 'zh-CN',
+          pageKind: 'museum',
+          preference: 'zh-CN',
+        }}
+      />,
+    )
+
+    const encounter = await screen.findByRole('dialog', {
+      name: '和无齿翼龙比一比',
+    })
+    expect(encounter).toBeVisible()
+    expect(viewerMock.setScaleEncounterSceneCandidateVariant).toHaveBeenCalledWith(
+      'D',
+    )
+  })
+
   it('keeps an animal detail URL clean after the initial model commits', async () => {
     window.history.replaceState(
       {},
@@ -290,6 +695,47 @@ describe('App', () => {
       'data-page-kind',
       'animal-detail',
     )
+  })
+
+  it('preserves explicit encounter review selectors when leaving a detail route', async () => {
+    const user = userEvent.setup()
+    window.history.replaceState(
+      {},
+      '',
+      '/museum/zh-CN/animals/tyrannosaurus-rex/?scene-variant=C&variant=production-slice&flight-approximation=0',
+    )
+
+    render(
+      <App
+        initialState={{
+          animalId: 'tyrannosaurus-rex',
+          locale: 'zh-CN',
+          pageKind: 'animal-detail',
+          preference: 'zh-CN',
+        }}
+      />,
+    )
+    await waitFor(() => {
+      expect(document.getElementById('museum-experience')).toHaveAttribute(
+        'data-ready-animal-id',
+        'tyrannosaurus-rex',
+      )
+    })
+
+    await user.click(screen.getByRole('link', { name: '查看长毛猛犸象' }))
+    await waitFor(() => {
+      expect(document.getElementById('museum-experience')).toHaveAttribute(
+        'data-ready-animal-id',
+        'mammoth',
+      )
+    })
+
+    const currentUrl = new URL(window.location.href)
+    expect(currentUrl.pathname).toBe('/museum/zh-CN/')
+    expect(currentUrl.searchParams.get('animal')).toBe('mammoth')
+    expect(currentUrl.searchParams.get('scene-variant')).toBe('C')
+    expect(currentUrl.searchParams.get('variant')).toBe('production-slice')
+    expect(currentUrl.searchParams.get('flight-approximation')).toBe('0')
   })
 
   it('switches to English without reloading the model and remembers a shareable locale path', async () => {

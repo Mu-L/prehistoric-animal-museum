@@ -46,7 +46,10 @@ if (!existsSync(root) || !statSync(root).isDirectory()) {
 function sendFile(filePath, response, delayMs = 0, statusCode = 200) {
   response.writeHead(statusCode, {
     'Content-Type': mimeTypes.get(extname(filePath).toLowerCase()) ?? 'application/octet-stream',
-    'Cache-Control': filePath.endsWith('.html') ? 'no-cache' : 'public, max-age=3600',
+    // This server is only used for local review. Keeping JS, GLB, and audio in
+    // Chrome's HTTP cache made a newly synced 4190 build appear to retain old
+    // behavior for up to an hour, even though dist had already been replaced.
+    'Cache-Control': 'no-store',
     'X-Content-Type-Options': 'nosniff',
   })
   if (delayMs > 0) {

@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 
 const localStorageValues = new Map<string, string>()
+const sessionStorageValues = new Map<string, string>()
 
 if (typeof window !== 'undefined') {
   Object.defineProperty(window, 'localStorage', {
@@ -15,6 +16,23 @@ if (typeof window !== 'undefined') {
       removeItem: (key: string) => localStorageValues.delete(key),
       setItem: (key: string, value: string) => {
         localStorageValues.set(key, String(value))
+      },
+    } satisfies Storage,
+  })
+
+  Object.defineProperty(window, 'sessionStorage', {
+    configurable: true,
+    value: {
+      clear: () => sessionStorageValues.clear(),
+      getItem: (key: string) => sessionStorageValues.get(key) ?? null,
+      key: (index: number) =>
+        Array.from(sessionStorageValues.keys())[index] ?? null,
+      get length() {
+        return sessionStorageValues.size
+      },
+      removeItem: (key: string) => sessionStorageValues.delete(key),
+      setItem: (key: string, value: string) => {
+        sessionStorageValues.set(key, String(value))
       },
     } satisfies Storage,
   })

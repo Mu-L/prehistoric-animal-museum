@@ -215,6 +215,7 @@ describe('static multilingual delivery', () => {
 
     const localized = await fetch(`http://127.0.0.1:${port}/museum/en/`)
     expect(localized.status).toBe(200)
+    expect(localized.headers.get('cache-control')).toBe('no-store')
     expect(await localized.text()).toBe('ENGLISH')
 
     const withoutTrailingSlash = await fetch(
@@ -232,6 +233,7 @@ describe('static multilingual delivery', () => {
 
     const robots = await fetch(`http://127.0.0.1:${port}/museum/robots.txt`)
     expect(robots.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+    expect(robots.headers.get('cache-control')).toBe('no-store')
     const sitemap = await fetch(
       `http://127.0.0.1:${port}/museum/sitemap.xml`,
     )

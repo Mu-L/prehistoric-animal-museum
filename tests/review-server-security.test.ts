@@ -15,11 +15,14 @@ import type { ViteDevServer } from 'vite'
 import {
   localReviewAssetFiles,
   localReviewAssetPrefix,
+  scaleEncounterChildAvatarAssetFiles,
+  scaleEncounterChildPortraitAssets,
 } from '../scripts/review-assets'
 import {
   assertReviewModeIsServeOnly,
   isPrivateLocalMaterialRequest,
   parseAllowedHosts,
+  privateLocalMaterialDenyForRoot,
   unprefixedRouteMarker,
 } from '../scripts/review-server-security'
 
@@ -54,6 +57,19 @@ describe('local review server boundary', () => {
       'tablet.local',
     ])
     expect(parseAllowedHosts(undefined)).toEqual([])
+  })
+
+  it('keeps a Wayfinder worktree root servable without opening nested private material', () => {
+    const worktreeDeny = privateLocalMaterialDenyForRoot(
+      '/project/.wayfinder/worktrees/direct-scale-encounter',
+    )
+
+    expect(worktreeDeny).not.toContain('**/.wayfinder/**')
+    expect(worktreeDeny).toContain('**/.handoff/**')
+    expect(worktreeDeny).toContain('**/assets/candidates/**')
+    expect(privateLocalMaterialDenyForRoot('/project')).toContain(
+      '**/.wayfinder/**',
+    )
   })
 
   it.each([
@@ -95,6 +111,48 @@ describe('local review server boundary', () => {
     ).toBe(true)
   })
 
+  it('allowlists exactly the eight v4 scene-and-gender child packages and no neighboring candidate files', () => {
+    const routePrefix =
+      `${localReviewAssetPrefix}/scale-encounter-child-avatar/`
+    const avatarRoutes = [...localReviewAssetFiles.keys()]
+      .filter((route) => route.startsWith(routePrefix))
+      .sort()
+    expect(avatarRoutes).toEqual(
+      scaleEncounterChildAvatarAssetFiles
+        .map((fileName) => `${routePrefix}${fileName}`)
+        .sort(),
+    )
+    expect(avatarRoutes).toHaveLength(8)
+    for (const blocked of [
+      'meshy-scene-avatar-packages.manifest.json',
+      'child-avatar-v4-boy-land-explorer-review-v01.glb.bak',
+      'child-avatar-v4-boy-land-explorer-review-v02.glb',
+      'child-avatar-v3-boy-land-normal.glb',
+      'prepare-scale-encounter-scene-avatars.ts',
+      'child-avatar-review-candidates.glb',
+    ]) {
+      expect(localReviewAssetFiles.has(`${routePrefix}${blocked}`)).toBe(false)
+    }
+  })
+
+  it('allowlists only the two reviewed setup portraits on their own route', () => {
+    const routePrefix =
+      `${localReviewAssetPrefix}/scale-encounter-child-portraits/`
+    const portraitRoutes = [...localReviewAssetFiles.keys()]
+      .filter((route) => route.startsWith(routePrefix))
+      .sort()
+
+    expect(portraitRoutes).toEqual(
+      scaleEncounterChildPortraitAssets
+        .map(({ fileName }) => `${routePrefix}${fileName}`)
+        .sort(),
+    )
+    expect(portraitRoutes).toHaveLength(2)
+    expect(
+      localReviewAssetFiles.has(`${routePrefix}girl-water-diver-main.png`),
+    ).toBe(false)
+  })
+
   it('keeps ignored source files outside Vite file-serving access', async () => {
     const config = await resolveConfig(
       {
@@ -104,6 +162,13 @@ describe('local review server boundary', () => {
       'serve',
       'review',
     )
+
+    expect(
+      isFileLoadingAllowed(
+        config,
+        normalizePath(join(process.cwd(), 'index.html')),
+      ),
+    ).toBe(true)
 
     for (const relativePath of [
       '.handoff/collection-review/audio/example.mp3',
@@ -155,6 +220,16 @@ describe('local review server boundary', () => {
       )
       expect(allowed.response.getHeader('Content-Type')).toBe(
         'model/gltf-binary',
+      )
+
+      const setupPortrait = dispatchHead(
+        server,
+        `${localReviewAssetPrefix}/scale-encounter-child-portraits/boy-land-explorer-main.png`,
+      )
+      expect(setupPortrait.nextCalled).toBe(false)
+      expect(setupPortrait.response.statusCode).toBe(200)
+      expect(setupPortrait.response.getHeader('Content-Type')).toBe(
+        'image/png',
       )
 
       const etag = allowed.response.getHeader('ETag')
@@ -214,6 +289,80 @@ describe('local review server boundary', () => {
         expect(nonFile.response.getHeader('Cache-Control')).toBe('no-store')
       } finally {
         mutableReviewAssets.delete(nonFileRoute)
+      }
+    } finally {
+      await server.close()
+    }
+  })
+
+  it('serves only the allowlisted scale-encounter environment file through the development server pipeline', async () => {
+    const server = await createServer({
+      appType: 'custom',
+      configFile: join(process.cwd(), 'vite.config.ts'),
+      logLevel: 'silent',
+      mode: 'development',
+      server: { middlewareMode: true },
+    })
+
+    try {
+      const allowed = dispatchHead(
+        server,
+        `${localReviewAssetPrefix}/scale-encounter-environments/panorama-land-cretaceous-2048.webp`,
+      )
+      expect(allowed.nextCalled).toBe(false)
+      expect(allowed.response.statusCode).toBe(200)
+      expect(allowed.response.getHeader('Content-Type')).toBe('image/webp')
+      expect(allowed.response.getHeader('Cache-Control')).toBe(
+        'private, no-cache',
+      )
+
+      const unknown = dispatchHead(
+        server,
+        `${localReviewAssetPrefix}/scale-encounter-environments/source-polyhaven-forest-slope.jpg`,
+      )
+      expect(unknown.nextCalled).toBe(false)
+      expect(unknown.response.statusCode).toBe(404)
+    } finally {
+      await server.close()
+    }
+  })
+
+  it('serves each exact v4 scene-and-gender child package while returning 404 for adjacent files', async () => {
+    const server = await createServer({
+      appType: 'custom',
+      configFile: join(process.cwd(), 'vite.config.ts'),
+      logLevel: 'silent',
+      mode: 'development',
+      server: { middlewareMode: true },
+    })
+
+    try {
+      const routePrefix =
+        `${localReviewAssetPrefix}/scale-encounter-child-avatar/`
+      for (const fileName of scaleEncounterChildAvatarAssetFiles) {
+        const allowed = dispatchHead(server, `${routePrefix}${fileName}`)
+        expect(allowed.nextCalled).toBe(false)
+        expect(allowed.response.statusCode).toBe(200)
+        expect(allowed.response.getHeader('Content-Type')).toBe(
+          'model/gltf-binary',
+        )
+        expect(allowed.response.getHeader('Cache-Control')).toBe(
+          'private, no-cache',
+        )
+      }
+
+      for (const blocked of [
+        'meshy-scene-avatar-packages.manifest.json',
+        'child-avatar-v4-boy-land-explorer-review-v01.glb.bak',
+        'child-avatar-v4-boy-land-explorer-review-v02.glb',
+        'child-avatar-v3-boy-land-normal.glb',
+        'prepare-scale-encounter-scene-avatars.ts',
+        'child-avatar-review-candidates.glb',
+      ]) {
+        const unknown = dispatchHead(server, `${routePrefix}${blocked}`)
+        expect(unknown.nextCalled).toBe(false)
+        expect(unknown.response.statusCode).toBe(404)
+        expect(unknown.response.getHeader('Cache-Control')).toBe('no-store')
       }
     } finally {
       await server.close()

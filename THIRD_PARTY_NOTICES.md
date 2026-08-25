@@ -25,6 +25,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   Bundled from `@fontsource-variable/noto-sans-sc@5.3.0` under the
   [SIL Open Font License 1.1](LICENSES/OFL-1.1.txt).
 
+## Scale encounter music
+
+- **RPG Town** — Copyright Karate Studios. Bundled as the optional pastoral
+  exploration music for the “Compare” encounter under
+  [Creative Commons CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+  Source: [OpenGameArt](https://opengameart.org/content/2-whimsical-rpg-themes).
+  The source FLAC was crossfaded into a seamless loop, loudness-normalized,
+  and encoded as Ogg Vorbis. Runtime SHA-256:
+  `79d427b3d82a6d73b560eb01f3b62ba1b014b718b2ff68724aee446e7d1c497d`.
+
 ## 迷惑龙 (`apatosaurus`)
 
 ### `audio/narration.en.mp3`
@@ -361,13 +371,15 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [ichthyosaurus](https://sketchfab.com/3d-models/ichthyosaurus-ef8609f5efa84984bc1800bdb36aac3c) by Julian Johnson-Mortimer / FreddyFoxFreddy
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “ichthyosaurus” by Julian Johnson-Mortimer / FreddyFoxFreddy, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `8f3a80ad11713d5dee3ccf29395655af8c7c0dd8f2d7ccba94bda57189fa6cb7`
+- Runtime SHA-256: `226f5f6055656f10498c641f0aa5a124dcfffc228d945b0f7484bfd480817f31`
 - Modifications:
   - Made neighbouring quaternion keys hemisphere-continuous, then resampled the authored CUBICSPLINE bone rotations to 24 fps LINEAR tracks before high-precision Meshopt compression; this removes opposite-sign half-turn spikes and prevents the compression filter from treating spline tangents as normalized rotations. Converted embedded PNG textures to lossless WebP for browser delivery.
   - Welded the source head and body, closed twelve residual boundary loops, softened the pink wound-like marks and ring-shaped head artifact, and preserved a complete mouth interior.
   - Re-UVed the accepted body and authored a 2K dark-dorsal/light-ventral aquatic base colour with irregular mottling and tangent-space surface detail plus a 1K roughness map; the skin remains matte and does not imitate fish scales.
   - Reduced the source teeth from approximately 69,632 triangles to approximately 12,500 while preserving their readable silhouette.
   - Built a project-authored fourteen-bone Blender rig and one six-second in-place Idle: a six-segment tail chain carries two continuous travelling waves, the front fins move by approximately eight degrees, the rear fins by approximately 4.5 degrees, and the root remains stationary.
+  - Shifted the Idle to begin at exactly zero seconds, made every rotation track close on the same quaternion, and periodically smoothed the head, neck, and body tracks so loop wraparound cannot produce a sudden head shake.
+  - Cleared stale normalized flags after promoting repaired quaternion accessors to floating point so the runtime GLTF loader receives spec-valid animation data.
   - Normalized the derivative to one closed-loop Idle, repacked it, validated it with zero Khronos errors and warnings before runtime compression, and reviewed it in the shared museum viewer.
 ## 慈母龙 (`maiasaura`)
 
@@ -479,23 +491,23 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `backgrounds/landscape.webp`
 
 - Asset type: background
-- Source: Woolly mammoth steppe-tundra — landscape, generated with OpenAI built-in image_gen on 2026-07-29
+- Source: Clarified woolly mammoth steppe-tundra — landscape, generated with OpenAI built-in image_gen on 2026-08-16
 - License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - Attribution: Project-generated 长毛猛犸象 landscape created with OpenAI ImageGen.
-- Runtime SHA-256: `d456a3b0f0cfedfcd6dc518199eb8e75cbe8ef043dfade64109299e0255a925f`
+- Runtime SHA-256: `2b23ceaf9e6b7f6d270dcb327254f5be27fb764fc2a845c627fa928aa3c01eb4`
 - Modifications:
-  - Converted the reviewed PNG to lossy WebP at quality 82.
-  - Removed ancillary metadata without applying a runtime tint or filter.
+  - Downscaled the reviewed 4096 × 2304 clarity derivative to 2048 × 1152 with Sharp Lanczos3 resampling.
+  - Encoded as WebP at quality 82 and effort 6 with ancillary metadata removed and no runtime tint or blur.
 ### `backgrounds/portrait.webp`
 
 - Asset type: background
-- Source: Woolly mammoth steppe-tundra — portrait, generated with OpenAI built-in image_gen on 2026-07-31
+- Source: Clarified woolly mammoth steppe-tundra — portrait, generated with OpenAI built-in image_gen on 2026-08-16
 - License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - Attribution: Project-generated 长毛猛犸象 portrait created with OpenAI ImageGen.
-- Runtime SHA-256: `dc2df002c5dab82c95534a93dcc0e91b2436dcb01be24667453533e6cd917c34`
+- Runtime SHA-256: `3b5e795c4abe470c1ca0cfba9d7834397080b76cb261e2ea1d3f1757f0482335`
 - Modifications:
-  - Converted the separately composed reviewed PNG to lossy WebP at quality 82.
-  - Removed ancillary metadata without applying a runtime tint or filter.
+  - Downscaled the reviewed 2304 × 4096 clarity derivative to 1152 × 2048 with Sharp Lanczos3 resampling.
+  - Encoded as WebP at quality 82 and effort 6 with ancillary metadata removed and no runtime tint or blur.
 ### `images/poster-portrait.webp`
 
 - Asset type: poster
@@ -519,10 +531,10 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/thumbnail.webp`
 
 - Asset type: thumbnail
-- Source: 长毛猛犸象 collection thumbnail, derived on 2026-08-10
+- Source: 长毛猛犸象 collection thumbnail, derived on 2026-08-16
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
-- Runtime SHA-256: `ad80efce6003cb1166dba7e21af3334fe66bed0005e83d0ec24b5746a56c896e`
+- Runtime SHA-256: `0d726c166a98708572f559b612068fc7d21d11067d3af94ddf32b9c3f0b73880`
 - Modifications:
   - Resized and centred the complete silhouette with animal-specific safe margins.
   - Encoded as 320 × 320 lossy WebP at quality 88 without text, controls, labels, logos, or watermarks.
@@ -619,13 +631,15 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Otodus Megalodon updated animations](https://sketchfab.com/3d-models/otodus-megalodon-updated-animations-7e65b8c51251440e9aca8385f286714f) by CanYuTsai
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `2ac86e4a499a10d02e6ded5667a69a06c70f5371d624a31bef3abcb64dd53253`
+- Runtime SHA-256: `dcd9ab8192cd1d38adf1c2ed664e040fed24a8d8498295fca138c887822d2070`
 - Modifications:
   - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Retained the source skinned hierarchy, repacked the GLB, and applied a desaturated non-metallic matte aquatic material treatment.
   - Replaced the source mouth-focused action with a project-authored eight-second in-place full-body swimming Idle at 24 frames per second.
   - Kept the four head-chain joints nearly stable at approximately 0.15–0.30 degrees while increasing the travelling propulsion wave from roughly 1.2 degrees at the tail root to 8.5 degrees at the tail tip.
   - Added restrained paired-fin pose changes, exported one closed-loop Idle, validator-checked the result, and reviewed the animated skinned bounds in the shared museum viewer.
+  - Resampled the propulsion chain to a uniform 24 fps periodic curve, smoothed the tail acceleration through the loop seam, and mirrored each left pectoral-fin quaternion onto its right-side partner so both fins sweep inward and outward together.
+  - Cleared stale normalized flags after promoting repaired quaternion accessors to floating point so the runtime GLTF loader receives spec-valid animation data.
 ## 巨脉蜻蜓 (`meganeura`)
 
 ### `audio/narration.en.mp3`
@@ -789,7 +803,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Source: [Mosasaurus](https://sketchfab.com/3d-models/mosasaurus-fe0c25c4ed4e4d4aa05312121e2f68df) by Lukiethewesly13
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Mosasaurus” by Lukiethewesly13, CC-BY-4.0; modified for the Prehistoric Animal Museum.
-- Runtime SHA-256: `5071da06a8a12bf0e3396d84bd3bfd86a3f9f378f322cda53bd69cc3541aa47d`
+- Runtime SHA-256: `c36e49446fb6f34a25deb1e1421118d24aaf608fde1654c2f667437702863e59`
 - Modifications:
   - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.
@@ -797,6 +811,8 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.
   - Authored and validator-checked one closed eight-second marine-tail Idle for the shared museum viewer.
   - Included the human-reviewed source-rig partial mouth relaxation in the same Idle loop.
+  - Replaced the source tail morph's sign-reversing S curve with two mirrored, length-preserving single-curvature arc targets. Each stroke now begins at the muscular tail root, increases continuously toward the tip, and returns through a neutral straight pose without folding back on itself; retained the symmetric four-flipper swimming targets.
+  - Cleared stale normalized flags after promoting repaired morph and animation accessors to floating point so the runtime GLTF loader receives spec-valid data.
 ## 肿头龙 (`pachycephalosaurus`)
 
 ### `audio/narration.en.mp3`

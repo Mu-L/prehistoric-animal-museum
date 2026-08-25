@@ -19,9 +19,9 @@ const baseProvenance = createPublishedAssetProvenance({
         'cfeb3db3b31e36180249cffd9e435b3c6a01ad0075d31b7efb2bc1b9025368dc',
     },
     runtime: {
-      bytes: 5_648_348,
+      bytes: 5_737_920,
       sha256:
-        '8f3a80ad11713d5dee3ccf29395655af8c7c0dd8f2d7ccba94bda57189fa6cb7',
+        '226f5f6055656f10498c641f0aa5a124dcfffc228d945b0f7484bfd480817f31',
     },
     modifications: [
       'Made neighbouring quaternion keys hemisphere-continuous, then resampled the authored CUBICSPLINE bone rotations to 24 fps LINEAR tracks before high-precision Meshopt compression; this removes opposite-sign half-turn spikes and prevents the compression filter from treating spline tangents as normalized rotations. Converted embedded PNG textures to lossless WebP for browser delivery.',
@@ -29,6 +29,8 @@ const baseProvenance = createPublishedAssetProvenance({
       'Re-UVed the accepted body and authored a 2K dark-dorsal/light-ventral aquatic base colour with irregular mottling and tangent-space surface detail plus a 1K roughness map; the skin remains matte and does not imitate fish scales.',
       'Reduced the source teeth from approximately 69,632 triangles to approximately 12,500 while preserving their readable silhouette.',
       'Built a project-authored fourteen-bone Blender rig and one six-second in-place Idle: a six-segment tail chain carries two continuous travelling waves, the front fins move by approximately eight degrees, the rear fins by approximately 4.5 degrees, and the root remains stationary.',
+      'Shifted the Idle to begin at exactly zero seconds, made every rotation track close on the same quaternion, and periodically smoothed the head, neck, and body tracks so loop wraparound cannot produce a sudden head shake.',
+      'Cleared stale normalized flags after promoting repaired quaternion accessors to floating point so the runtime GLTF loader receives spec-valid animation data.',
       'Normalized the derivative to one closed-loop Idle, repacked it, validated it with zero Khronos errors and warnings before runtime compression, and reviewed it in the shared museum viewer.',
     ],
   },

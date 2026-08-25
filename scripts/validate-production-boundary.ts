@@ -1,54 +1,51 @@
-import { readdir, readFile } from 'node:fs/promises'
 import { extname, join, relative } from 'node:path'
+import { readFile } from 'node:fs/promises'
 
 import { mainCollection } from '../src/content/collections/main'
 import { supportedLocales } from '../src/i18n/locale'
 import { localReviewAssetPrefix } from './review-assets'
 import { unprefixedRouteMarker } from './review-server-security'
+import {
+  collectProductionFiles,
+  findForbiddenProductionMarkers,
+  scaleEncounterPrivateReviewMarkers,
+} from './production-boundary-markers'
 
 const distributionRoot = join(process.cwd(), 'dist')
 const forbiddenMarkers = [
   unprefixedRouteMarker(localReviewAssetPrefix),
   '.handoff/collection-review',
-  'assets/candidates',
+  ...scaleEncounterPrivateReviewMarkers,
   'parasaurolophus',
   '副栉龙',
-] as const
-
-async function collectFiles(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true })
-  const files: string[] = []
-
-  for (const entry of entries) {
-    const absolutePath = join(directory, entry.name)
-    if (entry.isDirectory()) {
-      files.push(...(await collectFiles(absolutePath)))
-    } else if (entry.isFile()) {
-      files.push(absolutePath)
-    }
-  }
-
-  return files
-}
+]
 
 const findings: string[] = []
-const files = await collectFiles(distributionRoot)
+const files = await collectProductionFiles(distributionRoot)
 const distributionPaths = new Set(
   files.map((absolutePath) => relative(distributionRoot, absolutePath)),
 )
 
-for (const absolutePath of files) {
-  const source = await readFile(absolutePath)
-  const distributionPath = relative(distributionRoot, absolutePath)
-  for (const marker of forbiddenMarkers) {
-    if (
-      distributionPath.includes(marker) ||
-      source.includes(Buffer.from(marker))
-    ) {
-      findings.push(`${distributionPath}: ${marker}`)
-    }
-  }
+// Vite hashes emitted asset names, so scanning only the final filenames can
+// miss a private candidate that was copied into dist. The manifest preserves
+// each original source path and is therefore part of the production boundary.
+if (!distributionPaths.has('.vite/manifest.json')) {
+  findings.push('.vite/manifest.json: missing production source manifest')
 }
+if (!distributionPaths.has('SCALE_ENCOUNTER_ASSET_PROVENANCE.md')) {
+  findings.push('missing scale-encounter runtime asset provenance notice')
+}
+
+const markerFindings = await findForbiddenProductionMarkers(
+  distributionRoot,
+  forbiddenMarkers,
+  files,
+)
+findings.push(
+  ...markerFindings.map(
+    ({ distributionPath, marker }) => `${distributionPath}: ${marker}`,
+  ),
+)
 
 const glbFiles = files.filter((file) => extname(file) === '.glb')
 const mp3Files = files.filter((file) => extname(file) === '.mp3')
@@ -56,6 +53,8 @@ const sourceMaps = files.filter((file) => extname(file) === '.map')
 const expectedAnimalAssetCount = mainCollection.animalIds.length
 const expectedNarrationAssetCount =
   expectedAnimalAssetCount * supportedLocales.length
+const expectedScaleEncounterGlbCount = 11
+const expectedScaleEncounterNarrationCount = 112
 const expectedDetailPaths = supportedLocales.flatMap((locale) =>
   mainCollection.animalIds.map(
     (animalId) => `${locale}/animals/${animalId}/index.html`,
@@ -88,18 +87,67 @@ if (actualDetailPaths.length !== expectedDetailPaths.length) {
     `expected exactly ${expectedDetailPaths.length} static animal details; found ${actualDetailPaths.length}`,
   )
 }
-if (glbFiles.length !== expectedAnimalAssetCount) {
+if (
+  glbFiles.length !==
+  expectedAnimalAssetCount + expectedScaleEncounterGlbCount
+) {
   findings.push(
-    `expected exactly ${expectedAnimalAssetCount} production GLBs; found ${glbFiles.length}`,
+    `expected exactly ${expectedAnimalAssetCount + expectedScaleEncounterGlbCount} production GLBs; found ${glbFiles.length}`,
   )
 }
-if (mp3Files.length !== expectedNarrationAssetCount) {
+if (
+  mp3Files.length !==
+  expectedNarrationAssetCount + expectedScaleEncounterNarrationCount
+) {
   findings.push(
-    `expected exactly ${expectedNarrationAssetCount} reviewed locale MP3s; found ${mp3Files.length}`,
+    `expected exactly ${expectedNarrationAssetCount + expectedScaleEncounterNarrationCount} approved locale MP3s; found ${mp3Files.length}`,
   )
 }
 if (sourceMaps.length !== 0) {
   findings.push(`expected 0 production source maps; found ${sourceMaps.length}`)
+}
+
+if (distributionPaths.has('.vite/manifest.json')) {
+  const viteManifest = JSON.parse(
+    await readFile(join(distributionRoot, '.vite/manifest.json'), 'utf8'),
+  ) as Record<string, { readonly file?: string; readonly src?: string }>
+  const productionSources = new Set(
+    Object.entries(viteManifest).flatMap(([key, entry]) => [
+      key,
+      ...(entry.src ? [entry.src] : []),
+    ]),
+  )
+  const runtimeChecksums = await readFile(
+    join(process.cwd(), 'src/scale-encounter/assets/SHA256SUMS'),
+    'utf8',
+  )
+  const expectedRuntimeSources = runtimeChecksums
+    .trim()
+    .split('\n')
+    .map((line) => line.match(/^[a-f0-9]{64} {2}(.+)$/)?.[1])
+    .filter((fileName): fileName is string => Boolean(fileName))
+    .map((fileName) => `src/scale-encounter/assets/${fileName}`)
+  const narrationManifest = JSON.parse(
+    await readFile(
+      join(
+        process.cwd(),
+        'src/scale-encounter/audio/narration-candidates.json',
+      ),
+      'utf8',
+    ),
+  ) as { readonly tracks: readonly { readonly file: string }[] }
+  const expectedNarrationSources = narrationManifest.tracks.map(
+    ({ file }) => `src/scale-encounter/audio/${file}`,
+  )
+
+  for (const sourcePath of [
+    ...expectedRuntimeSources,
+    ...expectedNarrationSources,
+  ]) {
+    if (!productionSources.has(sourcePath)) {
+      findings.push(`approved runtime asset missing from manifest: ${sourcePath}`)
+    }
+  }
 }
 
 if (findings.length > 0) {
@@ -112,6 +160,6 @@ if (findings.length > 0) {
   process.exitCode = 1
 } else {
   console.log(
-    `Production boundary: ${files.length} artifact(s) scanned, ${actualDetailPaths.length} animal detail HTML files, ${expectedSocialImagePaths.length} animal social images, ${glbFiles.length} GLBs, ${mp3Files.length} MP3s, 0 source maps, 0 private review marker(s).`,
+    `Production boundary: ${files.length} artifact(s) scanned, ${actualDetailPaths.length} animal detail HTML files, ${expectedSocialImagePaths.length} animal social images, ${glbFiles.length} GLBs, ${mp3Files.length} MP3s, 0 source maps, 0 private source marker(s).`,
   )
 }

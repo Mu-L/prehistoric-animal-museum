@@ -148,6 +148,16 @@ content, contributions, and Brand Assets follow the separate scopes in
   Bundled from \`@fontsource-variable/noto-sans-sc@5.3.0\` under the
   [SIL Open Font License 1.1](LICENSES/OFL-1.1.txt).
 
+## Scale encounter music
+
+- **RPG Town** — Copyright Karate Studios. Bundled as the optional pastoral
+  exploration music for the “Compare” encounter under
+  [Creative Commons CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+  Source: [OpenGameArt](https://opengameart.org/content/2-whimsical-rpg-themes).
+  The source FLAC was crossfaded into a seamless loop, loudness-normalized,
+  and encoded as Ogg Vorbis. Runtime SHA-256:
+  \`79d427b3d82a6d73b560eb01f3b62ba1b014b718b2ff68724aee446e7d1c497d\`.
+
 ${sections}
 `
 }
