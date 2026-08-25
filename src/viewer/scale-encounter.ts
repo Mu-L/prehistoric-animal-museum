@@ -30,6 +30,11 @@ export type ScaleEncounterAvatarMotion =
   | 'glide'
   | 'swim'
 
+export type ScaleEncounterJumpEntryMotion = Extract<
+  ScaleEncounterAvatarMotion,
+  'idle' | 'walk' | 'run'
+>
+
 export type ScaleEncounterAvatarAction = 'jump'
 
 export type ScaleEncounterAvatarMotionPolicy =
@@ -170,6 +175,7 @@ export interface ScaleEncounterAvatar {
   readonly setActionState?: (
     action: ScaleEncounterAvatarAction,
     active: boolean,
+    entryMotion?: ScaleEncounterJumpEntryMotion,
   ) => void
   readonly updateIdle?: (
     elapsedSeconds: number,

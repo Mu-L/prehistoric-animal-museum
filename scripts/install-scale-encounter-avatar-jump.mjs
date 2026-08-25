@@ -12,8 +12,37 @@ import { NodeIO, PropertyType } from '@gltf-transform/core'
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
 import { prune } from '@gltf-transform/functions'
 
-const CLIP_NAME = 'Jump_Land'
-const EXPECTED_DURATION_SECONDS = 0.9
+const CLIP_SPECS = [
+  {
+    entry: 'stand',
+    name: 'Jump_Land_Stand',
+    durationSeconds: 54 / 60,
+    minimumArmExcursion: 1.1,
+    minimumForearmExcursion: 0.45,
+    minimumCrouchCentimetres: 6,
+    minimumKneeExcursion: 0.7,
+  },
+  {
+    entry: 'walk',
+    name: 'Jump_Land_Walk',
+    durationSeconds: 46 / 60,
+    minimumArmExcursion: 0.65,
+    minimumForearmExcursion: 0.25,
+    minimumCrouchCentimetres: 4,
+    minimumKneeExcursion: 0.35,
+  },
+  {
+    entry: 'run',
+    name: 'Jump_Land_Run',
+    durationSeconds: 42 / 60,
+    minimumArmExcursion: 0.65,
+    minimumForearmExcursion: 0.25,
+    minimumCrouchCentimetres: 3.5,
+    minimumKneeExcursion: 0.5,
+  },
+]
+const CLIP_NAMES = CLIP_SPECS.map((spec) => spec.name)
+const MANAGED_CLIP_NAMES = new Set(['Jump_Land', ...CLIP_NAMES])
 const PROJECT_ROOT = resolve(import.meta.dirname, '..')
 const ASSET_ROOT = join(
   PROJECT_ROOT,
@@ -129,7 +158,11 @@ function assertQuaternionAccessor(accessor, label) {
   }
 }
 
-function assertVerticalHipsTranslationAccessor(accessor, label) {
+function assertVerticalHipsTranslationAccessor(
+  accessor,
+  label,
+  minimumCrouchCentimetres,
+) {
   if (accessor.getType() !== 'VEC3') {
     throw new Error(`${label} must use VEC3 translation values`)
   }
@@ -167,8 +200,10 @@ function assertVerticalHipsTranslationAccessor(accessor, label) {
   if (maximumHorizontalDelta > 0.001) {
     throw new Error(`${label} contains horizontal root travel`)
   }
-  if (minimumVerticalDelta > -8) {
-    throw new Error(`${label} does not contain the authored deep crouch`)
+  if (minimumVerticalDelta > -minimumCrouchCentimetres) {
+    throw new Error(
+      `${label} does not contain its ${minimumCrouchCentimetres} cm planted crouch`,
+    )
   }
 }
 
@@ -189,27 +224,34 @@ function maximumQuaternionExcursion(accessor) {
   return maximum
 }
 
-function installJumpAnimation(sourceDocument, targetDocument, targetId) {
+function installJumpAnimation(
+  sourceDocument,
+  targetDocument,
+  targetId,
+  clipSpec,
+) {
   const sourceAnimations = sourceDocument
     .getRoot()
     .listAnimations()
-    .filter((animation) => animation.getName() === CLIP_NAME)
+    .filter((animation) => animation.getName() === clipSpec.name)
   if (sourceAnimations.length !== 1) {
-    throw new Error(`${targetId} expected one ${CLIP_NAME} source clip`)
+    throw new Error(`${targetId} expected one ${clipSpec.name} source clip`)
   }
   const sourceAnimation = sourceAnimations[0]
   const duration = animationDuration(sourceAnimation)
-  if (Math.abs(duration - EXPECTED_DURATION_SECONDS) > 0.001) {
+  if (Math.abs(duration - clipSpec.durationSeconds) > 0.001) {
     throw new Error(
-      `${targetId} ${CLIP_NAME} duration is ${duration}, expected ${EXPECTED_DURATION_SECONDS}`,
+      `${targetId} ${clipSpec.name} duration is ${duration}, expected ${clipSpec.durationSeconds}`,
     )
   }
 
   for (const [boneName, minimumExcursion] of [
-    ['LeftArm', 1.7],
-    ['RightArm', 1.7],
-    ['LeftForeArm', 0.45],
-    ['RightForeArm', 0.45],
+    ['LeftLeg', clipSpec.minimumKneeExcursion],
+    ['RightLeg', clipSpec.minimumKneeExcursion],
+    ['LeftArm', clipSpec.minimumArmExcursion],
+    ['RightArm', clipSpec.minimumArmExcursion],
+    ['LeftForeArm', clipSpec.minimumForearmExcursion],
+    ['RightForeArm', clipSpec.minimumForearmExcursion],
   ]) {
     const channel = sourceAnimation
       .listChannels()
@@ -221,20 +263,16 @@ function installJumpAnimation(sourceDocument, targetDocument, targetId) {
     const output = channel?.getSampler()?.getOutput()
     if (!output || maximumQuaternionExcursion(output) < minimumExcursion) {
       throw new Error(
-        `${targetId} ${CLIP_NAME} does not contain the bent-elbow arm drive for ${boneName}`,
+        `${targetId} ${clipSpec.name} does not contain the required articulated drive for ${boneName}`,
       )
     }
-  }
-
-  for (const animation of [...targetDocument.getRoot().listAnimations()]) {
-    if (animation.getName() === CLIP_NAME) animation.dispose()
   }
 
   const targetNodes = uniqueNodesByName(targetDocument)
   const targetBuffer =
     targetDocument.getRoot().listBuffers()[0] ??
     targetDocument.createBuffer('scale-encounter-avatar-buffer')
-  const targetAnimation = targetDocument.createAnimation(CLIP_NAME)
+  const targetAnimation = targetDocument.createAnimation(clipSpec.name)
   const copiedSamplers = new Map()
   const animatedBoneNames = new Set()
   let hipsTranslationCount = 0
@@ -267,6 +305,7 @@ function installJumpAnimation(sourceDocument, targetDocument, targetId) {
         assertVerticalHipsTranslationAccessor(
           output,
           `${targetId}:${sourceNodeName}:translation`,
+          clipSpec.minimumCrouchCentimetres,
         )
       }
       targetSampler = targetDocument
@@ -307,6 +346,8 @@ function installJumpAnimation(sourceDocument, targetDocument, targetId) {
   }
 
   return {
+    clip: clipSpec.name,
+    entry: clipSpec.entry,
     boneCount: animatedBoneNames.size,
     channelCount: targetAnimation.listChannels().length,
     duration,
@@ -328,8 +369,18 @@ async function stageTarget(target) {
     .getRoot()
     .listAnimations()
     .map((animation) => animation.getName())
-    .filter((name) => name !== CLIP_NAME)
-  const jump = installJumpAnimation(sourceDocument, targetDocument, target.id)
+    .filter((name) => !MANAGED_CLIP_NAMES.has(name))
+  for (const animation of [...targetDocument.getRoot().listAnimations()]) {
+    if (MANAGED_CLIP_NAMES.has(animation.getName())) animation.dispose()
+  }
+  const jumps = CLIP_SPECS.map((clipSpec) =>
+    installJumpAnimation(
+      sourceDocument,
+      targetDocument,
+      target.id,
+      clipSpec,
+    ),
+  )
   await targetDocument.transform(
     prune({
       keepAttributes: true,
@@ -344,7 +395,7 @@ async function stageTarget(target) {
     .getRoot()
     .listAnimations()
     .map((animation) => animation.getName())
-  const expectedClipNames = [...beforeClipNames, CLIP_NAME]
+  const expectedClipNames = [...beforeClipNames, ...CLIP_NAMES]
   if (JSON.stringify(afterClipNames) !== JSON.stringify(expectedClipNames)) {
     throw new Error(
       `${target.id} clip set changed unexpectedly: ${afterClipNames.join(', ')}`,
@@ -353,20 +404,22 @@ async function stageTarget(target) {
   const jumpAnimations = verificationDocument
     .getRoot()
     .listAnimations()
-    .filter((animation) => animation.getName() === CLIP_NAME)
+    .filter((animation) => CLIP_NAMES.includes(animation.getName()))
   if (
-    jumpAnimations.length !== 1 ||
-    jumpAnimations[0].listChannels().some(
-      (channel) =>
-        channel.getTargetPath() !== 'rotation' &&
-        !(
-          channel.getTargetPath() === 'translation' &&
-          channel.getTargetNode()?.getName() === 'Hips'
-        ),
+    jumpAnimations.length !== CLIP_SPECS.length ||
+    jumpAnimations.some((animation) =>
+      animation.listChannels().some(
+        (channel) =>
+          channel.getTargetPath() !== 'rotation' &&
+          !(
+            channel.getTargetPath() === 'translation' &&
+            channel.getTargetNode()?.getName() === 'Hips'
+          ),
+      ),
     )
   ) {
     throw new Error(
-      `${target.id} staged jump must contain rotations plus one vertical Hips channel`,
+      `${target.id} staged jumps must contain rotations plus one vertical Hips channel each`,
     )
   }
 
@@ -377,7 +430,7 @@ async function stageTarget(target) {
     clips: expectedClipNames,
     bytes: fileStat.size,
     sha256: await sha256(paths.staged),
-    jump,
+    jumps,
   }
 }
 
@@ -388,10 +441,13 @@ async function updateRunMetadata(result) {
   output.clips = result.clips
   output.sha256 = result.sha256
   runRecord.normalization.jumpAuthoring = {
-    clip: CLIP_NAME,
-    durationSeconds: result.jump.duration,
+    clips: result.jumps.map((jump) => ({
+      entry: jump.entry,
+      name: jump.clip,
+      durationSeconds: jump.duration,
+    })),
     channelPolicy: 'joint-rotation-plus-vertical-hips-no-horizontal-root-motion',
-    source: `Blender 5.2 procedural keyframes authored per package (${result.jump.boneCount} joints)`,
+    source: `Blender 5.2 procedural keyframes authored per package (${result.jumps[0].boneCount} joints)`,
     tools: [
       'scripts/author-scale-encounter-avatar-jump.py',
       'scripts/install-scale-encounter-avatar-jump.mjs',
@@ -432,7 +488,7 @@ for (const result of stagedResults) {
   entry.sha256 = result.sha256
 }
 manifest.runtimePolicy.jump =
-  'Land packages include a Blender-authored 0.9 s Jump_Land clip with joint rotations and a vertical-only Hips crouch; the outer runtime root owns the take-off parabola and all horizontal travel.'
+  'Land packages include separate Blender-authored Jump_Land_Stand, Jump_Land_Walk, and Jump_Land_Run clips. Each keeps hands in separate shoulder-width lanes, keeps the elbows flexed at roughly 90–120 degrees, and keeps each open palm in a near-vertical inward plane throughout take-off, flight, descent, landing, and recovery. The mirrored left and right hand meshes use opposite local-axis signs for their visible palm faces; authoring resolves them independently and rejects wrist corrections over 120 degrees to prevent glove and wrist skin collapse. The 24-joint source rigs contain whole-hand joints but no finger or thumb joints, so the clips do not fake a fist by folding the wrist. Walk and run entries preserve a modest gait asymmetry while lifting both arms once, keep the same arm slightly higher throughout flight, then lower both flexed arms together without an airborne side exchange. Clips provide entry-specific preparation, flight, landing absorption, and recovery, with joint rotations plus vertical-only planted-contact Hips compression; the terrain-clamped outer runtime root owns the matched parabola and horizontal travel.'
 await writeFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`)
 
 for (const result of stagedResults) {
@@ -441,8 +497,10 @@ for (const result of stagedResults) {
       result.target.id,
       basename(result.paths.runtime),
       `${result.bytes} bytes`,
-      `${result.jump.duration.toFixed(3)}s`,
-      `${result.jump.channelCount} skeletal channels`,
+      result.jumps
+        .map((jump) => `${jump.entry}=${jump.duration.toFixed(3)}s`)
+        .join(','),
+      `${result.jumps[0].channelCount} skeletal channels per jump`,
       result.sha256,
     ].join(' | '),
   )

@@ -65,6 +65,7 @@ import {
   type ScaleEncounterAvatarFactory,
   type ScaleEncounterCameraStage,
   type ScaleEncounterDefinition,
+  type ScaleEncounterJumpEntryMotion,
   type ScaleEncounterPlacement,
   type ScaleEncounterPerspective,
   type ScaleEncounterProfile,
@@ -373,7 +374,7 @@ interface ScaleEncounterRuntime {
   boostFlow: ScaleEncounterBoostFlowEffect | null
   environment: ScaleEncounterEnvironment | null
   jumpActive: boolean
-  jumpCrouchDepthMeters: number
+  jumpEntryMotion: ScaleEncounterJumpEntryMotion
   jumpOffsetMeters: number
   jumpPhase: 'grounded' | 'anticipation' | 'airborne' | 'landing'
   jumpPhaseElapsedSeconds: number
@@ -429,17 +430,43 @@ const SCALE_ENCOUNTER_ORBIT_EASING_PER_SECOND = 10
 const SCALE_ENCOUNTER_AIR_BOOST_MULTIPLIER = 1.6
 const SCALE_ENCOUNTER_WATER_BOOST_MULTIPLIER = 1.4
 const SCALE_ENCOUNTER_BOOST_EASING_PER_SECOND = 8
-const SCALE_ENCOUNTER_JUMP_MINIMUM_HEIGHT_METERS = 0.12
-const SCALE_ENCOUNTER_JUMP_MAXIMUM_HEIGHT_METERS = 0.18
-const SCALE_ENCOUNTER_JUMP_ANTICIPATION_SECONDS = 0.2
-const SCALE_ENCOUNTER_JUMP_AIRBORNE_SECONDS = 0.455
-const SCALE_ENCOUNTER_JUMP_LANDING_RECOVERY_SECONDS = 0.245
-// The package-local Hips channel drops 8.4 cm on its authored 1.15 m rig.
-// Scaling the camera/centre-of-mass crouch by the same ratio keeps shoe soles
-// planted for every accepted 90–130 cm profile.
-const SCALE_ENCOUNTER_JUMP_CROUCH_HEIGHT_RATIO = 8.4 / 115
-const SCALE_ENCOUNTER_JUMP_FIRST_CROUCH_RATIO = 3.7 / 8.4
-const SCALE_ENCOUNTER_JUMP_LANDING_CROUCH_RATIO = 6.2 / 8.4
+interface ScaleEncounterJumpMotionPolicy {
+  readonly airborneSeconds: number
+  readonly anticipationSeconds: number
+  readonly heightRatio: number
+  readonly landingRecoverySeconds: number
+  readonly maximumHeightMeters: number
+  readonly minimumHeightMeters: number
+}
+
+const SCALE_ENCOUNTER_JUMP_MOTION_POLICY: Readonly<
+  Record<ScaleEncounterJumpEntryMotion, ScaleEncounterJumpMotionPolicy>
+> = {
+  idle: {
+    airborneSeconds: 27 / 60,
+    anticipationSeconds: 12 / 60,
+    heightRatio: 0.13,
+    landingRecoverySeconds: 15 / 60,
+    maximumHeightMeters: 0.18,
+    minimumHeightMeters: 0.12,
+  },
+  walk: {
+    airborneSeconds: 26 / 60,
+    anticipationSeconds: 8 / 60,
+    heightRatio: 0.115,
+    landingRecoverySeconds: 12 / 60,
+    maximumHeightMeters: 0.17,
+    minimumHeightMeters: 0.11,
+  },
+  run: {
+    airborneSeconds: 26 / 60,
+    anticipationSeconds: 6 / 60,
+    heightRatio: 0.105,
+    landingRecoverySeconds: 10 / 60,
+    maximumHeightMeters: 0.16,
+    minimumHeightMeters: 0.1,
+  },
+}
 const SCALE_ENCOUNTER_AVATAR_MOVING_HEADING_EASING_PER_SECOND = 18
 const SCALE_ENCOUNTER_AVATAR_IDLE_HEADING_EASING_PER_SECOND = 8
 const SCALE_ENCOUNTER_ORBIT_RETURN_SPEED_RADIANS_PER_SECOND =
@@ -2000,7 +2027,7 @@ export class ViewerController {
         boostFlow,
         environment,
         jumpActive: false,
-        jumpCrouchDepthMeters: 0,
+        jumpEntryMotion: 'idle',
         jumpOffsetMeters: 0,
         jumpPhase: 'grounded',
         jumpPhaseElapsedSeconds: 0,
@@ -2587,24 +2614,34 @@ export class ViewerController {
     ) {
       return false
     }
+    const currentMotion = (
+      encounter.avatar.root.userData as Record<string, unknown>
+    ).scaleEncounterAvatarMotion
+    const entryMotion: ScaleEncounterJumpEntryMotion =
+      currentMotion === 'run'
+        ? 'run'
+        : currentMotion === 'walk'
+          ? 'walk'
+          : 'idle'
+    const jumpPolicy = SCALE_ENCOUNTER_JUMP_MOTION_POLICY[entryMotion]
     const apexHeight = MathUtils.clamp(
-      encounter.profile.heightMeters * 0.13,
-      SCALE_ENCOUNTER_JUMP_MINIMUM_HEIGHT_METERS,
-      SCALE_ENCOUNTER_JUMP_MAXIMUM_HEIGHT_METERS,
+      encounter.profile.heightMeters * jumpPolicy.heightRatio,
+      jumpPolicy.minimumHeightMeters,
+      jumpPolicy.maximumHeightMeters,
     )
     encounter.jumpActive = true
-    encounter.jumpCrouchDepthMeters =
-      encounter.profile.heightMeters *
-      SCALE_ENCOUNTER_JUMP_CROUCH_HEIGHT_RATIO
+    encounter.jumpEntryMotion = entryMotion
     encounter.jumpOffsetMeters = 0
     encounter.jumpPhase = 'anticipation'
     encounter.jumpPhaseElapsedSeconds = 0
     encounter.jumpVelocityMetersPerSecond =
-      (4 * apexHeight) / SCALE_ENCOUNTER_JUMP_AIRBORNE_SECONDS
-    encounter.avatar.setActionState?.('jump', true)
+      (4 * apexHeight) / jumpPolicy.airborneSeconds
+    encounter.avatar.setActionState?.('jump', true, entryMotion)
     if (this.renderer?.domElement) {
       this.renderer.domElement.dataset.scaleEncounterContextAction = 'jump'
       this.renderer.domElement.dataset.scaleEncounterJump = 'anticipation'
+      this.renderer.domElement.dataset.scaleEncounterJumpEntryMotion =
+        entryMotion
     }
     return true
   }
@@ -2637,10 +2674,14 @@ export class ViewerController {
     encounter.actionBoostMultiplier = 1
     encounter.boostFlow?.setIntensity(0)
     if (encounter.jumpActive) {
-      encounter.avatar.setActionState?.('jump', false)
+      encounter.avatar.setActionState?.(
+        'jump',
+        false,
+        encounter.jumpEntryMotion,
+      )
     }
     encounter.jumpActive = false
-    encounter.jumpCrouchDepthMeters = 0
+    encounter.jumpEntryMotion = 'idle'
     encounter.jumpOffsetMeters = 0
     encounter.jumpPhase = 'grounded'
     encounter.jumpPhaseElapsedSeconds = 0
@@ -2649,6 +2690,7 @@ export class ViewerController {
     if (dataset) {
       delete dataset.scaleEncounterContextAction
       delete dataset.scaleEncounterJump
+      delete dataset.scaleEncounterJumpEntryMotion
       delete dataset.scaleEncounterBoost
       delete dataset.scaleEncounterBoostMultiplier
       delete dataset.scaleEncounterBoostFlowIntensity
@@ -2693,46 +2735,22 @@ export class ViewerController {
     }
 
     if (!encounter.jumpActive) return
+    const jumpPolicy =
+      SCALE_ENCOUNTER_JUMP_MOTION_POLICY[encounter.jumpEntryMotion]
     const stepSeconds = Math.max(deltaSeconds, 0)
     encounter.jumpPhaseElapsedSeconds += stepSeconds
 
     if (encounter.jumpPhase === 'anticipation') {
       const progress = MathUtils.clamp(
         encounter.jumpPhaseElapsedSeconds /
-          SCALE_ENCOUNTER_JUMP_ANTICIPATION_SECONDS,
+          jumpPolicy.anticipationSeconds,
         0,
         1,
       )
-      // The camera and centre of mass lower with the authored pelvis while
-      // both feet remain planted, then return to ground height at take-off.
-      const firstCrouchKey = 5 / 12
-      const deepestCrouchKey = 9 / 12
-      let crouchRatio: number
-      if (progress <= firstCrouchKey) {
-        crouchRatio =
-          SCALE_ENCOUNTER_JUMP_FIRST_CROUCH_RATIO *
-          MathUtils.smoothstep(progress, 0, firstCrouchKey)
-      } else if (progress <= deepestCrouchKey) {
-        crouchRatio = MathUtils.lerp(
-          SCALE_ENCOUNTER_JUMP_FIRST_CROUCH_RATIO,
-          1,
-          MathUtils.smoothstep(
-            progress,
-            firstCrouchKey,
-            deepestCrouchKey,
-          ),
-        )
-      } else {
-        crouchRatio =
-          1 -
-          MathUtils.smoothstep(
-            progress,
-            deepestCrouchKey,
-            1,
-          )
-      }
-      encounter.jumpOffsetMeters =
-        -encounter.jumpCrouchDepthMeters * crouchRatio
+      // The package-local clip bends the hips and knees while the planted
+      // feet remain on the terrain. Moving the outer root down as well applied
+      // the crouch twice and pushed shoes below the ground before take-off.
+      encounter.jumpOffsetMeters = 0
       if (progress >= 1) {
         encounter.jumpPhase = 'airborne'
         encounter.jumpPhaseElapsedSeconds = 0
@@ -2744,31 +2762,24 @@ export class ViewerController {
     } else if (encounter.jumpPhase === 'airborne') {
       const elapsed = encounter.jumpPhaseElapsedSeconds
       const apexHeight = MathUtils.clamp(
-        encounter.profile.heightMeters * 0.13,
-        SCALE_ENCOUNTER_JUMP_MINIMUM_HEIGHT_METERS,
-        SCALE_ENCOUNTER_JUMP_MAXIMUM_HEIGHT_METERS,
+        encounter.profile.heightMeters * jumpPolicy.heightRatio,
+        jumpPolicy.minimumHeightMeters,
+        jumpPolicy.maximumHeightMeters,
       )
       const progress = MathUtils.clamp(
-        elapsed / SCALE_ENCOUNTER_JUMP_AIRBORNE_SECONDS,
+        elapsed / jumpPolicy.airborneSeconds,
         0,
         1,
       )
       encounter.jumpVelocityMetersPerSecond =
-        ((4 * apexHeight) / SCALE_ENCOUNTER_JUMP_AIRBORNE_SECONDS) *
+        ((4 * apexHeight) / jumpPolicy.airborneSeconds) *
         (1 - 2 * progress)
-      const landingCompression =
-        encounter.jumpCrouchDepthMeters *
-        SCALE_ENCOUNTER_JUMP_LANDING_CROUCH_RATIO *
-        MathUtils.smoothstep(progress, 0.88, 1)
       encounter.jumpOffsetMeters =
-        4 * apexHeight * progress * (1 - progress) -
-        landingCompression
+        4 * apexHeight * progress * (1 - progress)
       if (progress >= 1) {
         encounter.jumpPhase = 'landing'
         encounter.jumpPhaseElapsedSeconds = 0
-        encounter.jumpOffsetMeters =
-          -encounter.jumpCrouchDepthMeters *
-          SCALE_ENCOUNTER_JUMP_LANDING_CROUCH_RATIO
+        encounter.jumpOffsetMeters = 0
         encounter.jumpVelocityMetersPerSecond = 0
         if (this.renderer?.domElement) {
           this.renderer.domElement.dataset.scaleEncounterJump = 'landing'
@@ -2777,23 +2788,29 @@ export class ViewerController {
     } else if (encounter.jumpPhase === 'landing') {
       const progress = MathUtils.clamp(
         encounter.jumpPhaseElapsedSeconds /
-          SCALE_ENCOUNTER_JUMP_LANDING_RECOVERY_SECONDS,
+          jumpPolicy.landingRecoverySeconds,
         0,
         1,
       )
-      encounter.jumpOffsetMeters =
-        -encounter.jumpCrouchDepthMeters *
-        SCALE_ENCOUNTER_JUMP_LANDING_CROUCH_RATIO *
-        (1 - MathUtils.smoothstep(progress, 0, 1))
+      // Landing compression also belongs to the skeleton. The outer root
+      // stays clamped to the sampled terrain throughout recovery.
+      encounter.jumpOffsetMeters = 0
       if (progress >= 1) {
         encounter.jumpOffsetMeters = 0
         encounter.jumpVelocityMetersPerSecond = 0
         encounter.jumpActive = false
         encounter.jumpPhase = 'grounded'
         encounter.jumpPhaseElapsedSeconds = 0
-        encounter.avatar.setActionState?.('jump', false)
+        encounter.avatar.setActionState?.(
+          'jump',
+          false,
+          encounter.jumpEntryMotion,
+        )
+        encounter.jumpEntryMotion = 'idle'
         if (this.renderer?.domElement) {
           this.renderer.domElement.dataset.scaleEncounterJump = 'grounded'
+          delete this.renderer.domElement.dataset
+            .scaleEncounterJumpEntryMotion
         }
       }
     }
@@ -5058,6 +5075,7 @@ export class ViewerController {
           deltaSeconds,
           this.camera,
           this.reducedMotion,
+          this.scaleEncounter.avatar,
         )
       }
       if (import.meta.env.MODE === 'review') {

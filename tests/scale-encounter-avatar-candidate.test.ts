@@ -154,7 +154,12 @@ function candidateFor(
     .filter((clipName) => clipName !== options.omittedClip)
     .map((clipName) => {
       const moving = clipName.startsWith('Walk_') || clipName.startsWith('Run_')
-      const jumping = clipName === 'Jump_Land'
+      const jumping = clipName.startsWith('Jump_Land_')
+      const jumpDuration = clipName.endsWith('_Stand')
+        ? 54 / 60
+        : clipName.endsWith('_Walk')
+          ? 46 / 60
+          : 42 / 60
       const amplitude = clipName.startsWith('Run_') ? 0.12 : 0.08
       const tracks: KeyframeTrack[] = [
         new NumberKeyframeTrack(
@@ -162,7 +167,7 @@ function candidateFor(
           moving
             ? [0, 0.25, 0.5, 0.75, 1]
             : jumping
-              ? [0, 0.9]
+              ? [0, jumpDuration]
               : [0, 1],
           moving ? [0, amplitude, 0, -amplitude, 0] : [0, 0],
         ),
@@ -178,17 +183,17 @@ function candidateFor(
         tracks.push(
           new QuaternionKeyframeTrack(
             'LeftLeg.quaternion',
-            [0, 0.15, 0.45, 0.9],
+            [0, jumpDuration * 0.2, jumpDuration * 0.55, jumpDuration],
             kneeValues,
           ),
           new QuaternionKeyframeTrack(
             'RightLeg.quaternion',
-            [0, 0.15, 0.45, 0.9],
+            [0, jumpDuration * 0.2, jumpDuration * 0.55, jumpDuration],
             kneeValues,
           ),
           new VectorKeyframeTrack(
             'Hips.position',
-            [0, 0.15, 0.45, 0.9],
+            [0, jumpDuration * 0.2, jumpDuration * 0.55, jumpDuration],
             [
               0, 0.48, 0,
               0, 0.41, 0,
@@ -216,7 +221,7 @@ function candidateFor(
           ),
         )
       }
-      return new AnimationClip(clipName, jumping ? 0.9 : 1, tracks)
+      return new AnimationClip(clipName, jumping ? jumpDuration : 1, tracks)
     })
   return { animations, scene }
 }
@@ -331,12 +336,16 @@ describe('scale encounter complete Meshy V4 scene avatars', () => {
       'Idle_Forest',
       'Walk_Forest',
       'Run_Forest',
-      'Jump_Land',
+      'Jump_Land_Stand',
+      'Jump_Land_Walk',
+      'Jump_Land_Run',
     ])
     expect(packageFor('girl', 'snow-expedition').clipNames).toEqual([
       'Idle_Snow',
       'Walk_Snow',
-      'Jump_Land',
+      'Jump_Land_Stand',
+      'Jump_Land_Walk',
+      'Jump_Land_Run',
     ])
     expect(packageFor('boy', 'air-wingsuit').clipNames).toEqual([
       'Glide_Static',
@@ -451,7 +460,7 @@ describe('scale encounter complete Meshy V4 scene avatars', () => {
     }
   })
 
-  it('plays the package-local land jump once and returns to current locomotion', async () => {
+  it('selects the package-local jump for each entry gait and returns to current locomotion', async () => {
     const { loader } = loaderFixture(8)
     const lease = await loader.acquire(
       { gender: 'boy', heightCm: 110 },
@@ -464,18 +473,29 @@ describe('scale encounter complete Meshy V4 scene avatars', () => {
     )
 
     avatar.setMotionState?.({ kind: 'walk', speedMetersPerSecond: 1.2 })
-    avatar.setActionState?.('jump', true)
+    avatar.setActionState?.('jump', true, 'walk')
     expect(avatar.root.userData.scaleEncounterAvatarActiveClip).toBe(
-      'Jump_Land',
+      'Jump_Land_Walk',
     )
     avatar.setMotionState?.({ kind: 'run', speedMetersPerSecond: 2.8 })
     expect(avatar.root.userData.scaleEncounterAvatarActiveClip).toBe(
-      'Jump_Land',
+      'Jump_Land_Walk',
     )
-    avatar.setActionState?.('jump', false)
+    avatar.setActionState?.('jump', false, 'walk')
     expect(avatar.root.userData.scaleEncounterAvatarActiveClip).toBe(
       'Run_Forest',
     )
+    avatar.setActionState?.('jump', true, 'run')
+    expect(avatar.root.userData.scaleEncounterAvatarActiveClip).toBe(
+      'Jump_Land_Run',
+    )
+    avatar.setActionState?.('jump', false, 'run')
+    avatar.setMotionState?.({ kind: 'idle', speedMetersPerSecond: 0 })
+    avatar.setActionState?.('jump', true, 'idle')
+    expect(avatar.root.userData.scaleEncounterAvatarActiveClip).toBe(
+      'Jump_Land_Stand',
+    )
+    avatar.setActionState?.('jump', false, 'idle')
 
     avatar.dispose?.()
     lease.release()
@@ -498,7 +518,7 @@ describe('scale encounter complete Meshy V4 scene avatars', () => {
     const rightStart = rightKnee.quaternion.clone()
 
     avatar.updateIdle?.(0, false)
-    avatar.setActionState?.('jump', true)
+    avatar.setActionState?.('jump', true, 'idle')
     for (let frame = 1; frame <= 6; frame += 1) {
       avatar.updateIdle?.(frame / 30, false)
     }
@@ -506,10 +526,10 @@ describe('scale encounter complete Meshy V4 scene avatars', () => {
     expect(leftKnee.quaternion.angleTo(leftStart)).toBeGreaterThan(0.2)
     expect(rightKnee.quaternion.angleTo(rightStart)).toBeGreaterThan(0.2)
     expect(avatar.root.userData.scaleEncounterAvatarActiveClip).toBe(
-      'Jump_Land',
+      'Jump_Land_Stand',
     )
 
-    avatar.setActionState?.('jump', false)
+    avatar.setActionState?.('jump', false, 'idle')
     avatar.dispose?.()
     lease.release()
   })

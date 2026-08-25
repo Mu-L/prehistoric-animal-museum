@@ -27,6 +27,7 @@ import {
   type ScaleEncounterAvatarMotionState,
   type ScaleEncounterGender,
   type ScaleEncounterHabitat,
+  type ScaleEncounterJumpEntryMotion,
   type ScaleEncounterProfile,
 } from '../viewer/scale-encounter'
 import {
@@ -51,7 +52,9 @@ export type ReviewCandidateAvatarClipName =
   | 'Idle_Forest'
   | 'Walk_Forest'
   | 'Run_Forest'
-  | 'Jump_Land'
+  | 'Jump_Land_Stand'
+  | 'Jump_Land_Walk'
+  | 'Jump_Land_Run'
   | 'Idle_Snow'
   | 'Walk_Snow'
   | 'Glide_Static'
@@ -66,7 +69,14 @@ export interface ReviewCandidateAvatarPackage {
     Record<ScaleEncounterAvatarMotion, ReviewCandidateAvatarClipName>
   >
   readonly clipForAction: Readonly<
-    Partial<Record<ScaleEncounterAvatarAction, ReviewCandidateAvatarClipName>>
+    Partial<
+      Record<
+        ScaleEncounterAvatarAction,
+        Readonly<
+          Record<ScaleEncounterJumpEntryMotion, ReviewCandidateAvatarClipName>
+        >
+      >
+    >
   >
   readonly clipNames: readonly ReviewCandidateAvatarClipName[]
   readonly defaultClipName: ReviewCandidateAvatarClipName
@@ -134,9 +144,22 @@ const CLIPS_BY_PROFILE: Readonly<
   Record<ReviewCandidateAvatarProfile, AvatarClipPolicy>
 > = {
   'land-explorer': {
-    clipForAction: { jump: 'Jump_Land' },
+    clipForAction: {
+      jump: {
+        idle: 'Jump_Land_Stand',
+        walk: 'Jump_Land_Walk',
+        run: 'Jump_Land_Run',
+      },
+    },
     defaultClipName: 'Idle_Forest',
-    clipNames: ['Idle_Forest', 'Walk_Forest', 'Run_Forest', 'Jump_Land'],
+    clipNames: [
+      'Idle_Forest',
+      'Walk_Forest',
+      'Run_Forest',
+      'Jump_Land_Stand',
+      'Jump_Land_Walk',
+      'Jump_Land_Run',
+    ],
     clipForMotion: {
       idle: 'Idle_Forest',
       walk: 'Walk_Forest',
@@ -146,9 +169,21 @@ const CLIPS_BY_PROFILE: Readonly<
     },
   },
   'snow-expedition': {
-    clipForAction: { jump: 'Jump_Land' },
+    clipForAction: {
+      jump: {
+        idle: 'Jump_Land_Stand',
+        walk: 'Jump_Land_Walk',
+        run: 'Jump_Land_Run',
+      },
+    },
     defaultClipName: 'Idle_Snow',
-    clipNames: ['Idle_Snow', 'Walk_Snow', 'Jump_Land'],
+    clipNames: [
+      'Idle_Snow',
+      'Walk_Snow',
+      'Jump_Land_Stand',
+      'Jump_Land_Walk',
+      'Jump_Land_Run',
+    ],
     clipForMotion: {
       idle: 'Idle_Snow',
       walk: 'Walk_Snow',
@@ -220,7 +255,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     'land-explorer',
     'land',
     BASE_AUTHORED_HEIGHT_METERS,
-    '003dcd5344c3094562f39a5a56a090fe388168fe83da0d0010107320834799f7',
+    '591201f2048b279a4dcc6a231c2023cc5a9a9d36495e803d437e40f1abd4c62b',
     new URL(
       './assets/avatars/child-avatar-v4-boy-land-explorer-v01.glb',
       import.meta.url,
@@ -232,7 +267,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     'land-explorer',
     'land',
     BASE_AUTHORED_HEIGHT_METERS,
-    'bea3c113a62286861dc1da9d2b18311f244abc3295c1e462f69f486cd0d08bed',
+    '71e602e6ac2cf63d67965df446f5314096882ef2dd83e7aa01f164e84c506aaa',
     new URL(
       './assets/avatars/child-avatar-v4-girl-land-explorer-v01.glb',
       import.meta.url,
@@ -244,7 +279,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     'snow-expedition',
     'land',
     BASE_AUTHORED_HEIGHT_METERS,
-    '34a9a162fe632a68f98c0eccc66a53d31a9fa794d351432620bd2c734469e872',
+    '6ea345a82d8649e9ca6e86d7b9a0603eb203fc2a3a52c319ddaa9f3ae8b46658',
     new URL(
       './assets/avatars/child-avatar-v4-boy-snow-expedition-v01.glb',
       import.meta.url,
@@ -256,7 +291,7 @@ export const REVIEW_CANDIDATE_AVATAR_PACKAGES = {
     'snow-expedition',
     'land',
     BASE_AUTHORED_HEIGHT_METERS,
-    '361f8d43f2925eeacd6ae33e1efce602129b4c2aab8933f4304bbc0ba8f2b937',
+    'e9eeeaa6894b797ffdbb850b2b63a7bb9ddff58221f52a4a7ae7867c0e929fe7',
     new URL(
       './assets/avatars/child-avatar-v4-girl-snow-expedition-v01.glb',
       import.meta.url,
@@ -987,7 +1022,7 @@ export function createReviewCandidateAvatarLoader(
           )
           if (!clip) throw new Error(`candidate-avatar-missing-${clipName}`)
           const action = mixer.clipAction(clip)
-          if (clipName === 'Jump_Land') {
+          if (clipName.startsWith('Jump_Land_')) {
             action.setLoop(LoopOnce, 1)
             action.clampWhenFinished = true
           } else {
@@ -1073,8 +1108,15 @@ export function createReviewCandidateAvatarLoader(
         const setActionState = (
           action: ScaleEncounterAvatarAction,
           active: boolean,
+          requestedEntryMotion?: ScaleEncounterJumpEntryMotion,
         ) => {
-          const clipName = entry.avatarPackage.clipForAction[action]
+          const clipForEntry = entry.avatarPackage.clipForAction[action]
+          const entryMotion: ScaleEncounterJumpEntryMotion =
+            requestedEntryMotion ??
+            (motionState.kind === 'walk' || motionState.kind === 'run'
+              ? motionState.kind
+              : 'idle')
+          const clipName = clipForEntry?.[entryMotion]
           if (!clipName || disposed) return
           if (!active) {
             if (transientAction !== action) return
@@ -1099,6 +1141,7 @@ export function createReviewCandidateAvatarLoader(
           activeAction = nextAction
           activeClipName = clipName
           root.userData.scaleEncounterAvatarActiveClip = activeClipName
+          root.userData.scaleEncounterAvatarJumpEntryMotion = entryMotion
         }
 
         const dispose = () => {

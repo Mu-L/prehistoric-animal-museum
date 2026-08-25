@@ -1,12 +1,13 @@
-"""Author the review avatar's grounded jump clip in Blender.
+"""Author the review avatar's grounded jump family in Blender.
 
 The application owns the character's world-space jump parabola. This script
-authors a package-local anticipation, take-off, airborne, landing, and recovery
-sequence. Joint rotations create the pose while a vertical-only Hips channel
-lowers the centre of mass during the two-footed crouches. It never translates
-the character horizontally, so the scale-comparison rail remains owned by the
-runtime. The exported GLB is an animation source: the companion installer
-copies only ``Jump_Land`` skeletal channels into the untouched V4 review
+authors package-local standing, walking, and running entries. Each sequence
+contains anticipation, take-off, airborne travel, descent, landing absorption,
+and recovery. Joint rotations create the pose while a vertical-only Hips
+channel lowers the centre of mass at planted contacts. The clips never
+translate the character horizontally, so the scale-comparison rail remains
+owned by the runtime. The exported GLB is an animation source: the companion
+installer copies only the three jump animations into the untouched V4 review
 package so Blender never recompresses the reviewed mesh or textures.
 
 Usage (arguments after ``--`` are passed to this script):
@@ -26,9 +27,45 @@ import bpy
 from mathutils import Matrix, Vector
 
 
-CLIP_NAME = "Jump_Land"
 FPS = 60
-FRAME_END = 54
+PALM_FACE_LOCAL_X_SIGN = {
+    # The mirrored hand meshes do not share the same palmar-side sign. On the
+    # anatomical left hand, the visible palm normal is -local X; on the right
+    # hand it is +local X. Treating both local X axes as the palm face inverted
+    # the left palm and forced an almost 180-degree wrist twist.
+    "LeftHand": -1.0,
+    "RightHand": 1.0,
+}
+CLIP_SPECS = {
+    "stand": {
+        "name": "Jump_Land_Stand",
+        "frame_end": 54,
+        "takeoff_frame": 12,
+        "apex_frame": 25,
+        "landing_frame": 39,
+        "preview_apex_centimetres": 15.0,
+        "preview_frames": (0, 4, 9, 12, 17, 25, 34, 39, 43, 49, 54),
+    },
+    "walk": {
+        "name": "Jump_Land_Walk",
+        "frame_end": 46,
+        "takeoff_frame": 8,
+        "apex_frame": 21,
+        "landing_frame": 34,
+        "preview_apex_centimetres": 13.2,
+        "preview_frames": (0, 4, 8, 13, 21, 30, 34, 39, 43, 46),
+    },
+    "run": {
+        "name": "Jump_Land_Run",
+        "frame_end": 42,
+        "takeoff_frame": 6,
+        "apex_frame": 19,
+        "landing_frame": 32,
+        "preview_apex_centimetres": 12.1,
+        "preview_frames": (0, 3, 6, 10, 19, 27, 32, 36, 39, 42),
+    },
+}
+FRAME_END = max(int(spec["frame_end"]) for spec in CLIP_SPECS.values())
 
 
 def parse_args() -> argparse.Namespace:
@@ -143,12 +180,76 @@ def aim_bone_in_armature_space(
     bpy.context.view_layer.update()
 
 
+def orient_terminal_hand_in_armature_space(
+    rig: bpy.types.Object,
+    bone_name: str,
+    target_direction: tuple[float, float, float],
+    side: int,
+) -> None:
+    """Keep the wrist neutral and the open palm in a vertical plane.
+
+    These 24-joint Meshy rigs expose LeftHand and RightHand but no finger or
+    thumb joints, so they cannot form a genuine fist. The hand bone's local Y
+    axis follows the wrist-to-fingers direction and local X is the hand's
+    thickness axis. Because the mirrored meshes use opposite local-X signs for
+    their visible palm faces, we solve the anatomical palm normal first and
+    then convert it back to the correct local-X sign. This keeps both palms
+    vertical and inward without forcing a destructive half-turn at the wrist.
+    """
+
+    bone = rig.pose.bones[bone_name]
+    target_y = Vector(target_direction).normalized()
+    target_palm_normal = Vector((target_y.y, -target_y.x, 0.0))
+    if target_palm_normal.length_squared <= 1e-12:
+        return
+    target_palm_normal.normalize()
+    inward_x = -float(side)
+    if target_palm_normal.x * inward_x < 0:
+        target_palm_normal.negate()
+    target_x = (
+        target_palm_normal * PALM_FACE_LOCAL_X_SIGN[bone_name]
+    )
+    target_z = target_x.cross(target_y).normalized()
+
+    current_basis = Matrix(
+        (
+            tuple(bone.x_axis),
+            tuple(bone.y_axis),
+            tuple(bone.z_axis),
+        )
+    ).transposed()
+    target_basis = Matrix(
+        (
+            tuple(target_x),
+            tuple(target_y),
+            tuple(target_z),
+        )
+    ).transposed()
+    delta = target_basis @ current_basis.inverted()
+    correction_degrees = math.degrees(delta.to_quaternion().angle)
+    if correction_degrees > 120:
+        raise RuntimeError(
+            f"{bone_name} requires a {correction_degrees:.1f}-degree wrist "
+            "correction; refusing a skin-collapsing twist"
+        )
+    pivot = bone.head.copy()
+    transform = (
+        Matrix.Translation(pivot)
+        @ delta.to_4x4()
+        @ Matrix.Translation(-pivot)
+    )
+    bone.matrix = transform @ bone.matrix
+    bpy.context.view_layer.update()
+
+
 def key_pose(
     rig: bpy.types.Object,
     frame: int,
     hips_drop_centimetres: float,
     rotations: tuple[tuple[str, tuple[float, float, float], float], ...],
     arm_directions: tuple[
+        tuple[float, float, float],
+        tuple[float, float, float],
         tuple[float, float, float],
         tuple[float, float, float],
     ]
@@ -164,9 +265,7 @@ def key_pose(
     for bone_name, axis, degrees in rotations:
         rotate_bone_in_armature_space(rig, bone_name, axis, degrees)
     if arm_directions:
-        left_upper, left_lower = arm_directions
-        right_upper = (-left_upper[0], left_upper[1], left_upper[2])
-        right_lower = (-left_lower[0], left_lower[1], left_lower[2])
+        left_upper, left_lower, right_upper, right_lower = arm_directions
         aim_bone_in_armature_space(
             rig, "LeftArm", "LeftForeArm", left_upper
         )
@@ -178,6 +277,20 @@ def key_pose(
         )
         aim_bone_in_armature_space(
             rig, "RightForeArm", "RightHand", right_lower
+        )
+    for forearm_name, hand_name, side in (
+        ("LeftForeArm", "LeftHand", 1),
+        ("RightForeArm", "RightHand", -1),
+    ):
+        hand_direction = (
+            rig.pose.bones[hand_name].head
+            - rig.pose.bones[forearm_name].head
+        )
+        orient_terminal_hand_in_armature_space(
+            rig,
+            hand_name,
+            tuple(hand_direction),
+            side,
         )
     for bone in rig.pose.bones:
         bone.keyframe_insert(
@@ -192,123 +305,333 @@ def key_pose(
     )
 
 
-def author_jump(rig: bpy.types.Object) -> bpy.types.Action:
+def author_jumps(rig: bpy.types.Object) -> dict[str, bpy.types.Action]:
     scene = bpy.context.scene
     scene.render.fps = FPS
     scene.render.fps_base = 1
     scene.frame_start = 0
     scene.frame_end = FRAME_END
-
-    action = bpy.data.actions.new(CLIP_NAME)
-    action.use_fake_user = True
     rig.animation_data_create()
-    rig.animation_data.action = action
 
     # Blender uses X left/right, Y front/back, Z up for these imported rigs.
-    # The leg sequence below is a symmetric two-footed squat: both thighs
-    # rotate toward -Y, both shins counter-rotate toward planted feet, and the
-    # pelvis drops 8.4 cm at maximum compression. The 0.9 s timing aligns with
-    # the runtime's 0.2 s anticipation, ~0.46 s parabola, and 0.24 s recovery.
-    # The arms swing behind the torso during loading, pass forward through
-    # shoulder height at take-off, then finish on a bent-elbow forward-up arc.
-    # Keeping those three stages separate avoids the former straight overhead
-    # lift, which read as a rigid vertical translation rather than momentum.
+    # Front is -Y. The standing jump uses a bilateral countermovement; the walk
+    # and run entries use a right-leg take-off, left-knee drive, and a later
+    # left-foot landing. Every arm direction keeps its own signed X component,
+    # which preserves roughly shoulder-width hand separation. Standing arms
+    # swing only forward-up below the head. Moving entries begin from an
+    # opposing gait pose, lift both arms once with the left arm modestly higher,
+    # then lower both together. They never exchange high/low sides in flight.
     lateral_axis = (1.0, 0.0, 0.0)
+    vertical_axis = (0.0, 0.0, 1.0)
 
     def body_pose(
-        thigh: float,
-        knee: float,
-        foot: float,
-        spine: float,
+        left_thigh: float,
+        left_knee: float,
+        left_foot: float,
+        right_thigh: float,
+        right_knee: float,
+        right_foot: float,
+        torso_forward: float,
+        torso_twist: float = 0.0,
     ) -> tuple[tuple[str, tuple[float, float, float], float], ...]:
         return (
-            ("LeftUpLeg", lateral_axis, thigh),
-            ("RightUpLeg", lateral_axis, thigh),
-            ("LeftLeg", lateral_axis, knee),
-            ("RightLeg", lateral_axis, knee),
-            ("LeftFoot", lateral_axis, foot),
-            ("RightFoot", lateral_axis, foot),
-            ("Spine", lateral_axis, spine),
-            ("Spine01", lateral_axis, spine * 0.45),
+            ("LeftUpLeg", lateral_axis, left_thigh),
+            ("LeftLeg", lateral_axis, left_knee),
+            ("LeftFoot", lateral_axis, left_foot),
+            ("RightUpLeg", lateral_axis, right_thigh),
+            ("RightLeg", lateral_axis, right_knee),
+            ("RightFoot", lateral_axis, right_foot),
+            ("Spine", lateral_axis, torso_forward * 0.55),
+            ("Spine01", lateral_axis, torso_forward * 0.30),
+            ("Spine02", lateral_axis, torso_forward * 0.15),
+            ("neck", lateral_axis, -torso_forward * 0.25),
+            ("Spine", vertical_axis, torso_twist),
+            ("Spine01", vertical_axis, torso_twist * 0.45),
         )
 
-    poses = (
-        (0, 0.0, body_pose(0, 0, 0, 0), None),
+    def arm_segment_direction(
+        side: float,
+        sagittal_degrees: float,
+        lateral: float,
+    ) -> tuple[float, float, float]:
+        """Return a shoulder-lane direction in the character sagittal plane.
+
+        Zero degrees points forward (-Y), positive angles rise, and negative
+        angles lower. Using a 70-degree difference between the upper-arm and
+        forearm directions produces an anatomical elbow angle near 110 degrees
+        after the small lateral shoulder-lane components are included.
+        """
+
+        radians = math.radians(sagittal_degrees)
+        sagittal = math.sqrt(1 - lateral * lateral)
+        return (
+            side * lateral,
+            -math.cos(radians) * sagittal,
+            math.sin(radians) * sagittal,
+        )
+
+    def bent_arm_pose(
+        left_upper_degrees: float,
+        left_forearm_degrees: float,
+        right_upper_degrees: float,
+        right_forearm_degrees: float,
+    ) -> tuple[
+        tuple[float, float, float],
+        tuple[float, float, float],
+        tuple[float, float, float],
+        tuple[float, float, float],
+    ]:
+        return (
+            arm_segment_direction(1, left_upper_degrees, 0.25),
+            arm_segment_direction(1, left_forearm_degrees, 0.12),
+            arm_segment_direction(-1, right_upper_degrees, 0.25),
+            arm_segment_direction(-1, right_forearm_degrees, 0.12),
+        )
+
+    # Every authored jump pose below keeps about 70 degrees between the upper
+    # arm and forearm segment directions: roughly a 110-degree anatomical elbow
+    # angle. Arms therefore swing from the shoulders while the elbows stay
+    # flexed; no phase straightens or reverses an elbow to lower the hands.
+    standing_load = bent_arm_pose(-140, -70, -140, -70)
+    standing_deep_load = bent_arm_pose(-152, -82, -152, -82)
+    standing_drive = bent_arm_pose(-14, 56, -14, 56)
+    standing_apex = bent_arm_pose(-4, 66, -4, 66)
+    standing_descent = bent_arm_pose(-26, 44, -26, 44)
+    standing_contact = bent_arm_pose(-40, 30, -40, 30)
+    standing_absorb = bent_arm_pose(-58, 12, -58, 12)
+    standing_recover = bent_arm_pose(-72, -2, -72, -2)
+
+    walking_entry = bent_arm_pose(-142, -72, -34, 36)
+    walking_takeoff = bent_arm_pose(-12, 58, -20, 50)
+    walking_flight = bent_arm_pose(0, 70, -8, 62)
+    walking_descent = bent_arm_pose(-30, 40, -38, 32)
+    walking_absorb = bent_arm_pose(-55, 15, -62, 8)
+    walking_recover = bent_arm_pose(-70, 0, -76, -6)
+
+    running_entry = bent_arm_pose(-145, -75, -35, 35)
+    running_takeoff = bent_arm_pose(-10, 60, -18, 52)
+    running_flight = bent_arm_pose(2, 72, -6, 64)
+    running_descent = bent_arm_pose(-28, 42, -36, 34)
+    running_absorb = bent_arm_pose(-54, 16, -61, 9)
+    running_recover = bent_arm_pose(-68, 2, -74, -4)
+
+    standing_poses = (
+        (0, 0.0, body_pose(0, 0, 0, 0, 0, 0, 0), None),
         (
-            5,
-            3.7,
-            body_pose(-15, 31, -16, 6),
-            ((0.18, 0.55, -0.82), (0.10, 0.05, -0.99)),
+            4,
+            2.3,
+            body_pose(-10, 22, -12, -10, 22, -12, 4),
+            standing_load,
         ),
         (
             9,
-            8.4,
-            body_pose(-35, 74, -39, 11),
-            ((0.20, 0.70, -0.69), (0.10, 0.16, -0.98)),
+            7.4,
+            body_pose(-31, 66, -35, -31, 66, -35, 10),
+            standing_deep_load,
         ),
         (
             12,
             0.0,
-            body_pose(-3, 6, -3, -3),
-            ((0.22, -0.97, 0.12), (0.22, -0.72, 0.66)),
+            body_pose(-2, 5, -3, -2, 5, -3, -2),
+            standing_drive,
         ),
         (
-            16,
+            17,
             0.0,
-            body_pose(-7, 15, -8, -3),
-            ((0.24, -0.92, 0.31), (0.23, -0.48, 0.85)),
+            body_pose(-11, 29, -18, -11, 29, -18, -2),
+            standing_drive,
         ),
         (
-            24,
+            25,
             0.0,
-            body_pose(-11, 29, -18, -2),
-            ((0.25, -0.85, 0.46), (0.22, -0.32, 0.92)),
+            body_pose(-21, 50, -29, -21, 50, -29, 0),
+            standing_apex,
         ),
         (
-            35,
+            34,
             0.0,
-            body_pose(-8, 18, -10, 1),
-            ((0.28, -0.94, 0.18), (0.20, -0.72, 0.66)),
+            body_pose(-15, 35, -20, -15, 35, -20, 3),
+            standing_descent,
         ),
         (
             39,
-            6.2,
-            body_pose(-29, 64, -34, 10),
-            ((0.20, 0.56, -0.80), (0.12, 0.08, -0.99)),
+            0.0,
+            body_pose(-10, 22, -11, -10, 22, -11, 7),
+            standing_contact,
         ),
         (
-            45,
-            3.2,
-            body_pose(-15, 32, -17, 5),
-            ((0.15, 0.18, -0.97), (0.07, -0.04, -1.0)),
+            43,
+            6.6,
+            body_pose(-30, 65, -35, -30, 65, -35, 10),
+            standing_absorb,
         ),
         (
-            50,
-            0.8,
-            body_pose(-4, 8, -4, 1),
-            ((0.11, 0.05, -0.99), (0.05, 0.02, -1.0)),
+            49,
+            2.4,
+            body_pose(-11, 26, -15, -11, 26, -15, 4),
+            standing_recover,
         ),
-        (54, 0.0, body_pose(0, 0, 0, 0), None),
+        (54, 0.0, body_pose(0, 0, 0, 0, 0, 0, 0), None),
     )
-    for frame, hips_drop_centimetres, rotations, arm_directions in poses:
-        key_pose(
-            rig,
-            frame,
-            hips_drop_centimetres,
-            rotations,
-            arm_directions,
-        )
 
-    # Smooth between the authored poses without overshooting knees or elbows.
-    if hasattr(action, "fcurves"):
-        for curve in action.fcurves:
-            for point in curve.keyframe_points:
-                point.interpolation = "BEZIER"
-                point.handle_left_type = "AUTO_CLAMPED"
-                point.handle_right_type = "AUTO_CLAMPED"
+    walking_poses = (
+        (
+            0,
+            0.0,
+            body_pose(-18, 25, -9, 12, 16, -6, 5, -3),
+            walking_entry,
+        ),
+        (
+            4,
+            3.8,
+            body_pose(-25, 42, -18, 8, 36, -21, 8, -4),
+            walking_entry,
+        ),
+        (
+            8,
+            0.0,
+            body_pose(-33, 54, -22, 7, 5, -7, 4, -3),
+            walking_takeoff,
+        ),
+        (
+            13,
+            0.0,
+            body_pose(-40, 65, -28, 12, 22, -14, 4, -2),
+            walking_takeoff,
+        ),
+        (
+            21,
+            0.0,
+            body_pose(-37, 61, -27, 5, 34, -21, 4, 1),
+            walking_flight,
+        ),
+        (
+            30,
+            0.0,
+            body_pose(-21, 30, -11, 15, 28, -17, 6, 3),
+            walking_descent,
+        ),
+        (
+            34,
+            0.0,
+            body_pose(-12, 20, -7, 18, 31, -18, 8, 4),
+            walking_descent,
+        ),
+        (
+            39,
+            4.8,
+            body_pose(-27, 58, -33, 7, 39, -24, 11, 4),
+            walking_absorb,
+        ),
+        (
+            43,
+            1.9,
+            body_pose(-12, 30, -17, -5, 25, -14, 6, 1),
+            walking_recover,
+        ),
+        (
+            46,
+            0.0,
+            body_pose(10, 17, -6, -18, 25, -9, 5, 3),
+            walking_recover,
+        ),
+    )
 
+    running_poses = (
+        (
+            0,
+            0.0,
+            body_pose(-32, 52, -20, 18, 18, -8, 9, -5),
+            running_entry,
+        ),
+        (
+            3,
+            3.4,
+            body_pose(-38, 65, -29, 12, 38, -22, 12, -5),
+            running_entry,
+        ),
+        (
+            6,
+            0.0,
+            body_pose(-43, 67, -27, 10, 5, -8, 8, -4),
+            running_takeoff,
+        ),
+        (
+            10,
+            0.0,
+            body_pose(-48, 72, -30, 15, 22, -14, 7, -3),
+            running_takeoff,
+        ),
+        (
+            19,
+            0.0,
+            body_pose(-43, 68, -28, 7, 38, -23, 6, 0),
+            running_flight,
+        ),
+        (
+            27,
+            0.0,
+            body_pose(-25, 34, -12, 18, 30, -17, 8, 4),
+            running_descent,
+        ),
+        (
+            32,
+            0.0,
+            body_pose(-14, 21, -7, 21, 34, -20, 11, 5),
+            running_descent,
+        ),
+        (
+            36,
+            4.3,
+            body_pose(-31, 64, -35, 7, 43, -26, 13, 4),
+            running_absorb,
+        ),
+        (
+            39,
+            1.7,
+            body_pose(-13, 32, -18, -8, 29, -16, 8, 1),
+            running_recover,
+        ),
+        (
+            42,
+            0.0,
+            body_pose(16, 20, -8, -34, 54, -21, 9, 5),
+            running_recover,
+        ),
+    )
+
+    all_poses = {
+        "stand": standing_poses,
+        "walk": walking_poses,
+        "run": running_poses,
+    }
+    actions: dict[str, bpy.types.Action] = {}
+    for entry, poses in all_poses.items():
+        spec = CLIP_SPECS[entry]
+        action = bpy.data.actions.new(str(spec["name"]))
+        action.use_fake_user = True
+        rig.animation_data.action = action
+        for frame, hips_drop_centimetres, rotations, arm_directions in poses:
+            key_pose(
+                rig,
+                frame,
+                hips_drop_centimetres,
+                rotations,
+                arm_directions,
+            )
+
+        # Smooth between authored poses without overshooting knees or elbows.
+        if hasattr(action, "fcurves"):
+            for curve in action.fcurves:
+                for point in curve.keyframe_points:
+                    point.interpolation = "BEZIER"
+                    point.handle_left_type = "AUTO_CLAMPED"
+                    point.handle_right_type = "AUTO_CLAMPED"
+        actions[entry] = action
+
+    rig.animation_data.action = actions["stand"]
     scene.frame_set(0)
-    return action
+    return actions
 
 
 def export_animation_source(output: Path) -> None:
@@ -324,6 +647,240 @@ def export_animation_source(output: Path) -> None:
         export_skins=True,
         export_morph=False,
     )
+
+
+def validate_hand_clearance(
+    rig: bpy.types.Object,
+    actions: dict[str, bpy.types.Action],
+) -> None:
+    """Reject unsafe hands, flat palms, or invalid elbow mechanics."""
+
+    scene = bpy.context.scene
+    for entry, action in actions.items():
+        rig.animation_data.action = action
+        minimum_hand_separation = math.inf
+        minimum_shoulder_span = math.inf
+        maximum_hand_above_head = -math.inf
+        hand_heights_by_frame: dict[int, tuple[float, float]] = {}
+        elbow_angles_by_frame: dict[int, tuple[float, float]] = {}
+        elbow_bends_by_frame: dict[int, tuple[float, float]] = {}
+        palm_normals_by_frame: dict[
+            int,
+            tuple[tuple[float, float], tuple[float, float]],
+        ] = {}
+        for frame in range(int(CLIP_SPECS[entry]["frame_end"]) + 1):
+            scene.frame_set(frame)
+            bpy.context.view_layer.update()
+            left_hand = rig.pose.bones["LeftHand"].head
+            right_hand = rig.pose.bones["RightHand"].head
+            left_shoulder = rig.pose.bones["LeftArm"].head
+            right_shoulder = rig.pose.bones["RightArm"].head
+            head_base = rig.pose.bones["Head"].head
+            left_upper_direction = (
+                rig.pose.bones["LeftForeArm"].head
+                - rig.pose.bones["LeftArm"].head
+            ).normalized()
+            left_forearm_direction = (
+                rig.pose.bones["LeftHand"].head
+                - rig.pose.bones["LeftForeArm"].head
+            ).normalized()
+            right_upper_direction = (
+                rig.pose.bones["RightForeArm"].head
+                - rig.pose.bones["RightArm"].head
+            ).normalized()
+            right_forearm_direction = (
+                rig.pose.bones["RightHand"].head
+                - rig.pose.bones["RightForeArm"].head
+            ).normalized()
+            minimum_hand_separation = min(
+                minimum_hand_separation,
+                abs(left_hand.x - right_hand.x),
+            )
+            minimum_shoulder_span = min(
+                minimum_shoulder_span,
+                abs(left_shoulder.x - right_shoulder.x),
+            )
+            maximum_hand_above_head = max(
+                maximum_hand_above_head,
+                left_hand.z - head_base.z,
+                right_hand.z - head_base.z,
+            )
+            hand_heights_by_frame[frame] = (left_hand.z, right_hand.z)
+            elbow_angles_by_frame[frame] = (
+                180
+                - math.degrees(
+                    left_upper_direction.angle(left_forearm_direction)
+                ),
+                180
+                - math.degrees(
+                    right_upper_direction.angle(right_forearm_direction)
+                ),
+            )
+            elbow_bends_by_frame[frame] = (
+                left_upper_direction.cross(left_forearm_direction).x,
+                right_upper_direction.cross(right_forearm_direction).x,
+            )
+            palm_normals_by_frame[frame] = (
+                (
+                    rig.pose.bones["LeftHand"].x_axis.x
+                    * PALM_FACE_LOCAL_X_SIGN["LeftHand"],
+                    rig.pose.bones["LeftHand"].x_axis.z
+                    * PALM_FACE_LOCAL_X_SIGN["LeftHand"],
+                ),
+                (
+                    rig.pose.bones["RightHand"].x_axis.x
+                    * PALM_FACE_LOCAL_X_SIGN["RightHand"],
+                    rig.pose.bones["RightHand"].x_axis.z
+                    * PALM_FACE_LOCAL_X_SIGN["RightHand"],
+                ),
+            )
+        minimum_ratio = minimum_hand_separation / max(
+            minimum_shoulder_span,
+            1e-6,
+        )
+        print(
+            f"{action.name} hand clearance: minimum separation "
+            f"{minimum_hand_separation:.2f} cm ({minimum_ratio:.2f}x shoulder "
+            f"span), maximum wrist above head base "
+            f"{maximum_hand_above_head:.2f} cm"
+        )
+        if minimum_ratio < 0.72:
+            raise RuntimeError(
+                f"{action.name} brings the hands inside natural shoulder lanes"
+            )
+        if maximum_hand_above_head > 12:
+            raise RuntimeError(f"{action.name} raises a wrist over the head")
+        elbow_start_frame = 4 if entry == "stand" else 0
+        elbow_end_frame = (
+            49 if entry == "stand" else int(CLIP_SPECS[entry]["frame_end"])
+        )
+        sampled_elbows = [
+            (frame, side, elbow_angles_by_frame[frame][side])
+            for frame in range(elbow_start_frame, elbow_end_frame + 1)
+            for side in (0, 1)
+        ]
+        minimum_elbow_angle = min(sample[2] for sample in sampled_elbows)
+        maximum_elbow_angle = max(sample[2] for sample in sampled_elbows)
+        maximum_bend_x = max(
+            elbow_bends_by_frame[frame][side]
+            for frame in range(elbow_start_frame, elbow_end_frame + 1)
+            for side in (0, 1)
+        )
+        print(
+            f"{action.name} elbow contract: anatomical angle "
+            f"{minimum_elbow_angle:.2f}-{maximum_elbow_angle:.2f} degrees; "
+            f"maximum sagittal bend sign {maximum_bend_x:.3f}"
+        )
+        invalid_elbow = next(
+            (
+                sample
+                for sample in sampled_elbows
+                if sample[2] < 88 or sample[2] > 122
+            ),
+            None,
+        )
+        if invalid_elbow:
+            frame, side, angle = invalid_elbow
+            side_name = "left" if side == 0 else "right"
+            raise RuntimeError(
+                f"{action.name} {side_name} elbow is {angle:.2f} degrees "
+                f"at frame {frame}; expected 88-122 degrees"
+            )
+        if maximum_bend_x > -0.15:
+            raise RuntimeError(
+                f"{action.name} straightens or reverses an elbow bend"
+            )
+        sampled_palms = [
+            (frame, side, palm_normals_by_frame[frame][side])
+            for frame in range(int(CLIP_SPECS[entry]["frame_end"]) + 1)
+            for side in (0, 1)
+        ]
+        maximum_palm_normal_z = max(
+            abs(sample[2][1]) for sample in sampled_palms
+        )
+        minimum_inward_palm_x = min(
+            -sample[2][0] if sample[1] == 0 else sample[2][0]
+            for sample in sampled_palms
+        )
+        print(
+            f"{action.name} palm contract: maximum vertical normal "
+            f"{maximum_palm_normal_z:.3f}; minimum inward normal "
+            f"{minimum_inward_palm_x:.3f}"
+        )
+        invalid_palm = next(
+            (
+                sample
+                for sample in sampled_palms
+                if abs(sample[2][1]) > 0.2
+            ),
+            None,
+        )
+        if invalid_palm:
+            frame, side, normal = invalid_palm
+            side_name = "left" if side == 0 else "right"
+            raise RuntimeError(
+                f"{action.name} {side_name} palm faces vertically at frame "
+                f"{frame}: normal X/Z=({normal[0]:.3f}, {normal[1]:.3f})"
+            )
+        if minimum_inward_palm_x < 0.3:
+            raise RuntimeError(
+                f"{action.name} turns a palm away from its inward vertical lane"
+            )
+        if entry in {"walk", "run"}:
+            takeoff_frame = int(CLIP_SPECS[entry]["takeoff_frame"])
+            apex_frame = int(CLIP_SPECS[entry]["apex_frame"])
+            landing_frame = int(CLIP_SPECS[entry]["landing_frame"])
+            entry_heights = hand_heights_by_frame[0]
+            apex_heights = hand_heights_by_frame[apex_frame]
+            landing_heights = hand_heights_by_frame[landing_frame]
+            minimum_left_over_right = min(
+                hand_heights_by_frame[frame][0]
+                - hand_heights_by_frame[frame][1]
+                for frame in range(takeoff_frame, landing_frame + 1)
+            )
+            maximum_post_apex_relift = max(
+                max(
+                    hand_heights_by_frame[frame][side]
+                    - hand_heights_by_frame[frame - 1][side]
+                    for side in (0, 1)
+                )
+                for frame in range(apex_frame + 1, landing_frame + 1)
+            )
+            print(
+                f"{action.name} single arm lift: apex rises "
+                f"L={apex_heights[0] - entry_heights[0]:.2f} cm, "
+                f"R={apex_heights[1] - entry_heights[1]:.2f} cm; "
+                f"apex-to-landing drop "
+                f"L={apex_heights[0] - landing_heights[0]:.2f} cm, "
+                f"R={apex_heights[1] - landing_heights[1]:.2f} cm; "
+                f"minimum left-over-right airborne difference "
+                f"{minimum_left_over_right:.2f} cm; maximum post-apex "
+                f"re-lift {maximum_post_apex_relift:.2f} cm/frame"
+            )
+            if min(
+                apex_heights[0] - entry_heights[0],
+                apex_heights[1] - entry_heights[1],
+            ) < 6:
+                raise RuntimeError(
+                    f"{action.name} does not raise both hands for take-off"
+                )
+            if min(
+                apex_heights[0] - landing_heights[0],
+                apex_heights[1] - landing_heights[1],
+            ) < 10:
+                raise RuntimeError(
+                    f"{action.name} does not lower both arms for landing"
+                )
+            if minimum_left_over_right < -1:
+                raise RuntimeError(
+                    f"{action.name} swaps the airborne arm-height ordering"
+                )
+            if maximum_post_apex_relift > 1:
+                raise RuntimeError(
+                    f"{action.name} contains a second post-apex arm lift"
+                )
+    rig.animation_data.action = actions["stand"]
+    scene.frame_set(0)
 
 
 def look_at(obj: bpy.types.Object, target: Vector) -> None:
@@ -354,7 +911,11 @@ def deformed_mesh_minimum_z(scene: bpy.types.Scene) -> float:
     return minimum_z
 
 
-def render_previews(rig: bpy.types.Object, preview_dir: Path) -> None:
+def render_previews(
+    rig: bpy.types.Object,
+    actions: dict[str, bpy.types.Action],
+    preview_dir: Path,
+) -> None:
     preview_dir.mkdir(parents=True, exist_ok=True)
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_EEVEE"
@@ -411,15 +972,48 @@ def render_previews(rig: bpy.types.Object, preview_dir: Path) -> None:
     fill_object.location = center + Vector((height * 1.7, height, height * 1.2))
     look_at(fill_object, center)
 
-    for frame in (0, 5, 9, 12, 16, 24, 35, 39, 45, 50, 54):
-        scene.frame_set(frame)
-        bpy.context.view_layer.update()
-        print(
-            f"Jump frame {frame:02d} deformed minimum Z: "
-            f"{deformed_mesh_minimum_z(scene):.4f} cm"
-        )
-        scene.render.filepath = str(preview_dir / f"jump-{frame:02d}.png")
-        bpy.ops.render.render(write_still=True)
+    preview_roots = [
+        obj
+        for obj in scene.objects
+        if obj.parent is None and obj.type in {"ARMATURE", "EMPTY", "MESH"}
+    ]
+    preview_root_z = {obj.name: obj.location.z for obj in preview_roots}
+
+    for entry, action in actions.items():
+        spec = CLIP_SPECS[entry]
+        variant_dir = preview_dir / entry
+        variant_dir.mkdir(parents=True, exist_ok=True)
+        rig.animation_data.action = action
+        for frame in spec["preview_frames"]:
+            takeoff_frame = int(spec["takeoff_frame"])
+            landing_frame = int(spec["landing_frame"])
+            if takeoff_frame < int(frame) < landing_frame:
+                progress = (int(frame) - takeoff_frame) / (
+                    landing_frame - takeoff_frame
+                )
+                jump_offset = (
+                    4
+                    * float(spec["preview_apex_centimetres"])
+                    * progress
+                    * (1 - progress)
+                )
+            else:
+                jump_offset = 0.0
+            for obj in preview_roots:
+                obj.location.z = preview_root_z[obj.name] + jump_offset
+            scene.frame_set(int(frame))
+            bpy.context.view_layer.update()
+            print(
+                f"{action.name} frame {frame:02d} deformed minimum Z: "
+                f"{deformed_mesh_minimum_z(scene):.4f} cm"
+            )
+            scene.render.filepath = str(
+                variant_dir / f"jump-{int(frame):02d}.png"
+            )
+            bpy.ops.render.render(write_still=True)
+    for obj in preview_roots:
+        obj.location.z = preview_root_z[obj.name]
+    rig.animation_data.action = actions["stand"]
     scene.frame_set(0)
     bpy.context.view_layer.objects.active = rig
 
@@ -435,13 +1029,22 @@ def main() -> None:
     bpy.ops.import_scene.gltf(filepath=str(input_path))
     rig = imported_armature()
     clear_imported_animation(rig)
-    action = author_jump(rig)
+    actions = author_jumps(rig)
+    validate_hand_clearance(rig, actions)
     export_animation_source(output_path)
     if args.preview_dir:
-        render_previews(rig, args.preview_dir.expanduser().resolve())
+        render_previews(
+            rig,
+            actions,
+            args.preview_dir.expanduser().resolve(),
+        )
     print(
-        f"Authored {action.name}: {FRAME_END / FPS:.3f}s, "
-        f"{len(rig.pose.bones)} bones, {output_path}"
+        "Authored "
+        + ", ".join(
+            f"{action.name}={CLIP_SPECS[entry]['frame_end'] / FPS:.3f}s"
+            for entry, action in actions.items()
+        )
+        + f": {len(rig.pose.bones)} bones, {output_path}"
     )
 
 

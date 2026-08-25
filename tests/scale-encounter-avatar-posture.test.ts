@@ -166,7 +166,7 @@ describe(avatarPostureSuiteTitle, () => {
       ).toEqual(entry.clips)
 
       for (const animation of root.listAnimations()) {
-        const isJump = animation.getName() === 'Jump_Land'
+        const isJump = animation.getName().startsWith('Jump_Land_')
         expect(animation.listChannels()).toHaveLength(
           isJump ? 25 : 72,
         )
@@ -262,7 +262,7 @@ describe(avatarPostureSuiteTitle, () => {
     }
   })
 
-  it('keeps each land jump package-local with visible knee flexion and no horizontal root travel', async () => {
+  it('keeps three entry-specific land jumps articulated and free of horizontal skeletal root travel', async () => {
     const manifest = await readManifest()
     const landEntries = manifest.packages.filter(
       (entry) =>
@@ -271,128 +271,206 @@ describe(avatarPostureSuiteTitle, () => {
     )
 
     expect(landEntries).toHaveLength(4)
+    const jumpSpecs = [
+      {
+        apexSeconds: 25 / 60,
+        durationSeconds: 54 / 60,
+        minimumArmExcursion: 1.1,
+        minimumForearmExcursion: 0.45,
+        minimumApexKneeChange: 0.45,
+        minimumCrouchCentimetres: 6,
+        minimumKneeExcursion: 0.7,
+        name: 'Jump_Land_Stand',
+        returnsToStartPose: true,
+      },
+      {
+        apexSeconds: 21 / 60,
+        durationSeconds: 46 / 60,
+        minimumArmExcursion: 0.65,
+        minimumForearmExcursion: 0.25,
+        minimumApexKneeChange: 0.45,
+        minimumCrouchCentimetres: 4,
+        minimumKneeExcursion: 0.35,
+        name: 'Jump_Land_Walk',
+        returnsToStartPose: false,
+      },
+      {
+        apexSeconds: 19 / 60,
+        durationSeconds: 42 / 60,
+        minimumArmExcursion: 0.65,
+        minimumForearmExcursion: 0.25,
+        minimumApexKneeChange: 0.3,
+        minimumCrouchCentimetres: 3.5,
+        minimumKneeExcursion: 0.5,
+        name: 'Jump_Land_Run',
+        returnsToStartPose: false,
+      },
+    ] as const
+
     for (const entry of landEntries) {
       const { document } = await readPackage(entry)
-      const jump = animationNamed(document, 'Jump_Land')
-      expect(jump.listChannels()).toHaveLength(jointNames.length + 1)
-      const rotationChannels = jump
-        .listChannels()
-        .filter((channel) => channel.getTargetPath() === 'rotation')
-      const translationChannels = jump
-        .listChannels()
-        .filter((channel) => channel.getTargetPath() === 'translation')
-      expect(rotationChannels).toHaveLength(jointNames.length)
-      expect(translationChannels).toHaveLength(1)
-      expect(translationChannels[0]?.getTargetNode()?.getName()).toBe('Hips')
-
-      const times = Array.from(
-        jump.listSamplers()[0]?.getInput()?.getArray() ?? [],
-      )
-      expect(times[0]).toBe(0)
-      expect(times.at(-1)).toBeCloseTo(0.9, 6)
-
-      const hipsTranslation = translationChannels[0]!
-        .getSampler()!
-        .getOutput()!
-      const firstHips = hipsTranslation.getElement(0, [] as number[])
-      const lastHips = hipsTranslation.getElement(
-        hipsTranslation.getCount() - 1,
-        [] as number[],
-      )
-      let minimumVerticalDelta = 0
-      let maximumHorizontalDelta = 0
-      for (let index = 0; index < hipsTranslation.getCount(); index += 1) {
-        const sample = hipsTranslation.getElement(index, [] as number[])
-        minimumVerticalDelta = Math.min(
-          minimumVerticalDelta,
-          sample[1]! - firstHips[1]!,
+      for (const clipSpec of jumpSpecs) {
+        const jump = animationNamed(document, clipSpec.name)
+        expect(jump.listChannels()).toHaveLength(jointNames.length + 1)
+        const rotationChannels = jump
+          .listChannels()
+          .filter((channel) => channel.getTargetPath() === 'rotation')
+        const translationChannels = jump
+          .listChannels()
+          .filter((channel) => channel.getTargetPath() === 'translation')
+        expect(rotationChannels).toHaveLength(jointNames.length)
+        expect(translationChannels).toHaveLength(1)
+        expect(translationChannels[0]?.getTargetNode()?.getName()).toBe(
+          'Hips',
         )
-        maximumHorizontalDelta = Math.max(
-          maximumHorizontalDelta,
-          Math.abs(sample[0]! - firstHips[0]!),
-          Math.abs(sample[2]! - firstHips[2]!),
-        )
-      }
-      expect(minimumVerticalDelta).toBeLessThanOrEqual(-8)
-      expect(maximumHorizontalDelta).toBeLessThan(0.001)
-      for (let component = 0; component < firstHips.length; component += 1) {
-        expect(lastHips[component]).toBeCloseTo(firstHips[component]!, 4)
-      }
 
-      let changedJointCount = 0
-      for (const channel of rotationChannels) {
-        const output = channel.getSampler()!.getOutput()!
-        const first = output.getElement(0, [] as number[])
-        const last = output.getElement(output.getCount() - 1, [] as number[])
-        const changed = Array.from({ length: output.getCount() }).some(
-          (_, index) => {
+        const times = Array.from(
+          jump.listSamplers()[0]?.getInput()?.getArray() ?? [],
+        )
+        expect(times[0]).toBe(0)
+        expect(times.at(-1)).toBeCloseTo(clipSpec.durationSeconds, 6)
+        const apexIndex = times.reduce(
+          (nearest, time, index) =>
+            Math.abs(time - clipSpec.apexSeconds) <
+            Math.abs(times[nearest]! - clipSpec.apexSeconds)
+              ? index
+              : nearest,
+          0,
+        )
+
+        const maximumAngularChange = (jointName: string): number => {
+          const channel = rotationChannels.find(
+            (candidate) =>
+              candidate.getTargetNode()?.getName() === jointName,
+          )!
+          const output = channel.getSampler()!.getOutput()!
+          const first = output.getElement(0, [] as number[])
+          let maximum = 0
+          for (let index = 0; index < output.getCount(); index += 1) {
             const sample = output.getElement(index, [] as number[])
-            return sample.some(
+            const dot = Math.abs(
+              sample.reduce(
+                (sum, component, componentIndex) =>
+                  sum + component * first[componentIndex]!,
+                0,
+              ),
+            )
+            maximum = Math.max(
+              maximum,
+              2 * Math.acos(Math.min(1, dot)),
+            )
+          }
+          return maximum
+        }
+
+        const angularChangeAtApex = (jointName: string): number => {
+          const channel = rotationChannels.find(
+            (candidate) =>
+              candidate.getTargetNode()?.getName() === jointName,
+          )!
+          const output = channel.getSampler()!.getOutput()!
+          const first = output.getElement(0, [] as number[])
+          const apex = output.getElement(apexIndex, [] as number[])
+          const dot = Math.abs(
+            apex.reduce(
+              (sum, component, componentIndex) =>
+                sum + component * first[componentIndex]!,
+              0,
+            ),
+          )
+          return 2 * Math.acos(Math.min(1, dot))
+        }
+
+        const hipsTranslation = translationChannels[0]!
+          .getSampler()!
+          .getOutput()!
+        const firstHips = hipsTranslation.getElement(0, [] as number[])
+        const lastHips = hipsTranslation.getElement(
+          hipsTranslation.getCount() - 1,
+          [] as number[],
+        )
+        let minimumVerticalDelta = 0
+        let maximumHorizontalDelta = 0
+        for (let index = 0; index < hipsTranslation.getCount(); index += 1) {
+          const sample = hipsTranslation.getElement(index, [] as number[])
+          minimumVerticalDelta = Math.min(
+            minimumVerticalDelta,
+            sample[1]! - firstHips[1]!,
+          )
+          maximumHorizontalDelta = Math.max(
+            maximumHorizontalDelta,
+            Math.abs(sample[0]! - firstHips[0]!),
+            Math.abs(sample[2]! - firstHips[2]!),
+          )
+        }
+        expect(minimumVerticalDelta).toBeLessThanOrEqual(
+          -clipSpec.minimumCrouchCentimetres,
+        )
+        expect(maximumHorizontalDelta).toBeLessThan(0.001)
+        for (let component = 0; component < firstHips.length; component += 1) {
+          expect(lastHips[component]).toBeCloseTo(firstHips[component]!, 4)
+        }
+
+        let changedJointCount = 0
+        let changedEndJointCount = 0
+        for (const channel of rotationChannels) {
+          const output = channel.getSampler()!.getOutput()!
+          const first = output.getElement(0, [] as number[])
+          const last = output.getElement(
+            output.getCount() - 1,
+            [] as number[],
+          )
+          const changed = Array.from({ length: output.getCount() }).some(
+            (_, index) => {
+              const sample = output.getElement(index, [] as number[])
+              return sample.some(
+                (value, component) =>
+                  Math.abs(value - first[component]!) > 0.001,
+              )
+            },
+          )
+          if (changed) changedJointCount += 1
+          if (
+            last.some(
               (value, component) =>
                 Math.abs(value - first[component]!) > 0.001,
             )
-          },
-        )
-        if (changed) changedJointCount += 1
-        for (let index = 0; index < first.length; index += 1) {
-          expect(last[index]).toBeCloseTo(first[index]!, 5)
+          ) {
+            changedEndJointCount += 1
+          }
+          if (clipSpec.returnsToStartPose) {
+            for (let index = 0; index < first.length; index += 1) {
+              expect(last[index]).toBeCloseTo(first[index]!, 5)
+            }
+          }
         }
-      }
-      expect(changedJointCount).toBeGreaterThanOrEqual(10)
+        expect(changedJointCount).toBeGreaterThanOrEqual(10)
+        if (!clipSpec.returnsToStartPose) {
+          expect(changedEndJointCount).toBeGreaterThanOrEqual(6)
+        }
 
-      for (const kneeName of ['LeftLeg', 'RightLeg']) {
-        const knee = rotationChannels.find(
-          (channel) => channel.getTargetNode()?.getName() === kneeName,
-        )!
-        const output = knee.getSampler()!.getOutput()!
-        const first = output.getElement(0, [] as number[])
-        let maximumAngularChange = 0
-        for (let index = 0; index < output.getCount(); index += 1) {
-          const sample = output.getElement(index, [] as number[])
-          const dot = Math.abs(
-            sample.reduce(
-              (sum, component, componentIndex) =>
-                sum + component * first[componentIndex]!,
-              0,
-            ),
-          )
-          maximumAngularChange = Math.max(
-            maximumAngularChange,
-            2 * Math.acos(Math.min(1, dot)),
+        for (const kneeName of ['LeftLeg', 'RightLeg']) {
+          expect(maximumAngularChange(kneeName)).toBeGreaterThanOrEqual(
+            clipSpec.minimumKneeExcursion,
           )
         }
-        expect(maximumAngularChange).toBeGreaterThan(0.7)
-      }
+        expect(
+          Math.max(
+            angularChangeAtApex('LeftLeg'),
+            angularChangeAtApex('RightLeg'),
+          ),
+        ).toBeGreaterThan(clipSpec.minimumApexKneeChange)
 
-      for (const [armName, minimumAngularChange] of [
-        ['LeftArm', 1.7],
-        ['RightArm', 1.7],
-        ['LeftForeArm', 0.45],
-        ['RightForeArm', 0.45],
-      ] as const) {
-        const arm = rotationChannels.find(
-          (channel) => channel.getTargetNode()?.getName() === armName,
-        )!
-        const output = arm.getSampler()!.getOutput()!
-        const first = output.getElement(0, [] as number[])
-        let maximumAngularChange = 0
-        for (let index = 0; index < output.getCount(); index += 1) {
-          const sample = output.getElement(index, [] as number[])
-          const dot = Math.abs(
-            sample.reduce(
-              (sum, component, componentIndex) =>
-                sum + component * first[componentIndex]!,
-              0,
-            ),
-          )
-          maximumAngularChange = Math.max(
-            maximumAngularChange,
-            2 * Math.acos(Math.min(1, dot)),
+        for (const [jointName, minimumChange] of [
+          ['LeftArm', clipSpec.minimumArmExcursion],
+          ['RightArm', clipSpec.minimumArmExcursion],
+          ['LeftForeArm', clipSpec.minimumForearmExcursion],
+          ['RightForeArm', clipSpec.minimumForearmExcursion],
+        ] as const) {
+          expect(maximumAngularChange(jointName)).toBeGreaterThanOrEqual(
+            minimumChange,
           )
         }
-        expect(maximumAngularChange).toBeGreaterThanOrEqual(
-          minimumAngularChange,
-        )
       }
     }
   })

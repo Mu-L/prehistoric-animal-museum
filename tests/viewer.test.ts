@@ -545,37 +545,80 @@ describe('scale encounter context action', () => {
 
     expect(harness.controller.triggerScaleEncounterJump()).toBe(true)
     expect(harness.controller.triggerScaleEncounterJump()).toBe(false)
-    expect(setActionState).toHaveBeenCalledWith('jump', true)
+    expect(setActionState).toHaveBeenCalledWith('jump', true, 'idle')
     expect(harness.encounter.jumpPhase).toBe('anticipation')
+    expect(harness.encounter.jumpEntryMotion).toBe('idle')
 
     internals.updateScaleEncounterContextAction(0.1)
-    expect(harness.avatarEye.getWorldPosition(new Vector3()).y).toBeLessThan(
+    expect(harness.avatarEye.getWorldPosition(new Vector3()).y).toBeCloseTo(
       groundedEyeY,
+      8,
     )
     expect(harness.renderer.domElement.dataset.scaleEncounterJump).toBe(
       'anticipation',
     )
 
     let maximumEyeY = groundedEyeY
+    let minimumEyeY = groundedEyeY
     for (let frame = 0; frame < 120; frame += 1) {
       internals.updateScaleEncounterContextAction(1 / 60)
-      maximumEyeY = Math.max(
-        maximumEyeY,
-        harness.avatarEye.getWorldPosition(new Vector3()).y,
-      )
+      const eyeY = harness.avatarEye.getWorldPosition(new Vector3()).y
+      maximumEyeY = Math.max(maximumEyeY, eyeY)
+      minimumEyeY = Math.min(minimumEyeY, eyeY)
       if (!harness.encounter.jumpActive) break
     }
 
     expect(maximumEyeY - groundedEyeY).toBeGreaterThanOrEqual(0.11)
+    expect(minimumEyeY).toBeGreaterThanOrEqual(groundedEyeY - 1e-8)
     expect(harness.avatarEye.getWorldPosition(new Vector3()).y).toBeCloseTo(
       groundedEyeY,
       6,
     )
-    expect(setActionState).toHaveBeenLastCalledWith('jump', false)
+    expect(setActionState).toHaveBeenLastCalledWith('jump', false, 'idle')
     expect(harness.renderer.domElement.dataset.scaleEncounterJump).toBe(
       'grounded',
     )
   })
+
+  it.each([
+    ['walk', 46 / 60],
+    ['run', 42 / 60],
+  ] as const)(
+    'matches the %s entry clip timing instead of replaying the standing jump',
+    (entryMotion, expectedDuration) => {
+      const harness = createGroundedPovController(1440 / 900)
+      harness.encounter.avatar.root.userData.scaleEncounterAvatarMotion =
+        entryMotion
+      const setActionState = harness.encounter.avatar.setActionState
+      const internals = harness.controller as unknown as {
+        updateScaleEncounterContextAction: (deltaSeconds: number) => void
+      }
+
+      expect(harness.controller.triggerScaleEncounterJump()).toBe(true)
+      expect(setActionState).toHaveBeenCalledWith(
+        'jump',
+        true,
+        entryMotion,
+      )
+      expect(harness.encounter.jumpEntryMotion).toBe(entryMotion)
+      expect(
+        harness.renderer.domElement.dataset.scaleEncounterJumpEntryMotion,
+      ).toBe(entryMotion)
+
+      let elapsed = 0
+      while (harness.encounter.jumpActive && elapsed < 2) {
+        internals.updateScaleEncounterContextAction(1 / 120)
+        elapsed += 1 / 120
+      }
+
+      expect(elapsed).toBeCloseTo(expectedDuration, 1)
+      expect(setActionState).toHaveBeenLastCalledWith(
+        'jump',
+        false,
+        entryMotion,
+      )
+    },
+  )
 
   it.each([
     ['pteranodon', 1.6],
@@ -1051,7 +1094,7 @@ function createGroundedPovController(aspect: number): {
     distanceMotionDirection: -1 | 0 | 1
     definition: (typeof SCALE_ENCOUNTER_DEFINITIONS)[keyof typeof SCALE_ENCOUNTER_DEFINITIONS]
     jumpActive: boolean
-    jumpCrouchDepthMeters: number
+    jumpEntryMotion: 'idle' | 'walk' | 'run'
     jumpOffsetMeters: number
     jumpPhase: 'grounded' | 'anticipation' | 'airborne' | 'landing'
     jumpPhaseElapsedSeconds: number
@@ -1083,6 +1126,7 @@ function createGroundedPovController(aspect: number): {
   const avatarRoot = new Group()
   avatarRoot.name =
     'scale-encounter-child-girl-land-explorer-runtime-v1'
+  avatarRoot.userData.scaleEncounterAvatarMotion = 'idle'
   const avatarBody = new Mesh(
     new BoxGeometry(0.42, 1.05, 0.28),
     new MeshBasicMaterial(),
@@ -1128,7 +1172,7 @@ function createGroundedPovController(aspect: number): {
     targetOverviewZoom: 1,
     distanceMotionDirection: 0 as const,
     jumpActive: false,
-    jumpCrouchDepthMeters: 0,
+    jumpEntryMotion: 'idle' as const,
     jumpOffsetMeters: 0,
     jumpPhase: 'grounded' as const,
     jumpPhaseElapsedSeconds: 0,
