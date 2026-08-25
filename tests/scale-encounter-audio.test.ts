@@ -204,8 +204,8 @@ describe('scale encounter narration candidates', () => {
     expect(manifest.humanListeningReview['view-switch']).toMatchObject({
       status: 'approved',
       reviewedBy: 'Leon',
-      reviewedOn: '2026-08-24',
-      scriptApprovedOn: '2026-08-24',
+      reviewedOn: '2026-08-25',
+      scriptApprovedOn: '2026-08-25',
     })
     for (const locale of locales) {
       const content = scaleEncounterContentFor('mammoth', locale)

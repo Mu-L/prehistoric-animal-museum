@@ -952,7 +952,7 @@ describe('DirectScaleEncounter', () => {
 
     await user.click(screen.getByRole('button', { name: '身后视角' }))
     const rearAudio = testAudioInstances.find((audio) =>
-      audio.src.includes('view-switch-to-rear-v2.zh-CN'),
+      audio.src.includes('view-switch-to-rear-v4.zh-CN'),
     )
     expect(rearAudio?.play).toHaveBeenCalledOnce()
     expect(
@@ -963,7 +963,7 @@ describe('DirectScaleEncounter', () => {
 
     await user.click(screen.getByRole('button', { name: '眼睛视角' }))
     const eyesAudio = testAudioInstances.find((audio) =>
-      audio.src.includes('view-switch-to-eyes-v2.zh-CN'),
+      audio.src.includes('view-switch-to-eyes-v4.zh-CN'),
     )
     expect(rearAudio?.pause).toHaveBeenCalledOnce()
     expect(eyesAudio?.play).toHaveBeenCalledOnce()

@@ -175,9 +175,23 @@ describe('scale encounter content', () => {
     }
   })
 
-  it('describes viewpoint size as appearance rather than a physical change', () => {
-    const content = scaleEncounterContentFor('stegosaurus', 'zh-CN')
-    expect(content.copy.toChildEyes).toContain('显得更大了')
-    expect(content.copy.toChildEyes).not.toContain('是不是更大了')
+  it('uses the revised shared viewpoint lines for every Chinese animal', () => {
+    const sharedViewpointAudio = new Set<string>()
+
+    for (const animalId of SCALE_ENCOUNTER_ANIMAL_IDS) {
+      const content = scaleEncounterContentFor(animalId, 'zh-CN')
+      expect(content.copy.toChildEyes).not.toMatch(/更大|变大/)
+      expect(content.copy.toChildRear).not.toMatch(/更大|变大/)
+      expect(content.audio.toChildEyes).toMatch(
+        /view-switch-to-eyes-v4\.zh-CN\.mp3$/,
+      )
+      expect(content.audio.toChildRear).toMatch(
+        /view-switch-to-rear-v4\.zh-CN\.mp3$/,
+      )
+      sharedViewpointAudio.add(content.audio.toChildEyes)
+      sharedViewpointAudio.add(content.audio.toChildRear)
+    }
+
+    expect(sharedViewpointAudio.size).toBe(2)
   })
 })

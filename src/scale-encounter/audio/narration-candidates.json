@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "status": "production-approved",
-  "generatedOn": "2026-08-23",
+  "generatedOn": "2026-08-24",
   "engine": {
     "model": "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
     "modelRevision": "85e237c12c027371202489a0ec509ded67b5e4b5",
@@ -50,9 +50,9 @@
     "view-switch": {
       "status": "approved",
       "reviewedBy": "Leon",
-      "reviewedOn": "2026-08-24",
-      "scriptApprovedOn": "2026-08-24",
-      "evidence": "Leon explicitly approved the selected scripts, Serena narration tracks and public distribution in the final branch review on 2026-08-24. The files remain locked to the recorded continuous-master, timing and SHA-256 evidence."
+      "reviewedOn": "2026-08-25",
+      "scriptApprovedOn": "2026-08-25",
+      "evidence": "Leon explicitly accepted the two regenerated v4 Chinese viewpoint tracks, their revised script and inclusion in the current public PR on 2026-08-25. The tracks remain locked to the recorded continuous-master, timing and SHA-256 evidence; the unchanged English viewpoint tracks retain their earlier approval."
     },
     "stegosaurus": {
       "status": "approved",
@@ -154,7 +154,7 @@
     }
   },
   "publicDistributionDecision": "approved",
-  "note": "Leon explicitly approved the selected narration tracks for inclusion and public distribution on 2026-08-24. All animal-guided tracks are cut from one continuous Serena master per animal and locale; the shared viewpoint lines are cut from one master per locale.",
+  "note": "Leon explicitly approved the two revised Chinese v4 viewpoint tracks and their script for inclusion and public distribution on 2026-08-25. All previously approved animal-guided and English viewpoint tracks remain unchanged. The revised Chinese tracks were freshly synthesized from a new continuous Serena master whose input script does not contain the removed size sentence.",
   "tracks": [
     {
       "file": "tyrannosaurus-rex-intro-v3.zh-CN.mp3",
@@ -449,16 +449,16 @@
       "endSample": 1686708
     },
     {
-      "file": "view-switch-to-eyes-v2.zh-CN.mp3",
+      "file": "view-switch-to-eyes-v4.zh-CN.mp3",
       "locale": "zh-CN",
-      "script": "好，再回到你的眼睛这里。看看动物离你有多远，再顺着它的身体慢慢看一圈。从这个高度看，它是不是显得更大了？",
-      "sha256": "fee686617278746cce73c4796200f2a85890a64588902b8a3e48bc06f1b783f3",
-      "durationSeconds": 11.885688,
-      "continuousMasterSha256": "aa2a2ffaa66c831f3c95933ba75424e3d209cf071b67cef74cafab4715373b2f",
-      "continuousMasterScriptSha256": "17c087921ecf2baf44ceafb4346eaa0957ef4ea0da381d99f55879b5faebdb05",
-      "continuousMasterEvidence": ".handoff/scale-encounter-continuous-narration-all-animals-2026-08-23-serena-light-exploration-v3/master/view-switch.zh-CN.wav",
+      "script": "好，再回到你的眼睛这里。看看动物离你有多远，再顺着它的身体慢慢看一圈。",
+      "sha256": "db1667358d879b6db82f9adbcc6124632739e9ff221f1c8cd86369f89376dd48",
+      "durationSeconds": 8.046833,
+      "continuousMasterSha256": "af9ac427e10068d4c31c9d827da6dd34a0c49d8851a22281af684a56134cb4e5",
+      "continuousMasterScriptSha256": "9eafc6ac5e782b2c5a8bed0876a2a844466408d1b34aa1a733df4e3e344623a0",
+      "continuousMasterEvidence": ".handoff/scale-encounter-view-switch-regenerated-v4-2026-08-24/master/view-switch.zh-CN.wav",
       "startSample": 0,
-      "endSample": 570513
+      "endSample": 386248
     },
     {
       "file": "view-switch-to-eyes.en.mp3",
@@ -473,16 +473,16 @@
       "endSample": 463665
     },
     {
-      "file": "view-switch-to-rear-v2.zh-CN.mp3",
+      "file": "view-switch-to-rear-v4.zh-CN.mp3",
       "locale": "zh-CN",
       "script": "想看看自己刚才在什么位置吗？我们到你身后看一眼。你还可以向左或向右移动，换个方向再看看动物。",
-      "sha256": "16c473e0d8a555d8b863b6c8139f31b8ee2453b096ec711e897e166f6a65878a",
-      "durationSeconds": 11.349354,
-      "continuousMasterSha256": "aa2a2ffaa66c831f3c95933ba75424e3d209cf071b67cef74cafab4715373b2f",
-      "continuousMasterScriptSha256": "17c087921ecf2baf44ceafb4346eaa0957ef4ea0da381d99f55879b5faebdb05",
-      "continuousMasterEvidence": ".handoff/scale-encounter-continuous-narration-all-animals-2026-08-23-serena-light-exploration-v3/master/view-switch.zh-CN.wav",
-      "startSample": 570513,
-      "endSample": 1115282
+      "sha256": "6df87a3a5449429b62077a026b6561038157a6734e25b9f4a58b929f05b04a0b",
+      "durationSeconds": 9.480979,
+      "continuousMasterSha256": "af9ac427e10068d4c31c9d827da6dd34a0c49d8851a22281af684a56134cb4e5",
+      "continuousMasterScriptSha256": "9eafc6ac5e782b2c5a8bed0876a2a844466408d1b34aa1a733df4e3e344623a0",
+      "continuousMasterEvidence": ".handoff/scale-encounter-view-switch-regenerated-v4-2026-08-24/master/view-switch.zh-CN.wav",
+      "startSample": 386248,
+      "endSample": 841290
     },
     {
       "file": "view-switch-to-rear.en.mp3",
@@ -1512,7 +1512,7 @@
     "viewSwitchLocaleMasterCount": 2,
     "sampleRateHz": 48000,
     "policy": "Generate each animal and locale as one uninterrupted intro, transition and arrival master; normalize once; then encode three sample-aligned slices at natural pauses. Generate the two shared viewpoint lines as one additional master per locale and cut once.",
-    "evidenceDirectory": ".handoff/scale-encounter-continuous-narration-all-animals-2026-08-23-serena-light-exploration-v3"
+    "evidenceDirectory": ".handoff/scale-encounter-view-switch-regenerated-v4-2026-08-24"
   },
   "latestGeneration": {
     "model": "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",

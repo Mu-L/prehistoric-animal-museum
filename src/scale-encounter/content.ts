@@ -192,11 +192,11 @@ function bundledAudioUrl(file: string): string {
 const viewSwitchAudioUrls = {
   'zh-CN': {
     toChildEyes: new URL(
-      './audio/view-switch-to-eyes-v2.zh-CN.mp3',
+      './audio/view-switch-to-eyes-v4.zh-CN.mp3',
       import.meta.url,
     ).href,
     toChildRear: new URL(
-      './audio/view-switch-to-rear-v2.zh-CN.mp3',
+      './audio/view-switch-to-rear-v4.zh-CN.mp3',
       import.meta.url,
     ).href,
   },
@@ -562,7 +562,7 @@ function sharedZhCNCopy() {
   skip: '直接进入',
   staticFallback: '先看静态比一比',
   toChildEyes:
-    '好，再回到你的眼睛这里。看看动物离你有多远，再顺着它的身体慢慢看一圈。从这个高度看，它是不是显得更大了？',
+    '好，再回到你的眼睛这里。看看动物离你有多远，再顺着它的身体慢慢看一圈。',
   toChildRear:
     '想看看自己刚才在什么位置吗？我们到你身后看一眼。你还可以向左或向右移动，换个方向再看看动物。',
   unavailable: '这个设备暂时不能打开 3D 相遇。你可以返回展台，继续认识这只动物。',
