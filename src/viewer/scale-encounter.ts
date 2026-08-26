@@ -47,6 +47,49 @@ export interface ScaleEncounterAvatarMotionState {
   readonly kind: ScaleEncounterAvatarMotion
   readonly speedMetersPerSecond: number
 }
+
+export const SCALE_ENCOUNTER_LAND_WALK_SPEED_METERS_PER_SECOND = 1.4
+export const SCALE_ENCOUNTER_LAND_RUN_SPEED_METERS_PER_SECOND = 2.8
+
+export interface ScaleEncounterLandInputIntent {
+  /** Positive values move toward the animal. */
+  readonly radial: number
+  /** Positive values circle right around the animal. */
+  readonly tangential: number
+  readonly motion: Extract<ScaleEncounterAvatarMotion, 'idle' | 'walk' | 'run'>
+  readonly speedMetersPerSecond: number
+}
+
+/**
+ * Resolves land controls before any rail mapping or collision projection.
+ * Gait belongs to the user's intent, while geometry is only allowed to limit
+ * the final position. Normalising here prevents diagonal inputs from adding a
+ * 1.4 m/s radial vector to an independent 2.8 m/s tangent vector.
+ */
+export function resolveScaleEncounterLandInputIntent(
+  radialDirection: -1 | 0 | 1,
+  tangentialDirection: -1 | 0 | 1,
+): ScaleEncounterLandInputIntent {
+  if (radialDirection === 0 && tangentialDirection === 0) {
+    return {
+      motion: 'idle',
+      radial: 0,
+      speedMetersPerSecond: 0,
+      tangential: 0,
+    }
+  }
+  const magnitude = Math.hypot(radialDirection, tangentialDirection)
+  const motion = tangentialDirection === 0 ? 'walk' : 'run'
+  return {
+    motion,
+    radial: radialDirection / magnitude,
+    speedMetersPerSecond:
+      motion === 'run'
+        ? SCALE_ENCOUNTER_LAND_RUN_SPEED_METERS_PER_SECOND
+        : SCALE_ENCOUNTER_LAND_WALK_SPEED_METERS_PER_SECOND,
+    tangential: tangentialDirection / magnitude,
+  }
+}
 export type ScaleEncounterCameraStage =
   | 'overview'
   | 'side-establishing'
@@ -132,6 +175,7 @@ export interface ScaleEncounterDefinition {
 }
 
 export interface ScaleEncounterPlacement {
+  readonly animalId: ScaleEncounterAnimalId
   /** Complete calibrated world-space bounds used by close approach. */
   readonly animalBoundsMaximum: Readonly<Vector3>
   readonly animalBoundsMinimum: Readonly<Vector3>
@@ -424,7 +468,7 @@ export const SCALE_ENCOUNTER_DEFINITIONS: Readonly<
     habitat: 'land',
     environmentTheme: 'forest',
     avatarProfile: 'land-explorer',
-    avatarMotionPolicy: 'walk-only',
+    avatarMotionPolicy: 'adaptive-land',
     calibratedModelSha256:
       '9d9f151933a33ae5824eb7532e16a7416b012b9ffff154aca2957ad37a2a540a',
     displayedMeters: 23,
@@ -542,7 +586,7 @@ export const SCALE_ENCOUNTER_DEFINITIONS: Readonly<
     habitat: 'land',
     environmentTheme: 'glacier',
     avatarProfile: 'snow-expedition',
-    avatarMotionPolicy: 'walk-only',
+    avatarMotionPolicy: 'adaptive-land',
     calibratedModelSha256:
       '623a62621f1c6f2955fd3fe6442be8dfd34cdc94064e1bbb0c5e43e8970a1ece',
     // Published sources give a 3–3.5 m adult shoulder-height range. The
@@ -657,7 +701,7 @@ export const SCALE_ENCOUNTER_DEFINITIONS: Readonly<
     habitat: 'land',
     environmentTheme: 'forest',
     avatarProfile: 'land-explorer',
-    avatarMotionPolicy: 'walk-only',
+    avatarMotionPolicy: 'adaptive-land',
     calibratedModelSha256:
       '4e388ade5b32132cc60054fa51dc7ac0fe48372efafaf4c57732697b3874589b',
     displayedMeters: 0.7,
@@ -957,6 +1001,7 @@ export function createScaleEncounterPlacement(
     definition.defaultDistance,
   )
   return {
+    animalId,
     animalBoundsMaximum: new Vector3().copy(boundsMaximum),
     animalBoundsMinimum: new Vector3().copy(boundsMinimum),
     orbitCenter,

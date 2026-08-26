@@ -1,20 +1,25 @@
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { Vector3 } from 'three'
+import { MathUtils, Vector3 } from 'three'
 import {
   SCALE_ENCOUNTER_DEFINITIONS,
+  SCALE_ENCOUNTER_LAND_RUN_SPEED_METERS_PER_SECOND,
+  SCALE_ENCOUNTER_LAND_WALK_SPEED_METERS_PER_SECOND,
   clampScaleEncounterDistance,
   computeScaleEncounterAvatarTravelQuaternion,
   createScaleEncounterPlacement,
   normalizeScaleEncounterProfile,
   positionOnScaleEncounterRail,
+  resolveScaleEncounterLandInputIntent,
   scaleEncounterAvatarMotionFor,
   scaleEncounterElevationDegrees,
 } from '../src/viewer/scale-encounter'
 import { SCALE_ENCOUNTER_ANIMAL_IDS } from '../src/scale-encounter/types'
 import {
   clampScaleEncounterDistanceForProfile,
+  computeScaleEncounterOrbitedEyePosition,
+  computeScaleEncounterPovEyePosition,
   minimumScaleEncounterDistanceForProfile,
 } from '../src/viewer/ViewerController'
 
@@ -118,8 +123,8 @@ describe('scale encounter geometry', () => {
       Math.PI / 2,
     )
 
-    expect(headSideMinimum).toBeLessThan(definition.minimumDistance)
-    expect(broadsideMinimum).not.toBeCloseTo(headSideMinimum, 2)
+    expect(headSideMinimum).toBeGreaterThan(definition.minimumDistance)
+    expect(broadsideMinimum).toBeLessThan(definition.minimumDistance)
     expect(
       clampScaleEncounterDistanceForProfile(
         placement,
@@ -128,7 +133,7 @@ describe('scale encounter geometry', () => {
         0,
         0,
       ),
-    ).toBe(definition.minimumDistance)
+    ).toBeCloseTo(headSideMinimum, 5)
     expect(
       clampScaleEncounterDistanceForProfile(
         placement,
@@ -138,6 +143,141 @@ describe('scale encounter geometry', () => {
         0,
       ),
     ).toBeCloseTo(headSideMinimum, 5)
+  })
+
+  it('lets a close Apatosaurus observer reach the broadside legs without a forward jump', () => {
+    const definition = SCALE_ENCOUNTER_DEFINITIONS.apatosaurus
+    const placement = createScaleEncounterPlacement(
+      'apatosaurus',
+      new Vector3(-8, 0, -1.5),
+      new Vector3(15, 5, 1.5),
+      1.1,
+    )
+    const profile = normalizeScaleEncounterProfile({
+      approach: 'close',
+      gender: 'girl',
+      heightCm: 110,
+    })
+    const orbitAngleRadians = Math.PI / 2
+    const minimum = minimumScaleEncounterDistanceForProfile(
+      placement,
+      definition,
+      profile,
+      orbitAngleRadians,
+    )
+    const atMinimum = computeScaleEncounterOrbitedEyePosition(
+      placement,
+      definition.habitat,
+      minimum,
+      orbitAngleRadians,
+    )
+    const oneStepFarther = computeScaleEncounterOrbitedEyePosition(
+      placement,
+      definition.habitat,
+      minimum + 0.35,
+      orbitAngleRadians,
+    )
+    const twoStepsFarther = computeScaleEncounterOrbitedEyePosition(
+      placement,
+      definition.habitat,
+      minimum + 0.7,
+      orbitAngleRadians,
+    )
+    const firstStep = oneStepFarther.distanceTo(atMinimum)
+    const secondStep = twoStepsFarther.distanceTo(oneStepFarther)
+    const broadsideRadius = atMinimum
+      .clone()
+      .sub(placement.orbitCenter)
+      .setY(0)
+      .length()
+
+    expect(broadsideRadius).toBeLessThan(3)
+    expect(firstStep).toBeGreaterThan(0.1)
+    expect(secondStep).toBeCloseTo(firstStep, 8)
+  })
+
+  it.each([
+    ['front-left leg side', MathUtils.degToRad(60)],
+    ['rear-left leg side', MathUtils.degToRad(120)],
+    ['rear-right leg side', MathUtils.degToRad(240)],
+    ['front-right leg side', MathUtils.degToRad(300)],
+  ])('reaches the safe boundary beside the %s', (_label, angle) => {
+    const definition = SCALE_ENCOUNTER_DEFINITIONS.apatosaurus
+    const placement = createScaleEncounterPlacement(
+      'apatosaurus',
+      new Vector3(-8, 0, -1.5),
+      new Vector3(15, 5, 1.5),
+      1.1,
+    )
+    const profile = normalizeScaleEncounterProfile({
+      approach: 'close',
+      gender: 'girl',
+      heightCm: 110,
+    })
+    const minimum = minimumScaleEncounterDistanceForProfile(
+      placement,
+      definition,
+      profile,
+      angle,
+    )
+    const boundary = computeScaleEncounterOrbitedEyePosition(
+      placement,
+      'land',
+      minimum,
+      angle,
+    )
+    const radius = boundary
+      .clone()
+      .sub(placement.orbitCenter)
+      .setY(0)
+      .length()
+    const farther = computeScaleEncounterOrbitedEyePosition(
+      placement,
+      'land',
+      minimum + 0.1,
+      angle,
+    )
+
+    expect(Number.isFinite(minimum)).toBe(true)
+    expect(radius).toBeLessThan(3)
+    expect(farther.distanceTo(boundary)).toBeGreaterThan(0)
+    expect(farther.distanceTo(boundary)).toBeLessThan(0.5)
+  })
+
+  it.each(
+    SCALE_ENCOUNTER_ANIMAL_IDS.filter(
+      (animalId) =>
+        animalId !== 'apatosaurus' &&
+        SCALE_ENCOUNTER_DEFINITIONS[animalId].habitat === 'land',
+    ).map((animalId) => [animalId, animalId] as const),
+  )('keeps the existing head-relative ground rail for %s', (animalId) => {
+    const definition = SCALE_ENCOUNTER_DEFINITIONS[animalId]
+    const placement = createScaleEncounterPlacement(
+      animalId,
+      new Vector3(-4, 0, -1),
+      new Vector3(6, 4, 1),
+      1.1,
+    )
+    const distance = definition.maximumDistance
+    const eye = computeScaleEncounterPovEyePosition(
+      placement,
+      definition.habitat,
+      distance,
+    )
+    const eyeHeight = placement.defaultEyePosition.y
+    const verticalDistance = placement.target.y - eyeHeight
+    const horizontalDistance = Math.sqrt(
+      Math.max(distance * distance - verticalDistance * verticalDistance, 0),
+    )
+    const expected = placement.observerRailDirection
+      .clone()
+      .setY(0)
+      .normalize()
+      .multiplyScalar(horizontalDistance)
+      .add(placement.target)
+      .setY(eyeHeight)
+
+    expect(eye.distanceTo(expected)).toBeLessThan(1e-9)
   })
 
   it.each([
@@ -385,10 +525,40 @@ describe('scale encounter geometry', () => {
     expect(scaleEncounterAvatarMotionFor('tyrannosaurus-rex', 0)).toBe('idle')
     expect(scaleEncounterAvatarMotionFor('tyrannosaurus-rex', 1.4)).toBe('walk')
     expect(scaleEncounterAvatarMotionFor('tyrannosaurus-rex', 2.2)).toBe('run')
-    expect(scaleEncounterAvatarMotionFor('mammoth', 4)).toBe('walk')
+    expect(scaleEncounterAvatarMotionFor('apatosaurus', 1.4)).toBe('walk')
+    expect(scaleEncounterAvatarMotionFor('apatosaurus', 2.8)).toBe('run')
+    expect(scaleEncounterAvatarMotionFor('mammoth', 4)).toBe('run')
+    expect(scaleEncounterAvatarMotionFor('meganeura', 4)).toBe('run')
     expect(scaleEncounterAvatarMotionFor('pteranodon', 0)).toBe('glide')
     expect(scaleEncounterAvatarMotionFor('pteranodon', 8)).toBe('glide')
     expect(scaleEncounterAvatarMotionFor('mosasaurus', 0)).toBe('idle')
     expect(scaleEncounterAvatarMotionFor('mosasaurus', 0.8)).toBe('swim')
+  })
+
+  it('normalises land input once and chooses gait from intent', () => {
+    expect(resolveScaleEncounterLandInputIntent(0, 0)).toEqual({
+      motion: 'idle',
+      radial: 0,
+      speedMetersPerSecond: 0,
+      tangential: 0,
+    })
+    expect(resolveScaleEncounterLandInputIntent(1, 0)).toEqual({
+      motion: 'walk',
+      radial: 1,
+      speedMetersPerSecond:
+        SCALE_ENCOUNTER_LAND_WALK_SPEED_METERS_PER_SECOND,
+      tangential: 0,
+    })
+    const diagonal = resolveScaleEncounterLandInputIntent(1, 1)
+    expect(diagonal.motion).toBe('run')
+    expect(diagonal.speedMetersPerSecond).toBe(
+      SCALE_ENCOUNTER_LAND_RUN_SPEED_METERS_PER_SECOND,
+    )
+    expect(diagonal.radial).toBeCloseTo(Math.SQRT1_2, 12)
+    expect(diagonal.tangential).toBeCloseTo(Math.SQRT1_2, 12)
+    expect(Math.hypot(diagonal.radial, diagonal.tangential)).toBeCloseTo(
+      1,
+      12,
+    )
   })
 })

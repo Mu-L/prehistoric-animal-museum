@@ -38,6 +38,7 @@ import {
   computeModelTransitionFrame,
   computeModelBounds,
   createCameraRelativeLightingPose,
+  minimumScaleEncounterDistanceForProfile,
   readModelResponseBuffer,
   requestModelResponse,
   resetStagedModelPose,
@@ -52,6 +53,8 @@ import {
   createScaleEncounterPlacement,
   positionOnScaleEncounterRail,
   scaleEncounterSubjectLayoutForAspect,
+  type NormalizedScaleEncounterProfile,
+  type ScaleEncounterAnimalId,
   type ScaleEncounterAvatarFactory,
 } from '../src/viewer/scale-encounter'
 
@@ -525,6 +528,309 @@ describe('scale encounter avatar locomotion', () => {
     expect(
       harness.renderer.domElement.dataset.scaleEncounterAvatarMotion,
     ).toBe('idle')
+  })
+
+  it.each([
+    [
+      'ordinary forest animal',
+      'tyrannosaurus-rex',
+      new Vector3(-3.8, 0, -0.8),
+      new Vector3(8.2, 4, 0.8),
+      12.5,
+    ],
+    [
+      'Apatosaurus body-centred rail',
+      'apatosaurus',
+      new Vector3(-8, 0, -1.5),
+      new Vector3(15, 5, 1.5),
+      12,
+    ],
+  ] as const)(
+    'keeps unified world speeds and intent-driven actions on an %s',
+    (_label, animalId, boundsMinimum, boundsMaximum, distance) => {
+      const makeHarness = () => {
+        const harness = createGroundedPovController(
+          1440 / 900,
+          animalId,
+          boundsMinimum,
+          boundsMaximum,
+        )
+        harness.encounter.observerDistance = distance
+        harness.encounter.targetObserverDistance = distance
+        const internals = harness.controller as unknown as {
+          applyScaleEncounterPovPose: () => void
+          updateScaleEncounterAvatarMotion: (deltaSeconds: number) => void
+          updateScaleEncounterDistance: (
+            deltaSeconds: number,
+            now: number,
+          ) => void
+          updateScaleEncounterOrbit: (
+            deltaSeconds: number,
+            now: number,
+          ) => void
+        }
+        internals.applyScaleEncounterPovPose()
+        harness.encounter.avatarPreviousEyePosition.copy(
+          harness.avatarEye.getWorldPosition(new Vector3()),
+        )
+        return { harness, internals }
+      }
+
+      const runForOneSecond = (
+        radial: -1 | 0 | 1,
+        tangential: -1 | 0 | 1,
+      ) => {
+        const { harness, internals } = makeHarness()
+        harness.controller.setScaleEncounterDistanceMotion(radial)
+        harness.controller.setScaleEncounterOrbitMotion(tangential)
+        let pathLength = 0
+        for (let frame = 1; frame <= 60; frame += 1) {
+          const previous = harness.avatarEye.getWorldPosition(new Vector3())
+          internals.updateScaleEncounterDistance(1 / 60, frame * 16)
+          internals.updateScaleEncounterOrbit(1 / 60, frame * 16)
+          internals.updateScaleEncounterAvatarMotion(1 / 60)
+          pathLength += harness.avatarEye
+            .getWorldPosition(new Vector3())
+            .sub(previous)
+            .setY(0)
+            .length()
+        }
+        return { harness, pathLength }
+      }
+
+      const closer = runForOneSecond(1, 0)
+      expect(closer.pathLength).toBeCloseTo(1.4, 4)
+      expect(
+        closer.harness.encounter.avatar.root.userData
+          .scaleEncounterAvatarMotion,
+      ).toBe('walk')
+
+      const farther = runForOneSecond(-1, 0)
+      expect(farther.pathLength).toBeCloseTo(1.4, 4)
+      expect(
+        farther.harness.encounter.avatar.root.userData
+          .scaleEncounterAvatarMotion,
+      ).toBe('walk')
+
+      const orbit = runForOneSecond(0, 1)
+      expect(orbit.pathLength).toBeCloseTo(2.8, 3)
+      expect(
+        orbit.harness.encounter.avatar.root.userData
+          .scaleEncounterAvatarMotion,
+      ).toBe('run')
+
+      const diagonal = runForOneSecond(1, 1)
+      expect(diagonal.pathLength).toBeCloseTo(2.8, 3)
+      expect(
+        diagonal.harness.encounter.avatar.root.userData
+          .scaleEncounterAvatarMotion,
+      ).toBe('run')
+    },
+  )
+
+  it('keeps diagonals locally 45 degrees, cancels idle input and switches gait when one key is released', () => {
+    const harness = createGroundedPovController(1440 / 900)
+    const internals = harness.controller as unknown as {
+      applyScaleEncounterPovPose: () => void
+      updateScaleEncounterAvatarMotion: (deltaSeconds: number) => void
+      updateScaleEncounterDistance: (
+        deltaSeconds: number,
+        now: number,
+      ) => void
+      updateScaleEncounterOrbit: (
+        deltaSeconds: number,
+        now: number,
+      ) => void
+    }
+    internals.applyScaleEncounterPovPose()
+    harness.encounter.avatarPreviousEyePosition.copy(
+      harness.avatarEye.getWorldPosition(new Vector3()),
+    )
+    const start = harness.avatarEye.getWorldPosition(new Vector3())
+    const outward = start
+      .clone()
+      .sub(harness.placement.orbitCenter)
+      .setY(0)
+      .normalize()
+    const inward = outward.clone().negate()
+    const clockwiseTangent = new Vector3(outward.z, 0, -outward.x)
+
+    harness.controller.setScaleEncounterDistanceMotion(1)
+    harness.controller.setScaleEncounterOrbitMotion(1)
+    internals.updateScaleEncounterDistance(1 / 120, 8)
+    internals.updateScaleEncounterOrbit(1 / 120, 8)
+    internals.updateScaleEncounterAvatarMotion(1 / 120)
+    const diagonalTravel = harness.avatarEye
+      .getWorldPosition(new Vector3())
+      .sub(start)
+      .setY(0)
+    expect(diagonalTravel.length() * 120).toBeCloseTo(2.8, 3)
+    expect(diagonalTravel.dot(inward) * 120).toBeCloseTo(
+      2.8 * Math.SQRT1_2,
+      2,
+    )
+    expect(diagonalTravel.dot(clockwiseTangent) * 120).toBeCloseTo(
+      2.8 * Math.SQRT1_2,
+      2,
+    )
+
+    harness.controller.setScaleEncounterOrbitMotion(0)
+    internals.updateScaleEncounterDistance(1 / 60, 24)
+    internals.updateScaleEncounterOrbit(1 / 60, 24)
+    internals.updateScaleEncounterAvatarMotion(1 / 60)
+    expect(
+      harness.encounter.avatar.root.userData.scaleEncounterAvatarMotion,
+    ).toBe('walk')
+    expect(
+      Number(
+        harness.encounter.avatar.root.userData
+          .scaleEncounterAvatarTravelSpeed,
+      ),
+    ).toBeCloseTo(1.4, 4)
+
+    harness.controller.setScaleEncounterDistanceMotion(0)
+    const idleStart = harness.avatarEye.getWorldPosition(new Vector3())
+    internals.updateScaleEncounterDistance(1 / 60, 40)
+    internals.updateScaleEncounterOrbit(1 / 60, 40)
+    internals.updateScaleEncounterAvatarMotion(1 / 60)
+    expect(
+      harness.avatarEye
+        .getWorldPosition(new Vector3())
+        .distanceTo(idleStart),
+    ).toBeLessThan(1e-10)
+    expect(
+      harness.encounter.avatar.root.userData.scaleEncounterAvatarMotion,
+    ).toBe('idle')
+  })
+
+  it('integrates the same diagonal destination at low and high frame rates', () => {
+    const simulate = (framesPerSecond: number) => {
+      const harness = createGroundedPovController(1440 / 900)
+      const internals = harness.controller as unknown as {
+        applyScaleEncounterPovPose: () => void
+        updateScaleEncounterDistance: (
+          deltaSeconds: number,
+          now: number,
+        ) => void
+        updateScaleEncounterOrbit: (
+          deltaSeconds: number,
+          now: number,
+        ) => void
+      }
+      internals.applyScaleEncounterPovPose()
+      harness.controller.setScaleEncounterDistanceMotion(-1)
+      harness.controller.setScaleEncounterOrbitMotion(1)
+      for (let frame = 1; frame <= framesPerSecond; frame += 1) {
+        internals.updateScaleEncounterDistance(
+          1 / framesPerSecond,
+          (frame * 1_000) / framesPerSecond,
+        )
+        internals.updateScaleEncounterOrbit(
+          1 / framesPerSecond,
+          (frame * 1_000) / framesPerSecond,
+        )
+      }
+      return harness.avatarEye.getWorldPosition(new Vector3())
+    }
+
+    expect(simulate(15).distanceTo(simulate(120))).toBeLessThan(0.01)
+  })
+
+  it('slides around the Apatosaurus leg boundary, then retreats without a corrective jump', () => {
+    const harness = createGroundedPovController(
+      1440 / 900,
+      'apatosaurus',
+      new Vector3(-8, 0, -1.5),
+      new Vector3(15, 5, 1.5),
+    )
+    harness.encounter.profile = {
+      approach: 'close',
+      gender: 'girl',
+      heightCm: 110,
+      heightMeters: 1.1,
+    }
+    harness.encounter.orbitAngleRadians = Math.PI / 2
+    harness.encounter.targetOrbitAngleRadians = Math.PI / 2
+    const boundaryDistance = minimumScaleEncounterDistanceForProfile(
+      harness.encounter.placement,
+      harness.encounter.definition,
+      harness.encounter.profile,
+      harness.encounter.orbitAngleRadians,
+    )
+    harness.encounter.observerDistance = boundaryDistance
+    harness.encounter.targetObserverDistance = boundaryDistance
+    const internals = harness.controller as unknown as {
+      applyScaleEncounterPovPose: () => void
+      updateScaleEncounterAvatarMotion: (deltaSeconds: number) => void
+      updateScaleEncounterDistance: (
+        deltaSeconds: number,
+        now: number,
+      ) => void
+      updateScaleEncounterOrbit: (
+        deltaSeconds: number,
+        now: number,
+      ) => void
+    }
+    internals.applyScaleEncounterPovPose()
+    harness.encounter.avatarPreviousEyePosition.copy(
+      harness.avatarEye.getWorldPosition(new Vector3()),
+    )
+
+    harness.controller.setScaleEncounterDistanceMotion(1)
+    harness.controller.setScaleEncounterOrbitMotion(1)
+    const startingAngle = harness.encounter.orbitAngleRadians
+    let maximumFrameTravel = 0
+    for (let frame = 1; frame <= 60; frame += 1) {
+      const previous = harness.avatarEye.getWorldPosition(new Vector3())
+      internals.updateScaleEncounterDistance(1 / 60, frame * 16)
+      internals.updateScaleEncounterOrbit(1 / 60, frame * 16)
+      internals.updateScaleEncounterAvatarMotion(1 / 60)
+      const frameTravel = harness.avatarEye
+        .getWorldPosition(new Vector3())
+        .sub(previous)
+        .setY(0)
+        .length()
+      maximumFrameTravel = Math.max(maximumFrameTravel, frameTravel)
+      const minimum = minimumScaleEncounterDistanceForProfile(
+        harness.encounter.placement,
+        harness.encounter.definition,
+        harness.encounter.profile,
+        harness.encounter.orbitAngleRadians,
+      )
+      expect(Number.isFinite(harness.encounter.observerDistance)).toBe(true)
+      expect(harness.encounter.observerDistance).toBeGreaterThanOrEqual(
+        minimum - 1e-5,
+      )
+    }
+    expect(harness.encounter.orbitAngleRadians - startingAngle).toBeGreaterThan(
+      0.2,
+    )
+    expect(maximumFrameTravel).toBeLessThanOrEqual(2.8 / 60 + 1e-5)
+    expect(
+      harness.encounter.avatar.root.userData.scaleEncounterAvatarMotion,
+    ).toBe('run')
+
+    const beforeRetreat = harness.avatarEye
+      .getWorldPosition(new Vector3())
+      .sub(harness.encounter.placement.orbitCenter)
+      .setY(0)
+      .length()
+    harness.controller.setScaleEncounterOrbitMotion(0)
+    harness.controller.setScaleEncounterDistanceMotion(-1)
+    for (let frame = 61; frame <= 120; frame += 1) {
+      internals.updateScaleEncounterDistance(1 / 60, frame * 16)
+      internals.updateScaleEncounterOrbit(1 / 60, frame * 16)
+      internals.updateScaleEncounterAvatarMotion(1 / 60)
+    }
+    const afterRetreat = harness.avatarEye
+      .getWorldPosition(new Vector3())
+      .sub(harness.encounter.placement.orbitCenter)
+      .setY(0)
+      .length()
+    expect(afterRetreat - beforeRetreat).toBeCloseTo(1.4, 4)
+    expect(
+      harness.encounter.avatar.root.userData.scaleEncounterAvatarMotion,
+    ).toBe('walk')
   })
 })
 
@@ -1074,7 +1380,12 @@ function minimumNearPlaneCornerHeight(camera: PerspectiveCamera): number {
   )
 }
 
-function createGroundedPovController(aspect: number): {
+function createGroundedPovController(
+  aspect: number,
+  animalId: ScaleEncounterAnimalId = 'tyrannosaurus-rex',
+  boundsMinimum = new Vector3(-3.8, 0, -0.8),
+  boundsMaximum = new Vector3(8.2, 4, 0.8),
+): {
   readonly avatarEye: Group
   readonly camera: PerspectiveCamera
   readonly container: { clientHeight: number; clientWidth: number }
@@ -1103,6 +1414,8 @@ function createGroundedPovController(aspect: number): {
     orbitAngleRadians: number
     orbitMotionDirection: -1 | 0 | 1
     overviewZoom: number
+    placement: ReturnType<typeof createScaleEncounterPlacement>
+    profile: NormalizedScaleEncounterProfile
     targetObserverDistance: number
     targetOrbitAngleRadians: number
     targetOverviewZoom: number
@@ -1116,11 +1429,11 @@ function createGroundedPovController(aspect: number): {
     readonly setSize: ReturnType<typeof vi.fn>
   }
 } {
-  const definition = SCALE_ENCOUNTER_DEFINITIONS['tyrannosaurus-rex']
+  const definition = SCALE_ENCOUNTER_DEFINITIONS[animalId]
   const placement = createScaleEncounterPlacement(
     definition.id,
-    new Vector3(-3.8, 0, -0.8),
-    new Vector3(8.2, 4, 0.8),
+    boundsMinimum,
+    boundsMaximum,
     0.985,
   )
   const avatarRoot = new Group()
@@ -1179,6 +1492,7 @@ function createGroundedPovController(aspect: number): {
     jumpVelocityMetersPerSecond: 0,
     placement,
     profile: {
+      approach: 'comfortable' as const,
       gender: 'girl' as const,
       heightCm: 100,
       heightMeters: 1,

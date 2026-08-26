@@ -49,6 +49,8 @@ import {
 import type { ViewerModelDescriptor } from './viewer-model-descriptor'
 import {
   SCALE_ENCOUNTER_DEFINITIONS,
+  SCALE_ENCOUNTER_LAND_RUN_SPEED_METERS_PER_SECOND,
+  SCALE_ENCOUNTER_LAND_WALK_SPEED_METERS_PER_SECOND,
   clampScaleEncounterValue,
   computeScaleEncounterAvatarGroundedEyeHeight,
   computeScaleEncounterAvatarTravelQuaternion,
@@ -57,6 +59,7 @@ import {
   isScaleEncounterAnimalId,
   normalizeScaleEncounterProfile,
   positionOnScaleEncounterRail,
+  resolveScaleEncounterLandInputIntent,
   scaleEncounterAvatarMotionFor,
   scaleEncounterSubjectLayoutForAspect,
   updateScaleEncounterAvatarIdle,
@@ -379,6 +382,7 @@ interface ScaleEncounterRuntime {
   jumpPhase: 'grounded' | 'anticipation' | 'airborne' | 'landing'
   jumpPhaseElapsedSeconds: number
   jumpVelocityMetersPerSecond: number
+  landMotionIntent: 'idle' | 'walk' | 'run'
   mammothAnimalGrade: MammothSubjectGradeLease | null
   oceanAnimalGrade: OceanSubjectGradeLease | null
   oceanAvatarGrade: OceanSubjectGradeLease | null
@@ -422,9 +426,7 @@ function scaleEncounterOrbitTravelSpeedMetersPerSecond(
 ): number {
   if (definition.habitat === 'air') return 4
   if (definition.habitat === 'water') return 1.2
-  if (definition.environmentTheme === 'glacier') return 1.4
-  if (definition.displayedMeters <= 1) return 1
-  return 2.8
+  return SCALE_ENCOUNTER_LAND_RUN_SPEED_METERS_PER_SECOND
 }
 const SCALE_ENCOUNTER_ORBIT_EASING_PER_SECOND = 10
 const SCALE_ENCOUNTER_AIR_BOOST_MULTIPLIER = 1.6
@@ -622,6 +624,7 @@ function scaleEncounterOverviewAxes(
 }
 const SCALE_ENCOUNTER_DISTANCE_HOLD_STEPS_PER_SECOND = 4
 const SCALE_ENCOUNTER_DISTANCE_EASING_PER_SECOND = 14
+const SCALE_ENCOUNTER_LAND_SWEEP_STEP_METERS = 0.01
 // Keep a grounded first-person camera well above both the land plane
 // (y = -0.035) and its 3 cm near plane, even if a future avatar has a
 // malformed eye anchor. Reviewed child avatars sit much higher than this.
@@ -668,8 +671,11 @@ export function viewerZoomProfileForPointer(
  * different child eye anchor, below) the land plane.
  *
  * On land the useful interaction is a horizontal dolly at the child's eye
- * height. `distance` remains the true eye-to-target distance, while the camera
- * moves on one fixed horizontal axis. Air and water retain their authored
+ * height. Existing animals retain their reviewed head-relative rail.
+ * Apatosaurus alone uses a body-centred linear radius: rotating its old
+ * head-relative rail around a 23 m body left an irreducible multi-metre gap at
+ * the legs, while the slant-distance projection collapsed the last part of an
+ * approach into a visible forward snap. Air and water retain their authored
  * three-dimensional rails unchanged.
  */
 export function computeScaleEncounterPovEyePosition(
@@ -691,21 +697,27 @@ export function computeScaleEncounterPovEyePosition(
     placement.defaultEyePosition.y,
     SCALE_ENCOUNTER_GROUNDED_CAMERA_MINIMUM_HEIGHT,
   )
-  const verticalDistance = placement.target.y - eyeHeight
-  const horizontalDistance = Math.sqrt(
-    Math.max(distance * distance - verticalDistance * verticalDistance, 0),
-  )
-  result.copy(placement.observerRailDirection).setY(0)
-  if (result.lengthSq() < 1e-8) {
-    result.copy(placement.defaultEyePosition).sub(placement.target).setY(0)
+  if (placement.animalId !== 'apatosaurus') {
+    const verticalDistance = placement.target.y - eyeHeight
+    const horizontalDistance = Math.sqrt(
+      Math.max(distance * distance - verticalDistance * verticalDistance, 0),
+    )
+    result.copy(placement.observerRailDirection).setY(0)
+    if (result.lengthSq() < 1e-8) {
+      result.copy(placement.defaultEyePosition).sub(placement.target).setY(0)
+    }
+    if (result.lengthSq() < 1e-8) result.set(-1, 0, 0)
+    return result
+      .normalize()
+      .multiplyScalar(horizontalDistance)
+      .add(placement.target)
+      .setY(eyeHeight)
   }
-  if (result.lengthSq() < 1e-8) {
-    result.set(-1, 0, 0)
-  }
+  result.copy(placement.defaultEyePosition).sub(placement.orbitCenter).setY(0)
+  if (result.lengthSq() < 1e-8) result.set(-1, 0, 0)
   return result
-    .normalize()
-    .multiplyScalar(horizontalDistance)
-    .add(placement.target)
+    .multiplyScalar(distance / Math.max(placement.defaultDistance, 1e-8))
+    .add(placement.orbitCenter)
     .setY(eyeHeight)
 }
 
@@ -732,6 +744,105 @@ export function computeScaleEncounterOrbitedEyePosition(
     .sub(placement.orbitCenter)
     .applyAxisAngle(WORLD_UP, orbitAngleRadians)
     .add(placement.orbitCenter)
+}
+
+/** Horizontal world radius produced by a rail parameter at any orbit angle. */
+export function scaleEncounterLandRadiusAtDistance(
+  placement: ScaleEncounterPlacement,
+  distance: number,
+): number {
+  const eye = computeScaleEncounterPovEyePosition(placement, 'land', distance)
+  const radius = eye.sub(placement.orbitCenter).setY(0).length()
+  return Number.isFinite(radius) ? radius : 0
+}
+
+/**
+ * Inverts a land animal's existing observation rail by world radius. This is
+ * what keeps 1.4/2.8 m/s honest on both the legacy slant-distance rails and
+ * Apatosaurus's body-centred linear rail without changing either composition.
+ */
+export function scaleEncounterLandDistanceForRadius(
+  placement: ScaleEncounterPlacement,
+  desiredRadius: number,
+  minimumDistance: number,
+  maximumDistance: number,
+): number {
+  const lowerDistance = Math.min(minimumDistance, maximumDistance)
+  const upperDistance = Math.max(minimumDistance, maximumDistance)
+  const lowerRadius = scaleEncounterLandRadiusAtDistance(
+    placement,
+    lowerDistance,
+  )
+  const upperRadius = scaleEncounterLandRadiusAtDistance(
+    placement,
+    upperDistance,
+  )
+  if (
+    !Number.isFinite(desiredRadius) ||
+    !Number.isFinite(lowerRadius) ||
+    !Number.isFinite(upperRadius)
+  ) {
+    return lowerDistance
+  }
+  const increasing = upperRadius >= lowerRadius
+  const clampedRadius = MathUtils.clamp(
+    desiredRadius,
+    Math.min(lowerRadius, upperRadius),
+    Math.max(lowerRadius, upperRadius),
+  )
+  let low = lowerDistance
+  let high = upperDistance
+  for (let iteration = 0; iteration < 32; iteration += 1) {
+    const midpoint = (low + high) * 0.5
+    const radius = scaleEncounterLandRadiusAtDistance(placement, midpoint)
+    if ((radius < clampedRadius) === increasing) low = midpoint
+    else high = midpoint
+  }
+  return (low + high) * 0.5
+}
+
+function projectScaleEncounterLandPointOutsideBounds(
+  point: Vector3,
+  minimum: Readonly<Vector3>,
+  maximum: Readonly<Vector3>,
+): Vector3 {
+  if (
+    point.x <= minimum.x ||
+    point.x >= maximum.x ||
+    point.z <= minimum.z ||
+    point.z >= maximum.z
+  ) {
+    return point
+  }
+  const candidates = [
+    { distance: point.x - minimum.x, axis: 'x' as const, value: minimum.x },
+    { distance: maximum.x - point.x, axis: 'x' as const, value: maximum.x },
+    { distance: point.z - minimum.z, axis: 'z' as const, value: minimum.z },
+    { distance: maximum.z - point.z, axis: 'z' as const, value: maximum.z },
+  ]
+  const closest = candidates.reduce((best, candidate) =>
+    candidate.distance < best.distance ? candidate : best,
+  )
+  point[closest.axis] = closest.value
+  return point
+}
+
+function unwrapScaleEncounterOrbitAngle(
+  previousAngle: number,
+  baseDirection: Readonly<Vector3>,
+  nextDirection: Readonly<Vector3>,
+): number {
+  const wrapped = Math.atan2(
+    baseDirection.z * nextDirection.x -
+      baseDirection.x * nextDirection.z,
+    baseDirection.x * nextDirection.x +
+      baseDirection.z * nextDirection.z,
+  )
+  const delta = MathUtils.euclideanModulo(
+    wrapped - previousAngle + Math.PI,
+    Math.PI * 2,
+  ) - Math.PI
+  return previousAngle + delta
 }
 
 function scaleEncounterEyeClearsExpandedAnimalBounds(
@@ -800,13 +911,20 @@ export function minimumScaleEncounterDistanceForProfile(
   profile: NormalizedScaleEncounterProfile,
   orbitAngleRadians: number,
 ): number {
-  if (profile.approach !== 'close') return definition.minimumDistance
-
+  if (
+    profile.approach !== 'close' &&
+    placement.animalId !== 'apatosaurus'
+  ) {
+    return definition.minimumDistance
+  }
   const marginMeters = Math.max(0.55, profile.heightMeters * 0.5)
-  const distanceFloor = Math.min(
-    definition.minimumDistance,
-    Math.max(0.75, profile.heightMeters * 0.75),
-  )
+  const distanceFloor =
+    profile.approach === 'close'
+      ? Math.min(
+          definition.minimumDistance,
+          Math.max(0.75, profile.heightMeters * 0.75),
+        )
+      : definition.minimumDistance
   const clearsAt = (distance: number) =>
     scaleEncounterEyeClearsExpandedAnimalBounds(
       placement,
@@ -2032,6 +2150,7 @@ export class ViewerController {
         jumpPhase: 'grounded',
         jumpPhaseElapsedSeconds: 0,
         jumpVelocityMetersPerSecond: 0,
+        landMotionIntent: 'idle',
         mammothAnimalGrade,
         oceanAnimalGrade,
         oceanAvatarGrade,
@@ -2553,6 +2672,12 @@ export class ViewerController {
       // target prevents an ease from being added on top of the linear dolly.
       encounter.targetOverviewZoom = encounter.overviewZoom
       encounter.targetObserverDistance = encounter.observerDistance
+      if (
+        encounter.view === 'pov' &&
+        encounter.definition.habitat === 'land'
+      ) {
+        encounter.targetOrbitAngleRadians = encounter.orbitAngleRadians
+      }
     } else {
       this.publishScaleEncounterSnapshot()
     }
@@ -2595,6 +2720,9 @@ export class ViewerController {
     encounter.orbitMotionDirection = direction
     if (direction !== 0) {
       encounter.targetOrbitAngleRadians = encounter.orbitAngleRadians
+      if (encounter.definition.habitat === 'land') {
+        encounter.targetObserverDistance = encounter.observerDistance
+      }
     } else {
       this.publishScaleEncounterSnapshot()
     }
@@ -2826,6 +2954,26 @@ export class ViewerController {
     const encounter = this.scaleEncounter
     if (!encounter || encounter.transition) return
 
+    if (
+      encounter.view === 'pov' &&
+      encounter.definition.habitat === 'land' &&
+      (encounter.distanceMotionDirection !== 0 ||
+        encounter.orbitMotionDirection !== 0)
+    ) {
+      this.updateScaleEncounterLandHeldMotion(deltaSeconds, now)
+      return
+    }
+
+    if (encounter.definition.habitat === 'land') {
+      encounter.landMotionIntent =
+        encounter.view === 'pov' &&
+        Math.abs(
+          encounter.targetObserverDistance - encounter.observerDistance,
+        ) > 1e-7
+          ? 'walk'
+          : 'idle'
+    }
+
     const heldDirection = encounter.distanceMotionDirection
     const isOverview = encounter.view === 'overview'
     let changed: boolean
@@ -2878,6 +3026,39 @@ export class ViewerController {
           encounter.orbitAngleRadians,
         )
         encounter.targetObserverDistance = encounter.observerDistance
+      } else if (encounter.definition.habitat === 'land') {
+        const targetRadius = scaleEncounterLandRadiusAtDistance(
+          encounter.placement,
+          encounter.targetObserverDistance,
+        )
+        const previousRadius = scaleEncounterLandRadiusAtDistance(
+          encounter.placement,
+          previous,
+        )
+        const maximumWorldStep =
+          SCALE_ENCOUNTER_LAND_WALK_SPEED_METERS_PER_SECOND *
+          Math.max(deltaSeconds, 0)
+        const remainingRadius = targetRadius - previousRadius
+        const nextRadius =
+          previousRadius +
+          Math.sign(remainingRadius) *
+            Math.min(Math.abs(remainingRadius), maximumWorldStep)
+        const minimumDistance = minimumScaleEncounterDistanceForProfile(
+          encounter.placement,
+          encounter.definition,
+          encounter.profile,
+          encounter.orbitAngleRadians,
+        )
+        encounter.observerDistance = scaleEncounterLandDistanceForRadius(
+          encounter.placement,
+          nextRadius,
+          minimumDistance,
+          encounter.definition.maximumDistance,
+        )
+        if (Math.abs(remainingRadius) <= maximumWorldStep + 1e-8) {
+          encounter.observerDistance = encounter.targetObserverDistance
+          settled = true
+        }
       } else {
         const alpha = 1 - Math.exp(
           -SCALE_ENCOUNTER_DISTANCE_EASING_PER_SECOND * deltaSeconds,
@@ -2917,14 +3098,213 @@ export class ViewerController {
     }
   }
 
+  /**
+   * Integrates both axes as one normalised local-polar command. Small world
+   * substeps are the swept equivalent used here: every segment is projected
+   * onto the angle-dependent safe radius before the next segment begins, so a
+   * long frame cannot penetrate and then trigger a large corrective snap.
+   */
+  private updateScaleEncounterLandHeldMotion(
+    deltaSeconds: number,
+    now: number,
+  ): void {
+    const encounter = this.scaleEncounter
+    if (
+      !encounter ||
+      encounter.transition ||
+      encounter.view !== 'pov' ||
+      encounter.definition.habitat !== 'land'
+    ) {
+      return
+    }
+    const intent = resolveScaleEncounterLandInputIntent(
+      encounter.distanceMotionDirection,
+      encounter.orbitMotionDirection,
+    )
+    if (intent.motion === 'idle' || deltaSeconds <= 0) return
+    encounter.landMotionIntent = intent.motion
+
+    const previousDistance = encounter.observerDistance
+    const previousAngle = encounter.orbitAngleRadians
+    const travelMeters = intent.speedMetersPerSecond * deltaSeconds
+    const substepCount = Math.max(
+      1,
+      Math.ceil(travelMeters / SCALE_ENCOUNTER_LAND_SWEEP_STEP_METERS),
+    )
+    const substepSeconds = deltaSeconds / substepCount
+    const usesExpandedAnimalBounds =
+      encounter.profile.approach === 'close' ||
+      encounter.placement.animalId === 'apatosaurus'
+    const collisionMarginMeters = Math.max(
+      0.55,
+      encounter.profile.heightMeters * 0.5,
+    )
+    const collisionMinimum = encounter.placement.animalBoundsMinimum
+      .clone()
+      .addScalar(-collisionMarginMeters)
+    const collisionMaximum = encounter.placement.animalBoundsMaximum
+      .clone()
+      .addScalar(collisionMarginMeters)
+    const baseDirection = computeScaleEncounterPovEyePosition(
+      encounter.placement,
+      'land',
+      encounter.placement.defaultDistance,
+    )
+      .sub(encounter.placement.orbitCenter)
+      .setY(0)
+      .normalize()
+
+    for (let step = 0; step < substepCount; step += 1) {
+      if (usesExpandedAnimalBounds) {
+        const currentEye = computeScaleEncounterOrbitedEyePosition(
+          encounter.placement,
+          'land',
+          encounter.observerDistance,
+          encounter.orbitAngleRadians,
+        ).setY(0)
+        const outward = currentEye
+          .clone()
+          .sub(encounter.placement.orbitCenter)
+          .setY(0)
+          .normalize()
+        const tangent = new Vector3(outward.z, 0, -outward.x)
+        const nextEye = currentEye
+          .clone()
+          .addScaledVector(
+            outward,
+            -intent.radial *
+              intent.speedMetersPerSecond *
+              substepSeconds,
+          )
+          .addScaledVector(
+            tangent,
+            intent.tangential *
+              intent.speedMetersPerSecond *
+              substepSeconds,
+          )
+        projectScaleEncounterLandPointOutsideBounds(
+          nextEye,
+          collisionMinimum,
+          collisionMaximum,
+        )
+        const nextOffset = nextEye
+          .sub(encounter.placement.orbitCenter)
+          .setY(0)
+        const maximumRadius = scaleEncounterLandRadiusAtDistance(
+          encounter.placement,
+          encounter.definition.maximumDistance,
+        )
+        if (nextOffset.length() > maximumRadius) {
+          nextOffset.setLength(maximumRadius)
+        }
+        const nextRadius = Math.max(nextOffset.length(), 0.001)
+        const nextDirection = nextOffset.clone().divideScalar(nextRadius)
+        const nextAngle = unwrapScaleEncounterOrbitAngle(
+          encounter.orbitAngleRadians,
+          baseDirection,
+          nextDirection,
+        )
+        const minimumDistance = minimumScaleEncounterDistanceForProfile(
+          encounter.placement,
+          encounter.definition,
+          encounter.profile,
+          nextAngle,
+        )
+        encounter.orbitAngleRadians = nextAngle
+        encounter.observerDistance = scaleEncounterLandDistanceForRadius(
+          encounter.placement,
+          nextRadius,
+          minimumDistance,
+          encounter.definition.maximumDistance,
+        )
+        continue
+      }
+
+      const radius = Math.max(
+        scaleEncounterLandRadiusAtDistance(
+          encounter.placement,
+          encounter.observerDistance,
+        ),
+        0.001,
+      )
+      const nextAngle =
+        encounter.orbitAngleRadians +
+        (intent.tangential *
+          intent.speedMetersPerSecond *
+          substepSeconds) /
+          radius
+      const minimumDistance = minimumScaleEncounterDistanceForProfile(
+        encounter.placement,
+        encounter.definition,
+        encounter.profile,
+        nextAngle,
+      )
+      const minimumRadius = scaleEncounterLandRadiusAtDistance(
+        encounter.placement,
+        minimumDistance,
+      )
+      const maximumRadius = scaleEncounterLandRadiusAtDistance(
+        encounter.placement,
+        encounter.definition.maximumDistance,
+      )
+      const desiredRadius =
+        radius -
+        intent.radial * intent.speedMetersPerSecond * substepSeconds
+      const nextRadius = MathUtils.clamp(
+        desiredRadius,
+        Math.min(minimumRadius, maximumRadius),
+        Math.max(minimumRadius, maximumRadius),
+      )
+      encounter.orbitAngleRadians = Number.isFinite(nextAngle)
+        ? nextAngle
+        : encounter.orbitAngleRadians
+      encounter.observerDistance = scaleEncounterLandDistanceForRadius(
+        encounter.placement,
+        nextRadius,
+        minimumDistance,
+        encounter.definition.maximumDistance,
+      )
+    }
+
+    encounter.targetObserverDistance = encounter.observerDistance
+    encounter.targetOrbitAngleRadians = encounter.orbitAngleRadians
+    const changed =
+      Math.abs(encounter.observerDistance - previousDistance) > 1e-7 ||
+      Math.abs(encounter.orbitAngleRadians - previousAngle) > 1e-7
+    if (!changed) return
+    this.applyScaleEncounterPovPose()
+    if (now - this.scaleEncounterDistanceSnapshotUpdatedAt >= 50) {
+      this.scaleEncounterDistanceSnapshotUpdatedAt = now
+      this.publishScaleEncounterSnapshot()
+    }
+  }
+
   private updateScaleEncounterOrbit(
     deltaSeconds: number,
     now: number,
   ): void {
     const encounter = this.scaleEncounter
     if (!encounter || encounter.transition || encounter.view !== 'pov') return
+    if (
+      encounter.definition.habitat === 'land' &&
+      (encounter.distanceMotionDirection !== 0 ||
+        encounter.orbitMotionDirection !== 0)
+    ) {
+      return
+    }
 
     const previous = encounter.orbitAngleRadians
+    const hasOrbitIntent =
+      encounter.orbitMotionDirection !== 0 ||
+      Math.abs(
+        encounter.targetOrbitAngleRadians - encounter.orbitAngleRadians,
+      ) > 0.0002
+    if (
+      encounter.definition.habitat === 'land' &&
+      hasOrbitIntent
+    ) {
+      encounter.landMotionIntent = 'run'
+    }
     const horizontalOrbitRadius = Math.max(
       encounter.avatar.eyeAnchor
         .getWorldPosition(new Vector3())
@@ -4222,11 +4602,18 @@ export class ViewerController {
     // along the measured travel vector.
     this.placeScaleEncounterAvatarEyeAt(encounter.avatar, eyePosition)
     encounter.avatarPreviousEyePosition.copy(eyePosition)
+    let motionKind = scaleEncounterAvatarMotionFor(
+      encounter.definition.id,
+      speedMetersPerSecond,
+    )
+    if (encounter.definition.habitat === 'land') {
+      motionKind =
+        encounter.view !== 'pov'
+          ? 'idle'
+          : (encounter.landMotionIntent ?? 'idle')
+    }
     const motionState = {
-      kind: scaleEncounterAvatarMotionFor(
-        encounter.definition.id,
-        speedMetersPerSecond,
-      ),
+      kind: motionKind,
       speedMetersPerSecond,
     }
     encounter.avatar.setMotionState?.(motionState)
