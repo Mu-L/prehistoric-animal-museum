@@ -103,6 +103,24 @@ async function expectUnmistakableSelectedLanguage(menu: Locator): Promise<void> 
   }
 }
 
+async function expectMenuInsideViewport(page: Page, menu: Locator): Promise<void> {
+  const layout = await menu.evaluate((element) => {
+    const box = element.getBoundingClientRect()
+    return {
+      bottom: box.bottom,
+      left: box.left,
+      right: box.right,
+      top: box.top,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
+    }
+  })
+  expect(layout.left).toBeGreaterThanOrEqual(11)
+  expect(layout.top).toBeGreaterThanOrEqual(11)
+  expect(layout.right).toBeLessThanOrEqual(layout.viewportWidth - 11)
+  expect(layout.bottom).toBeLessThanOrEqual(layout.viewportHeight - 11)
+}
+
 async function expectReadableEnglishStoryLayout(
   page: Page,
   viewport: (typeof responsiveStoryViewports)[number],
@@ -754,11 +772,11 @@ test('keeps an open drawer and model focus mode during an in-place language swit
     .click()
   await page.keyboard.press('Escape')
   await expect(chineseGuide).toBeVisible()
-  await expect(chineseGuide.getByRole('menu')).toHaveCount(0)
+  await expect(page.getByRole('menu')).toHaveCount(0)
   await chineseGuide
     .getByRole('button', { name: '切换语言，当前简体中文' })
     .click()
-  await chineseGuide.getByRole('menuitemradio', { name: 'English' }).click()
+  await page.getByRole('menuitemradio', { name: 'English' }).click()
   const englishGuide = page.getByRole('dialog', { name: 'Guide for grown-ups' })
   await expect(englishGuide).toBeVisible()
   await expect(englishGuide.getByText('When it lived', { exact: true })).toBeVisible()
@@ -818,14 +836,25 @@ test('makes the selected language unmistakable in both museum sheets', async ({
     expect(response?.ok()).toBe(true)
     await waitForMuseumShell(page, '剑龙')
 
+    await page
+      .getByRole('button', { name: '切换语言，当前简体中文' })
+      .click()
+    await expectMenuInsideViewport(
+      page,
+      page.getByRole('menu', { name: '选择界面语言' }),
+    )
+    await page.keyboard.press('Escape')
+
     await page.getByRole('button', { name: '打开全馆图鉴' }).click()
     const collection = page.getByRole('dialog', { name: '全馆图鉴' })
     await collection
       .getByRole('button', { name: '切换语言，当前简体中文' })
       .click()
+    const collectionMenu = page.getByRole('menu', { name: '选择界面语言' })
     await expectUnmistakableSelectedLanguage(
-      collection.getByRole('menu', { name: '选择界面语言' }),
+      collectionMenu,
     )
+    await expectMenuInsideViewport(page, collectionMenu)
     await page.keyboard.press('Escape')
     await collection.getByRole('button', { name: '关闭全馆图鉴' }).click()
 
@@ -834,9 +863,9 @@ test('makes the selected language unmistakable in both museum sheets', async ({
     await guide
       .getByRole('button', { name: '切换语言，当前简体中文' })
       .click()
-    await expectUnmistakableSelectedLanguage(
-      guide.getByRole('menu', { name: '选择界面语言' }),
-    )
+    const guideMenu = page.getByRole('menu', { name: '选择界面语言' })
+    await expectUnmistakableSelectedLanguage(guideMenu)
+    await expectMenuInsideViewport(page, guideMenu)
     expect(await page.evaluate(() => window.devicePixelRatio)).toBe(2)
   } finally {
     await context.close()
