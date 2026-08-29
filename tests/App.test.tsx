@@ -919,7 +919,7 @@ describe('App', () => {
       }),
     )
     await user.click(
-      within(chineseDialog).getByRole('menuitemradio', { name: 'English' }),
+      screen.getByRole('menuitemradio', { name: 'English' }),
     )
 
     const englishDialog = screen.getByRole('dialog', {
