@@ -1,19 +1,38 @@
 import { Check, Languages } from 'lucide-react'
 import {
+  useCallback,
   useEffect,
+  useId,
+  useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { useI18n } from '../i18n/I18nProvider'
 import { systemLocale, type LocalePreference } from '../i18n/locale'
 
 const choices: readonly LocalePreference[] = ['system', 'zh-CN', 'en']
+const popoverGap = 9
+const viewportMargin = 12
+const preferredPopoverWidth = 304
+
+interface PopoverPosition {
+  readonly accentSoft: string
+  readonly left: number
+  readonly top: number
+  readonly width: number
+}
 
 export function LanguageMenu() {
   const { locale, messages, preference, setPreference } = useI18n()
   const [open, setOpen] = useState(false)
+  const [popoverPosition, setPopoverPosition] =
+    useState<PopoverPosition | null>(null)
+  const menuId = useId()
+  const menuRef = useRef<HTMLDivElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const itemRefs = useRef(new Map<LocalePreference, HTMLButtonElement>())
@@ -50,6 +69,7 @@ export function LanguageMenu() {
 
   const close = (restoreFocus = false) => {
     setOpen(false)
+    setPopoverPosition(null)
     if (restoreFocus) {
       queueMicrotask(() => triggerRef.current?.focus())
     }
@@ -60,12 +80,101 @@ export function LanguageMenu() {
     queueMicrotask(() => itemRefs.current.get(choice)?.focus())
   }
 
+  const positionPopover = useCallback(() => {
+    const trigger = triggerRef.current
+    const menu = menuRef.current
+    if (!trigger || !menu) {
+      return
+    }
+
+    const viewport = window.visualViewport
+    const viewportLeft = viewport?.offsetLeft ?? 0
+    const viewportTop = viewport?.offsetTop ?? 0
+    const viewportWidth = viewport?.width ?? window.innerWidth
+    const viewportHeight = viewport?.height ?? window.innerHeight
+    const viewportRight = viewportLeft + viewportWidth
+    const viewportBottom = viewportTop + viewportHeight
+    const triggerBox = trigger.getBoundingClientRect()
+    const menuHeight = menu.getBoundingClientRect().height
+    const width = Math.min(
+      preferredPopoverWidth,
+      Math.max(0, viewportWidth - viewportMargin * 2),
+    )
+    const minLeft = viewportLeft + viewportMargin
+    const maxLeft = Math.max(minLeft, viewportRight - viewportMargin - width)
+    const left = Math.min(
+      Math.max(triggerBox.right - width, minLeft),
+      maxLeft,
+    )
+    const below = triggerBox.bottom + popoverGap
+    const above = triggerBox.top - popoverGap - menuHeight
+    const availableBelow = viewportBottom - viewportMargin - below
+    const availableAbove =
+      triggerBox.top - popoverGap - (viewportTop + viewportMargin)
+    const preferredTop =
+      menuHeight <= availableBelow || availableBelow >= availableAbove
+        ? below
+        : above
+    const maxTop = Math.max(
+      viewportTop + viewportMargin,
+      viewportBottom - viewportMargin - menuHeight,
+    )
+    const top = Math.min(
+      Math.max(preferredTop, viewportTop + viewportMargin),
+      maxTop,
+    )
+    const accentSoft = getComputedStyle(trigger).getPropertyValue(
+      '--animal-accent-soft',
+    )
+
+    setPopoverPosition((current) => {
+      const next = { accentSoft, left, top, width }
+      return current?.accentSoft === next.accentSoft &&
+        current.left === next.left &&
+        current.top === next.top &&
+        current.width === next.width
+        ? current
+        : next
+    })
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!open) {
+      return
+    }
+
+    positionPopover()
+    const viewport = window.visualViewport
+    const observer =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(positionPopover)
+    if (triggerRef.current) observer?.observe(triggerRef.current)
+    if (menuRef.current) observer?.observe(menuRef.current)
+    window.addEventListener('resize', positionPopover)
+    window.addEventListener('scroll', positionPopover, true)
+    viewport?.addEventListener('resize', positionPopover)
+    viewport?.addEventListener('scroll', positionPopover)
+
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', positionPopover)
+      window.removeEventListener('scroll', positionPopover, true)
+      viewport?.removeEventListener('resize', positionPopover)
+      viewport?.removeEventListener('scroll', positionPopover)
+    }
+  }, [open, positionPopover])
+
   useEffect(() => {
     if (!open) {
       return
     }
     const handlePointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node
+      if (
+        !rootRef.current?.contains(target) &&
+        !menuRef.current?.contains(target)
+      ) {
         close()
       }
     }
@@ -86,7 +195,22 @@ export function LanguageMenu() {
       return
     }
     if (event.key === 'Tab') {
-      queueMicrotask(() => close())
+      event.preventDefault()
+      const trigger = triggerRef.current
+      const focusTarget = event.shiftKey
+        ? trigger
+        : Array.from(
+            document.querySelectorAll<HTMLElement>(
+              'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+          ).find(
+            (element, index, elements) =>
+              index > elements.indexOf(trigger!) &&
+              !menuRef.current?.contains(element) &&
+              !element.closest('[inert]'),
+          )
+      close()
+      queueMicrotask(() => (focusTarget ?? trigger)?.focus())
       return
     }
     if (event.key === 'Home' || event.key === 'End') {
@@ -111,6 +235,7 @@ export function LanguageMenu() {
   return (
     <div className="language-menu" ref={rootRef}>
       <button
+        aria-controls={open ? menuId : undefined}
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={messages.language.buttonLabel}
@@ -133,42 +258,57 @@ export function LanguageMenu() {
         <Languages aria-hidden="true" size={20} strokeWidth={2.1} />
         <span>{locale === 'zh-CN' ? '中' : 'EN'}</span>
       </button>
-      {open ? (
-        <div
-          aria-label={messages.language.menuLabel}
-          className="language-menu__popover"
-          onKeyDown={handleMenuKeyDown}
-          role="menu"
-        >
-          {choices.map((choice) => (
-            <button
-              aria-checked={preference === choice}
-              className="language-menu__choice"
-              key={choice}
-              onClick={() => {
-                setPreference(choice)
-                close(true)
-              }}
-              ref={(element) => {
-                if (element) itemRefs.current.set(choice, element)
-                else itemRefs.current.delete(choice)
-              }}
-              role="menuitemradio"
-              tabIndex={-1}
-              type="button"
+      {open
+        ? createPortal(
+            <div
+              aria-label={messages.language.menuLabel}
+              className="language-menu__popover"
+              data-positioned={popoverPosition !== null}
+              id={menuId}
+              onKeyDown={handleMenuKeyDown}
+              ref={menuRef}
+              role="menu"
+              style={
+                {
+                  '--animal-accent-soft':
+                    popoverPosition?.accentSoft || undefined,
+                  left: popoverPosition?.left ?? 0,
+                  top: popoverPosition?.top ?? 0,
+                  width: popoverPosition?.width ?? preferredPopoverWidth,
+                } as CSSProperties
+              }
             >
-              <span aria-hidden="true" className="language-menu__radio" />
-              <span>{labelFor(choice)}</span>
-              <span
-                aria-hidden="true"
-                className="language-menu__selected-mark"
-              >
-                <Check size={17} strokeWidth={3} />
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+              {choices.map((choice) => (
+                <button
+                  aria-checked={preference === choice}
+                  className="language-menu__choice"
+                  key={choice}
+                  onClick={() => {
+                    setPreference(choice)
+                    close(true)
+                  }}
+                  ref={(element) => {
+                    if (element) itemRefs.current.set(choice, element)
+                    else itemRefs.current.delete(choice)
+                  }}
+                  role="menuitemradio"
+                  tabIndex={-1}
+                  type="button"
+                >
+                  <span aria-hidden="true" className="language-menu__radio" />
+                  <span>{labelFor(choice)}</span>
+                  <span
+                    aria-hidden="true"
+                    className="language-menu__selected-mark"
+                  >
+                    <Check size={17} strokeWidth={3} />
+                  </span>
+                </button>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }

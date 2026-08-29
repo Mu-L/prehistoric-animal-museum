@@ -69,6 +69,39 @@ describe('LanguageMenu', () => {
     expect(trigger).toHaveFocus()
   })
 
+  it('keeps the portalled menu inside a narrow viewport', async () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(320)
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(568)
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+      function (this: HTMLElement) {
+        if (this.classList.contains('language-menu__trigger')) {
+          return DOMRect.fromRect({ x: 198, y: 20, width: 52, height: 52 })
+        }
+        if (this.classList.contains('language-menu__popover')) {
+          return DOMRect.fromRect({ width: 296, height: 160 })
+        }
+        return DOMRect.fromRect()
+      },
+    )
+    const user = userEvent.setup()
+    renderLanguageMenu()
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Change language, current English',
+      }),
+    )
+
+    const menu = screen.getByRole('menu', {
+      name: 'Choose interface language',
+    })
+    await waitFor(() => expect(menu).toHaveAttribute('data-positioned', 'true'))
+    expect(menu.parentElement).toBe(document.body)
+    expect(menu.style.left).toBe('12px')
+    expect(menu.style.top).toBe('81px')
+    expect(menu.style.width).toBe('296px')
+  })
+
   it('closes on Tab and Shift+Tab while preserving the browser focus order', async () => {
     window.localStorage.setItem(localePreferenceStorageKey, 'zh-CN')
     const user = userEvent.setup()
@@ -105,7 +138,7 @@ describe('LanguageMenu', () => {
 
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
     expect(afterMenu).toHaveFocus()
-    expect(tabDefaultPrevented).toEqual([false])
+    expect(tabDefaultPrevented).toEqual([true])
 
     trigger.focus()
     await user.keyboard('{ArrowUp}')
@@ -117,7 +150,7 @@ describe('LanguageMenu', () => {
 
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
     expect(trigger).toHaveFocus()
-    expect(tabDefaultPrevented).toEqual([false, false])
+    expect(tabDefaultPrevented).toEqual([true, true])
   })
 
   it('contains Escape so parent keyboard handlers do not close another layer', async () => {
