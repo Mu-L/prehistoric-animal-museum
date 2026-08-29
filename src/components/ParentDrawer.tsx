@@ -194,7 +194,7 @@ export function ParentDrawer({
         </header>
         <div
           aria-describedby={showScrollCue ? scrollHintId : undefined}
-          className="drawer-scroll"
+          className="drawer-scroll parent-drawer__scroll"
           ref={scrollRef}
         >
           <div>
