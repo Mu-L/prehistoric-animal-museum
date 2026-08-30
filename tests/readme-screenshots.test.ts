@@ -119,7 +119,7 @@ describe('README reference screenshot plan', () => {
     }
   })
 
-  it('keeps both README collections aligned with every published animal', async () => {
+  it('keeps both README collections count-agnostic and aligned with every published animal', async () => {
     const [englishReadme, chineseReadme] = await Promise.all([
       readFile('README.md', 'utf8'),
       readFile('README.zh-CN.md', 'utf8'),
@@ -131,10 +131,12 @@ describe('README reference screenshot plan', () => {
       ]),
     )
 
-    expect(englishReadme).toContain(
+    expect(englishReadme).toContain('## Exhibits across sea, land, and sky')
+    expect(chineseReadme).toContain('## 来自海、陆、空的史前动物展品')
+    expect(englishReadme).not.toContain(
       `## ${mainCollection.animalIds.length} animals across sea, land, and sky`,
     )
-    expect(chineseReadme).toContain(
+    expect(chineseReadme).not.toContain(
       `## ${mainCollection.animalIds.length} 种动物，来自海、陆、空`,
     )
     for (const id of mainCollection.animalIds) {
