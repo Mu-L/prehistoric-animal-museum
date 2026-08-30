@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>For curious children and the grown-ups willing to sit beside them.</strong><br>
-  Explore 18 prehistoric animals in English or Simplified Chinese, with short narration and a parent guide for the questions that follow.
+  Explore prehistoric animal exhibits in English or Simplified Chinese, with short narration and a parent guide for the questions that follow.
 </p>
 
 <p align="center">
@@ -39,7 +39,7 @@ The museum follows the device language on a first visit. You can switch between 
 
 It is designed mainly for children aged 2–6 with a grown-up nearby, but curiosity matters more than the age label. If an image or sound feels uncomfortable, choose another animal or close the page.
 
-## 18 animals across sea, land, and sky
+## Exhibits across sea, land, and sky
 
 <details>
 <summary><strong>See the full collection</strong></summary>
