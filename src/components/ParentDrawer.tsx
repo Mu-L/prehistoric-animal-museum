@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import { IconButton } from './IconButton'
 import { LanguageMenu } from './LanguageMenu'
 import { OfficialLinks } from './OfficialLinks'
+import { useTransientScrollbar } from './useTransientScrollbar'
 
 export interface ParentReviewFacts {
   readonly badge: string
@@ -81,6 +82,7 @@ export function ParentDrawer({
   const scrollHintId = useId()
   const titleId = useId()
   const review = showReviewDetails ? facts.review : undefined
+  const { handleScroll, isScrolling } = useTransientScrollbar()
 
   const updateScrollCue = useCallback(() => {
     const scroll = scrollRef.current
@@ -194,7 +196,9 @@ export function ParentDrawer({
         </header>
         <div
           aria-describedby={showScrollCue ? scrollHintId : undefined}
-          className="drawer-scroll parent-drawer__scroll"
+          className="drawer-scroll museum-scrollbar"
+          data-scrolling={isScrolling}
+          onScroll={handleScroll}
           ref={scrollRef}
         >
           <div>

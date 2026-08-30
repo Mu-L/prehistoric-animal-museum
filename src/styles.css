@@ -1942,34 +1942,61 @@ a:focus-visible {
   scrollbar-gutter: stable;
 }
 
-.parent-drawer__scroll {
-  scrollbar-color:
-    color-mix(in srgb, var(--animal-accent, var(--leaf)) 58%, var(--leaf))
-    color-mix(in srgb, var(--canvas-warm) 62%, transparent);
+.museum-scrollbar {
+  --museum-scrollbar-thumb: color-mix(
+    in srgb,
+    var(--animal-accent, var(--leaf)) 58%,
+    var(--leaf)
+  );
+  --museum-scrollbar-thumb-hover: color-mix(
+    in srgb,
+    var(--animal-accent, var(--leaf)) 76%,
+    var(--leaf)
+  );
+  --museum-scrollbar-track: color-mix(
+    in srgb,
+    var(--canvas-warm) 62%,
+    transparent
+  );
+  scrollbar-color: transparent transparent;
   scrollbar-width: thin;
 }
 
-.parent-drawer__scroll::-webkit-scrollbar {
+.museum-scrollbar[data-scrolling="true"],
+.museum-scrollbar:hover {
+  scrollbar-color: var(--museum-scrollbar-thumb) var(--museum-scrollbar-track);
+}
+
+.museum-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
 
-.parent-drawer__scroll::-webkit-scrollbar-track {
+.museum-scrollbar::-webkit-scrollbar-track {
   border-radius: 999px;
-  background: color-mix(in srgb, var(--canvas-warm) 62%, transparent);
+  background-color: transparent;
+  transition: background-color 180ms ease;
 }
 
-.parent-drawer__scroll::-webkit-scrollbar-thumb {
+.museum-scrollbar::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
-  background:
-    color-mix(in srgb, var(--animal-accent, var(--leaf)) 58%, var(--leaf))
-    padding-box;
+  background-color: transparent;
+  background-clip: padding-box;
+  transition: background-color 180ms ease;
 }
 
-.parent-drawer__scroll::-webkit-scrollbar-thumb:hover {
-  background:
-    color-mix(in srgb, var(--animal-accent, var(--leaf)) 76%, var(--leaf))
-    padding-box;
+.museum-scrollbar[data-scrolling="true"]::-webkit-scrollbar-track,
+.museum-scrollbar:hover::-webkit-scrollbar-track {
+  background-color: var(--museum-scrollbar-track);
+}
+
+.museum-scrollbar[data-scrolling="true"]::-webkit-scrollbar-thumb,
+.museum-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: var(--museum-scrollbar-thumb);
+}
+
+.museum-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--museum-scrollbar-thumb-hover);
 }
 
 .fact-grid {
@@ -3234,12 +3261,7 @@ a:focus-visible {
   }
 
   .drawer-handle {
-    top: 50%;
-    right: 7px;
-    left: auto;
-    width: 4px;
-    height: 42px;
-    transform: translateY(-50%);
+    display: none;
   }
 
   .drawer-header {
