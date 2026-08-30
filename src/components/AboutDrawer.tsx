@@ -5,6 +5,8 @@ import { useI18n } from '../i18n/I18nProvider'
 import { IconButton } from './IconButton'
 import { LanguageMenu } from './LanguageMenu'
 import { OfficialLinks } from './OfficialLinks'
+import { TransientScrollbar } from './TransientScrollbar'
+import { useTransientScrollbar } from './useTransientScrollbar'
 
 interface AboutDrawerProps {
   readonly onClose: () => void
@@ -27,6 +29,8 @@ export function AboutDrawer({
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const drawerRef = useRef<HTMLElement>(null)
   const titleId = useId()
+  const { handleScroll, isScrolling, metrics, scrollRef } =
+    useTransientScrollbar(open)
 
   useEffect(() => {
     if (!open) {
@@ -99,8 +103,13 @@ export function AboutDrawer({
             />
           </div>
         </header>
-        <div className="drawer-scroll about-drawer__scroll">
-          <div className="about-drawer__body">
+        <div className="drawer-scroll-shell">
+          <div
+            className="drawer-scroll museum-scrollbar about-drawer__scroll"
+            onScroll={handleScroll}
+            ref={scrollRef}
+          >
+            <div className="about-drawer__body">
             <section className="about-story">
               <h3>{messages.about.heading}</h3>
               {messages.about.paragraphs.map((paragraph) => (
@@ -129,7 +138,9 @@ export function AboutDrawer({
                 <ExternalLink aria-hidden="true" size={16} strokeWidth={2} />
               </a>
             </div>
+            </div>
           </div>
+          <TransientScrollbar isScrolling={isScrolling} metrics={metrics} />
         </div>
       </section>
     </div>
