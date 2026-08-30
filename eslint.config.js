@@ -22,7 +22,6 @@ export default tseslint.config(
       'docs/specification',
       'prototypes',
       'spikes',
-      'tools',
     ],
   },
   {

@@ -1,4 +1,4 @@
 interface:
-  display_name: "史前动物新增自动化"
-  short_description: "候选评分、Idle、Qwen Serena、证据 QA 与原子晋升"
-  default_prompt: "Use $prehistoric-animal-onboarding to take licensed candidates through deterministic QA and local review, then atomically promote only animals with explicit owner approval."
+  display_name: "史前动物资产工厂"
+  short_description: "把史前动物从风险路由推进到全循环证据、模型锁与原子晋升"
+  default_prompt: "Use $prehistoric-animal-onboarding to route this animal by risk, prepare hash-bound machine and visual evidence, ask me only for the model-lock or publication decision, and never infer owner approval."
