@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/I18nProvider'
 import { IconButton } from './IconButton'
 import { LanguageMenu } from './LanguageMenu'
 import { OfficialLinks } from './OfficialLinks'
+import { TransientScrollbar } from './TransientScrollbar'
 import { useTransientScrollbar } from './useTransientScrollbar'
 
 export interface ParentReviewFacts {
@@ -77,12 +78,12 @@ export function ParentDrawer({
   const { locale, messages } = useI18n()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const drawerRef = useRef<HTMLElement>(null)
-  const scrollRef = useRef<HTMLDivElement>(null)
   const [showScrollCue, setShowScrollCue] = useState(false)
   const scrollHintId = useId()
   const titleId = useId()
   const review = showReviewDetails ? facts.review : undefined
-  const { handleScroll, isScrolling } = useTransientScrollbar()
+  const { handleScroll, isScrolling, metrics, scrollRef } =
+    useTransientScrollbar(open)
 
   const updateScrollCue = useCallback(() => {
     const scroll = scrollRef.current
@@ -93,7 +94,7 @@ export function ParentDrawer({
     const remaining =
       scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight
     setShowScrollCue(scroll.scrollHeight > scroll.clientHeight + 2 && remaining > 4)
-  }, [])
+  }, [scrollRef])
 
   useEffect(() => {
     if (!open) {
@@ -157,7 +158,7 @@ export function ParentDrawer({
       window.removeEventListener('resize', updateScrollCue)
       observer?.disconnect()
     }
-  }, [facts, open, updateScrollCue])
+  }, [facts, open, scrollRef, updateScrollCue])
 
   return (
     <div className="drawer-layer" hidden={!open}>
@@ -194,14 +195,14 @@ export function ParentDrawer({
             />
           </div>
         </header>
-        <div
-          aria-describedby={showScrollCue ? scrollHintId : undefined}
-          className="drawer-scroll museum-scrollbar"
-          data-scrolling={isScrolling}
-          onScroll={handleScroll}
-          ref={scrollRef}
-        >
-          <div>
+        <div className="drawer-scroll-shell">
+          <div
+            aria-describedby={showScrollCue ? scrollHintId : undefined}
+            className="drawer-scroll museum-scrollbar"
+            onScroll={handleScroll}
+            ref={scrollRef}
+          >
+            <div>
             <dl className="fact-grid">
               <div>
                 <dt>{messages.parent.period}</dt>
@@ -343,8 +344,10 @@ export function ParentDrawer({
                 </div>
               </div>
             </details>
-            <OfficialLinks compact />
+              <OfficialLinks compact />
+            </div>
           </div>
+          <TransientScrollbar isScrolling={isScrolling} metrics={metrics} />
         </div>
         <p className="sr-only" id={scrollHintId}>
           {messages.parent.moreHint}

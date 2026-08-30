@@ -3,13 +3,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useTransientScrollbar } from '../src/components/useTransientScrollbar'
 
 function TransientScrollbarFixture() {
-  const { handleScroll, isScrolling } = useTransientScrollbar()
+  const { handleScroll, isScrolling, scrollRef } = useTransientScrollbar()
 
   return (
     <div
       data-scrolling={isScrolling}
       data-testid="scroll-container"
       onScroll={handleScroll}
+      ref={scrollRef}
     />
   )
 }
@@ -30,7 +31,7 @@ describe('useTransientScrollbar', () => {
     expect(scrollContainer).toHaveAttribute('data-scrolling', 'true')
 
     act(() => {
-      vi.advanceTimersByTime(699)
+      vi.advanceTimersByTime(479)
     })
     expect(scrollContainer).toHaveAttribute('data-scrolling', 'true')
 

@@ -1936,67 +1936,76 @@ a:focus-visible {
 }
 
 .drawer-scroll {
+  height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 10px 26px max(64px, env(safe-area-inset-bottom));
   scrollbar-gutter: stable;
 }
 
-.museum-scrollbar {
-  --museum-scrollbar-thumb: color-mix(
-    in srgb,
-    var(--animal-accent, var(--leaf)) 58%,
-    var(--leaf)
-  );
-  --museum-scrollbar-thumb-hover: color-mix(
-    in srgb,
-    var(--animal-accent, var(--leaf)) 76%,
-    var(--leaf)
-  );
-  --museum-scrollbar-track: color-mix(
-    in srgb,
-    var(--canvas-warm) 62%,
-    transparent
-  );
-  scrollbar-color: transparent transparent;
-  scrollbar-width: thin;
+.drawer-scroll-shell {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.museum-scrollbar[data-scrolling="true"],
-.museum-scrollbar:hover {
-  scrollbar-color: var(--museum-scrollbar-thumb) var(--museum-scrollbar-track);
+.museum-scrollbar {
+  scrollbar-color: transparent transparent;
+  scrollbar-width: thin;
 }
 
 .museum-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
 
-.museum-scrollbar::-webkit-scrollbar-track {
-  border-radius: 999px;
-  background-color: transparent;
-  transition: background-color 180ms ease;
-}
-
+.museum-scrollbar::-webkit-scrollbar-track,
 .museum-scrollbar::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
-  border-radius: 999px;
   background-color: transparent;
-  background-clip: padding-box;
-  transition: background-color 180ms ease;
 }
 
-.museum-scrollbar[data-scrolling="true"]::-webkit-scrollbar-track,
-.museum-scrollbar:hover::-webkit-scrollbar-track {
-  background-color: var(--museum-scrollbar-track);
+.museum-scrollbar-visual {
+  position: absolute;
+  z-index: 5;
+  top: 4px;
+  right: 0;
+  bottom: 4px;
+  width: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--canvas-warm) 62%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transform: scaleX(0.72);
+  transform-origin: right center;
+  transition:
+    opacity 360ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms,
+    transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms;
 }
 
-.museum-scrollbar[data-scrolling="true"]::-webkit-scrollbar-thumb,
-.museum-scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: var(--museum-scrollbar-thumb);
+.museum-scrollbar-visual > span {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  width: 4px;
+  height: var(--museum-scrollbar-thumb-size);
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--animal-accent, var(--leaf)) 58%,
+    var(--leaf)
+  );
+  transform: translate3d(0, var(--museum-scrollbar-thumb-offset), 0);
+  transition:
+    height 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 90ms linear;
 }
 
-.museum-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: var(--museum-scrollbar-thumb-hover);
+.museum-scrollbar-visual[data-visible="true"],
+.drawer-scroll-shell:hover
+  .museum-scrollbar-visual[data-scrollable="true"] {
+  opacity: 1;
+  transform: scaleX(1);
+  transition-delay: 0ms;
+  transition-duration: 150ms;
 }
 
 .fact-grid {
