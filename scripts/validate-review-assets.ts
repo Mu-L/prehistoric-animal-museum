@@ -7,6 +7,10 @@ import {
 } from '../src/viewer/model-preview-profiles'
 import { inspectGlb, inspectWebp } from './content-validation'
 import { localReviewAssetFiles } from './review-assets'
+import {
+  formatVisibleAlphaEdgeContacts,
+  visibleAlphaEdgeContacts,
+} from './transparent-image-edges'
 
 const errors: string[] = []
 let totalBytes = 0
@@ -18,6 +22,31 @@ const modelStillDimensions = new Map<string, readonly [number, number]>([
       [fileName, [width, height] as const] as const,
   ),
 ])
+
+async function validateTransparentModelStill(
+  buffer: Uint8Array,
+  route: string,
+): Promise<void> {
+  const metadata = await sharp(buffer).metadata()
+  const alpha = await sharp(buffer)
+    .ensureAlpha()
+    .extractChannel('alpha')
+    .stats()
+  const alphaChannel = alpha.channels[0]
+  if (!metadata.hasAlpha || !alphaChannel || alphaChannel.min !== 0) {
+    errors.push(`${route} 必须保留透明背景。`)
+    return
+  }
+  if (alphaChannel.max <= 100 || alphaChannel.mean >= 120) {
+    errors.push(`${route} 没有可用的透明模型轮廓。`)
+  }
+  const edgeContactSummary = formatVisibleAlphaEdgeContacts(
+    await visibleAlphaEdgeContacts(buffer),
+  )
+  if (edgeContactSummary) {
+    errors.push(`${route} 的可见模型像素接触图片边缘（${edgeContactSummary}）。`)
+  }
+}
 
 for (const [route, absolutePath] of localReviewAssetFiles) {
   try {
@@ -50,17 +79,7 @@ for (const [route, absolutePath] of localReviewAssetFiles) {
           `${route} 应为 ${expectedModelStillDimensions[0]}×${expectedModelStillDimensions[1]}，实际为 ${dimensions.width}×${dimensions.height}。`,
         )
       }
-      const metadata = await sharp(buffer).metadata()
-      const alpha = await sharp(buffer)
-        .ensureAlpha()
-        .extractChannel('alpha')
-        .stats()
-      const alphaChannel = alpha.channels[0]
-      if (!metadata.hasAlpha || !alphaChannel || alphaChannel.min !== 0) {
-        errors.push(`${route} 必须保留透明背景。`)
-      } else if (alphaChannel.max <= 100 || alphaChannel.mean >= 120) {
-        errors.push(`${route} 没有可用的透明模型轮廓。`)
-      }
+      await validateTransparentModelStill(buffer, route)
     } else if (route.endsWith('/poster-portrait.webp')) {
       const dimensions = inspectWebp(buffer)
       if (dimensions.width !== 390 || dimensions.height !== 844) {
@@ -68,6 +87,7 @@ for (const [route, absolutePath] of localReviewAssetFiles) {
           `${route} 应为 390×844，实际为 ${dimensions.width}×${dimensions.height}。`,
         )
       }
+      await validateTransparentModelStill(buffer, route)
     } else if (route.endsWith('/poster.webp')) {
       const dimensions = inspectWebp(buffer)
       const isLegacyReviewSize =
@@ -79,6 +99,7 @@ for (const [route, absolutePath] of localReviewAssetFiles) {
           `${route} 应为 960×540 或 1200×675，实际为 ${dimensions.width}×${dimensions.height}。`,
         )
       }
+      await validateTransparentModelStill(buffer, route)
     } else if (route.endsWith('/thumbnail.webp')) {
       const dimensions = inspectWebp(buffer)
       if (dimensions.width !== 320 || dimensions.height !== 320) {
@@ -86,7 +107,10 @@ for (const [route, absolutePath] of localReviewAssetFiles) {
           `${route} 应为 320×320，实际为 ${dimensions.width}×${dimensions.height}。`,
         )
       }
-    } else if (route.endsWith('/narration.mp3')) {
+    } else if (
+      route.endsWith('/narration.mp3') ||
+      route.endsWith('/narration.en.mp3')
+    ) {
       const startsWithId3 = buffer.subarray(0, 3).toString('ascii') === 'ID3'
       const startsWithFrameSync =
         buffer.length >= 2 &&

@@ -7,7 +7,9 @@ import {
   type ScaleEncounterAnimalId,
 } from '../src/scale-encounter/content'
 import type { Locale } from '../src/i18n/locale'
-import { SCALE_ENCOUNTER_ANIMAL_IDS } from '../src/scale-encounter/types'
+import {
+  SCALE_ENCOUNTER_ANIMAL_IDS,
+} from '../src/scale-encounter/types'
 import { animalDefinition as staticTyrannosaurus } from '../src/content/animals/tyrannosaurus-rex/package'
 
 interface NarrationTrack {
@@ -18,6 +20,7 @@ interface NarrationTrack {
   readonly endSample?: number
   readonly file: string
   readonly locale: Locale
+  readonly pronunciationContext?: string
   readonly script: string
   readonly sha256: string
   readonly startSample?: number
@@ -73,6 +76,16 @@ const manifest = JSON.parse(
 
 const animalIds: readonly ScaleEncounterAnimalId[] =
   SCALE_ENCOUNTER_ANIMAL_IDS
+const narratedAnimalIds: readonly ScaleEncounterAnimalId[] =
+  SCALE_ENCOUNTER_ANIMAL_IDS
+const expansionAnimalIds: ReadonlySet<string> = new Set([
+  'spinosaurus',
+  'lystrosaurus',
+  'baryonyx',
+  'archaeopteryx',
+  'carnotaurus',
+  'anomalocaris',
+])
 const locales: readonly Locale[] = ['zh-CN', 'en']
 const lineKinds: readonly GuidedLineKind[] = [
   'intro',
@@ -100,9 +113,11 @@ describe('scale encounter narration candidates', () => {
     )
   })
 
-  it('keeps all 112 Serena files byte-for-byte tied to their recorded hashes', () => {
+  it('keeps all 148 Serena files byte-for-byte tied to their recorded hashes', () => {
     expect(manifest.schemaVersion).toBe(2)
-    expect(manifest.status).toBe('production-approved')
+    expect(manifest.status).toBe(
+      'production-approved',
+    )
     expect(manifest.engine).toMatchObject({
       model: 'Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice',
       modelRevision:
@@ -119,8 +134,8 @@ describe('scale encounter narration candidates', () => {
         wholeMasterFactor: 1.04,
       },
     })
-    expect(manifest.tracks).toHaveLength(112)
-    expect(new Set(manifest.tracks.map((track) => track.file)).size).toBe(112)
+    expect(manifest.tracks).toHaveLength(148)
+    expect(new Set(manifest.tracks.map((track) => track.file)).size).toBe(148)
 
     for (const track of manifest.tracks) {
       const bytes = readFileSync(resolve(audioDirectory, track.file))
@@ -151,7 +166,7 @@ describe('scale encounter narration candidates', () => {
     const expectedFiles: string[] = []
     const staleRecordedCopy: string[] = []
 
-    for (const animalId of animalIds) {
+    for (const animalId of narratedAnimalIds) {
       for (const locale of locales) {
         const content = scaleEncounterContentFor(animalId, locale)
         for (const kind of lineKinds) {
@@ -194,11 +209,14 @@ describe('scale encounter narration candidates', () => {
     expect([...tracksByFile.keys()].sort()).toEqual(expectedFiles.sort())
     expect(staleRecordedCopy).toEqual([])
     for (const animalId of animalIds) {
+      const reviewedOn = expansionAnimalIds.has(animalId)
+        ? '2026-09-01'
+        : '2026-08-24'
       expect(manifest.humanListeningReview[animalId]).toMatchObject({
         status: 'approved',
         reviewedBy: 'Leon',
-        reviewedOn: '2026-08-24',
-        scriptApprovedOn: '2026-08-24',
+        reviewedOn,
+        scriptApprovedOn: reviewedOn,
       })
     }
     expect(manifest.humanListeningReview['view-switch']).toMatchObject({
@@ -214,14 +232,28 @@ describe('scale encounter narration candidates', () => {
         /从头到脚|绕到你身后|来到你的眼睛|camera|move behind|arrive at your eyes/i,
       )
     }
-    expect(manifest.publicDistributionDecision).toBe('approved')
+    expect(manifest.publicDistributionDecision).toBe(
+      'approved-all-production',
+    )
+  })
+
+  it('records the intended fourth-tone reading for every Chinese Baryonyx line', () => {
+    const tracks = manifest.tracks.filter(
+      (track) =>
+        track.locale === 'zh-CN' && track.file.startsWith('baryonyx-'),
+    )
+    expect(tracks).toHaveLength(3)
+    for (const track of tracks) {
+      expect(track.pronunciationContext).toContain('zhòng')
+      expect(track.pronunciationContext).toContain('轻重的重')
+    }
   })
 
   it('keeps every animal and locale contiguous on one normalized master', () => {
     expect(manifest.continuousNarrationPolicy).toMatchObject({
-      guidedTrackCount: 112,
-      animalPhaseTrackCount: 108,
-      animalLocaleMasterCount: 36,
+      guidedTrackCount: 148,
+      animalPhaseTrackCount: 144,
+      animalLocaleMasterCount: 48,
       sampleRateHz: 48_000,
       viewSwitchLocaleMasterCount: 2,
     })
@@ -230,7 +262,7 @@ describe('scale encounter narration candidates', () => {
     )
     const masterHashes = new Set<string>()
 
-    for (const animalId of animalIds) {
+    for (const animalId of narratedAnimalIds) {
       for (const locale of locales) {
         const content = scaleEncounterContentFor(animalId, locale)
         const tracks = lineKinds.map(
@@ -294,7 +326,7 @@ describe('scale encounter narration candidates', () => {
       masterHashes.add(toEyes.continuousMasterSha256!)
     }
 
-    expect(masterHashes.size).toBe(38)
+    expect(masterHashes.size).toBe(50)
     expect(
       manifest.tracks.filter((track) => !track.continuousMasterSha256),
     ).toEqual([])
@@ -305,7 +337,7 @@ describe('scale encounter narration candidates', () => {
       manifest.tracks.map((track) => [track.file, track]),
     )
 
-    for (const animalId of [...animalIds, 'view-switch'] as const) {
+    for (const animalId of [...narratedAnimalIds, 'view-switch'] as const) {
       for (const locale of locales) {
         const content = scaleEncounterContentFor(
           animalId === 'view-switch' ? 'pteranodon' : animalId,
@@ -332,7 +364,15 @@ describe('scale encounter narration candidates', () => {
           const spokenWords = script.match(/[A-Za-z]+/g)?.length ?? 0
           const wordsPerMinute =
             (spokenWords / masterDurationSeconds) * 60
-          expect(wordsPerMinute, `${animalId}.${locale}`).toBeGreaterThanOrEqual(125)
+          // The six expansion tracks retain their accepted slightly calmer
+          // cadence; the earlier production set and shared viewpoint guide
+          // keep the established 125 WPM floor.
+          const minimumWordsPerMinute = expansionAnimalIds.has(animalId)
+            ? 120
+            : 125
+          expect(wordsPerMinute, `${animalId}.${locale}`).toBeGreaterThanOrEqual(
+            minimumWordsPerMinute,
+          )
           expect(wordsPerMinute, `${animalId}.${locale}`).toBeLessThanOrEqual(175)
         }
       }

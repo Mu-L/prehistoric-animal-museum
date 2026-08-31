@@ -1171,6 +1171,53 @@ a:focus-visible {
   background: transparent;
 }
 
+html[data-model-preview-capture] {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--model-preview-capture-matte) !important;
+}
+
+html[data-model-preview-capture] body,
+html[data-model-preview-capture] #root,
+html[data-model-preview-capture] .museum-page,
+html[data-model-preview-capture] .museum-experience,
+html[data-model-preview-capture] .stage-panel {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  background: var(--model-preview-capture-matte) !important;
+}
+
+html[data-model-preview-capture] .museum-experience > :not(.stage-panel),
+html[data-model-preview-capture] .stage-panel > :not(.viewer-stage),
+html[data-model-preview-capture] .scene-background,
+html[data-model-preview-capture] .model-composition-frame > * {
+  visibility: hidden !important;
+}
+
+html[data-model-preview-capture] .viewer-stage[data-model-preview-capture] {
+  position: fixed;
+  z-index: 9999;
+  inset: 0 auto auto 0;
+  width: var(--model-preview-capture-width);
+  height: var(--model-preview-capture-height);
+  overflow: visible;
+}
+
+html[data-model-preview-capture] .model-viewport {
+  position: absolute;
+  inset: 0 auto auto 0;
+}
+
+html[data-model-preview-capture] .viewer-host::after {
+  opacity: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 .model-viewport {
   position: fixed;
   z-index: 2;

@@ -22,6 +22,12 @@ export type LocalReviewAnimalId =
   | 'rhamphorhynchus'
   | 'tupandactylus'
   | 'meganeura'
+  | 'spinosaurus'
+  | 'lystrosaurus'
+  | 'baryonyx'
+  | 'archaeopteryx'
+  | 'carnotaurus'
+  | 'anomalocaris'
 
 export function reviewAssetUrl(
   animalId: LocalReviewAnimalId,
@@ -30,6 +36,7 @@ export function reviewAssetUrl(
     | 'background-landscape'
     | 'background-portrait'
     | 'narration.mp3'
+    | 'narration.en.mp3'
     | 'poster.webp'
     | 'poster-portrait.webp'
     | 'thumbnail.webp'

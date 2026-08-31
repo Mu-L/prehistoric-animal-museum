@@ -2,15 +2,137 @@ import {
   isScaleEncounterAnimal,
   scaleEncounterContentFor,
 } from '../src/scale-encounter/content'
-import { SCALE_ENCOUNTER_ANIMAL_IDS } from '../src/scale-encounter/types'
+import {
+  REVIEW_SCALE_ENCOUNTER_ANIMAL_IDS,
+  SCALE_ENCOUNTER_ANIMAL_IDS,
+} from '../src/scale-encounter/types'
+
+const expansionAnimalIds = [
+  'spinosaurus',
+  'lystrosaurus',
+  'baryonyx',
+  'archaeopteryx',
+  'carnotaurus',
+  'anomalocaris',
+] as const
 
 describe('scale encounter content', () => {
-  it('enables all eighteen published animals from one catalog', () => {
-    expect(SCALE_ENCOUNTER_ANIMAL_IDS).toHaveLength(18)
+  it('enables all twenty-four published animals from one catalog', () => {
+    expect(SCALE_ENCOUNTER_ANIMAL_IDS).toHaveLength(24)
     for (const animalId of SCALE_ENCOUNTER_ANIMAL_IDS) {
       expect(isScaleEncounterAnimal(animalId)).toBe(true)
     }
     expect(isScaleEncounterAnimal('not-an-animal')).toBe(false)
+  })
+
+  it('promotes all six expansion encounters with bilingual copy and narration', () => {
+    expect(REVIEW_SCALE_ENCOUNTER_ANIMAL_IDS).toHaveLength(0)
+    for (const animalId of expansionAnimalIds) {
+      expect(isScaleEncounterAnimal(animalId)).toBe(true)
+      for (const locale of ['zh-CN', 'en'] as const) {
+        const content = scaleEncounterContentFor(animalId, locale)
+        const guidedCopy = `${content.copy.intro}${content.copy.transition}${content.copy.arrival}`
+        expect(content.narrationAvailable).toBe(true)
+        expect(content.audio.intro).toMatch(`intro.${locale}.mp3`)
+        expect(content.audio.transition).toMatch(`transition.${locale}.mp3`)
+        expect(content.audio.arrival).toMatch(`arrival.${locale}.mp3`)
+        expect(content.copy.title.length).toBeGreaterThan(0)
+        expect(content.copy.measurement.length).toBeGreaterThan(0)
+        expect(guidedCopy).not.toMatch(
+          /内部|调查|模型|复核|争议|候选|评审|internal|research|model|review|candidate|disputed/i,
+        )
+      }
+    }
+  })
+
+  it('invites curiosity in the six newly narrated compare encounters', () => {
+    for (const animalId of expansionAnimalIds) {
+      for (const locale of ['zh-CN', 'en'] as const) {
+        const content = scaleEncounterContentFor(animalId, locale)
+        const guidedCopy = `${content.copy.intro}${content.copy.transition}${content.copy.arrival}`
+        expect(guidedCopy).toMatch(/[？?]/)
+        expect(content.copy.intro).toMatch(/寻找|去找|search|looking for/i)
+      }
+    }
+  })
+
+  it('keeps the corrected expansion narration aligned with the visible encounters', () => {
+    const baryonyxZh = scaleEncounterContentFor('baryonyx', 'zh-CN')
+    const baryonyxEn = scaleEncounterContentFor('baryonyx', 'en')
+    const baryonyxZhScript = `${baryonyxZh.copy.intro}${baryonyxZh.copy.transition}${baryonyxZh.copy.arrival}`
+    const baryonyxEnScript = `${baryonyxEn.copy.intro}${baryonyxEn.copy.transition}${baryonyxEn.copy.arrival}`
+
+    expect(baryonyxZh.sceneLabel).toBe('森林相遇')
+    expect(baryonyxZhScript).toContain('森林')
+    expect(baryonyxZhScript).toMatch(/长嘴|细长的嘴/)
+    expect(baryonyxZhScript).toContain('大爪子')
+    expect(baryonyxZhScript).toContain('寻找食物')
+    expect(baryonyxZhScript).not.toMatch(/河边|河岸|水边|芦苇|八米七五/)
+    expect(baryonyxEn.sceneLabel).toBe('Forest encounter')
+    expect(baryonyxEnScript).toMatch(/forest/i)
+    expect(baryonyxEnScript).toMatch(/long snout/i)
+    expect(baryonyxEnScript).toMatch(/claw/i)
+    expect(baryonyxEnScript).toMatch(/find food/i)
+    expect(baryonyxEnScript).not.toMatch(/riverside|river|water|reeds?/i)
+
+    const spinosaurusZh = scaleEncounterContentFor('spinosaurus', 'zh-CN')
+    const spinosaurusEn = scaleEncounterContentFor('spinosaurus', 'en')
+    const spinosaurusZhScript = `${spinosaurusZh.copy.intro}${spinosaurusZh.copy.transition}${spinosaurusZh.copy.arrival}`
+    const spinosaurusEnScript = `${spinosaurusEn.copy.intro}${spinosaurusEn.copy.transition}${spinosaurusEn.copy.arrival}`
+    expect(spinosaurusZh.sceneLabel).toBe('森林相遇')
+    expect(spinosaurusZhScript).toMatch(/森林|林间|树影/)
+    expect(spinosaurusZhScript).not.toMatch(/河岸|河边|泥滩|水里|芦苇/)
+    expect(spinosaurusZh.copy.transition).toContain('相对较短的后腿')
+    expect(spinosaurusZh.copy.transition).not.toContain('粗壮后腿')
+    expect(spinosaurusEn.sceneLabel).toBe('Forest encounter')
+    expect(spinosaurusEnScript).toMatch(/forest|trees/i)
+    expect(spinosaurusEnScript).not.toMatch(
+      /riverbank|riverside|muddy bank|water|reeds?/i,
+    )
+    expect(spinosaurusEn.copy.transition).toContain(
+      'relatively short hind legs',
+    )
+    expect(spinosaurusEn.copy.transition).not.toContain('powerful hind legs')
+
+    const archaeopteryxZh = scaleEncounterContentFor(
+      'archaeopteryx',
+      'zh-CN',
+    )
+    const archaeopteryxEn = scaleEncounterContentFor('archaeopteryx', 'en')
+    const archaeopteryxZhScript = `${archaeopteryxZh.copy.intro}${archaeopteryxZh.copy.transition}${archaeopteryxZh.copy.arrival}`
+    const archaeopteryxEnScript = `${archaeopteryxEn.copy.intro}${archaeopteryxEn.copy.transition}${archaeopteryxEn.copy.arrival}`
+
+    expect(archaeopteryxZh.sceneLabel).toBe('森林倒木相遇')
+    expect(archaeopteryxZhScript).toMatch(/森林|林地/)
+    expect(archaeopteryxZhScript).toContain('倒木')
+    expect(archaeopteryxZhScript).not.toContain('木桩')
+    expect(archaeopteryxZh.copy.measurement).toBe(
+      '从嘴尖到尾尖的总长约 50 厘米',
+    )
+    expect(archaeopteryxZhScript).toContain('半米')
+    expect(archaeopteryxZhScript).toContain('羽毛')
+    expect(archaeopteryxZhScript).toContain('翅膀上的小爪子')
+    expect(archaeopteryxZhScript).not.toMatch(
+      /飞行装备|天空|滑翔|飞到对面|向前滑|一条手臂/,
+    )
+    expect(archaeopteryxEn.sceneLabel).toBe('Forest fallen-log encounter')
+    expect(archaeopteryxEnScript).toMatch(/forest/i)
+    expect(archaeopteryxEnScript).toMatch(/fallen log/i)
+    expect(archaeopteryxEnScript).not.toMatch(/tree stump/i)
+    expect(archaeopteryxEn.copy.measurement).toBe(
+      'About 50 cm in total from beak tip to tail tip',
+    )
+    expect(archaeopteryxEnScript).toMatch(/half a metre/i)
+    expect(archaeopteryxEnScript).toMatch(/feathers/i)
+    expect(archaeopteryxEnScript).toMatch(/wing claws/i)
+    expect(archaeopteryxEnScript).not.toMatch(
+      /flying gear|\bsky\b|\bsoar\w*\b|\bglid\w*\b|young child’s arm/i,
+    )
+
+    const anomalocarisZh = scaleEncounterContentFor('anomalocaris', 'zh-CN')
+    const anomalocarisEn = scaleEncounterContentFor('anomalocaris', 'en')
+    expect(anomalocarisZh.copy.arrival).not.toContain('小朋友的一条手臂')
+    expect(anomalocarisEn.copy.arrival).not.toContain('young child’s arm')
   })
 
   it('explains that height sets the eye view and every scene is imaginary', () => {
@@ -129,14 +251,14 @@ describe('scale encounter content', () => {
     for (const animalId of SCALE_ENCOUNTER_ANIMAL_IDS) {
       const content = scaleEncounterContentFor(animalId, 'zh-CN')
       const narration = `${content.copy.intro}${content.copy.transition}${content.copy.arrival}`
-      expect(content.copy.intro).toContain('寻找')
+      expect(content.copy.intro).toMatch(/寻找|去找/)
       expect(narration).not.toMatch(/模型|展示|复原|估算|不确定|只作|类/)
       // The Megalodon line deliberately uses the unambiguous comparative
       // phrase requested for the bus comparison. Other scripts retain the
       // existing guard against polyphonic uses that previously confused TTS.
       if (animalId === 'megalodon') {
         expect(content.copy.arrival).toContain('比一辆大巴还要长')
-      } else {
+      } else if (!expansionAnimalIds.includes(animalId as typeof expansionAnimalIds[number])) {
         expect(narration).not.toContain('长')
       }
     }
@@ -170,7 +292,7 @@ describe('scale encounter content', () => {
     for (const animalId of SCALE_ENCOUNTER_ANIMAL_IDS) {
       const content = scaleEncounterContentFor(animalId, 'en')
       const narration = `${content.copy.intro}${content.copy.transition}${content.copy.arrival}`
-      expect(content.copy.intro).toMatch(/search|searching/i)
+      expect(content.copy.intro).toMatch(/search|searching|looking for/i)
       expect(narration).not.toMatch(/model|display|reconstruct|estimate|uncertain/i)
     }
   })

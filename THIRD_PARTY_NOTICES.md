@@ -35,6 +35,88 @@ content, contributions, and Brand Assets follow the separate scopes in
   and encoded as Ogg Vorbis. Runtime SHA-256:
   `79d427b3d82a6d73b560eb01f3b62ba1b014b718b2ff68724aee446e7d1c497d`.
 
+## 奇虾 (`anomalocaris`)
+
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Anomalocaris English narration, generated with Qwen3-TTS CustomVoice on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `4aeade799e623ad6063decad6056639a0734098b23b28ba9b7d6e9565eb7dd0e`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `audio/narration.zh-CN.mp3`
+
+- Asset type: narration
+- Source: 奇虾 Mandarin narration, generated with Qwen3-TTS CustomVoice on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `a493f6f7e3eda0d5e09698527178a42f8fa6ff14f885c6142d65ab641cbaed99`
+- Modifications:
+  - Generated offline from the exact reviewed two-sentence script.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `backgrounds/landscape.webp`
+
+- Asset type: background
+- Source: Anomalocaris Cambrian marine habitat — landscape, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 奇虾 landscape created with OpenAI ImageGen.
+- Runtime SHA-256: `6c724dfea63bb6d15371e7988eadcff797f7377cdd25488661bbbf54339986fc`
+- Modifications:
+  - Converted the accepted exact-size source to responsive WebP.
+  - Removed ancillary metadata without adding a runtime tint or filter.
+### `backgrounds/portrait.webp`
+
+- Asset type: background
+- Source: Anomalocaris Cambrian marine habitat — portrait, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 奇虾 portrait created with OpenAI ImageGen.
+- Runtime SHA-256: `fd9cdd5c11b4fa68926b7a00102952603bd20d290d801bcb86dd1ba35e004ce2`
+- Modifications:
+  - Converted the accepted exact-size source to responsive WebP.
+  - Removed ancillary metadata without adding a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 奇虾 transparent portrait model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Anomalocaris 3D Model” by Skache, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `ae2f76f99ccea6569304cecba85bcda98a2135a9af12108467ede04d7b2436cc`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/poster.webp`
+
+- Asset type: poster
+- Source: 奇虾 transparent model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Anomalocaris 3D Model” by Skache, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `a0d729fd6ce565eb96890a077d12083de6631e34774f7a6d73302632f0709829`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/thumbnail.webp`
+
+- Asset type: thumbnail
+- Source: 奇虾 collection thumbnail, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Anomalocaris 3D Model” by Skache, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
+- Runtime SHA-256: `8b1b54c271904e12836c6a596220ba9b3f3db75b5c72cd99efd854e14d719939`
+- Modifications:
+  - Kept the complete animal silhouette readable at collection-card size.
+  - Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks.
+### `model/model.glb`
+
+- Asset type: model
+- Source: [Anomalocaris 3D Model](https://sketchfab.com/3d-models/anomalocaris-3d-model-dad76e60589a41e18a42db1e979f81f8) by Skache
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Anomalocaris 3D Model” by Skache, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `147de95a18c771739f918e8ce0319c00fba560d6f415305f57fddc97b96f661a`
+- Modifications:
+  - Compressed textures and geometry and added 28 rigid swimming-flap bones plus two segmented frontal-appendage chains.
+  - Authored a varied metachronal flap wave, subtle body drift and frontal-appendage motion as a smooth closed eight-second swimming Idle.
 ## 迷惑龙 (`apatosaurus`)
 
 ### `audio/narration.en.mp3`
@@ -80,7 +162,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster-portrait.webp`
 
 - Asset type: poster
-- Source: 迷惑龙 transparent portrait model still, derived on 2026-08-05
+- Source: 迷惑龙 transparent portrait model still, derived on 2026-08-09
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `a63885f1e8ffde809a84d285e62518190d3bed699b0cbe4ad4744b9204282150`
@@ -90,7 +172,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 迷惑龙 transparent model still, derived on 2026-08-05
+- Source: 迷惑龙 transparent model still, derived on 2026-08-09
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Apatosaurus” by toro ardido modelos 3d, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `0f48f330cc86e1214dbbf61172666c7c7f0902b2572a01faaa32ed19caa3b422`
@@ -121,6 +203,252 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Normalized the animal to a 3.2-unit total length with canonical transforms, centred horizontal bounds, and all four feet resting on the ground plane.
   - Authored one eight-second in-place morph-target Idle at 24 frames per second; all feet and lower limbs remain fixed, the loop closes exactly, and the head and open mouth move as one rigid region.
   - Verified zero foot drift, ground penetration, seam separation, new BVH overlap, collapsed triangles, and flipped triangles, then validator-checked and reviewed the derivative in the shared museum viewer.
+## 始祖鸟 (`archaeopteryx`)
+
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Archaeopteryx English narration, generated with Qwen3-TTS CustomVoice on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `af758bee30c4c51e3e556af561c90ee8de4ec5676bbb24df3acee36443c0a6e3`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `audio/narration.zh-CN.mp3`
+
+- Asset type: narration
+- Source: 始祖鸟 Mandarin narration, generated with Qwen3-TTS CustomVoice on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `8bae3d056d4e92a5a2059a2502d9c6b97069e95ae80b13cc14dc9fd6c4c3e91a`
+- Modifications:
+  - Generated offline from the exact reviewed two-sentence script.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `backgrounds/landscape.webp`
+
+- Asset type: background
+- Source: Archaeopteryx Solnhofen lagoon habitat — landscape, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 始祖鸟 landscape created with OpenAI ImageGen.
+- Runtime SHA-256: `a20650760ab07b5859567f5d71d2f034b4fbb60860db440124b1af5c65bd6931`
+- Modifications:
+  - Converted the accepted source to quality-92 WebP with mild sigma-0.45 sharpening.
+  - Preserved the approved v2 high-horizon model-safe composition.
+### `backgrounds/portrait.webp`
+
+- Asset type: background
+- Source: Archaeopteryx Solnhofen lagoon habitat — portrait, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 始祖鸟 portrait created with OpenAI ImageGen.
+- Runtime SHA-256: `fbbad2b996d6115d0b5b95fc30093599c80eeb62c590cb5124315cd7906ab5c5`
+- Modifications:
+  - Converted the accepted source to quality-92 WebP with mild sigma-0.45 sharpening.
+  - Preserved the approved v2 high-horizon portrait composition.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 始祖鸟 transparent portrait model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Archaeopteryx” by khata, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `f35ef600486746fa5dbfa180326467f145b52595c2780f23f967f4e8c0d88ffa`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/poster.webp`
+
+- Asset type: poster
+- Source: 始祖鸟 transparent model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Archaeopteryx” by khata, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `8317b82b3447ae2a08aca52d9054ee0bfd25aae2045aec9e8a41b53228d21d83`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/thumbnail.webp`
+
+- Asset type: thumbnail
+- Source: 始祖鸟 collection thumbnail, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Archaeopteryx” by khata, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
+- Runtime SHA-256: `ad2118c1f284a830d003d04701803aa3b06395428d48a7c226bc05a74d11743c`
+- Modifications:
+  - Kept the complete animal silhouette readable at collection-card size.
+  - Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks.
+### `model/model.glb`
+
+- Asset type: model
+- Source: [Archaeopteryx](https://sketchfab.com/3d-models/archaeopteryx-cbec5591c584438392824d13fbef401b) by khata
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Archaeopteryx” by khata, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `bf3e125a0b834202ba4a3709788375165d68bcd79691692a17debc22702e89da`
+- Modifications:
+  - Restored supplied textures, compressed the runtime model, and changed feather transparency to stable alpha masking.
+  - Retained the author-authored fully extended wing interval and retimed paired wing, body, neck, head and tail motion into a closed eight-second two-flap Idle.
+## 重爪龙 (`baryonyx`)
+
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Baryonyx English narration, generated with Qwen3-TTS CustomVoice on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `33e75861cbf2b44dfedb6e7e7f36e961b1f920e378b3bf3bac6d610851b7c135`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `audio/narration.zh-CN.mp3`
+
+- Asset type: narration
+- Source: 重爪龙 Mandarin narration, generated with Qwen3-TTS CustomVoice on 2026-09-01
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `bcfcf45d8ca4ffea0251f79932f53829f29791ea96b40a82ede7fc8d4e5fbfca`
+- Modifications:
+  - Generated offline from the exact reviewed two-sentence script.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `backgrounds/landscape.webp`
+
+- Asset type: background
+- Source: Baryonyx Wealden wet-woodland habitat — landscape, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 重爪龙 landscape created with OpenAI ImageGen.
+- Runtime SHA-256: `1b5ebdeff9a75fae21d0fe3c43102b0d5a73849add10b95b997567c0a49aa2a4`
+- Modifications:
+  - Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.
+  - Preserved the approved v5 ground detail and model-safe composition.
+### `backgrounds/portrait.webp`
+
+- Asset type: background
+- Source: Baryonyx Wealden wet-woodland habitat — portrait, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 重爪龙 portrait created with OpenAI ImageGen.
+- Runtime SHA-256: `e9d80b3bfe9aefc2ea93c2d3e2f909079e2ba1b25f1efee7cc1cf31f63a0ca85`
+- Modifications:
+  - Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.
+  - Preserved the approved v5 ground detail and portrait model-safe composition.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 重爪龙 transparent portrait model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Baryonyx” by Paleo Modelist, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `3474707d8354dda26d5cee3808785a43ed10ee80c0c15c57b0f03d55faef81d2`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/poster.webp`
+
+- Asset type: poster
+- Source: 重爪龙 transparent model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Baryonyx” by Paleo Modelist, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `c0f928317ae0f775ff5b05eff93630ccb0652deb4ae28a532b5cc86e2d4c0939`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/thumbnail.webp`
+
+- Asset type: thumbnail
+- Source: 重爪龙 collection thumbnail, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Baryonyx” by Paleo Modelist, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
+- Runtime SHA-256: `392892710eb964b4acccf0c1d5c2a31a8a64af70c5fbf9ecab880f33e6e3cf14`
+- Modifications:
+  - Kept the complete animal silhouette readable at collection-card size.
+  - Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks.
+### `model/model.glb`
+
+- Asset type: model
+- Source: [Baryonyx](https://sketchfab.com/3d-models/baryonyx-09b838e4bad84b33a647c647f42f4acd) by Paleo Modelist
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Baryonyx” by Paleo Modelist, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `6bd4dbf4924e8b0c22e3687eaed30889d8bbf4f0463395cffc9e458d2688ffdc`
+- Modifications:
+  - Relinked and embedded the supplied textures, then compressed the runtime model for browser delivery.
+  - Retimed the source seamless motion into a deterministic closed Idle and preserved the reviewed long snout and hand claw.
+## 食肉牛龙 (`carnotaurus`)
+
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Carnotaurus English narration, generated with Qwen3-TTS CustomVoice on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `adeb2ea856e62ea21148c9450a9506d09e5580ae29e3c03518b01cd7c4b312b0`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `audio/narration.zh-CN.mp3`
+
+- Asset type: narration
+- Source: 食肉牛龙 Mandarin narration, generated with Qwen3-TTS CustomVoice on 2026-08-31
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `214732f97ecfc4ec0ceb55ea53f4af1436009fae18a471297f3dfd2887fb984b`
+- Modifications:
+  - Generated offline from the exact reviewed two-sentence script.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `backgrounds/landscape.webp`
+
+- Asset type: background
+- Source: Carnotaurus Patagonian estuary habitat — landscape, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 食肉牛龙 landscape created with OpenAI ImageGen.
+- Runtime SHA-256: `0468967d20f22c1a8ec2ac4b28b9631ece1c5d7abd8bb73a4a2c8fa8d835485a`
+- Modifications:
+  - Converted the accepted exact-size source to responsive WebP.
+  - Removed ancillary metadata without adding a runtime tint or filter.
+### `backgrounds/portrait.webp`
+
+- Asset type: background
+- Source: Carnotaurus Patagonian estuary habitat — portrait, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 食肉牛龙 portrait created with OpenAI ImageGen.
+- Runtime SHA-256: `362a75eafe77e5f8a8de47f36e588f870302970f3006fdf996b1e8f6787bcf1a`
+- Modifications:
+  - Converted the accepted exact-size source to responsive WebP.
+  - Removed ancillary metadata without adding a runtime tint or filter.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 食肉牛龙 transparent portrait model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “CARNOTAURUS DİNOSAUR” by Cenker Turhan, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `bae0b5a35f917517bc4c04499e5f1f313b0d6903ad93e4a4be5348bd8d2774ee`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/poster.webp`
+
+- Asset type: poster
+- Source: 食肉牛龙 transparent model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “CARNOTAURUS DİNOSAUR” by Cenker Turhan, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `4148a50ab7d8d95392524ec51fe1fce44e79966c0507c1dbec0dd36c5b171b2d`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/thumbnail.webp`
+
+- Asset type: thumbnail
+- Source: 食肉牛龙 collection thumbnail, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “CARNOTAURUS DİNOSAUR” by Cenker Turhan, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
+- Runtime SHA-256: `ba63abedd4add5e03b22a7bad465e64b1535d657625b7d60317836234d0a284c`
+- Modifications:
+  - Kept the complete animal silhouette readable at collection-card size.
+  - Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks.
+### `model/model.glb`
+
+- Asset type: model
+- Source: [CARNOTAURUS DİNOSAUR](https://sketchfab.com/3d-models/carnotaurus-dinosaur-548c9a0575b14deaae1f12ca9a6c31ca) by Cenker Turhan
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “CARNOTAURUS DİNOSAUR” by Cenker Turhan, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `e66ebb901782706aadd2a054bd7965f1c819ead52f73baa5fcf34ca3427265f8`
+- Modifications:
+  - Removed the separate rock, calibrated both feet to a grounded pose, and compressed the model for browser delivery.
+  - Retained the original left forelimb, adjusted the original right forelimb, bound lower teeth to the jaw, kept the tongue independent, and authored a closed eight-second jaw-and-tail Idle.
 ## 双冠龙 (`dilophosaurus`)
 
 ### `audio/narration.en.mp3`
@@ -252,7 +580,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster-portrait.webp`
 
 - Asset type: poster
-- Source: 巨盗龙 transparent portrait model still, derived on 2026-08-05
+- Source: 巨盗龙 transparent portrait model still, derived on 2026-07-29
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `65f2bf3b10f3d20577b44fc0e0a0822816e190b074ee3cdfbd2e7bf7d1ef5324`
@@ -262,7 +590,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 巨盗龙 transparent model still, derived on 2026-08-05
+- Source: 巨盗龙 transparent model still, derived on 2026-07-29
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Gigantoraptor” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `dea94a7fa22d9d52f20d4649b766ca18e48ce8027148d3e5f44c6b2beefe1272`
@@ -381,6 +709,88 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Shifted the Idle to begin at exactly zero seconds, made every rotation track close on the same quaternion, and periodically smoothed the head, neck, and body tracks so loop wraparound cannot produce a sudden head shake.
   - Cleared stale normalized flags after promoting repaired quaternion accessors to floating point so the runtime GLTF loader receives spec-valid animation data.
   - Normalized the derivative to one closed-loop Idle, repacked it, validated it with zero Khronos errors and warnings before runtime compression, and reviewed it in the shared museum viewer.
+## 水龙兽 (`lystrosaurus`)
+
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Lystrosaurus English narration, generated with Qwen3-TTS CustomVoice on 2026-08-31
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `92d59b949042a63557f0ab8abaaa13823d68d89faa029136efd0b8160f2fed46`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `audio/narration.zh-CN.mp3`
+
+- Asset type: narration
+- Source: 水龙兽 Mandarin narration, generated with Qwen3-TTS CustomVoice on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `736427a33d71f4a5af235961f4daba968d2e84e3068611660785f39c735cb20f`
+- Modifications:
+  - Generated offline from the exact reviewed two-sentence script.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `backgrounds/landscape.webp`
+
+- Asset type: background
+- Source: Lystrosaurus Karoo floodplain habitat — landscape, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 水龙兽 landscape created with OpenAI ImageGen.
+- Runtime SHA-256: `6a04c7334312694b553a3430126590a92d11378d18e64710ec450e7b9f02364d`
+- Modifications:
+  - Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.
+  - Preserved the approved v5 ground detail and model-safe composition.
+### `backgrounds/portrait.webp`
+
+- Asset type: background
+- Source: Lystrosaurus Karoo floodplain habitat — portrait, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 水龙兽 portrait created with OpenAI ImageGen.
+- Runtime SHA-256: `55e46d34fe7b7f6b9f3bee16c01e77960e44b8f2473b847ed5cfd620220b69c7`
+- Modifications:
+  - Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.
+  - Preserved the approved v5 ground detail and portrait model-safe composition.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 水龙兽 transparent portrait model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Lystrosaurus” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `299cfa842bea6778dd85ead0eca2becbc0139d441ebc2952ad8ab7ddbb958311`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/poster.webp`
+
+- Asset type: poster
+- Source: 水龙兽 transparent model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Lystrosaurus” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `28a16389d34ce48d72fd015b3be1b1b08a33ee1fa20effa34fd3cb1577833e1e`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/thumbnail.webp`
+
+- Asset type: thumbnail
+- Source: 水龙兽 collection thumbnail, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Lystrosaurus” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
+- Runtime SHA-256: `09d628f086d1a4c47f7d8fc16da378ff1828394db3fe37cbb0d9168d0a76670c`
+- Modifications:
+  - Kept the complete animal silhouette readable at collection-card size.
+  - Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks.
+### `model/model.glb`
+
+- Asset type: model
+- Source: [Lystrosaurus](https://sketchfab.com/3d-models/lystrosaurus-32ea6a3bedd948638f9add8da7483b28) by seth the yutyrannus
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Lystrosaurus” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `f3edc52dc7bbfec681cb7b30b8246f65b84f2980b6bd04f8eee46e5f6a62551a`
+- Modifications:
+  - Removed an unbound helper object and compressed geometry and textures for browser delivery.
+  - Authored a deterministic closed eight-second skeletal Idle with stable four-foot grounding.
 ## 慈母龙 (`maiasaura`)
 
 ### `audio/narration.en.mp3`
@@ -511,7 +921,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster-portrait.webp`
 
 - Asset type: poster
-- Source: 长毛猛犸象 transparent portrait model still, derived on 2026-08-05
+- Source: 长毛猛犸象 transparent portrait model still, derived on 2026-07-30
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `60535ab5da8eeef84e24fd72eace080c929809a53210ac2d2ba8c0b030d1f82a`
@@ -521,7 +931,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 长毛猛犸象 transparent model still, derived on 2026-08-05
+- Source: 长毛猛犸象 transparent model still, derived on 2026-07-30
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “3D High-poly Baby Woolly Mammoth” by SDPM Esare, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `d542ad735c863ba82de7c05c2a34210182459d9e0c6e3a54166cdc6a83165fb5`
@@ -598,7 +1008,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster-portrait.webp`
 
 - Asset type: poster
-- Source: 巨齿鲨 transparent portrait model still, derived on 2026-08-05
+- Source: 巨齿鲨 transparent portrait model still, derived on 2026-07-31
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `94db35be0a98cedecec69515a6f000634fccaf8d3c15ed07a4a2b6b4dc6719e7`
@@ -608,7 +1018,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 巨齿鲨 transparent model still, derived on 2026-08-05
+- Source: 巨齿鲨 transparent model still, derived on 2026-07-31
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Otodus Megalodon updated animations” by CanYuTsai, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `0f0c4cfd1ec6c6ee6f2f0b43afd7f98361932d6c6cdcf1b7edf80fec34b08ca1`
@@ -858,7 +1268,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster-portrait.webp`
 
 - Asset type: poster
-- Source: 肿头龙 transparent portrait model still, derived on 2026-08-05
+- Source: 肿头龙 transparent portrait model still, derived on 2026-07-29
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “PBR Pachycephalasaurus Animated” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `b2cfb7fdf43c532716ae609546db17a0c1c250128cacd2396a97c0a70b249b36`
@@ -868,7 +1278,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 肿头龙 transparent model still, derived on 2026-08-05
+- Source: 肿头龙 transparent model still, derived on 2026-07-29
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “PBR Pachycephalasaurus Animated” by Ferocious Industries, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `7344dbe2798e99e158a5aed5b38ce5038d619f689da0c550fda1b600eb49a2c7`
@@ -942,7 +1352,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster-portrait.webp`
 
 - Asset type: poster
-- Source: 蛇颈龙类 transparent portrait model still, derived on 2026-08-05
+- Source: 蛇颈龙类 transparent portrait model still, derived on 2026-07-31
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `e1a5604b3ebe56f005ee4c4fa92041639667850a6a42f940442732b48d578d66`
@@ -952,7 +1362,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 蛇颈龙类 transparent model still, derived on 2026-08-05
+- Source: 蛇颈龙类 transparent model still, derived on 2026-07-31
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Plesiosaure” by leo kerjean, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `33fa574cf2f476706dd77137dcff9edac0b1e816f6f075241bd02e4dc2b1f529`
@@ -1028,7 +1438,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster-portrait.webp`
 
 - Asset type: poster
-- Source: 无齿翼龙 transparent portrait model still, derived on 2026-08-05
+- Source: 无齿翼龙 transparent portrait model still, derived on 2026-07-29
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `3d22a12522c1147698b66e66f55531d7778bee69ff8e1412abb41de62c3e7c68`
@@ -1038,7 +1448,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 无齿翼龙 transparent model still, derived on 2026-08-05
+- Source: 无齿翼龙 transparent model still, derived on 2026-07-29
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `a7de4a01c75ca4e565dc2bbdba4f2bebd64a6d1e114c66c41bc85c9db8f1c574`
@@ -1238,6 +1648,88 @@ content, contributions, and Brand Assets follow the separate scopes in
   - Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.
   - Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.
   - Authored and validator-checked one closed eight-second land-breathe-tail Idle for the shared museum viewer.
+## 棘龙 (`spinosaurus`)
+
+### `audio/narration.en.mp3`
+
+- Asset type: narration
+- Source: Spinosaurus English narration, generated with Qwen3-TTS CustomVoice on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `7775ec734bf9c411413a89a832856ba71fa69308948b2258cd0a934178e4b5df`
+- Modifications:
+  - Generated offline from the exact reviewed English two-sentence script with the Serena voice.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `audio/narration.zh-CN.mp3`
+
+- Asset type: narration
+- Source: 棘龙 Mandarin narration, generated with Qwen3-TTS CustomVoice on 2026-08-31
+- License: [CC BY-NC-SA 4.0 project-owned Qwen3-TTS output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).
+- Runtime SHA-256: `d2e5fce062d7da5f1a63b0e1773f62402dca56042a5fdf43131587a5f3f26fc0`
+- Modifications:
+  - Generated offline from the exact reviewed two-sentence script.
+  - Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis.
+### `backgrounds/landscape.webp`
+
+- Asset type: background
+- Source: Spinosaurus North African river-delta habitat — landscape, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 棘龙 landscape created with OpenAI ImageGen.
+- Runtime SHA-256: `922eb9a2c76bf236773a0ffac8d57006780a631333a04fd7b783d114bb934539`
+- Modifications:
+  - Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.
+  - Preserved the approved v5 ground detail and model-safe composition.
+### `backgrounds/portrait.webp`
+
+- Asset type: background
+- Source: Spinosaurus North African river-delta habitat — portrait, generated with OpenAI built-in image_gen on 2026-08-29
+- License: [CC BY-NC-SA 4.0 project-owned ImageGen output](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Attribution: Project-generated 棘龙 portrait created with OpenAI ImageGen.
+- Runtime SHA-256: `094c2707fa3f6aa2aa252b39ce4ba18acb79eaa6f3e343988af94fff40b35519`
+- Modifications:
+  - Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.
+  - Preserved the approved v5 ground detail and portrait model-safe composition.
+### `images/poster-portrait.webp`
+
+- Asset type: poster
+- Source: 棘龙 transparent portrait model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Spinosaurus” by Pedro B. Goulart, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `45d1103373529bd5bdd3020da3b801f3da36904f34ad13fe3248c901a9977cf6`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/poster.webp`
+
+- Asset type: poster
+- Source: 棘龙 transparent model still, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Spinosaurus” by Pedro B. Goulart, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `2128be78534751d9d071b1f25c26105359a4a16a5a245073f126322b21a49344`
+- Modifications:
+  - Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.
+  - Encoded as lossless WebP without text, controls, labels, logos, or watermarks.
+### `images/thumbnail.webp`
+
+- Asset type: thumbnail
+- Source: 棘龙 collection thumbnail, derived on 2026-08-30
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Spinosaurus” by Pedro B. Goulart, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.
+- Runtime SHA-256: `442c7f423170d5b691357dfb496bd264aed934f24e07973c6246931842ee340b`
+- Modifications:
+  - Kept the complete animal silhouette readable at collection-card size.
+  - Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks.
+### `model/model.glb`
+
+- Asset type: model
+- Source: [Spinosaurus](https://sketchfab.com/3d-models/spinosaurus-2a325726dd7b4a7c888277f262fd09bc) by Pedro B. Goulart
+- License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
+- Attribution: “Spinosaurus” by Pedro B. Goulart, CC BY 4.0; modified for the Prehistoric Animal Museum.
+- Runtime SHA-256: `b4b97f2df0acc376495689351bc2c5e1067ab17bd2cd5f8ce4be83e3213d4c84`
+- Modifications:
+  - Compressed geometry and embedded textures for browser delivery.
+  - Retimed the source motion into a deterministic closed eight-second in-place Idle and preserved the reviewed full-body pose.
 ## 剑龙 (`stegosaurus`)
 
 ### `audio/narration.en.mp3`
@@ -1369,7 +1861,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster-portrait.webp`
 
 - Asset type: poster
-- Source: 三角龙 transparent portrait model still, derived on 2026-08-05
+- Source: 三角龙 transparent portrait model still, derived on 2026-07-30
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `bb4d9d99916de0328dd706d40bb8eac0f7c2ba991c577e4e7e08792a303b2700`
@@ -1379,7 +1871,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 三角龙 transparent model still, derived on 2026-08-05
+- Source: 三角龙 transparent model still, derived on 2026-07-30
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Triceratops dinosaur” by wojciechmiedziocha, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `e1e40c7eb807ad374b9a822101c93b7f088f72e2f17cebbd3a53b61ad124bf8b`
@@ -1541,7 +2033,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster-portrait.webp`
 
 - Asset type: poster
-- Source: 霸王龙 transparent portrait model still, derived on 2026-08-05
+- Source: 霸王龙 transparent portrait model still, derived on 2026-08-09
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `4064ae7a5b0a32a8610d3da2040e3befe0ad9a6a39c29b0dab9c234d1f89bdaa`
@@ -1551,7 +2043,7 @@ content, contributions, and Brand Assets follow the separate scopes in
 ### `images/poster.webp`
 
 - Asset type: poster
-- Source: 霸王龙 transparent model still, derived on 2026-08-05
+- Source: 霸王龙 transparent model still, derived on 2026-08-09
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
 - Attribution: “Tyrant King - Tyrannosaurus” by Marcel Schanz, CC BY 4.0; modified for the Prehistoric Animal Museum.
 - Runtime SHA-256: `cbce8194764c1bbc5d519600d46a03d8a7959092316834c713e3966367dd52e9`

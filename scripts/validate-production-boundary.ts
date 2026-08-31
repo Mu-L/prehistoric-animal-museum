@@ -54,7 +54,21 @@ const expectedAnimalAssetCount = mainCollection.animalIds.length
 const expectedNarrationAssetCount =
   expectedAnimalAssetCount * supportedLocales.length
 const expectedScaleEncounterGlbCount = 11
-const expectedScaleEncounterNarrationCount = 112
+const narrationManifest = JSON.parse(
+  await readFile(
+    join(process.cwd(), 'src/scale-encounter/audio/narration-candidates.json'),
+    'utf8',
+  ),
+) as { readonly tracks: readonly { readonly file: string }[] }
+const expectedScaleEncounterNarrationFiles = narrationManifest.tracks.filter(
+  ({ file }) =>
+    file.startsWith('view-switch-') ||
+    mainCollection.animalIds.some((animalId) =>
+      file.startsWith(`${animalId}-`),
+    ),
+)
+const expectedScaleEncounterNarrationCount =
+  expectedScaleEncounterNarrationFiles.length
 const expectedDetailPaths = supportedLocales.flatMap((locale) =>
   mainCollection.animalIds.map(
     (animalId) => `${locale}/animals/${animalId}/index.html`,
@@ -127,18 +141,8 @@ if (distributionPaths.has('.vite/manifest.json')) {
     .map((line) => line.match(/^[a-f0-9]{64} {2}(.+)$/)?.[1])
     .filter((fileName): fileName is string => Boolean(fileName))
     .map((fileName) => `src/scale-encounter/assets/${fileName}`)
-  const narrationManifest = JSON.parse(
-    await readFile(
-      join(
-        process.cwd(),
-        'src/scale-encounter/audio/narration-candidates.json',
-      ),
-      'utf8',
-    ),
-  ) as { readonly tracks: readonly { readonly file: string }[] }
-  const expectedNarrationSources = narrationManifest.tracks.map(
-    ({ file }) => `src/scale-encounter/audio/${file}`,
-  )
+  const expectedNarrationSources = expectedScaleEncounterNarrationFiles
+    .map(({ file }) => `src/scale-encounter/audio/${file}`)
 
   for (const sourcePath of [
     ...expectedRuntimeSources,

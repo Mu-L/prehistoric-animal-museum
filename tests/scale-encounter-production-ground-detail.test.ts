@@ -18,15 +18,14 @@ describe('scale encounter production ground detail', () => {
     expect(root.name).toBe('scale-encounter-production-ground-detail')
     expect(mesh).toBeInstanceOf(InstancedMesh)
     expect(metadata).toMatchObject({
-      drawCalls: 3,
+      drawCalls: 2,
       instanceCount: 520,
-      representation: 'instanced-twigs-humus-roots-and-authored-soil-impressions',
-      rootInstanceCount: 24,
+      representation: 'instanced-twigs-humus-and-authored-soil-impressions',
       seed: SCALE_ENCOUNTER_PRODUCTION_GROUND_DETAIL_SEED,
       soilImpressionCount: 5,
     })
-    expect(metadata.estimatedTriangles).toBeGreaterThan(27_000)
-    expect(metadata.estimatedTriangles).toBeLessThan(40_000)
+    expect(metadata.estimatedTriangles).toBeGreaterThan(25_000)
+    expect(metadata.estimatedTriangles).toBeLessThan(35_000)
     expect(metadata.samples).toHaveLength(12)
     for (const sample of metadata.samples) {
       expect(sample.y).toBeCloseTo(
@@ -34,14 +33,6 @@ describe('scale encounter production ground detail', () => {
         8,
       )
     }
-    expect(metadata.rootSamples).toHaveLength(12)
-    for (const sample of metadata.rootSamples) {
-      expect(sample.y).toBeCloseTo(
-        terrainHeight(sample.x, sample.z) - 0.002,
-        8,
-      )
-    }
-
     const litter = mesh as InstancedMesh
     expect(litter.count).toBe(520)
     expect(litter.castShadow).toBe(false)
@@ -63,13 +54,9 @@ describe('scale encounter production ground detail', () => {
         'scale-encounter-production-decayed-leaf-litter-patches',
       ),
     ).toBeUndefined()
-    const roots = root.getObjectByName(
-      'scale-encounter-production-surface-roots',
-    ) as InstancedMesh
-    expect(roots).toBeInstanceOf(InstancedMesh)
-    expect(roots.count).toBe(24)
-    expect(roots.castShadow).toBe(false)
-    expect(roots.receiveShadow).toBe(true)
+    expect(
+      root.getObjectByName('scale-encounter-production-surface-roots'),
+    ).toBeUndefined()
   })
 
   it('is deterministic across environment rebuilds', () => {

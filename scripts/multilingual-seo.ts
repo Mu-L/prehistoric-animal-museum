@@ -8,9 +8,14 @@ import type { Plugin } from 'vite'
 
 import { animalSeoDescription } from '../src/content/animal-seo'
 import { animalDefinition as apatosaurusDefinition } from '../src/content/animals/apatosaurus/package'
+import { animalDefinition as anomalocarisDefinition } from '../src/content/animals/anomalocaris/package'
+import { animalDefinition as archaeopteryxDefinition } from '../src/content/animals/archaeopteryx/package'
+import { animalDefinition as baryonyxDefinition } from '../src/content/animals/baryonyx/package'
+import { animalDefinition as carnotaurusDefinition } from '../src/content/animals/carnotaurus/package'
 import { animalDefinition as dilophosaurusDefinition } from '../src/content/animals/dilophosaurus/package'
 import { animalDefinition as gigantoraptorDefinition } from '../src/content/animals/gigantoraptor/package'
 import { animalDefinition as ichthyosaurDefinition } from '../src/content/animals/ichthyosaur/package'
+import { animalDefinition as lystrosaurusDefinition } from '../src/content/animals/lystrosaurus/package'
 import { animalDefinition as maiasauraDefinition } from '../src/content/animals/maiasaura/package'
 import { animalDefinition as mammothDefinition } from '../src/content/animals/mammoth/package'
 import { animalDefinition as megalodonDefinition } from '../src/content/animals/megalodon/package'
@@ -21,6 +26,7 @@ import { animalDefinition as plesiosaurusDefinition } from '../src/content/anima
 import { animalDefinition as pteranodonDefinition } from '../src/content/animals/pteranodon/package'
 import { animalDefinition as rhamphorhynchusDefinition } from '../src/content/animals/rhamphorhynchus/package'
 import { animalDefinition as sauropeltaDefinition } from '../src/content/animals/sauropelta/package'
+import { animalDefinition as spinosaurusDefinition } from '../src/content/animals/spinosaurus/package'
 import { animalDefinition as stegosaurusDefinition } from '../src/content/animals/stegosaurus/package'
 import { animalDefinition as triceratopsDefinition } from '../src/content/animals/triceratops/package'
 import { animalDefinition as tupandactylusDefinition } from '../src/content/animals/tupandactylus/package'
@@ -100,10 +106,15 @@ const defaultOptions = {
 } satisfies Required<MultilingualSeoOptions>
 
 const canonicalAnimalDefinitions = [
+  anomalocarisDefinition,
   apatosaurusDefinition,
+  archaeopteryxDefinition,
+  baryonyxDefinition,
+  carnotaurusDefinition,
   dilophosaurusDefinition,
   gigantoraptorDefinition,
   ichthyosaurDefinition,
+  lystrosaurusDefinition,
   maiasauraDefinition,
   mammothDefinition,
   megalodonDefinition,
@@ -114,6 +125,7 @@ const canonicalAnimalDefinitions = [
   pteranodonDefinition,
   rhamphorhynchusDefinition,
   sauropeltaDefinition,
+  spinosaurusDefinition,
   stegosaurusDefinition,
   triceratopsDefinition,
   tupandactylusDefinition,

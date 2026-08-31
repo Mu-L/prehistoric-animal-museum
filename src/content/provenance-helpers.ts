@@ -252,6 +252,42 @@ export const reviewedBackgroundSources = {
 >
 
 export const reviewedEnglishNarrationArtifacts = {
+  anomalocaris: {
+    generatedOn: '2026-08-29',
+    bytes: 130_365,
+    sha256:
+      '4aeade799e623ad6063decad6056639a0734098b23b28ba9b7d6e9565eb7dd0e',
+  },
+  archaeopteryx: {
+    generatedOn: '2026-08-29',
+    bytes: 149_805,
+    sha256:
+      'af758bee30c4c51e3e556af561c90ee8de4ec5676bbb24df3acee36443c0a6e3',
+  },
+  baryonyx: {
+    generatedOn: '2026-08-29',
+    bytes: 160_845,
+    sha256:
+      '33e75861cbf2b44dfedb6e7e7f36e961b1f920e378b3bf3bac6d610851b7c135',
+  },
+  carnotaurus: {
+    generatedOn: '2026-08-29',
+    bytes: 151_245,
+    sha256:
+      'adeb2ea856e62ea21148c9450a9506d09e5580ae29e3c03518b01cd7c4b312b0',
+  },
+  lystrosaurus: {
+    generatedOn: '2026-08-31',
+    bytes: 159_165,
+    sha256:
+      '92d59b949042a63557f0ab8abaaa13823d68d89faa029136efd0b8160f2fed46',
+  },
+  spinosaurus: {
+    generatedOn: '2026-08-29',
+    bytes: 167_325,
+    sha256:
+      '7775ec734bf9c411413a89a832856ba71fa69308948b2258cd0a934178e4b5df',
+  },
   apatosaurus: {
     generatedOn: '2026-08-07',
     bytes: 111_165,
@@ -543,7 +579,7 @@ export function createPublishedAssetProvenance(
       source: {
         type: 'derived',
         title: `${input.animalName} transparent model still`,
-        generatedOn: '2026-08-05',
+        generatedOn: input.derivedImagesGeneratedOn ?? '2026-08-05',
         inputAssetPaths: ['model/model.glb'],
         method:
           'Rendered the deterministic first animation frame at the normal 1200 × 675 landscape runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow.',
@@ -567,7 +603,7 @@ export function createPublishedAssetProvenance(
       source: {
         type: 'derived',
         title: `${input.animalName} transparent portrait model still`,
-        generatedOn: '2026-08-05',
+        generatedOn: input.derivedImagesGeneratedOn ?? '2026-08-05',
         inputAssetPaths: ['model/model.glb'],
         method:
           'Rendered the deterministic first animation frame at the normal 390 × 844 portrait runtime camera, composition, size, pose, and lighting; preserved transparent pixels outside the model and contact shadow.',

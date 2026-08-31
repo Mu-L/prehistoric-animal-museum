@@ -3,6 +3,127 @@ import type { CreditEntry } from './types'
 
 export const credits = [
   {
+    "id": "anomalocaris:audio/narration.en.mp3",
+    "animalId": "anomalocaris",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Anomalocaris English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "anomalocaris:audio/narration.zh-CN.mp3",
+    "animalId": "anomalocaris",
+    "assetPath": "audio/narration.zh-CN.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "奇虾 Mandarin narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed two-sentence script.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "anomalocaris:backgrounds/landscape.webp",
+    "animalId": "anomalocaris",
+    "assetPath": "backgrounds/landscape.webp",
+    "assetKind": "background",
+    "sourceTitle": "Anomalocaris Cambrian marine habitat — landscape",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 奇虾 landscape created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted exact-size source to responsive WebP.",
+      "Removed ancillary metadata without adding a runtime tint or filter."
+    ]
+  },
+  {
+    "id": "anomalocaris:backgrounds/portrait.webp",
+    "animalId": "anomalocaris",
+    "assetPath": "backgrounds/portrait.webp",
+    "assetKind": "background",
+    "sourceTitle": "Anomalocaris Cambrian marine habitat — portrait",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 奇虾 portrait created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted exact-size source to responsive WebP.",
+      "Removed ancillary metadata without adding a runtime tint or filter."
+    ]
+  },
+  {
+    "id": "anomalocaris:images/poster-portrait.webp",
+    "animalId": "anomalocaris",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "奇虾 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Anomalocaris 3D Model” by Skache, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "anomalocaris:images/poster.webp",
+    "animalId": "anomalocaris",
+    "assetPath": "images/poster.webp",
+    "assetKind": "poster",
+    "sourceTitle": "奇虾 transparent model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Anomalocaris 3D Model” by Skache, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "anomalocaris:images/thumbnail.webp",
+    "animalId": "anomalocaris",
+    "assetPath": "images/thumbnail.webp",
+    "assetKind": "thumbnail",
+    "sourceTitle": "奇虾 collection thumbnail",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Anomalocaris 3D Model” by Skache, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "modifications": [
+      "Kept the complete animal silhouette readable at collection-card size.",
+      "Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "anomalocaris:model/model.glb",
+    "animalId": "anomalocaris",
+    "assetPath": "model/model.glb",
+    "assetKind": "model",
+    "sourceTitle": "Anomalocaris 3D Model",
+    "author": "Skache",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceUrl": "https://sketchfab.com/3d-models/anomalocaris-3d-model-dad76e60589a41e18a42db1e979f81f8",
+    "attribution": "“Anomalocaris 3D Model” by Skache, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Compressed textures and geometry and added 28 rigid swimming-flap bones plus two segmented frontal-appendage chains.",
+      "Authored a varied metachronal flap wave, subtle body drift and frontal-appendage motion as a smooth closed eight-second swimming Idle."
+    ]
+  },
+  {
     "id": "apatosaurus:audio/narration.en.mp3",
     "animalId": "apatosaurus",
     "assetPath": "audio/narration.en.mp3",
@@ -125,6 +246,369 @@ export const credits = [
       "Normalized the animal to a 3.2-unit total length with canonical transforms, centred horizontal bounds, and all four feet resting on the ground plane.",
       "Authored one eight-second in-place morph-target Idle at 24 frames per second; all feet and lower limbs remain fixed, the loop closes exactly, and the head and open mouth move as one rigid region.",
       "Verified zero foot drift, ground penetration, seam separation, new BVH overlap, collapsed triangles, and flipped triangles, then validator-checked and reviewed the derivative in the shared museum viewer."
+    ]
+  },
+  {
+    "id": "archaeopteryx:audio/narration.en.mp3",
+    "animalId": "archaeopteryx",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Archaeopteryx English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "archaeopteryx:audio/narration.zh-CN.mp3",
+    "animalId": "archaeopteryx",
+    "assetPath": "audio/narration.zh-CN.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "始祖鸟 Mandarin narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed two-sentence script.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "archaeopteryx:backgrounds/landscape.webp",
+    "animalId": "archaeopteryx",
+    "assetPath": "backgrounds/landscape.webp",
+    "assetKind": "background",
+    "sourceTitle": "Archaeopteryx Solnhofen lagoon habitat — landscape",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 始祖鸟 landscape created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted source to quality-92 WebP with mild sigma-0.45 sharpening.",
+      "Preserved the approved v2 high-horizon model-safe composition."
+    ]
+  },
+  {
+    "id": "archaeopteryx:backgrounds/portrait.webp",
+    "animalId": "archaeopteryx",
+    "assetPath": "backgrounds/portrait.webp",
+    "assetKind": "background",
+    "sourceTitle": "Archaeopteryx Solnhofen lagoon habitat — portrait",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 始祖鸟 portrait created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted source to quality-92 WebP with mild sigma-0.45 sharpening.",
+      "Preserved the approved v2 high-horizon portrait composition."
+    ]
+  },
+  {
+    "id": "archaeopteryx:images/poster-portrait.webp",
+    "animalId": "archaeopteryx",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "始祖鸟 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Archaeopteryx” by khata, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "archaeopteryx:images/poster.webp",
+    "animalId": "archaeopteryx",
+    "assetPath": "images/poster.webp",
+    "assetKind": "poster",
+    "sourceTitle": "始祖鸟 transparent model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Archaeopteryx” by khata, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "archaeopteryx:images/thumbnail.webp",
+    "animalId": "archaeopteryx",
+    "assetPath": "images/thumbnail.webp",
+    "assetKind": "thumbnail",
+    "sourceTitle": "始祖鸟 collection thumbnail",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Archaeopteryx” by khata, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "modifications": [
+      "Kept the complete animal silhouette readable at collection-card size.",
+      "Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "archaeopteryx:model/model.glb",
+    "animalId": "archaeopteryx",
+    "assetPath": "model/model.glb",
+    "assetKind": "model",
+    "sourceTitle": "Archaeopteryx",
+    "author": "khata",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceUrl": "https://sketchfab.com/3d-models/archaeopteryx-cbec5591c584438392824d13fbef401b",
+    "attribution": "“Archaeopteryx” by khata, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Restored supplied textures, compressed the runtime model, and changed feather transparency to stable alpha masking.",
+      "Retained the author-authored fully extended wing interval and retimed paired wing, body, neck, head and tail motion into a closed eight-second two-flap Idle."
+    ]
+  },
+  {
+    "id": "baryonyx:audio/narration.en.mp3",
+    "animalId": "baryonyx",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Baryonyx English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "baryonyx:audio/narration.zh-CN.mp3",
+    "animalId": "baryonyx",
+    "assetPath": "audio/narration.zh-CN.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "重爪龙 Mandarin narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed two-sentence script.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "baryonyx:backgrounds/landscape.webp",
+    "animalId": "baryonyx",
+    "assetPath": "backgrounds/landscape.webp",
+    "assetKind": "background",
+    "sourceTitle": "Baryonyx Wealden wet-woodland habitat — landscape",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 重爪龙 landscape created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.",
+      "Preserved the approved v5 ground detail and model-safe composition."
+    ]
+  },
+  {
+    "id": "baryonyx:backgrounds/portrait.webp",
+    "animalId": "baryonyx",
+    "assetPath": "backgrounds/portrait.webp",
+    "assetKind": "background",
+    "sourceTitle": "Baryonyx Wealden wet-woodland habitat — portrait",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 重爪龙 portrait created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.",
+      "Preserved the approved v5 ground detail and portrait model-safe composition."
+    ]
+  },
+  {
+    "id": "baryonyx:images/poster-portrait.webp",
+    "animalId": "baryonyx",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "重爪龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Baryonyx” by Paleo Modelist, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "baryonyx:images/poster.webp",
+    "animalId": "baryonyx",
+    "assetPath": "images/poster.webp",
+    "assetKind": "poster",
+    "sourceTitle": "重爪龙 transparent model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Baryonyx” by Paleo Modelist, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "baryonyx:images/thumbnail.webp",
+    "animalId": "baryonyx",
+    "assetPath": "images/thumbnail.webp",
+    "assetKind": "thumbnail",
+    "sourceTitle": "重爪龙 collection thumbnail",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Baryonyx” by Paleo Modelist, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "modifications": [
+      "Kept the complete animal silhouette readable at collection-card size.",
+      "Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "baryonyx:model/model.glb",
+    "animalId": "baryonyx",
+    "assetPath": "model/model.glb",
+    "assetKind": "model",
+    "sourceTitle": "Baryonyx",
+    "author": "Paleo Modelist",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceUrl": "https://sketchfab.com/3d-models/baryonyx-09b838e4bad84b33a647c647f42f4acd",
+    "attribution": "“Baryonyx” by Paleo Modelist, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Relinked and embedded the supplied textures, then compressed the runtime model for browser delivery.",
+      "Retimed the source seamless motion into a deterministic closed Idle and preserved the reviewed long snout and hand claw."
+    ]
+  },
+  {
+    "id": "carnotaurus:audio/narration.en.mp3",
+    "animalId": "carnotaurus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Carnotaurus English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "carnotaurus:audio/narration.zh-CN.mp3",
+    "animalId": "carnotaurus",
+    "assetPath": "audio/narration.zh-CN.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "食肉牛龙 Mandarin narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed two-sentence script.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "carnotaurus:backgrounds/landscape.webp",
+    "animalId": "carnotaurus",
+    "assetPath": "backgrounds/landscape.webp",
+    "assetKind": "background",
+    "sourceTitle": "Carnotaurus Patagonian estuary habitat — landscape",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 食肉牛龙 landscape created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted exact-size source to responsive WebP.",
+      "Removed ancillary metadata without adding a runtime tint or filter."
+    ]
+  },
+  {
+    "id": "carnotaurus:backgrounds/portrait.webp",
+    "animalId": "carnotaurus",
+    "assetPath": "backgrounds/portrait.webp",
+    "assetKind": "background",
+    "sourceTitle": "Carnotaurus Patagonian estuary habitat — portrait",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 食肉牛龙 portrait created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted exact-size source to responsive WebP.",
+      "Removed ancillary metadata without adding a runtime tint or filter."
+    ]
+  },
+  {
+    "id": "carnotaurus:images/poster-portrait.webp",
+    "animalId": "carnotaurus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "食肉牛龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“CARNOTAURUS DİNOSAUR” by Cenker Turhan, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "carnotaurus:images/poster.webp",
+    "animalId": "carnotaurus",
+    "assetPath": "images/poster.webp",
+    "assetKind": "poster",
+    "sourceTitle": "食肉牛龙 transparent model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“CARNOTAURUS DİNOSAUR” by Cenker Turhan, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "carnotaurus:images/thumbnail.webp",
+    "animalId": "carnotaurus",
+    "assetPath": "images/thumbnail.webp",
+    "assetKind": "thumbnail",
+    "sourceTitle": "食肉牛龙 collection thumbnail",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“CARNOTAURUS DİNOSAUR” by Cenker Turhan, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "modifications": [
+      "Kept the complete animal silhouette readable at collection-card size.",
+      "Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "carnotaurus:model/model.glb",
+    "animalId": "carnotaurus",
+    "assetPath": "model/model.glb",
+    "assetKind": "model",
+    "sourceTitle": "CARNOTAURUS DİNOSAUR",
+    "author": "Cenker Turhan",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceUrl": "https://sketchfab.com/3d-models/carnotaurus-dinosaur-548c9a0575b14deaae1f12ca9a6c31ca",
+    "attribution": "“CARNOTAURUS DİNOSAUR” by Cenker Turhan, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the separate rock, calibrated both feet to a grounded pose, and compressed the model for browser delivery.",
+      "Retained the original left forelimb, adjusted the original right forelimb, bound lower teeth to the jaw, kept the tongue independent, and authored a closed eight-second jaw-and-tail Idle."
     ]
   },
   {
@@ -502,6 +986,127 @@ export const credits = [
       "Shifted the Idle to begin at exactly zero seconds, made every rotation track close on the same quaternion, and periodically smoothed the head, neck, and body tracks so loop wraparound cannot produce a sudden head shake.",
       "Cleared stale normalized flags after promoting repaired quaternion accessors to floating point so the runtime GLTF loader receives spec-valid animation data.",
       "Normalized the derivative to one closed-loop Idle, repacked it, validated it with zero Khronos errors and warnings before runtime compression, and reviewed it in the shared museum viewer."
+    ]
+  },
+  {
+    "id": "lystrosaurus:audio/narration.en.mp3",
+    "animalId": "lystrosaurus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Lystrosaurus English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "lystrosaurus:audio/narration.zh-CN.mp3",
+    "animalId": "lystrosaurus",
+    "assetPath": "audio/narration.zh-CN.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "水龙兽 Mandarin narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed two-sentence script.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "lystrosaurus:backgrounds/landscape.webp",
+    "animalId": "lystrosaurus",
+    "assetPath": "backgrounds/landscape.webp",
+    "assetKind": "background",
+    "sourceTitle": "Lystrosaurus Karoo floodplain habitat — landscape",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 水龙兽 landscape created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.",
+      "Preserved the approved v5 ground detail and model-safe composition."
+    ]
+  },
+  {
+    "id": "lystrosaurus:backgrounds/portrait.webp",
+    "animalId": "lystrosaurus",
+    "assetPath": "backgrounds/portrait.webp",
+    "assetKind": "background",
+    "sourceTitle": "Lystrosaurus Karoo floodplain habitat — portrait",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 水龙兽 portrait created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.",
+      "Preserved the approved v5 ground detail and portrait model-safe composition."
+    ]
+  },
+  {
+    "id": "lystrosaurus:images/poster-portrait.webp",
+    "animalId": "lystrosaurus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "水龙兽 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Lystrosaurus” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "lystrosaurus:images/poster.webp",
+    "animalId": "lystrosaurus",
+    "assetPath": "images/poster.webp",
+    "assetKind": "poster",
+    "sourceTitle": "水龙兽 transparent model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Lystrosaurus” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "lystrosaurus:images/thumbnail.webp",
+    "animalId": "lystrosaurus",
+    "assetPath": "images/thumbnail.webp",
+    "assetKind": "thumbnail",
+    "sourceTitle": "水龙兽 collection thumbnail",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Lystrosaurus” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "modifications": [
+      "Kept the complete animal silhouette readable at collection-card size.",
+      "Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "lystrosaurus:model/model.glb",
+    "animalId": "lystrosaurus",
+    "assetPath": "model/model.glb",
+    "assetKind": "model",
+    "sourceTitle": "Lystrosaurus",
+    "author": "seth the yutyrannus",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceUrl": "https://sketchfab.com/3d-models/lystrosaurus-32ea6a3bedd948638f9add8da7483b28",
+    "attribution": "“Lystrosaurus” by seth the yutyrannus, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed an unbound helper object and compressed geometry and textures for browser delivery.",
+      "Authored a deterministic closed eight-second skeletal Idle with stable four-foot grounding."
     ]
   },
   {
@@ -1749,6 +2354,127 @@ export const credits = [
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
       "Authored and validator-checked one closed eight-second land-breathe-tail Idle for the shared museum viewer."
+    ]
+  },
+  {
+    "id": "spinosaurus:audio/narration.en.mp3",
+    "animalId": "spinosaurus",
+    "assetPath": "audio/narration.en.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "Spinosaurus English narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated English narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed English two-sentence script with the Serena voice.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "spinosaurus:audio/narration.zh-CN.mp3",
+    "animalId": "spinosaurus",
+    "assetPath": "audio/narration.zh-CN.mp3",
+    "assetKind": "narration",
+    "sourceTitle": "棘龙 Mandarin narration",
+    "author": "Qwen3-TTS CustomVoice",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned Qwen3-TTS output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated Mandarin narration produced locally with Qwen3-TTS 0.6B CustomVoice (Serena).",
+    "modifications": [
+      "Generated offline from the exact reviewed two-sentence script.",
+      "Normalized to a reviewed 48 kHz mono MP3 without runtime synthesis."
+    ]
+  },
+  {
+    "id": "spinosaurus:backgrounds/landscape.webp",
+    "animalId": "spinosaurus",
+    "assetPath": "backgrounds/landscape.webp",
+    "assetKind": "background",
+    "sourceTitle": "Spinosaurus North African river-delta habitat — landscape",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 棘龙 landscape created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.",
+      "Preserved the approved v5 ground detail and model-safe composition."
+    ]
+  },
+  {
+    "id": "spinosaurus:backgrounds/portrait.webp",
+    "animalId": "spinosaurus",
+    "assetPath": "backgrounds/portrait.webp",
+    "assetKind": "background",
+    "sourceTitle": "Spinosaurus North African river-delta habitat — portrait",
+    "author": "OpenAI built-in image_gen",
+    "licenseName": "CC BY-NC-SA 4.0 project-owned ImageGen output",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Project-generated 棘龙 portrait created with OpenAI ImageGen.",
+    "modifications": [
+      "Converted the accepted exact-size source to quality-96 WebP without post-process sharpening.",
+      "Preserved the approved v5 ground detail and portrait model-safe composition."
+    ]
+  },
+  {
+    "id": "spinosaurus:images/poster-portrait.webp",
+    "animalId": "spinosaurus",
+    "assetPath": "images/poster-portrait.webp",
+    "assetKind": "poster",
+    "sourceTitle": "棘龙 transparent portrait model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Spinosaurus” by Pedro B. Goulart, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as exact lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "spinosaurus:images/poster.webp",
+    "animalId": "spinosaurus",
+    "assetPath": "images/poster.webp",
+    "assetKind": "poster",
+    "sourceTitle": "棘龙 transparent model still",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Spinosaurus” by Pedro B. Goulart, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Removed the habitat composite and all interface chrome; kept only the model and contact shadow on a transparent background.",
+      "Encoded as lossless WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "spinosaurus:images/thumbnail.webp",
+    "animalId": "spinosaurus",
+    "assetPath": "images/thumbnail.webp",
+    "assetKind": "thumbnail",
+    "sourceTitle": "棘龙 collection thumbnail",
+    "author": "Prehistoric Animal Museum",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "“Spinosaurus” by Pedro B. Goulart, CC BY 4.0; modified for the Prehistoric Animal Museum. Scene art generated for this project.",
+    "modifications": [
+      "Kept the complete animal silhouette readable at collection-card size.",
+      "Encoded as 320 × 320 WebP without text, controls, labels, logos, or watermarks."
+    ]
+  },
+  {
+    "id": "spinosaurus:model/model.glb",
+    "animalId": "spinosaurus",
+    "assetPath": "model/model.glb",
+    "assetKind": "model",
+    "sourceTitle": "Spinosaurus",
+    "author": "Pedro B. Goulart",
+    "licenseName": "Creative Commons Attribution 4.0 International",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceUrl": "https://sketchfab.com/3d-models/spinosaurus-2a325726dd7b4a7c888277f262fd09bc",
+    "attribution": "“Spinosaurus” by Pedro B. Goulart, CC BY 4.0; modified for the Prehistoric Animal Museum.",
+    "modifications": [
+      "Compressed geometry and embedded textures for browser delivery.",
+      "Retimed the source motion into a deterministic closed eight-second in-place Idle and preserved the reviewed full-body pose."
     ]
   },
   {

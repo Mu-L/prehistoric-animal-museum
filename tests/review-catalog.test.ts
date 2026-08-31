@@ -16,6 +16,15 @@ import {
   type DisplayableAnimalPackage,
 } from '../src/review/types'
 
+const expansionAnimalIds = [
+  'spinosaurus',
+  'lystrosaurus',
+  'baryonyx',
+  'archaeopteryx',
+  'carnotaurus',
+  'anomalocaris',
+] as const
+
 describe('local collection review catalog', () => {
   it('switches an allowlisted draft to production assets without a catalog edit', () => {
     const beforePromotion = buildLocalReviewCatalog(
@@ -47,7 +56,7 @@ describe('local collection review catalog', () => {
     )
   })
 
-  it('keeps all eighteen production animals in a habitat-balanced order', () => {
+  it('keeps all twenty-four production animals in the accepted collection order', () => {
     expect(localReviewAnimals.map(({ id }) => id)).toEqual([
       'stegosaurus',
       'pteranodon',
@@ -67,6 +76,12 @@ describe('local collection review catalog', () => {
       'meganeura',
       'dilophosaurus',
       'mosasaurus',
+      'spinosaurus',
+      'lystrosaurus',
+      'baryonyx',
+      'archaeopteryx',
+      'carnotaurus',
+      'anomalocaris',
     ])
     expect(
       localReviewAnimals.every(({ status }) => status === 'published'),
@@ -75,25 +90,18 @@ describe('local collection review catalog', () => {
       localReviewAnimals
         .map(({ habitat }, index) => habitat === 'water' ? index : -1)
         .filter((index) => index >= 0),
-    ).toEqual([3, 8, 12, 17])
+    ).toEqual([3, 8, 12, 17, 23])
     expect(
       localReviewAnimals
         .map(({ habitat }, index) => habitat === 'air' ? index : -1)
         .filter((index) => index >= 0),
-    ).toEqual([1, 5, 10, 15])
+    ).toEqual([1, 5, 10, 15, 21])
   })
 
   it('provides complete visual assets and locally reviewable narration', () => {
-    const promotedIds = new Set([
-      'sauropelta',
-      'dilophosaurus',
-      'mosasaurus',
-      'rhamphorhynchus',
-      'tupandactylus',
-      'meganeura',
-    ])
+    const publishedIds = new Set(mainAnimals.map(({ id }) => id))
     for (const animal of localReviewAnimals) {
-      if (promotedIds.has(animal.id)) {
+      if (publishedIds.has(animal.id)) {
         expect(animal.assets.model).toContain(
           `/src/content/animals/${animal.id}/model/model.glb`,
         )
@@ -104,7 +112,7 @@ describe('local collection review catalog', () => {
       }
       expect(animal.assets.poster).toMatch(/poster\.webp$/)
       expect(animal.assets.thumbnail).toMatch(/thumbnail\.webp$/)
-      if (promotedIds.has(animal.id)) {
+      if (publishedIds.has(animal.id)) {
         expect(animal.assets.backgrounds.landscape).toContain(
           `/src/content/animals/${animal.id}/backgrounds/landscape.webp`,
         )
@@ -132,7 +140,7 @@ describe('local collection review catalog', () => {
       if (zhNarrationAsset?.status !== 'ready') {
         throw new Error(`Expected ready narration for ${animal.id}`)
       }
-      if (promotedIds.has(animal.id)) {
+      if (publishedIds.has(animal.id)) {
         expect(zhNarrationAsset.url).toContain(
           `/src/content/animals/${animal.id}/audio/narration.zh-CN.mp3`,
         )
@@ -149,7 +157,7 @@ describe('local collection review catalog', () => {
       if (animal.review) {
         expect(animal.review.checks.length).toBeGreaterThanOrEqual(2)
       } else {
-        expect(promotedIds.has(animal.id)).toBe(true)
+        expect(publishedIds.has(animal.id)).toBe(true)
       }
     }
   })
@@ -163,15 +171,68 @@ describe('local collection review catalog', () => {
     ).toBeUndefined()
   })
 
-  it('fills published review overlays from the matching production locale', () => {
+  it('keeps English content and narration bound to the matching locale', () => {
     for (const animal of localReviewAnimals) {
       expect(animal.content.en?.name).toBeTruthy()
       const narration = reviewNarrationPlanFor(animal.narration, 'en')
+      const narrationAsset = reviewNarrationAssetFor(
+        animal.assets.narration,
+        'en',
+      )
       expect(narration?.status).toBe('ready')
+      expect(narrationAsset?.status).toBe('ready')
       if (narration?.status !== 'ready') {
         throw new Error(`Expected ready English narration for ${animal.id}`)
       }
       expect(narration.sourcePath).toBe('audio/narration.en.mp3')
+      if (animal.status === 'draft') {
+        expect(narrationAsset).toMatchObject({
+          status: 'ready',
+          sourcePath: 'audio/narration.en.mp3',
+          url: `/__museum-review-assets/${animal.id}/narration.en.mp3`,
+        })
+        expect(
+          localReviewAssetFiles.has(
+            `/__museum-review-assets/${animal.id}/narration.en.mp3`,
+          ),
+        ).toBe(true)
+      }
+    }
+  })
+
+  it('records final owner approval for all six expansion animals', () => {
+    for (const animalId of expansionAnimalIds) {
+      const animal = localReviewAnimals.find(({ id }) => id === animalId)
+      expect(animal?.status).toBe('published')
+      expect(animal?.review?.badge).toBe('已验收')
+      expect(animal?.review?.status).toContain('已晋升生产')
+      expect(animal?.review?.note).toContain('2026-09-01')
+      expect(animal?.content['zh-CN'].editorial).toMatchObject({
+        reviewedBy: 'Leon（产品负责人）',
+        reviewedOn: '2026-09-01',
+      })
+      expect(animal?.content.en?.editorial).toMatchObject({
+        reviewedBy: 'Leon (product owner)',
+        reviewedOn: '2026-09-01',
+      })
+      expect(
+        animal
+          ? reviewNarrationPlanFor(animal.narration, 'zh-CN')
+          : undefined,
+      ).toMatchObject({
+        humanReviewStatus: 'approved',
+        language: 'Chinese',
+        speaker: 'Serena',
+      })
+      expect(
+        animal
+          ? reviewNarrationPlanFor(animal.narration, 'en')
+          : undefined,
+      ).toMatchObject({
+        humanReviewStatus: 'approved',
+        language: 'English',
+        speaker: 'Serena',
+      })
     }
   })
 
@@ -197,6 +258,12 @@ describe('local collection review catalog', () => {
       ['meganeura', 'air'],
       ['dilophosaurus', 'plains'],
       ['mosasaurus', 'underwater'],
+      ['spinosaurus', 'plains'],
+      ['lystrosaurus', 'plains'],
+      ['baryonyx', 'plains'],
+      ['archaeopteryx', 'air'],
+      ['carnotaurus', 'plains'],
+      ['anomalocaris', 'underwater'],
     ])
   })
 
@@ -235,10 +302,37 @@ describe('local collection review catalog', () => {
         `${routePrefix}/thumbnail.webp`,
       )
       expect(thumbnailPath).toContain(
-        animalId === 'apatosaurus'
-          ? '/assets/candidates/apatosaurus-sketchfab-fecabec8-2026-08/revision-v1/output/thumbnail.webp'
-          : `/src/content/animals/${animalId}/images/thumbnail.webp`,
+        `/src/content/animals/${animalId}/images/thumbnail.webp`,
       )
+    }
+  })
+
+  it('serves production assets for the six promoted expansion animals', () => {
+    for (const animalId of expansionAnimalIds) {
+      const routePrefix = `/__museum-review-assets/${animalId}`
+      const productionPrefix = `/src/content/animals/${animalId}`
+
+      expect(
+        localReviewAssetFiles.get(`${routePrefix}/background-landscape`),
+      ).toContain(`${productionPrefix}/backgrounds/landscape.webp`)
+      expect(
+        localReviewAssetFiles.get(`${routePrefix}/background-portrait`),
+      ).toContain(`${productionPrefix}/backgrounds/portrait.webp`)
+      expect(localReviewAssetFiles.get(`${routePrefix}/poster.webp`)).toContain(
+        `${productionPrefix}/images/poster.webp`,
+      )
+      expect(
+        localReviewAssetFiles.get(`${routePrefix}/poster-portrait.webp`),
+      ).toContain(`${productionPrefix}/images/poster-portrait.webp`)
+      expect(
+        localReviewAssetFiles.get(`${routePrefix}/thumbnail.webp`),
+      ).toContain(`${productionPrefix}/images/thumbnail.webp`)
+      expect(
+        localReviewAssetFiles.get(`${routePrefix}/narration.mp3`),
+      ).toContain(`${productionPrefix}/audio/narration.zh-CN.mp3`)
+      expect(
+        localReviewAssetFiles.get(`${routePrefix}/narration.en.mp3`),
+      ).toContain(`${productionPrefix}/audio/narration.en.mp3`)
     }
   })
 
@@ -258,8 +352,11 @@ describe('local collection review catalog', () => {
     }
   })
 
-  it('records the exact encoded GLB size for every local review animal', async () => {
-    for (const animal of localReviewAnimals) {
+  it('records the exact encoded GLB size for every promoted expansion animal', async () => {
+    for (const animalId of expansionAnimalIds) {
+      const animal = localReviewAnimals.find(({ id }) => id === animalId)
+      expect(animal).toBeDefined()
+      if (!animal) throw new Error(`Missing promoted animal: ${animalId}`)
       const route = `/__museum-review-assets/${animal.id}/model.glb`
       const modelPath = localReviewAssetFiles.get(route)
       expect(modelPath, route).toBeDefined()
@@ -381,7 +478,7 @@ describe('local collection review catalog', () => {
     expect(ichthyosaur?.review?.note).toContain('80,398 tris')
     expect(ichthyosaur?.review?.note).toContain('14 骨骼')
     expect(ichthyosaur?.review?.note).toContain('0 error、0 warning')
-    expect(ichthyosaur?.assets.modelBytes).toBe(10_709_576)
+    expect(ichthyosaur?.assets.modelBytes).toBe(5_737_920)
     expect(
       [pteranodon, ichthyosaur].every(
         (animal) => animal?.status === 'published',
@@ -464,7 +561,7 @@ describe('local collection review catalog', () => {
       speed: 0.9,
     })
     expect(apatosaurus?.presentation.landscapeHorizontalOffset).toBe(0.01)
-    expect(apatosaurus?.assets.modelBytes).toBe(6_222_396)
+    expect(apatosaurus?.assets.modelBytes).toBe(3_513_136)
     expect(apatosaurus?.review?.status).toBe(
       '新迷惑龙模型、Idle 与静态图已晋升生产',
     )

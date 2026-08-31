@@ -356,7 +356,7 @@ describe('multilingual SEO artifacts', () => {
     },
   )
 
-  it('emits exactly one localized detail artifact for all 18 animals', () => {
+  it('emits exactly one localized detail artifact for all 24 animals', () => {
     const expectedDetailArtifacts = detailCases
       .map(
         ({ animalId, locale }) =>
@@ -495,7 +495,7 @@ describe('multilingual SEO artifacts', () => {
     ].sort()
 
     expect(sitemapUrls).toEqual(expectedSitemapUrls)
-    expect(sitemapUrls).toHaveLength(38)
+    expect(sitemapUrls).toHaveLength(50)
     expect(sitemapUrls).not.toContain('https://example.test/museum/')
 
     const notFound = parseHtml(artifactSource(artifacts, '404.html'))

@@ -1160,10 +1160,10 @@ describe('App', () => {
     expect(dialog).toBeVisible()
     expect(
       within(dialog).getAllByRole('button', { name: /前往.+展台$/ }),
-    ).toHaveLength(18)
+    ).toHaveLength(24)
     expect(
       dialog.querySelectorAll('.collection-card__image img[loading="eager"]'),
-    ).toHaveLength(18)
+    ).toHaveLength(24)
     expect(
       within(dialog).getByRole('button', {
         name: '当前展台，前往剑龙展台',
@@ -1347,8 +1347,8 @@ describe('App', () => {
     expect(
       urls.slice(1, 3).every((url) => url.includes('pteranodon')),
     ).toBe(true)
-    expect(urls[3]).toContain('mosasaurus/model/model.glb')
-    expect(urls.slice(4).every((url) => url.includes('mosasaurus'))).toBe(true)
+    expect(urls[3]).toContain('anomalocaris/model/model.glb')
+    expect(urls.slice(4).every((url) => url.includes('anomalocaris'))).toBe(true)
     for (const [, init] of fetchMock.mock.calls) {
       expect(init).toMatchObject({ priority: 'low' })
     }
@@ -1430,7 +1430,7 @@ describe('App', () => {
         '.animal-rail .thumbnail-frame img',
       ),
     )
-    expect(thumbnails).toHaveLength(18)
+    expect(thumbnails).toHaveLength(24)
     expect(thumbnails.filter((image) => image.hasAttribute('src'))).toHaveLength(
       1,
     )
@@ -1511,7 +1511,7 @@ describe('App', () => {
       expect(urls.slice(0, 3).every((url) => url.includes('pteranodon'))).toBe(
         true,
       )
-      expect(urls[3]).toContain('mosasaurus/model/model.glb')
+      expect(urls[3]).toContain('anomalocaris/model/model.glb')
     } finally {
       if (originalVisibilityState) {
         Object.defineProperty(

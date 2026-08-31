@@ -39,6 +39,10 @@ const reviewEnvironmentMock = vi.hoisted(() => ({
   upgradeTexture: { name: 'review-panorama-high' },
 }))
 
+const forestPropsMock = vi.hoisted(() => ({
+  load: vi.fn(),
+}))
+
 vi.mock('../src/scale-encounter/avatar-review-candidate', () => ({
   acquireReviewCandidateAvatarFactory: reviewCandidateMock.acquire,
 }))
@@ -52,7 +56,7 @@ vi.mock('../src/scale-encounter/forest-ecology-review-candidate', () => ({
 }))
 
 vi.mock('../src/scale-encounter/forest-props-review-candidate', () => ({
-  loadReviewCandidateForestProps: vi.fn().mockResolvedValue(null),
+  loadReviewCandidateForestProps: forestPropsMock.load,
 }))
 
 interface Deferred<T> {
@@ -115,6 +119,7 @@ function makeController() {
     setScaleEncounterOrbitMotion: vi.fn(),
     setScaleEncounterEcologyDensity: vi.fn(),
     setScaleEncounterEnvironmentVariant: vi.fn(),
+    setScaleEncounterForestProps: vi.fn(),
     setScaleEncounterPanoramaTexture: vi.fn(),
     setScaleEncounterPrototypeFlightApproximation: vi.fn(),
     setScaleEncounterSceneCandidateVariant: vi.fn(),
@@ -157,6 +162,45 @@ function renderTyrannosaurusEncounter(controller = makeController()) {
       onProfileChange={onProfileChange}
       onScenePresentationChange={onScenePresentationChange}
       profile={null}
+    />,
+  )
+  return {
+    ...view,
+    controller,
+    onClose,
+    onPresentationStateChange,
+    onProfileChange,
+    onScenePresentationChange,
+  }
+}
+
+function renderArchaeopteryxEncounter(
+  controller = makeController(),
+  profile: DirectScaleEncounterProps['profile'] = null,
+) {
+  const onClose = vi.fn()
+  const onPresentationStateChange = vi.fn()
+  const onProfileChange = vi.fn()
+  const onScenePresentationChange =
+    vi.fn<DirectScaleEncounterProps['onScenePresentationChange']>()
+  const view = render(
+    <DirectScaleEncounter
+      animal={{
+        atmosphere: 'forest',
+        backgroundLandscape: '/archaeopteryx-landscape.webp',
+        backgroundPortrait: '/archaeopteryx-portrait.webp',
+        id: 'archaeopteryx',
+        name: '始祖鸟',
+        poster: '/archaeopteryx.webp',
+        posterPortrait: '/archaeopteryx-portrait-model.webp',
+      }}
+      controller={controller as unknown as ViewerController}
+      locale="zh-CN"
+      onClose={onClose}
+      onPresentationStateChange={onPresentationStateChange}
+      onProfileChange={onProfileChange}
+      onScenePresentationChange={onScenePresentationChange}
+      profile={profile}
     />,
   )
   return {
@@ -358,6 +402,7 @@ describe('DirectScaleEncounter', () => {
     reviewEnvironmentMock.discard.mockReset()
     reviewEnvironmentMock.release.mockReset()
     reviewEnvironmentMock.startPanoramaUpgrade.mockReset().mockResolvedValue(null)
+    forestPropsMock.load.mockReset().mockResolvedValue(null)
     vi.stubGlobal('Audio', TestAudio)
     window.localStorage.clear()
     window.localStorage.setItem('museum.locale', 'zh-CN')
@@ -402,6 +447,36 @@ describe('DirectScaleEncounter', () => {
     )
     expect(reviewCandidateMock.release).toHaveBeenCalledOnce()
     expect(reviewEnvironmentMock.release).toHaveBeenCalledOnce()
+  })
+
+  it('installs the scanned fallen-log prop before an Archaeopteryx encounter begins', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/museum/?animal=archaeopteryx&variant=production-slice',
+    )
+    const controller = makeController()
+    const scannedForestProps = { name: 'reviewed-forest-props' }
+    forestPropsMock.load.mockResolvedValue(scannedForestProps)
+
+    renderArchaeopteryxEncounter(controller, {
+      gender: 'boy',
+      heightCm: 100,
+    })
+
+    await waitFor(() => {
+      expect(controller.beginScaleEncounter).toHaveBeenCalledWith({
+        gender: 'boy',
+        heightCm: 100,
+      })
+    })
+    expect(forestPropsMock.load).toHaveBeenCalledOnce()
+    expect(controller.setScaleEncounterForestProps).toHaveBeenCalledWith(
+      scannedForestProps,
+    )
+    expect(
+      controller.setScaleEncounterForestProps.mock.invocationCallOrder[0],
+    ).toBeLessThan(controller.beginScaleEncounter.mock.invocationCallOrder[0]!)
   })
 
   it('uses the accepted D sky scene when the formal URL has no review override', async () => {

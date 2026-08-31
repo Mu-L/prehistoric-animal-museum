@@ -17,7 +17,13 @@
     "sauropelta": 9773,
     "meganeura": 11244,
     "dilophosaurus": 8830,
-    "mosasaurus": 9995
+    "mosasaurus": 9995,
+    "spinosaurus": 9449,
+    "lystrosaurus": 9990,
+    "baryonyx": 8735,
+    "archaeopteryx": 11455,
+    "carnotaurus": 13418,
+    "anomalocaris": 12606
   },
   "en": {
     "stegosaurus": 9434,
@@ -37,6 +43,12 @@
     "sauropelta": 10259,
     "meganeura": 8898,
     "dilophosaurus": 9862,
-    "mosasaurus": 10541
+    "mosasaurus": 10541,
+    "spinosaurus": 8993,
+    "lystrosaurus": 7885,
+    "baryonyx": 10252,
+    "archaeopteryx": 11877,
+    "carnotaurus": 13870,
+    "anomalocaris": 11248
   }
 }

@@ -20,21 +20,14 @@ function productionAnimalAsset(
   return repositoryFile(`src/content/animals/${animalId}/${relativePath}`)
 }
 
-const ichthyosaurBackgrounds = {
-  landscape: repositoryFile(
-    'prototypes/background-art-directions/assets/production-ichthyosaur-landscape.png',
-  ),
-  portrait: repositoryFile(
-    'prototypes/background-art-directions/assets/production-ichthyosaur-portrait.png',
-  ),
-}
-
 interface ReviewAnimalFiles {
   readonly model: string
   readonly backgroundLandscape: string
   readonly backgroundPortrait: string
   readonly narration?: string
+  readonly narrationEn?: string
   readonly poster: string
+  readonly posterPortrait?: string
   readonly thumbnail: string
 }
 
@@ -86,19 +79,30 @@ const reviewAnimalFiles: Readonly<
     ),
   },
   ichthyosaur: {
-    model: repositoryFile(
-      'assets/candidates/ichthyosaur-sketchfab-julian-2026-08-04/output/model-review.glb',
+    model: productionAnimalAsset('ichthyosaur', 'model/model.glb'),
+    backgroundLandscape: productionAnimalAsset(
+      'ichthyosaur',
+      'backgrounds/landscape.webp',
     ),
-    backgroundLandscape: ichthyosaurBackgrounds.landscape,
-    backgroundPortrait: ichthyosaurBackgrounds.portrait,
-    narration: repositoryFile(
-      '.handoff/collection-review/audio/ichthyosaur.mp3',
+    backgroundPortrait: productionAnimalAsset(
+      'ichthyosaur',
+      'backgrounds/portrait.webp',
     ),
-    poster: repositoryFile(
-      'assets/candidates/ichthyosaur-sketchfab-julian-2026-08-04/output/poster.webp',
+    narration: productionAnimalAsset(
+      'ichthyosaur',
+      'audio/narration.zh-CN.mp3',
     ),
-    thumbnail: repositoryFile(
-      'assets/candidates/ichthyosaur-sketchfab-julian-2026-08-04/output/thumbnail.webp',
+    narrationEn: productionAnimalAsset(
+      'ichthyosaur',
+      'audio/narration.en.mp3',
+    ),
+    poster: productionAnimalAsset(
+      'ichthyosaur',
+      'images/poster.webp',
+    ),
+    thumbnail: productionAnimalAsset(
+      'ichthyosaur',
+      'images/thumbnail.webp',
     ),
   },
   pteranodon: {
@@ -168,9 +172,7 @@ const reviewAnimalFiles: Readonly<
     ),
   },
   apatosaurus: {
-    model: repositoryFile(
-      'assets/candidates/apatosaurus-sketchfab-fecabec8-2026-08/revision-v1/output/apatosaurus-review.glb',
-    ),
+    model: productionAnimalAsset('apatosaurus', 'model/model.glb'),
     backgroundLandscape: productionAnimalAsset(
       'apatosaurus',
       'backgrounds/landscape.webp',
@@ -179,15 +181,21 @@ const reviewAnimalFiles: Readonly<
       'apatosaurus',
       'backgrounds/portrait.webp',
     ),
-    narration: repositoryFile(
-      '.handoff/collection-review/audio/apatosaurus.mp3',
+    narration: productionAnimalAsset(
+      'apatosaurus',
+      'audio/narration.zh-CN.mp3',
+    ),
+    narrationEn: productionAnimalAsset(
+      'apatosaurus',
+      'audio/narration.en.mp3',
     ),
     poster: productionAnimalAsset(
       'apatosaurus',
       'images/poster.webp',
     ),
-    thumbnail: repositoryFile(
-      'assets/candidates/apatosaurus-sketchfab-fecabec8-2026-08/revision-v1/output/thumbnail.webp',
+    thumbnail: productionAnimalAsset(
+      'apatosaurus',
+      'images/thumbnail.webp',
     ),
   },
   gigantoraptor: {
@@ -397,6 +405,156 @@ const reviewAnimalFiles: Readonly<
       'assets/candidates/animal-onboarding-2026-08-01/meganeura/output/thumbnail.webp',
     ),
   },
+  spinosaurus: {
+    model: productionAnimalAsset('spinosaurus', 'model/model.glb'),
+    backgroundLandscape: productionAnimalAsset(
+      'spinosaurus',
+      'backgrounds/landscape.webp',
+    ),
+    backgroundPortrait: productionAnimalAsset(
+      'spinosaurus',
+      'backgrounds/portrait.webp',
+    ),
+    narration: productionAnimalAsset(
+      'spinosaurus',
+      'audio/narration.zh-CN.mp3',
+    ),
+    narrationEn: productionAnimalAsset(
+      'spinosaurus',
+      'audio/narration.en.mp3',
+    ),
+    poster: productionAnimalAsset('spinosaurus', 'images/poster.webp'),
+    posterPortrait: productionAnimalAsset(
+      'spinosaurus',
+      'images/poster-portrait.webp',
+    ),
+    thumbnail: productionAnimalAsset('spinosaurus', 'images/thumbnail.webp'),
+  },
+  lystrosaurus: {
+    model: productionAnimalAsset('lystrosaurus', 'model/model.glb'),
+    backgroundLandscape: productionAnimalAsset(
+      'lystrosaurus',
+      'backgrounds/landscape.webp',
+    ),
+    backgroundPortrait: productionAnimalAsset(
+      'lystrosaurus',
+      'backgrounds/portrait.webp',
+    ),
+    narration: productionAnimalAsset(
+      'lystrosaurus',
+      'audio/narration.zh-CN.mp3',
+    ),
+    narrationEn: productionAnimalAsset(
+      'lystrosaurus',
+      'audio/narration.en.mp3',
+    ),
+    poster: productionAnimalAsset('lystrosaurus', 'images/poster.webp'),
+    posterPortrait: productionAnimalAsset(
+      'lystrosaurus',
+      'images/poster-portrait.webp',
+    ),
+    thumbnail: productionAnimalAsset('lystrosaurus', 'images/thumbnail.webp'),
+  },
+  baryonyx: {
+    model: productionAnimalAsset('baryonyx', 'model/model.glb'),
+    backgroundLandscape: productionAnimalAsset(
+      'baryonyx',
+      'backgrounds/landscape.webp',
+    ),
+    backgroundPortrait: productionAnimalAsset(
+      'baryonyx',
+      'backgrounds/portrait.webp',
+    ),
+    narration: productionAnimalAsset(
+      'baryonyx',
+      'audio/narration.zh-CN.mp3',
+    ),
+    narrationEn: productionAnimalAsset(
+      'baryonyx',
+      'audio/narration.en.mp3',
+    ),
+    poster: productionAnimalAsset('baryonyx', 'images/poster.webp'),
+    posterPortrait: productionAnimalAsset(
+      'baryonyx',
+      'images/poster-portrait.webp',
+    ),
+    thumbnail: productionAnimalAsset('baryonyx', 'images/thumbnail.webp'),
+  },
+  archaeopteryx: {
+    model: productionAnimalAsset('archaeopteryx', 'model/model.glb'),
+    backgroundLandscape: productionAnimalAsset(
+      'archaeopteryx',
+      'backgrounds/landscape.webp',
+    ),
+    backgroundPortrait: productionAnimalAsset(
+      'archaeopteryx',
+      'backgrounds/portrait.webp',
+    ),
+    narration: productionAnimalAsset(
+      'archaeopteryx',
+      'audio/narration.zh-CN.mp3',
+    ),
+    narrationEn: productionAnimalAsset(
+      'archaeopteryx',
+      'audio/narration.en.mp3',
+    ),
+    poster: productionAnimalAsset('archaeopteryx', 'images/poster.webp'),
+    posterPortrait: productionAnimalAsset(
+      'archaeopteryx',
+      'images/poster-portrait.webp',
+    ),
+    thumbnail: productionAnimalAsset('archaeopteryx', 'images/thumbnail.webp'),
+  },
+  carnotaurus: {
+    model: productionAnimalAsset('carnotaurus', 'model/model.glb'),
+    backgroundLandscape: productionAnimalAsset(
+      'carnotaurus',
+      'backgrounds/landscape.webp',
+    ),
+    backgroundPortrait: productionAnimalAsset(
+      'carnotaurus',
+      'backgrounds/portrait.webp',
+    ),
+    narration: productionAnimalAsset(
+      'carnotaurus',
+      'audio/narration.zh-CN.mp3',
+    ),
+    narrationEn: productionAnimalAsset(
+      'carnotaurus',
+      'audio/narration.en.mp3',
+    ),
+    poster: productionAnimalAsset('carnotaurus', 'images/poster.webp'),
+    posterPortrait: productionAnimalAsset(
+      'carnotaurus',
+      'images/poster-portrait.webp',
+    ),
+    thumbnail: productionAnimalAsset('carnotaurus', 'images/thumbnail.webp'),
+  },
+  anomalocaris: {
+    model: productionAnimalAsset('anomalocaris', 'model/model.glb'),
+    backgroundLandscape: productionAnimalAsset(
+      'anomalocaris',
+      'backgrounds/landscape.webp',
+    ),
+    backgroundPortrait: productionAnimalAsset(
+      'anomalocaris',
+      'backgrounds/portrait.webp',
+    ),
+    narration: productionAnimalAsset(
+      'anomalocaris',
+      'audio/narration.zh-CN.mp3',
+    ),
+    narrationEn: productionAnimalAsset(
+      'anomalocaris',
+      'audio/narration.en.mp3',
+    ),
+    poster: productionAnimalAsset('anomalocaris', 'images/poster.webp'),
+    posterPortrait: productionAnimalAsset(
+      'anomalocaris',
+      'images/poster-portrait.webp',
+    ),
+    thumbnail: productionAnimalAsset('anomalocaris', 'images/thumbnail.webp'),
+  },
 }
 
 const routeFilePairs = Object.entries(reviewAnimalFiles).flatMap(
@@ -404,10 +562,12 @@ const routeFilePairs = Object.entries(reviewAnimalFiles).flatMap(
     const modelPreviewDirectory = repositoryFile(
       `assets/review-generated/model-previews/${animalId}`,
     )
-    const posterPortrait = productionAnimalAsset(
-      animalId as LocalReviewAnimalId,
-      'images/poster-portrait.webp',
-    )
+    const posterPortrait =
+      files.posterPortrait ??
+      productionAnimalAsset(
+        animalId as LocalReviewAnimalId,
+        'images/poster-portrait.webp',
+      )
     const modelPreviewFiles = [
       ...modelPreviewProfiles.map(
         ({ fileName }) =>
@@ -429,6 +589,9 @@ const routeFilePairs = Object.entries(reviewAnimalFiles).flatMap(
       ...(files.narration === undefined
         ? []
         : ([['narration.mp3', files.narration]] as const)),
+      ...(files.narrationEn === undefined
+        ? []
+        : ([['narration.en.mp3', files.narrationEn]] as const)),
     ] satisfies readonly (readonly [string, string])[]
 
     return filePairs.map(
@@ -445,16 +608,11 @@ const scaleEncounterEnvironmentAssetFiles = [
   'forest-props-real-v1.glb',
   'forest-ecology-real-v2.glb',
   'real-tree-lods-v1.glb',
-  'midground-vegetation-atlas-v1.webp',
   'midground-vegetation-atlas-v2.webp',
-  'midground-araucaria-components-v3.webp',
   'midground-araucaria-components-v4.webp',
   'midground-frond-components-v4-final.webp',
   'midground-mature-tree-atlas-v1.webp',
   'midground-mature-tree-atlas-v1-1024.webp',
-  'far-tree-atlas-v1.webp',
-  'panorama-land-cretaceous-v4-open-1774.webp',
-  'panorama-land-cretaceous-v4-open-1024.webp',
   'panorama-land-cretaceous-v5-farfield-4096.webp',
   'panorama-land-cretaceous-v5-farfield-2048.webp',
   'panorama-gobi-irendabas-photoreal-v1-4096.webp',
@@ -467,7 +625,6 @@ const scaleEncounterEnvironmentAssetFiles = [
   'surface-floodplain-red-silt-albedo-v1.webp',
   'surface-carboniferous-peat-albedo-v1.webp',
   'surface-land-v4-humus-albedo-1254.webp',
-  'surface-land-dry-decay-litter-v1.webp',
   'panorama-land-cretaceous-2048.webp',
   'panorama-land-cretaceous-4096.webp',
   'panorama-land-cretaceous-8192.webp',
@@ -498,7 +655,7 @@ const scaleEncounterEnvironmentRouteFilePairs =
       [
         `${localReviewAssetPrefix}/scale-encounter-environments/${fileName}`,
         repositoryFile(
-          `assets/candidates/scale-encounter-environments/${fileName}`,
+          `src/scale-encounter/assets/environments/${fileName}`,
         ),
       ] as const,
   )
@@ -520,21 +677,19 @@ const scaleEncounterChildAvatarRouteFilePairs =
       [
         `${localReviewAssetPrefix}/scale-encounter-child-avatar/${fileName}`,
         repositoryFile(
-          `assets/candidates/scale-encounter-child-avatar/${fileName}`,
+          `src/scale-encounter/assets/avatars/${fileName.replace('-review-v01', '-v01')}`,
         ),
       ] as const,
   )
 
 export const scaleEncounterChildPortraitAssets = [
   {
-    fileName: 'boy-land-explorer-main.png',
-    sourceFile:
-      'meshy-scene-multiview-2026-08-18/boy-land-explorer/child-avatar-v4-boy-land-explorer-mv-v02-main.png',
+    fileName: 'boy-land-explorer.webp',
+    sourceFile: 'boy-land-explorer.webp',
   },
   {
-    fileName: 'girl-land-explorer-main.png',
-    sourceFile:
-      'meshy-scene-multiview-2026-08-18/girl-land-explorer/child-avatar-v4-girl-land-explorer-mv-v02-main.png',
+    fileName: 'girl-land-explorer.webp',
+    sourceFile: 'girl-land-explorer.webp',
   },
 ] as const
 
@@ -544,10 +699,29 @@ const scaleEncounterChildPortraitRouteFilePairs =
       [
         `${localReviewAssetPrefix}/scale-encounter-child-portraits/${fileName}`,
         repositoryFile(
-          `assets/candidates/scale-encounter-child-avatar/${sourceFile}`,
+          `src/scale-encounter/assets/avatars/${sourceFile}`,
         ),
       ] as const,
   )
+
+const scaleEncounterNarrationRouteFilePairs = [
+  'spinosaurus',
+  'lystrosaurus',
+  'baryonyx',
+  'archaeopteryx',
+  'carnotaurus',
+  'anomalocaris',
+].flatMap((animalId) =>
+  ['zh-CN', 'en'].flatMap((locale) =>
+    ['intro', 'transition', 'arrival'].map((kind) => {
+      const fileName = `${animalId}-${kind}.${locale}.mp3`
+      return [
+        `${localReviewAssetPrefix}/scale-encounter-audio/${fileName}`,
+        repositoryFile(`src/scale-encounter/audio/${fileName}`),
+      ] as const
+    }),
+  ),
+)
 
 export const localReviewAssetFiles: ReadonlyMap<string, string> = new Map(
   [
@@ -555,5 +729,6 @@ export const localReviewAssetFiles: ReadonlyMap<string, string> = new Map(
     ...scaleEncounterEnvironmentRouteFilePairs,
     ...scaleEncounterChildAvatarRouteFilePairs,
     ...scaleEncounterChildPortraitRouteFilePairs,
+    ...scaleEncounterNarrationRouteFilePairs,
   ],
 )

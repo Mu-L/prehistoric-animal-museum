@@ -93,9 +93,7 @@ export interface ScaleEncounterProductionGroundDetailMetadata {
   readonly humusPatchCount: number
   readonly instanceCount: number
   readonly litterPatchCount: number
-  readonly representation: 'instanced-twigs-humus-roots-and-authored-soil-impressions'
-  readonly rootInstanceCount: number
-  readonly rootSamples: ReadonlyArray<GroundDetailSample>
+  readonly representation: 'instanced-twigs-humus-and-authored-soil-impressions'
   readonly samples: ReadonlyArray<GroundDetailSample>
   readonly seed: number
   readonly soilImpressionCount: number
@@ -399,48 +397,6 @@ function createGroundDetailPlacements(
   return placements
 }
 
-function createSurfaceRootFanGeometry(): BufferGeometry {
-  const positions: number[] = []
-  const colours: number[] = []
-  const indices: number[] = []
-  const palette = [
-    new Color('#625a4c'),
-    new Color('#716757'),
-    new Color('#585548'),
-  ] as const
-  for (let index = 0; index < 5; index += 1) {
-    const yaw = (index / 5) * Math.PI * 2 + Math.sin(index * 2.17) * 0.18
-    const length = 0.52 + (index % 3) * 0.14
-    appendTwigPrism(
-      positions,
-      colours,
-      indices,
-      Math.cos(yaw) * length * 0.43,
-      Math.sin(yaw) * length * 0.43,
-      length * 0.52,
-      0.026 + (index % 2) * 0.008,
-      yaw,
-      palette[index % palette.length]!,
-      0.002,
-    )
-  }
-  const geometry = new BufferGeometry()
-  geometry.name = 'scale-encounter-production-surface-root-fan-geometry'
-  geometry.setAttribute(
-    'position',
-    new BufferAttribute(new Float32Array(positions), 3),
-  )
-  geometry.setAttribute(
-    'color',
-    new BufferAttribute(new Float32Array(colours), 3),
-  )
-  geometry.setIndex(indices)
-  geometry.computeVertexNormals()
-  geometry.computeBoundingBox()
-  geometry.computeBoundingSphere()
-  return geometry
-}
-
 export function createScaleEncounterProductionGroundDetail(
   terrainHeightAtWorld: TerrainHeightAtWorld,
   density: ScaleEncounterEcologyDensity = 'current',
@@ -573,81 +529,18 @@ export function createScaleEncounterProductionGroundDetail(
   patches.computeBoundingBox()
   patches.computeBoundingSphere()
 
-  const rootInstanceCount =
-    density === 'current' ? 24 : density === '1.25x' ? 34 : 46
-  const rootGeometry = createSurfaceRootFanGeometry()
-  const rootMaterial = new MeshStandardMaterial({
-    color: '#c7c2b4',
-    metalness: 0,
-    polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -2,
-    roughness: 0.98,
-    vertexColors: true,
-  })
-  rootMaterial.name = 'scale-encounter-production-surface-root-material'
-  const roots = new InstancedMesh(
-    rootGeometry,
-    rootMaterial,
-    rootInstanceCount,
-  )
-  roots.name = 'scale-encounter-production-surface-roots'
-  roots.castShadow = false
-  roots.receiveShadow = true
-  const rootPlacements = placements.filter(({ x, z }) => {
-    const radius = Math.hypot(x, z)
-    return radius >= 16 && radius <= 84
-  })
-  const rootSamples: GroundDetailSample[] = []
-  const rootBounds = rootGeometry.boundingBox?.clone()
-  if (!rootBounds) {
-    throw new Error('Production surface-root geometry has no bounds')
-  }
-  for (let index = 0; index < rootInstanceCount; index += 1) {
-    const placement = rootPlacements[(index * 29 + 13) % rootPlacements.length]!
-    const terrainY = terrainHeightAtWorld(placement.x, placement.z)
-    transform.position.set(placement.x, 0, placement.z)
-    transform.rotation.set(0, placement.yaw + index * 0.37, 0)
-    const scale = 0.72 + ((index * 17) % 13) / 13
-    transform.scale.set(
-      scale * (0.84 + placement.aspect * 0.18),
-      scale,
-      scale * (0.88 + ((index * 7) % 9) * 0.025),
-    )
-    transform.updateMatrix()
-    const zeroHeightBounds = rootBounds.clone().applyMatrix4(transform.matrix)
-    transform.position.y = terrainY - 0.002 - zeroHeightBounds.min.y
-    transform.updateMatrix()
-    const finalBounds = rootBounds.clone().applyMatrix4(transform.matrix)
-    roots.setMatrixAt(index, transform.matrix)
-    if (rootSamples.length < 12) {
-      rootSamples.push({
-        x: placement.x,
-        y: finalBounds.min.y,
-        z: placement.z,
-      })
-    }
-  }
-  roots.instanceMatrix.needsUpdate = true
-  roots.computeBoundingBox()
-  roots.computeBoundingSphere()
-
   const triangleCount = (geometry.getIndex()?.count ?? 0) / 3
   const patchTriangleCount = (patchGeometry.getIndex()?.count ?? 0) / 3
-  const rootTriangleCount = (rootGeometry.getIndex()?.count ?? 0) / 3
   const metadata: ScaleEncounterProductionGroundDetailMetadata = {
     density,
-    drawCalls: rootInstanceCount > 0 ? 3 : 2,
+    drawCalls: 2,
     estimatedTriangles:
       triangleCount * placements.length +
-      patchTriangleCount * patchCount +
-      rootTriangleCount * rootInstanceCount,
+      patchTriangleCount * patchCount,
     humusPatchCount: patchCount,
     instanceCount: placements.length,
     litterPatchCount: 0,
-    representation: 'instanced-twigs-humus-roots-and-authored-soil-impressions',
-    rootInstanceCount,
-    rootSamples,
+    representation: 'instanced-twigs-humus-and-authored-soil-impressions',
     samples,
     seed: SCALE_ENCOUNTER_PRODUCTION_GROUND_DETAIL_SEED,
     soilImpressionCount: HERO_SOIL_IMPRESSIONS.length,
@@ -656,6 +549,5 @@ export function createScaleEncounterProductionGroundDetail(
   root.name = 'scale-encounter-production-ground-detail'
   root.userData.scaleEncounterProductionGroundDetail = metadata
   root.add(patches, mesh)
-  root.add(roots)
   return root
 }
