@@ -75,7 +75,32 @@ ANIMALS = (
     "meganeura",
     "dilophosaurus",
     "mosasaurus",
+    "spinosaurus",
+    "lystrosaurus",
+    "baryonyx",
+    "archaeopteryx",
+    "carnotaurus",
+    "anomalocaris",
 )
+REVIEW_ANIMALS = (
+    "spinosaurus",
+    "lystrosaurus",
+    "baryonyx",
+    "archaeopteryx",
+    "carnotaurus",
+    "anomalocaris",
+)
+PRONUNCIATION_OVERRIDES = {
+    ("baryonyx", "zh-CN"): {
+        "text": "重爪龙",
+        # Qwen's Chinese grapheme front end otherwise selects chóng in this
+        # uncommon animal name. 仲 is an audio-only homophone that forces the
+        # intended zhòng without changing any visible or recorded copy.
+        "generationText": "仲爪龙",
+        "reading": "zhòng zhǎo lóng",
+        "context": "重爪龙，重读 zhòng（轻重的重）",
+    },
+}
 VIEW_SWITCH_SCRIPTS = {
     "zh-CN": {
         "toChildEyes": "好，再回到你的眼睛这里。看看动物离你有多远，再顺着它的身体慢慢看一圈。",
@@ -105,6 +130,20 @@ def sha256(path: Path) -> str:
 
 def text_sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def pronunciation_generation_script(
+    animal: str, locale: str, authored_script: str
+) -> tuple[str, dict[str, str] | None]:
+    override = PRONUNCIATION_OVERRIDES.get((animal, locale))
+    if override is None:
+        return authored_script, None
+    text = override["text"]
+    if text not in authored_script:
+        raise RuntimeError(
+            f"Pronunciation override text {text!r} is absent from {animal}.{locale}"
+        )
+    return authored_script.replace(text, override["generationText"]), override
 
 
 def ffprobe(path: Path) -> dict[str, object]:
@@ -292,6 +331,32 @@ def find_phase_tracks(
             )
         result.append(matches[0])
     return result
+
+
+def ensure_review_phase_tracks(
+    manifest: dict[str, object], animal: str, locale: str
+) -> None:
+    if animal not in REVIEW_ANIMALS:
+        return
+    tracks = manifest["tracks"]
+    if not isinstance(tracks, list):
+        raise RuntimeError("Narration manifest tracks must be a list")
+    for kind in KINDS:
+        file_name = f"{animal}-{kind}.{locale}.mp3"
+        if any(
+            isinstance(track, dict) and track.get("file") == file_name
+            for track in tracks
+        ):
+            continue
+        tracks.append(
+            {
+                "file": file_name,
+                "locale": locale,
+                "script": "",
+                "sha256": "pending-generation",
+                "durationSeconds": 0,
+            }
+        )
 
 
 def find_view_switch_tracks(
@@ -551,10 +616,24 @@ def main() -> None:
     jobs: list[dict[str, object]] = []
     for animal in selected_animals:
         for locale in selected_locales:
+            ensure_review_phase_tracks(narration_manifest, animal, locale)
             phase_tracks = find_phase_tracks(narration_manifest, animal, locale)
             scripts = [str(authored_scripts[locale][animal][kind]) for kind in KINDS]
             for track, script in zip(phase_tracks, scripts, strict=True):
                 track["script"] = script
+            continuous_script = "\n".join(scripts)
+            generation_script, pronunciation_override = (
+                pronunciation_generation_script(
+                    animal,
+                    locale,
+                    continuous_script,
+                )
+            )
+            if pronunciation_override is not None:
+                for track in phase_tracks:
+                    track["pronunciationContext"] = pronunciation_override[
+                        "context"
+                    ]
             jobs.append(
                 {
                     "animal": animal,
@@ -565,7 +644,9 @@ def main() -> None:
                     "scripts": scripts,
                     # Newlines strengthen the two edit points without breaking
                     # the single-input, single-master generation contract.
-                    "continuousScript": "\n".join(scripts),
+                    "continuousScript": continuous_script,
+                    "generationScript": generation_script,
+                    "pronunciationOverride": pronunciation_override,
                 }
             )
     if include_view_switch:
@@ -583,6 +664,8 @@ def main() -> None:
                     "phaseTracks": phase_tracks,
                     "scripts": scripts,
                     "continuousScript": "\n".join(scripts),
+                    "generationScript": "\n".join(scripts),
+                    "pronunciationOverride": None,
                 }
             )
 
@@ -620,7 +703,7 @@ def main() -> None:
                 torch.manual_seed(seed)
                 started = time.perf_counter()
                 wavs, sample_rate = model.generate_custom_voice(
-                    text=[str(job["continuousScript"]) for job in batch],
+                    text=[str(job["generationScript"]) for job in batch],
                     language=[str(job["language"]) for job in batch],
                     speaker=[SPEAKER] * len(batch),
                 )
@@ -709,6 +792,7 @@ def main() -> None:
         master_path = master_directory / f"{key}.wav"
         master_preview_path = master_directory / f"{key}.mp3"
         continuous_script = str(job["continuousScript"])
+        generation_script = str(job["generationScript"])
         tempo_factor = normalize_master(
             raw_path,
             master_path,
@@ -774,6 +858,8 @@ def main() -> None:
                 ),
                 "script": job["continuousScript"],
                 "scriptSha256": text_sha256(str(job["continuousScript"])),
+                "generationScriptSha256": text_sha256(generation_script),
+                "pronunciationOverride": job["pronunciationOverride"],
                 "sha256": master_hash,
                 "durationSeconds": total_samples / SAMPLE_RATE,
                 "tempoFactor": tempo_factor,
@@ -874,10 +960,12 @@ def main() -> None:
             "exploration feel comes from a subtle whole-master pace lift."
         ),
     }
+    animal_phase_track_count = len(ANIMALS) * len(LOCALES) * len(KINDS)
+    view_switch_track_count = len(LOCALES) * len(VIEW_SWITCH_KINDS)
     narration_manifest["continuousNarrationPolicy"] = {
-        "guidedTrackCount": 112,
-        "animalPhaseTrackCount": 108,
-        "animalLocaleMasterCount": 36,
+        "guidedTrackCount": animal_phase_track_count + view_switch_track_count,
+        "animalPhaseTrackCount": animal_phase_track_count,
+        "animalLocaleMasterCount": len(ANIMALS) * len(LOCALES),
         "viewSwitchLocaleMasterCount": 2,
         "sampleRateHz": SAMPLE_RATE,
         "policy": (
@@ -889,11 +977,18 @@ def main() -> None:
         "evidenceDirectory": str(evidence_directory.relative_to(PROJECT)),
     }
     narration_manifest["note"] = (
-        "All animal-guided tracks are local review candidates rebuilt from one "
-        "continuous master per animal and locale. The shared viewpoint lines "
-        "are likewise cut from one master per locale. Nothing is approved for "
-        "public distribution."
+        "The original production narration remains approved. Spinosaurus, "
+        "Lystrosaurus, Baryonyx, Archaeopteryx, Carnotaurus and Anomalocaris "
+        "are local bilingual review candidates, "
+        "each cut from one continuous Serena master per locale. Their scripts, "
+        "pronunciation, pacing and public distribution still require Leon's "
+        "listening review."
     )
+    if any(animal in REVIEW_ANIMALS for animal in selected_animals):
+        narration_manifest["status"] = "production-approved-with-review-candidates"
+        narration_manifest["publicDistributionDecision"] = (
+            "approved-existing-production-only"
+        )
     NARRATION_MANIFEST_PATH.write_text(
         json.dumps(narration_manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",

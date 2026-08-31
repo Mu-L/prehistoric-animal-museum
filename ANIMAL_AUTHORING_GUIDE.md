@@ -103,6 +103,17 @@ Generate English measurements from the metric facts so the UI can show metric
 first with approximate imperial units. Do not infer species, sex, colour, diet,
 sound, or behaviour from a model.
 
+Calibrate scientific review to this museum's young-child audience. Require the
+broad identity, classification, period, habitat context and child-facing facts
+to be defensible, and keep the features that make the animal recognisable. Do
+not require a specimen-level reconstruction audit or reject a usable model
+only because one proportion follows an older plausible interpretation. Colour,
+soft tissue, skin texture, posture, expression and gentle display motion may use
+clear artistic interpretation or exaggeration. Keep uncertain details out of
+the child-facing fact layer, describe them as reconstruction choices for
+parents when material, and never turn a disputed hypothesis into a unique
+fact.
+
 Choose the correct size semantic:
 
 - `body-length`;
@@ -129,6 +140,14 @@ viewports.
 Landscape and portrait backgrounds are separate compositions, not runtime
 crops. Keep the central model area quiet and do not bake animals, text, UI,
 logos, or watermarks into the scene.
+
+Choose the scene exposure only after inspecting the accepted runtime material
+and lighting. The habitat, weather, colour temperature and model should feel
+like one visual world: a dark animal must not look pasted into a bright noon
+scene, while a pale animal must not disappear into pale ground or sky. Preserve
+enough local contrast to read the silhouette, keep a continuous ground patch
+under land animals, and give landscape and portrait backgrounds the same mood
+and palette.
 
 Capture the poster from the accepted runtime presentation, then derive a
 readable square thumbnail. Current ceilings are:

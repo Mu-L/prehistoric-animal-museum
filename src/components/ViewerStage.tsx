@@ -51,12 +51,43 @@ export function ViewerStage({
   const stageRef = useRef<HTMLDivElement>(null)
   const compositionFrameRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const controllerRef = useRef<ViewerController | null>(null)
   const [initialOverlayMounted, setInitialOverlayMounted] = useState(true)
   const [viewportSize, setViewportSize] = useState<{
     readonly height: number
     readonly width: number
   } | null>(null)
-  const previewProfile = useModelPreviewProfile()
+  const responsivePreviewProfile = useModelPreviewProfile()
+  const captureSearchParams = new URLSearchParams(
+    typeof window === 'undefined' ? '' : window.location.search,
+  )
+  const requestedCaptureProfile = captureSearchParams.get(
+    'modelPreviewCapture',
+  )
+  const requestedCaptureMatte = captureSearchParams.get('modelPreviewMatte')
+  const requestedCaptureTime = Number(
+    captureSearchParams.get('modelPreviewTime') ?? 0,
+  )
+  const captureProfile =
+    import.meta.env.MODE === 'review'
+      ? modelPreviewProfiles.find(
+          ({ key }) => key === requestedCaptureProfile,
+        )
+      : undefined
+  const previewProfile = captureProfile ?? responsivePreviewProfile
+  const captureScale = captureProfile
+    ? Math.min(
+        window.innerWidth / captureProfile.referenceWidth,
+        window.innerHeight / captureProfile.referenceHeight,
+        1,
+      )
+    : 1
+  const captureWidth = captureProfile
+    ? captureProfile.referenceWidth * captureScale
+    : undefined
+  const captureHeight = captureProfile
+    ? captureProfile.referenceHeight * captureScale
+    : undefined
   const previewUrl =
     modelPreviewFor(animalId, previewProfile.fileName) ??
     (previewProfile.height > previewProfile.width
@@ -106,6 +137,55 @@ export function ViewerStage({
       observer.disconnect()
     }
   }, [previewProfile.height, previewProfile.width])
+
+  useEffect(() => {
+    if (!captureProfile) {
+      return
+    }
+    const root = document.documentElement
+    root.dataset.modelPreviewCapture = captureProfile.key
+    root.style.setProperty(
+      '--model-preview-capture-width',
+      `${captureWidth}px`,
+    )
+    root.style.setProperty(
+      '--model-preview-capture-height',
+      `${captureHeight}px`,
+    )
+    root.style.setProperty(
+      '--model-preview-capture-matte',
+      requestedCaptureMatte === 'black' ? '#000' : '#fff',
+    )
+    return () => {
+      delete root.dataset.modelPreviewCapture
+      root.style.removeProperty('--model-preview-capture-width')
+      root.style.removeProperty('--model-preview-capture-height')
+      root.style.removeProperty('--model-preview-capture-matte')
+    }
+  }, [
+    captureHeight,
+    captureProfile,
+    captureWidth,
+    requestedCaptureMatte,
+  ])
+
+  useEffect(() => {
+    if (captureProfile && modelReady) {
+      const controller = controllerRef.current
+      controller?.setReviewAnimationTime(
+        Number.isFinite(requestedCaptureTime) && requestedCaptureTime >= 0
+          ? requestedCaptureTime
+          : 0,
+      )
+      const frame = controller?.captureReviewFramePng()
+      const canvas = containerRef.current?.querySelector<HTMLCanvasElement>(
+        '.viewer-canvas',
+      )
+      if (canvas && frame) {
+        canvas.dataset.reviewCapturePng = frame
+      }
+    }
+  }, [captureProfile, modelReady, requestedCaptureTime])
 
   useEffect(() => {
     if (!modelReady) {
@@ -160,10 +240,12 @@ export function ViewerStage({
           return
         }
         onControllerReady(controller)
+        controllerRef.current = controller
         reviewCanvas = container.querySelector<ReviewCanvas>('.viewer-canvas')
         if (
           reviewCanvas &&
-          (import.meta.env.MODE === 'review' ||
+          (import.meta.env.DEV ||
+            import.meta.env.MODE === 'review' ||
             import.meta.env.MODE === 'model-still' ||
             import.meta.env.MODE === 'e2e')
         ) {
@@ -189,6 +271,7 @@ export function ViewerStage({
         delete reviewCanvas.__museumReviewSetAnimationTime
       }
       if (controller) {
+        controllerRef.current = null
         onControllerReady(null)
         controller.destroy()
       }
@@ -210,6 +293,7 @@ export function ViewerStage({
   return (
     <div
       className="viewer-stage"
+      data-model-preview-capture={captureProfile?.key}
       data-initial-loading={initialLoading}
       data-model-ready={modelReady}
       data-reveal-phase={revealPhase}
@@ -218,6 +302,16 @@ export function ViewerStage({
       <div
         className="model-viewport"
         data-preview-profile={previewProfile.key}
+        data-preview-reference-height={captureProfile?.referenceHeight}
+        data-preview-reference-width={captureProfile?.referenceWidth}
+        style={
+          captureProfile
+            ? {
+                height: captureHeight,
+                width: captureWidth,
+              }
+            : undefined
+        }
       >
         <div className="viewer-host" ref={containerRef} />
       </div>

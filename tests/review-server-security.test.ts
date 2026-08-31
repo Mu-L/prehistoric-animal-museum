@@ -224,12 +224,12 @@ describe('local review server boundary', () => {
 
       const setupPortrait = dispatchHead(
         server,
-        `${localReviewAssetPrefix}/scale-encounter-child-portraits/boy-land-explorer-main.png`,
+        `${localReviewAssetPrefix}/scale-encounter-child-portraits/boy-land-explorer.webp`,
       )
       expect(setupPortrait.nextCalled).toBe(false)
       expect(setupPortrait.response.statusCode).toBe(200)
       expect(setupPortrait.response.getHeader('Content-Type')).toBe(
-        'image/png',
+        'image/webp',
       )
 
       const etag = allowed.response.getHeader('ETag')

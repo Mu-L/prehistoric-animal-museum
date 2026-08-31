@@ -22,6 +22,7 @@ import {
   PerspectiveCamera,
   PMREMGenerator,
   Quaternion,
+  Raycaster,
   RGBAFormat,
   SRGBColorSpace,
   SphereGeometry,
@@ -114,6 +115,14 @@ export const SCALE_ENCOUNTER_ENVIRONMENT_VARIANTS = [
 const SCALE_ENCOUNTER_SURFACE_RADIUS_METERS = 360
 const SCALE_ENCOUNTER_GROUND_WORLD_Y =
   SCALE_ENCOUNTER_PRODUCTION_TERRAIN_WORLD_Y_METERS
+const ARCHAEOPTERYX_PERCH_GROUND_EMBED_DEPTH_METERS = 0.055
+const ARCHAEOPTERYX_PERCH_FOOTPRINT_SAMPLE_OFFSETS = [
+  -0.09,
+  -0.045,
+  0,
+  0.045,
+  0.09,
+] as const
 
 function surfaceRepeatCount(physicalWidthMeters: number): number {
   return (SCALE_ENCOUNTER_SURFACE_RADIUS_METERS * 2) / physicalWidthMeters
@@ -185,6 +194,210 @@ function createMesh(
   const mesh = new Mesh(geometry, material)
   mesh.name = name
   return mesh
+}
+
+function clonePerchMaterials(
+  template: Mesh,
+  borrowedTextures: Set<Texture>,
+): Material | Material[] {
+  const materials = Array.isArray(template.material)
+    ? template.material
+    : [template.material]
+  materials.forEach((material) =>
+    borrowMaterialTextures(material, borrowedTextures),
+  )
+  const clones = materials.map((material) => material.clone())
+  return Array.isArray(template.material) ? clones : clones[0]!
+}
+
+function createScannedArchaeopteryxLog(
+  forestProps: Group<Object3DEventMap>,
+  borrowedTextures: Set<Texture>,
+  supportHeight: number,
+): Mesh | null {
+  const template = propTemplate(forestProps, 'dead_tree_trunk')
+  if (!template) return null
+
+  forestProps.updateMatrixWorld(true)
+  template.updateMatrixWorld(true)
+  const relativeTemplateMatrix = forestProps.matrixWorld
+    .clone()
+    .invert()
+    .multiply(template.matrixWorld)
+  const geometry = template.geometry.clone()
+  geometry.applyMatrix4(relativeTemplateMatrix)
+  geometry.computeBoundingBox()
+  const bounds = geometry.boundingBox?.clone()
+  if (!bounds || bounds.isEmpty()) {
+    geometry.dispose()
+    return null
+  }
+
+  const centre = bounds.getCenter(new Vector3())
+  const size = bounds.getSize(new Vector3())
+  const positions = geometry.getAttribute('position')
+  let supportZoneTop = bounds.min.y
+  for (let index = 0; index < positions.count; index += 1) {
+    if (Math.abs(positions.getX(index) - centre.x) > size.x * 0.18) {
+      continue
+    }
+    supportZoneTop = Math.max(supportZoneTop, positions.getY(index))
+  }
+  const supportZoneHeight = Math.max(
+    supportZoneTop - bounds.min.y,
+    size.y * 0.76,
+  )
+  geometry.translate(-centre.x, -bounds.min.y, -centre.z)
+
+  const log = new Mesh(
+    geometry,
+    clonePerchMaterials(template, borrowedTextures),
+  )
+  log.name = 'scale-encounter-archaeopteryx-perch-scanned-log'
+  // Keep the genuine bark scan, silhouette and UVs. Only the overall length
+  // and thickness are fitted to the small encounter so the child can still
+  // read the half-metre animal above it.
+  log.scale.set(
+    1.45 / Math.max(size.x, 0.001),
+    1,
+    0.34 / Math.max(size.z, 0.001),
+  )
+  log.rotation.y = -0.16
+  // The scan has an uneven, concave top. A single ray through its origin can
+  // align one hollow while a nearby knot cuts through a foot. Sample the whole
+  // standing patch instead and fit its highest rendered point to the sole
+  // plane, so neither foot intersects the bark.
+  log.updateMatrixWorld(true)
+  const sampleOriginY = size.y + 1
+  const sampledSupportHeights: number[] = []
+  for (const x of ARCHAEOPTERYX_PERCH_FOOTPRINT_SAMPLE_OFFSETS) {
+    for (const z of ARCHAEOPTERYX_PERCH_FOOTPRINT_SAMPLE_OFFSETS) {
+      const supportHit = new Raycaster(
+        new Vector3(x, sampleOriginY, z),
+        new Vector3(0, -1, 0),
+        0,
+        sampleOriginY + 1,
+      ).intersectObject(log, false)[0]
+      if (supportHit) sampledSupportHeights.push(supportHit.point.y)
+    }
+  }
+  const sampledSupportY =
+    sampledSupportHeights.length > 0
+      ? Math.max(...sampledSupportHeights)
+      : supportZoneHeight
+  // Embed a small part of the irregular underside into the flat clearing.
+  // Keeping the highest footprint sample fixed while extending downward gives
+  // the log a broad, believable contact instead of one invisible touching
+  // vertex that leaves the silhouette apparently floating.
+  log.scale.y =
+    (supportHeight + ARCHAEOPTERYX_PERCH_GROUND_EMBED_DEPTH_METERS) /
+    Math.max(sampledSupportY, 0.001)
+  log.position.y = -ARCHAEOPTERYX_PERCH_GROUND_EMBED_DEPTH_METERS
+  log.castShadow = true
+  log.receiveShadow = true
+  log.userData.scaleEncounterPerchSupportZone = {
+    fittedSupportY: sampledSupportY * log.scale.y + log.position.y,
+    footprintSampleCount: sampledSupportHeights.length,
+    groundEmbedDepth:
+      ARCHAEOPTERYX_PERCH_GROUND_EMBED_DEPTH_METERS,
+    sampledSupportY,
+    sourceHeight: size.y,
+    supportZoneHeight,
+  }
+  return log
+}
+
+function createFallbackArchaeopteryxLog(supportHeight: number): Mesh {
+  const totalHeight =
+    supportHeight + ARCHAEOPTERYX_PERCH_GROUND_EMBED_DEPTH_METERS
+  const radius = totalHeight / 2
+  const geometry = new CylinderGeometry(
+    radius * 0.9,
+    radius,
+    1.35,
+    32,
+    7,
+  )
+  const positions = geometry.getAttribute('position')
+  for (let index = 0; index < positions.count; index += 1) {
+    const x = positions.getX(index)
+    const y = positions.getY(index)
+    const z = positions.getZ(index)
+    const angle = Math.atan2(z, x)
+    const lengthRatio = y / 1.35
+    const variation =
+      1 +
+      Math.sin(angle * 7 + lengthRatio * 5.1) * 0.035 +
+      Math.sin(angle * 13 - lengthRatio * 3.7) * 0.018
+    positions.setXYZ(index, x * variation, y, z * variation)
+  }
+  geometry.computeVertexNormals()
+  const log = createMesh(
+    'scale-encounter-archaeopteryx-perch-fallback-log',
+    geometry,
+    new MeshStandardMaterial({
+      color: '#4a3828',
+      metalness: 0,
+      roughness: 1,
+    }),
+  )
+  log.rotation.set(0, -0.16, Math.PI / 2)
+  log.position.y =
+    (supportHeight - ARCHAEOPTERYX_PERCH_GROUND_EMBED_DEPTH_METERS) / 2
+  log.castShadow = true
+  log.receiveShadow = true
+  return log
+}
+
+/**
+ * Gives the half-metre Archaeopteryx a low, natural fallen-log perch. The
+ * bundled PBR forest prop owns the visible result; the procedural mesh is only
+ * a loading/error fallback and deliberately keeps the same horizontal form.
+ */
+function addArchaeopteryxPerch(
+  root: Group,
+  animalContactCue: Mesh | null,
+  variant: ScaleEncounterEnvironmentVariant,
+  forestProps: Group<Object3DEventMap> | null,
+  borrowedTextures: Set<Texture>,
+): void {
+  const supportPosition =
+    SCALE_ENCOUNTER_DEFINITIONS.archaeopteryx.animalPosition
+  const supportTopY = supportPosition.y
+  const groundY =
+    variant === 'production-slice'
+      ? scaleEncounterProductionTerrainHeightAtWorld(
+          supportPosition.x,
+          supportPosition.z,
+        )
+      : SCALE_ENCOUNTER_GROUND_WORLD_Y
+  const supportHeight = Math.max(0.2, supportTopY - groundY)
+  const perch = new Group()
+  perch.name = 'scale-encounter-archaeopteryx-perch'
+  perch.position.set(supportPosition.x, groundY, supportPosition.z)
+  const scannedLog = forestProps
+    ? createScannedArchaeopteryxLog(
+        forestProps,
+        borrowedTextures,
+        supportHeight,
+      )
+    : null
+  const log = scannedLog ?? createFallbackArchaeopteryxLog(supportHeight)
+  perch.add(log)
+  perch.userData.scaleEncounterPerch = {
+    animalId: 'archaeopteryx',
+    asset: scannedLog ? 'forest-props-real-v1' : 'procedural-fallback',
+    form: 'fallen-log',
+    groundEmbedDepth:
+      ARCHAEOPTERYX_PERCH_GROUND_EMBED_DEPTH_METERS,
+    supportTopY,
+  }
+  root.add(perch)
+
+  if (animalContactCue) {
+    animalContactCue.userData.scaleEncounterContactGroundY =
+      supportTopY + 0.009
+  }
 }
 
 function createGradientDome(
@@ -2646,7 +2859,6 @@ function publishProductionEcologyPopulation(
   const groundDetailInstances = numericMetadata(ground, 'instanceCount')
   const groundHumusPatches = numericMetadata(ground, 'humusPatchCount')
   const groundLitterPatches = numericMetadata(ground, 'litterPatchCount')
-  const groundRootInstances = numericMetadata(ground, 'rootInstanceCount')
   const midgroundInstances = numericMetadata(middle, 'totalInstances')
   const farTreeInstances = numericMetadata(far, 'treeCount')
   const understoryInstances = numericMetadata(understory, 'totalInstances')
@@ -2658,7 +2870,6 @@ function publishProductionEcologyPopulation(
     groundDetailInstances +
     groundHumusPatches +
     groundLitterPatches +
-    groundRootInstances +
     heroInstances +
     midgroundInstances +
     farTreeInstances
@@ -2676,7 +2887,6 @@ function publishProductionEcologyPopulation(
     groundDetailInstances,
     groundHumusPatches,
     groundLitterPatches,
-    groundRootInstances,
     heroInstances,
     midgroundInstances,
     totalInstances,
@@ -3189,6 +3399,15 @@ export function createScaleEncounterEnvironment(
     )
     animalContactCue = contacts.animalContactCue
     childContactCue = contacts.childContactCue
+    if (options.animalId === 'archaeopteryx') {
+      addArchaeopteryxPerch(
+        root,
+        animalContactCue,
+        effectiveVariant,
+        options.forestProps ?? null,
+        borrowedTextures,
+      )
+    }
     // The displaced, distance-graded PBR grid supplies the panorama camera's
     // middle-ground parallax. Avoid conspicuous low-poly boulders or poles.
     // The panorama supplies the distant forest.  Only the procedural fallback

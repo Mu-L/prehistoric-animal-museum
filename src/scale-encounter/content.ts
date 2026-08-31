@@ -1,7 +1,12 @@
 import type { Locale } from '../i18n/locale'
 import narrationScripts from './audio/narration-scripts.json'
 import transitionDurations from './audio/transition-durations.json'
-import type { ScaleEncounterAnimalId } from './types'
+import {
+  isProductionScaleEncounterAnimal,
+  NARRATED_REVIEW_SCALE_ENCOUNTER_ANIMAL_IDS,
+  type ProductionScaleEncounterAnimalId,
+  type ScaleEncounterAnimalId,
+} from './types'
 
 export type { ChildProfile, ScaleEncounterAnimalId } from './types'
 export { isScaleEncounterAnimal } from './types'
@@ -86,6 +91,7 @@ export interface ScaleEncounterContent {
   readonly animalId: ScaleEncounterAnimalId
   readonly audio: Readonly<Record<GuidedLineKind, string>>
   readonly copy: ScaleEncounterCopy
+  readonly narrationAvailable: boolean
   readonly sceneLabel: string
   /** Rounded ffprobe duration of this locale's transition MP3. */
   readonly transitionDurationMs: number
@@ -95,8 +101,33 @@ type AnimalGuidedAudioFiles = Readonly<
   Record<Locale, Readonly<Record<'intro' | 'transition' | 'arrival', string>>>
 >
 
+type NarratedScaleEncounterAnimalId =
+  ProductionScaleEncounterAnimalId
+
+const REVIEW_NARRATED_ANIMAL_ID_SET: ReadonlySet<string> = new Set(
+  NARRATED_REVIEW_SCALE_ENCOUNTER_ANIMAL_IDS,
+)
+
+function reviewNarrationEnabled(): boolean {
+  return (
+    import.meta.env.MODE === 'review' ||
+    import.meta.env.MODE === 'development' ||
+    import.meta.env.MODE === 'test'
+  )
+}
+
+function isNarratedScaleEncounterAnimal(
+  animalId: ScaleEncounterAnimalId,
+): animalId is NarratedScaleEncounterAnimalId {
+  return (
+    isProductionScaleEncounterAnimal(animalId) ||
+    (reviewNarrationEnabled() &&
+      REVIEW_NARRATED_ANIMAL_ID_SET.has(animalId))
+  )
+}
+
 const audioFiles: Readonly<
-  Record<ScaleEncounterAnimalId, AnimalGuidedAudioFiles>
+  Record<NarratedScaleEncounterAnimalId, AnimalGuidedAudioFiles>
 > = {
   stegosaurus: standardAudioFiles('stegosaurus'),
   pachycephalosaurus: standardAudioFiles('pachycephalosaurus'),
@@ -160,6 +191,12 @@ const audioFiles: Readonly<
       arrival: 'mammoth-arrival-v3.en.mp3',
     },
   },
+  spinosaurus: standardAudioFiles('spinosaurus'),
+  lystrosaurus: standardAudioFiles('lystrosaurus'),
+  baryonyx: standardAudioFiles('baryonyx'),
+  archaeopteryx: standardAudioFiles('archaeopteryx'),
+  carnotaurus: standardAudioFiles('carnotaurus'),
+  anomalocaris: standardAudioFiles('anomalocaris'),
 }
 
 function standardAudioFiles(animalId: string): AnimalGuidedAudioFiles {
@@ -177,16 +214,34 @@ function standardAudioFiles(animalId: string): AnimalGuidedAudioFiles {
   }
 }
 
-const bundledAudioUrls = import.meta.glob('./audio/*.mp3', {
-  eager: true,
-  import: 'default',
-  query: '?url',
-}) as Readonly<Record<string, string>>
+const bundledAudioUrls = import.meta.glob(
+  './audio/*.mp3',
+  {
+    eager: true,
+    import: 'default',
+    query: '?url',
+  },
+) as Readonly<Record<string, string>>
 
 function bundledAudioUrl(file: string): string {
   const url = bundledAudioUrls[`./audio/${file}`]
   if (!url) throw new Error(`missing-scale-encounter-audio:${file}`)
   return url
+}
+
+function guidedAudioUrl(
+  animalId: NarratedScaleEncounterAnimalId,
+  file: string,
+): string {
+  if (
+    (import.meta.env.MODE === 'review' ||
+      import.meta.env.MODE === 'development' ||
+      import.meta.env.MODE === 'test') &&
+    REVIEW_NARRATED_ANIMAL_ID_SET.has(animalId)
+  ) {
+    return `/__museum-review-assets/scale-encounter-audio/${file}`
+  }
+  return bundledAudioUrl(file)
 }
 
 const viewSwitchAudioUrls = {
@@ -212,7 +267,14 @@ const viewSwitchAudioUrls = {
   },
 } as const
 
-const zhCN: Readonly<Record<ScaleEncounterAnimalId, Omit<ScaleEncounterContent, 'audio'>>> = {
+type AuthoredScaleEncounterContent = Omit<
+  ScaleEncounterContent,
+  'audio' | 'narrationAvailable'
+>
+
+const zhCN: Readonly<
+  Record<ScaleEncounterAnimalId, AuthoredScaleEncounterContent>
+> = {
   stegosaurus: {
     animalId: 'stegosaurus',
     sceneLabel: '森林相遇 · 小朋友眼睛视角',
@@ -501,6 +563,102 @@ const zhCN: Readonly<Record<ScaleEncounterAnimalId, Omit<ScaleEncounterContent, 
       ...sharedZhCNCopy(),
     },
   },
+  spinosaurus: {
+    animalId: 'spinosaurus',
+    sceneLabel: '森林相遇 · 小朋友眼睛视角',
+    transitionDurationMs: 9_856,
+    copy: {
+      title: '和棘龙比一比',
+      measurement: '从鼻尖到尾巴约 14.5 米',
+      intro:
+        '小朋友，准备好了吗？背上探险包，我们走进白垩纪的森林，去寻找十四米多长的棘龙。高高的背帆会不会先从树影后面露出来？',
+      transition:
+        '沿着林间空地慢慢向前走。看，棘龙的长嘴、相对较短的后腿和像船帆一样的高背一点点出现啦。',
+      arrival:
+        '它来到对面啦！从鼻尖到尾巴大约十四米半，差不多能排下三辆小汽车。长长的嘴和高高的背帆，你先发现了哪一样？',
+      ...sharedZhCNCopy(),
+    },
+  },
+  lystrosaurus: {
+    animalId: 'lystrosaurus',
+    sceneLabel: '林地相遇 · 小朋友眼睛视角',
+    transitionDurationMs: 9_990,
+    copy: {
+      title: '和水龙兽比一比',
+      measurement: '从头到尾约 1.5 米',
+      intro:
+        '小朋友，准备好了吗？我们走进二叠纪末到三叠纪初的河漫滩，去找一只一米半长的水龙兽。它嘴边的两枚小獠牙，会不会先被你看到？',
+      transition:
+        '脚步放轻一点，沿着干燥泥地往前走。看，水龙兽的短脸、像喙一样的嘴和四条敦实的腿出现啦。',
+      arrival:
+        '它来到对面啦！一米半差不多和一位大人的身高一样。水龙兽的家族挺过了地球上最大的一次大灭绝，你能找到它的喙和两枚獠牙吗？',
+      ...sharedZhCNCopy(),
+    },
+  },
+  baryonyx: {
+    animalId: 'baryonyx',
+    sceneLabel: '森林相遇 · 小朋友眼睛视角',
+    transitionDurationMs: 9_285,
+    copy: {
+      title: '和重爪龙比一比',
+      measurement: '从鼻尖到尾巴约 8.75 米',
+      intro:
+        '小朋友，准备好了吗？我们走进白垩纪的森林，去寻找将近九米长的重爪龙。它手上那枚特别大的爪子，会藏在哪片树影后面？',
+      transition:
+        '沿着林间小路慢慢向前走。先找细长的嘴，再看看它的两只手。重爪龙的大爪子露出来啦。',
+      arrival:
+        '它来到对面啦！从鼻尖到尾巴将近九米，差不多能排下两辆小汽车。长嘴和大爪子都很特别，你觉得它们会怎样帮助重爪龙寻找食物？',
+      ...sharedZhCNCopy(),
+    },
+  },
+  archaeopteryx: {
+    animalId: 'archaeopteryx',
+    sceneLabel: '森林倒木相遇 · 小朋友眼睛视角',
+    transitionDurationMs: 4_400,
+    copy: {
+      title: '和始祖鸟比一比',
+      measurement: '从嘴尖到尾尖的总长约 50 厘米',
+      intro:
+        '小朋友，准备好了吗？背上探险包，我们走进侏罗纪的森林，去寻找始祖鸟。它从嘴尖到尾巴大约半米，你能发现站在低矮倒木上的它吗？',
+      transition:
+        '脚步放轻一点，沿着林地慢慢走近倒木。看，始祖鸟正站在上面，羽毛、翅膀上的小爪子和长尾巴都看清楚啦。',
+      arrival:
+        '我们来到倒木旁啦！始祖鸟从嘴尖到尾巴大约半米。看看它的羽毛、翅膀上的小爪子和长长的尾巴，你先发现了哪一样？',
+      ...sharedZhCNCopy(),
+    },
+  },
+  carnotaurus: {
+    animalId: 'carnotaurus',
+    sceneLabel: '森林相遇 · 小朋友眼睛视角',
+    transitionDurationMs: 13_418,
+    copy: {
+      title: '和食肉牛龙比一比',
+      measurement: '从鼻尖到尾巴约 8 米',
+      intro:
+        '小朋友，准备好了吗？背上小包，我们走进白垩纪的森林，去寻找八米长的食肉牛龙。它的短脸和小得出奇的前肢，你会先发现哪一样？',
+      transition:
+        '脚步放轻一点。先找稳稳踩在地上的两只大脚，再沿着粗壮的腿往上看。短脸、眼睛上方的小角，还有小小的前肢，都出现啦。',
+      arrival:
+        '哇，它从鼻尖到尾巴大约八米，差不多能排下两辆小汽车！身体这么大，前肢却小小的，这个反差是不是很有趣？你想先看哪里？',
+      ...sharedZhCNCopy(),
+    },
+  },
+  anomalocaris: {
+    animalId: 'anomalocaris',
+    sceneLabel: '海底相遇 · 小朋友眼睛视角',
+    transitionDurationMs: 12_525,
+    copy: {
+      title: '和奇虾比一比',
+      measurement: '从头到尾约 60 厘米',
+      intro:
+        '小朋友，准备好了吗？戴好潜水装备，我们潜进五亿多年前的寒武纪海洋，去寻找六十厘米长的奇虾。它会怎样摆动身体两侧的游泳叶，在海水里向前滑行呢？',
+      transition:
+        '轻轻摆动脚蹼，留在安全的位置。看，奇虾两边的游泳叶像波浪一样一片接一片地摆动，两只带刺的捕食附肢也伸向前方。',
+      arrival:
+        '它游到对面啦！从头到尾大约六十厘米，在寒武纪海洋里已经是醒目的大动物。圆圆的嘴藏在身体下面，你能找到吗？',
+      ...sharedZhCNCopy(),
+    },
+  },
 }
 
 function sharedZhCNCopy() {
@@ -639,7 +797,9 @@ function sharedEnCopy() {
   } as const
 }
 
-const en: Readonly<Record<ScaleEncounterAnimalId, Omit<ScaleEncounterContent, 'audio'>>> = {
+const en: Readonly<
+  Record<ScaleEncounterAnimalId, AuthoredScaleEncounterContent>
+> = {
   stegosaurus: {
     animalId: 'stegosaurus',
     sceneLabel: 'Forest encounter · child eye level',
@@ -919,6 +1079,102 @@ const en: Readonly<Record<ScaleEncounterAnimalId, Omit<ScaleEncounterContent, 'a
       ...sharedEnCopy(),
     },
   },
+  spinosaurus: {
+    animalId: 'spinosaurus',
+    sceneLabel: 'Forest encounter · child eye level',
+    transitionDurationMs: 10_661,
+    copy: {
+      title: 'Compare with Spinosaurus',
+      measurement: 'About 14.5 m from nose to tail',
+      intro:
+        'Ready, explorer? Pack your day bag and enter a Cretaceous forest in search of a Spinosaurus more than fourteen metres long. Will its tall sail appear from behind the trees first?',
+      transition:
+        'Walk slowly through the forest clearing. Look! Its long snout, relatively short hind legs, and sail-like back are appearing.',
+      arrival:
+        'It has reached the other side! Fourteen and a half metres is about as long as three small cars. Which did you spot first, the long snout or the tall sail?',
+      ...sharedEnCopy(),
+    },
+  },
+  lystrosaurus: {
+    animalId: 'lystrosaurus',
+    sceneLabel: 'Woodland encounter · child eye level',
+    transitionDurationMs: 7_885,
+    copy: {
+      title: 'Compare with Lystrosaurus',
+      measurement: 'About 1.5 m from head to tail',
+      intro:
+        'Ready, explorer? Let’s visit a floodplain from the end of the Permian and start of the Triassic in search of a Lystrosaurus about one and a half metres long. Will you spot its two little tusks first?',
+      transition:
+        'Step softly along the dry mud. Look! Its short face, beak-like mouth, and four sturdy legs are appearing.',
+      arrival:
+        'It has reached the other side! One and a half metres is about as tall as a grown-up. Its relatives survived Earth’s biggest mass extinction. Can you find its beak and two tusks?',
+      ...sharedEnCopy(),
+    },
+  },
+  baryonyx: {
+    animalId: 'baryonyx',
+    sceneLabel: 'Forest encounter · child eye level',
+    transitionDurationMs: 9_833,
+    copy: {
+      title: 'Compare with Baryonyx',
+      measurement: 'About 8.75 m from nose to tail',
+      intro:
+        'Ready, explorer? Let’s enter a Cretaceous forest in search of Baryonyx, nearly nine metres long. Where might its enormous hand claw be hiding?',
+      transition:
+        'Walk slowly along the forest path. Find the long snout, then look at its two hands. There is Baryonyx’s great claw!',
+      arrival:
+        'It has reached the other side! At nearly nine metres from nose to tail, it is about as long as two small cars. Its long snout and giant claw are both unusual. How might each one have helped Baryonyx find food?',
+      ...sharedEnCopy(),
+    },
+  },
+  archaeopteryx: {
+    animalId: 'archaeopteryx',
+    sceneLabel: 'Forest fallen-log encounter · child eye level',
+    transitionDurationMs: 4_400,
+    copy: {
+      title: 'Compare with Archaeopteryx',
+      measurement: 'About 50 cm in total from beak tip to tail tip',
+      intro:
+        'Ready, explorer? Pack your day bag and enter a Jurassic forest in search of Archaeopteryx. It is about half a metre from beak to tail. Can you spot it standing on a low fallen log?',
+      transition:
+        'Step quietly through the forest and move closer to the fallen log. Look! Archaeopteryx is standing on top, and we can see its feathers, tiny wing claws, and long tail.',
+      arrival:
+        'We have reached the fallen log! Archaeopteryx is about half a metre from beak to tail. Look at its feathers, tiny wing claws, and long tail. What did you spot first?',
+      ...sharedEnCopy(),
+    },
+  },
+  carnotaurus: {
+    animalId: 'carnotaurus',
+    sceneLabel: 'Forest encounter · child eye level',
+    transitionDurationMs: 13_870,
+    copy: {
+      title: 'Compare with Carnotaurus',
+      measurement: 'About 8 m from nose to tail',
+      intro:
+        'Ready, explorer? Pack your day bag and enter a Cretaceous forest in search of an eight-metre Carnotaurus. Will you notice its short face or its surprisingly tiny arms first?',
+      transition:
+        'Step softly. Find the two huge feet planted on the ground, then follow the powerful legs upward. There are its short face, small horns above the eyes, and tiny arms.',
+      arrival:
+        'Wow! From nose to tail it is about as long as two small cars parked end to end. Such a big body with such tiny arms is a funny contrast. Which part would you inspect first?',
+      ...sharedEnCopy(),
+    },
+  },
+  anomalocaris: {
+    animalId: 'anomalocaris',
+    sceneLabel: 'Underwater encounter · child eye level',
+    transitionDurationMs: 11_415,
+    copy: {
+      title: 'Compare with Anomalocaris',
+      measurement: 'About 60 cm from head to tail',
+      intro:
+        'Ready, explorer? Put on your diving gear and descend into a Cambrian sea more than five hundred million years ago. We are looking for an Anomalocaris about sixty centimetres long. How will it ripple the swimming flaps along its sides to glide forward?',
+      transition:
+        'Kick your fins gently and stay in our safe spot. Look! The swimming flaps ripple one after another, while two spiny grasping limbs reach forward.',
+      arrival:
+        'It is swimming right across from us! At about sixty centimetres from head to tail, Anomalocaris was a striking animal in the Cambrian sea. Can you find its round mouth underneath?',
+      ...sharedEnCopy(),
+    },
+  },
 }
 
 export function scaleEncounterContentFor(
@@ -926,22 +1182,39 @@ export function scaleEncounterContentFor(
   locale: Locale,
 ): ScaleEncounterContent {
   const localized = locale === 'zh-CN' ? zhCN[animalId] : en[animalId]
+  const sceneLabel = localized.sceneLabel
+    .replace(' · 小朋友眼睛视角', '')
+    .replace(' · child eye level', '')
+
+  if (!isNarratedScaleEncounterAnimal(animalId)) {
+    return {
+      ...localized,
+      sceneLabel,
+      narrationAvailable: false,
+      audio: {
+        intro: '',
+        transition: '',
+        arrival: '',
+        ...viewSwitchAudioUrls[locale],
+      },
+    }
+  }
+
   const guidedFiles = audioFiles[animalId][locale]
   const guidedScripts = narrationScripts[locale][animalId]
   return {
     ...localized,
-    sceneLabel: localized.sceneLabel
-      .replace(' · 小朋友眼睛视角', '')
-      .replace(' · child eye level', ''),
+    sceneLabel,
+    narrationAvailable: true,
     transitionDurationMs: transitionDurations[locale][animalId],
     copy: {
       ...localized.copy,
       ...guidedScripts,
     },
     audio: {
-      intro: bundledAudioUrl(guidedFiles.intro),
-      transition: bundledAudioUrl(guidedFiles.transition),
-      arrival: bundledAudioUrl(guidedFiles.arrival),
+      intro: guidedAudioUrl(animalId, guidedFiles.intro),
+      transition: guidedAudioUrl(animalId, guidedFiles.transition),
+      arrival: guidedAudioUrl(animalId, guidedFiles.arrival),
       ...viewSwitchAudioUrls[locale],
     },
   }

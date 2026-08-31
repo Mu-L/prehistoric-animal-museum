@@ -771,6 +771,172 @@ export const SCALE_ENCOUNTER_DEFINITIONS: Readonly<
     guidedTransitionDurationMs: 5_500,
     referenceAnimationTimeSeconds: 0,
   },
+  spinosaurus: {
+    id: 'spinosaurus',
+    habitat: 'land',
+    environmentTheme: 'forest',
+    avatarProfile: 'land-explorer',
+    avatarMotionPolicy: 'adaptive-land',
+    calibratedModelSha256:
+      'b4b97f2df0acc376495689351bc2c5e1067ab17bd2cd5f8ce4be83e3213d4c84',
+    displayedMeters: 14.5,
+    scaleConfidence: 'range-midpoint',
+    measurement: 'body-length',
+    measurementAxis: 'x',
+    modelYawRadians: -Math.PI / 2,
+    support: 'ground',
+    animalPosition: new Vector3(2.6, 0, 0),
+    // Keep the child close enough to remain recognisable beside the long
+    // silhouette in a portrait overview; families can still back away to 25 m.
+    defaultDistance: 12.5,
+    minimumDistance: 9,
+    maximumDistance: 25,
+    overviewFieldOfView: 38,
+    povFieldOfView: 58,
+    // Keep most of the 14.5 m silhouette visible while looking partly along
+    // the child's diagonal rail. The child then reads as foreground scale
+    // instead of disappearing at the far-left edge of the comparison.
+    overviewDirection: new Vector3(
+      Math.cos(MathUtils.degToRad(132)),
+      0.02,
+      Math.sin(MathUtils.degToRad(132)),
+    ).normalize(),
+    overviewUp: new Vector3(0, 1, 0),
+    guidedTransitionDurationMs: 5_100,
+    referenceAnimationTimeSeconds: 0,
+  },
+  lystrosaurus: {
+    id: 'lystrosaurus',
+    habitat: 'land',
+    environmentTheme: 'forest',
+    avatarProfile: 'land-explorer',
+    avatarMotionPolicy: 'adaptive-land',
+    calibratedModelSha256:
+      'f3edc52dc7bbfec681cb7b30b8246f65b84f2980b6bd04f8eee46e5f6a62551a',
+    displayedMeters: 1.5,
+    scaleConfidence: 'range-midpoint',
+    measurement: 'body-length',
+    measurementAxis: 'x',
+    modelYawRadians: -Math.PI / 2,
+    support: 'ground',
+    animalPosition: new Vector3(1.1, 0, 0),
+    defaultDistance: 4,
+    minimumDistance: 2,
+    maximumDistance: 7,
+    overviewFieldOfView: 35,
+    povFieldOfView: 56,
+    overviewDirection: new Vector3(0, 0.025, 1).normalize(),
+    overviewUp: new Vector3(0, 1, 0),
+    guidedTransitionDurationMs: 4_300,
+    referenceAnimationTimeSeconds: 0,
+  },
+  baryonyx: {
+    id: 'baryonyx',
+    habitat: 'land',
+    environmentTheme: 'forest',
+    avatarProfile: 'land-explorer',
+    avatarMotionPolicy: 'adaptive-land',
+    calibratedModelSha256:
+      '6bd4dbf4924e8b0c22e3687eaed30889d8bbf4f0463395cffc9e458d2688ffdc',
+    displayedMeters: 8.75,
+    scaleConfidence: 'range-midpoint',
+    measurement: 'body-length',
+    measurementAxis: 'x',
+    modelYawRadians: Math.PI / 2,
+    support: 'ground',
+    animalPosition: new Vector3(2.2, 0, 0),
+    defaultDistance: 13,
+    minimumDistance: 6.5,
+    maximumDistance: 19,
+    overviewFieldOfView: 36,
+    povFieldOfView: 58,
+    overviewDirection: new Vector3(0, 0.02, 1).normalize(),
+    overviewUp: new Vector3(0, 1, 0),
+    guidedTransitionDurationMs: 4_700,
+    referenceAnimationTimeSeconds: 0,
+  },
+  archaeopteryx: {
+    id: 'archaeopteryx',
+    habitat: 'land',
+    environmentTheme: 'forest',
+    avatarProfile: 'land-explorer',
+    avatarMotionPolicy: 'adaptive-land',
+    calibratedModelSha256:
+      'bf3e125a0b834202ba4a3709788375165d68bcd79691692a17debc22702e89da',
+    displayedMeters: 0.5,
+    scaleConfidence: 'representative',
+    measurement: 'body-length',
+    // The authored body axis is local +Z. Turn it across the forest clearing
+    // so the child sees the complete half-metre profile while the feet rest on
+    // the low fallen log rather than floating in the former sky scene.
+    measurementAxis: 'x',
+    modelYawRadians: -Math.PI / 2,
+    support: 'ground',
+    animalPosition: new Vector3(2.2, 0.3, 0),
+    // A 3.6 m rail made the half-metre beak-to-tail silhouette and the child
+    // occupy opposite edges of the overview. At 1.8 m they still have a calm,
+    // plausible clearing between them, while the true 2:1 length/height
+    // comparison is readable without enlarging the animal.
+    defaultDistance: 1.8,
+    minimumDistance: 1.4,
+    maximumDistance: 5,
+    overviewFieldOfView: 36,
+    povFieldOfView: 56,
+    overviewDirection: new Vector3(0, 0.035, 1).normalize(),
+    overviewUp: new Vector3(0, 1, 0),
+    guidedTransitionDurationMs: 4_400,
+    referenceAnimationTimeSeconds: 0,
+  },
+  carnotaurus: {
+    id: 'carnotaurus',
+    habitat: 'land',
+    environmentTheme: 'forest',
+    avatarProfile: 'land-explorer',
+    avatarMotionPolicy: 'adaptive-land',
+    calibratedModelSha256:
+      'e66ebb901782706aadd2a054bd7965f1c819ead52f73baa5fcf34ca3427265f8',
+    displayedMeters: 8,
+    scaleConfidence: 'representative',
+    measurement: 'body-length',
+    measurementAxis: 'x',
+    modelYawRadians: -Math.PI / 2,
+    support: 'ground',
+    animalPosition: new Vector3(2.2, 0, 0),
+    defaultDistance: 12,
+    minimumDistance: 6,
+    maximumDistance: 18,
+    overviewFieldOfView: 36,
+    povFieldOfView: 58,
+    overviewDirection: new Vector3(0, 0.02, 1).normalize(),
+    overviewUp: new Vector3(0, 1, 0),
+    guidedTransitionDurationMs: 4_700,
+    referenceAnimationTimeSeconds: 0,
+  },
+  anomalocaris: {
+    id: 'anomalocaris',
+    habitat: 'water',
+    environmentTheme: 'ocean',
+    avatarProfile: 'water-diver',
+    avatarMotionPolicy: 'swim',
+    calibratedModelSha256:
+      '147de95a18c771739f918e8ce0319c00fba560d6f415305f57fddc97b96f661a',
+    displayedMeters: 0.6,
+    scaleConfidence: 'range-midpoint',
+    measurement: 'body-length',
+    measurementAxis: 'x',
+    modelYawRadians: Math.PI,
+    support: 'centre',
+    animalPosition: new Vector3(0.6, 1.35, 0),
+    defaultDistance: 4,
+    minimumDistance: 2,
+    maximumDistance: 8,
+    overviewFieldOfView: 34,
+    povFieldOfView: 58,
+    overviewDirection: new Vector3(0, 0.04, 1).normalize(),
+    overviewUp: new Vector3(0, 1, 0),
+    guidedTransitionDurationMs: 4_400,
+    referenceAnimationTimeSeconds: 0,
+  },
 }
 
 const AIR_RAIL_DIRECTION = new Vector3(0, 0, 1)
@@ -970,10 +1136,23 @@ export function createScaleEncounterPlacement(
     const horizontalDistance = Math.sqrt(
       Math.max(definition.defaultDistance ** 2 - verticalOffset ** 2, 0),
     )
+    // The open-mouthed Spinosaurus faces along -X. Offset its authored rail
+    // toward +Z so eye view reads as a calm three-quarter head view. Forty-two
+    // degrees also carries more of the child-to-animal gap into screen depth,
+    // keeping the long animal and child balanced on wide and phone overviews.
+    const railAzimuthRadians =
+      animalId === 'spinosaurus'
+        ? MathUtils.degToRad(42)
+        : animalId === 'archaeopteryx'
+          // Keep the complete beak-to-tail profile broadside to the overview,
+          // but place the child partly in screen depth so a phone does not
+          // pin the two true-scale subjects to opposite edges.
+          ? MathUtils.degToRad(30)
+          : 0
     observerRailDirection = new Vector3(
-      -horizontalDistance,
+      -horizontalDistance * Math.cos(railAzimuthRadians),
       verticalOffset,
-      0,
+      horizontalDistance * Math.sin(railAzimuthRadians),
     ).normalize()
   } else if (definition.habitat === 'air') {
     target = pointInBounds(boundsMinimum, boundsMaximum, 0.5, 0.5, 0.5)

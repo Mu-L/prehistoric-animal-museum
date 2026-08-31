@@ -38,7 +38,7 @@ describe('scale encounter approved runtime assets', () => {
     ) as RuntimeAssetApproval
     expect(approval).toMatchObject({
       approvedBy: 'Leon',
-      approvedOn: '2026-08-24',
+      approvedOn: '2026-09-01',
       productionApproved: true,
       publicDistributionDecision: 'approved',
       status: 'production-approved',
@@ -46,7 +46,7 @@ describe('scale encounter approved runtime assets', () => {
     expect(approval.assetGroups).toMatchObject({
       avatars: { binaryCount: 10, status: 'production-approved' },
       environments: { binaryCount: 55, status: 'production-approved' },
-      narration: { binaryCount: 112, status: 'production-approved' },
+      narration: { binaryCount: 148, status: 'production-approved' },
     })
 
     const recorded = new Map(

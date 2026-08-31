@@ -892,6 +892,23 @@ export class ViewerController {
     return true
   }
 
+  captureReviewFramePng(): string | null {
+    if (
+      import.meta.env.MODE !== 'review' &&
+      import.meta.env.MODE !== 'model-still' &&
+      import.meta.env.MODE !== 'e2e'
+    ) {
+      return null
+    }
+    const current = this.current
+    if (!current) {
+      return null
+    }
+    current.modelRoot.updateMatrixWorld(true)
+    this.renderer.render(this.scene, this.camera)
+    return this.renderer.domElement.toDataURL('image/png')
+  }
+
   setFocusMode(focused: boolean): void {
     if (focused) {
       this.reset()

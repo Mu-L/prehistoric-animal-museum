@@ -540,6 +540,16 @@ function scaleEncounterOverviewDistanceFactor(
   layout: ReturnType<typeof scaleEncounterSubjectLayoutForAspect>,
 ): number {
   const narrowOverview = aspect <= 1.05
+  if (definition.id === 'spinosaurus') {
+    // Its diagonal child rail and three-quarter overview use considerably
+    // less screen width than the conservative union sphere. Tighten that
+    // fit without moving either subject or changing the interaction range.
+    return MathUtils.lerp(
+      0.85,
+      0.66,
+      scaleEncounterNarrowOverviewProgress(aspect),
+    )
+  }
   if (!narrowOverview) {
     return definition.id === 'tyrannosaurus-rex'
       ? 0.8
@@ -843,6 +853,27 @@ function unwrapScaleEncounterOrbitAngle(
     Math.PI * 2,
   ) - Math.PI
   return previousAngle + delta
+}
+
+function scaleEncounterLandOrbitAngleForWorldDirection(
+  placement: ScaleEncounterPlacement,
+  distance: number,
+  previousAngle: number,
+  worldDirection: Readonly<Vector3>,
+): number {
+  const baseDirection = computeScaleEncounterPovEyePosition(
+    placement,
+    'land',
+    distance,
+  )
+    .sub(placement.orbitCenter)
+    .setY(0)
+  if (baseDirection.lengthSq() < 1e-8) return previousAngle
+  return unwrapScaleEncounterOrbitAngle(
+    previousAngle,
+    baseDirection.normalize(),
+    worldDirection,
+  )
 }
 
 function scaleEncounterEyeClearsExpandedAnimalBounds(
@@ -2641,6 +2672,12 @@ export class ViewerController {
         SCALE_ENCOUNTER_OVERVIEW_ZOOM_MAXIMUM,
       )
     } else {
+      if (encounter.definition.habitat === 'land') {
+        // A tapped radial command owns the next movement segment. Cancel any
+        // unfinished left/right target first; otherwise the two independent
+        // eases combine into a fast spiral that makes Up/Down look like orbit.
+        encounter.targetOrbitAngleRadians = encounter.orbitAngleRadians
+      }
       encounter.targetObserverDistance = clampScaleEncounterDistanceForProfile(
         encounter.placement,
         encounter.definition,
@@ -2687,6 +2724,12 @@ export class ViewerController {
   adjustScaleEncounterOrbit(direction: -1 | 1): void {
     const encounter = this.scaleEncounter
     if (!encounter || encounter.transition || encounter.view !== 'pov') return
+    if (encounter.definition.habitat === 'land') {
+      // Match held controls: a new lateral command cancels an unfinished
+      // radial target. Simultaneous keyboard holds still use the dedicated
+      // normalised two-axis integrator below.
+      encounter.targetObserverDistance = encounter.observerDistance
+    }
     encounter.targetOrbitAngleRadians +=
       direction * SCALE_ENCOUNTER_ORBIT_STEP_RADIANS
     if (this.reducedMotion) {
@@ -3027,6 +3070,16 @@ export class ViewerController {
         )
         encounter.targetObserverDistance = encounter.observerDistance
       } else if (encounter.definition.habitat === 'land') {
+        const currentWorldDirection =
+          computeScaleEncounterOrbitedEyePosition(
+            encounter.placement,
+            'land',
+            previous,
+            encounter.orbitAngleRadians,
+          )
+            .sub(encounter.placement.orbitCenter)
+            .setY(0)
+            .normalize()
         const targetRadius = scaleEncounterLandRadiusAtDistance(
           encounter.placement,
           encounter.targetObserverDistance,
@@ -3049,12 +3102,25 @@ export class ViewerController {
           encounter.profile,
           encounter.orbitAngleRadians,
         )
-        encounter.observerDistance = scaleEncounterLandDistanceForRadius(
+        const nextDistance = scaleEncounterLandDistanceForRadius(
           encounter.placement,
           nextRadius,
           minimumDistance,
           encounter.definition.maximumDistance,
         )
+        encounter.observerDistance = nextDistance
+        // The authored land rail points toward a reviewed head/detail target,
+        // which is offset from the body-centred orbit pivot. Compensate that
+        // changing rail bearing so a distance command follows one straight
+        // world-space radial instead of drifting sideways around long animals.
+        encounter.orbitAngleRadians =
+          scaleEncounterLandOrbitAngleForWorldDirection(
+            encounter.placement,
+            nextDistance,
+            encounter.orbitAngleRadians,
+            currentWorldDirection,
+          )
+        encounter.targetOrbitAngleRadians = encounter.orbitAngleRadians
         if (Math.abs(remainingRadius) <= maximumWorldStep + 1e-8) {
           encounter.observerDistance = encounter.targetObserverDistance
           settled = true
@@ -3124,9 +3190,11 @@ export class ViewerController {
     if (intent.motion === 'idle' || deltaSeconds <= 0) return
     encounter.landMotionIntent = intent.motion
 
+    const travelSpeedMetersPerSecond = intent.speedMetersPerSecond
+
     const previousDistance = encounter.observerDistance
     const previousAngle = encounter.orbitAngleRadians
-    const travelMeters = intent.speedMetersPerSecond * deltaSeconds
+    const travelMeters = travelSpeedMetersPerSecond * deltaSeconds
     const substepCount = Math.max(
       1,
       Math.ceil(travelMeters / SCALE_ENCOUNTER_LAND_SWEEP_STEP_METERS),
@@ -3145,125 +3213,86 @@ export class ViewerController {
     const collisionMaximum = encounter.placement.animalBoundsMaximum
       .clone()
       .addScalar(collisionMarginMeters)
-    const baseDirection = computeScaleEncounterPovEyePosition(
-      encounter.placement,
-      'land',
-      encounter.placement.defaultDistance,
-    )
-      .sub(encounter.placement.orbitCenter)
-      .setY(0)
-      .normalize()
-
     for (let step = 0; step < substepCount; step += 1) {
+      const currentEye = computeScaleEncounterOrbitedEyePosition(
+        encounter.placement,
+        'land',
+        encounter.observerDistance,
+        encounter.orbitAngleRadians,
+      ).setY(0)
+      const outward = currentEye
+        .clone()
+        .sub(encounter.placement.orbitCenter)
+        .setY(0)
+        .normalize()
+      const tangent = new Vector3(outward.z, 0, -outward.x)
+      const nextEye = currentEye
+        .clone()
+        .addScaledVector(
+          outward,
+          -intent.radial * travelSpeedMetersPerSecond * substepSeconds,
+        )
+        .addScaledVector(
+          tangent,
+          intent.tangential * travelSpeedMetersPerSecond * substepSeconds,
+        )
       if (usesExpandedAnimalBounds) {
-        const currentEye = computeScaleEncounterOrbitedEyePosition(
-          encounter.placement,
-          'land',
-          encounter.observerDistance,
-          encounter.orbitAngleRadians,
-        ).setY(0)
-        const outward = currentEye
-          .clone()
-          .sub(encounter.placement.orbitCenter)
-          .setY(0)
-          .normalize()
-        const tangent = new Vector3(outward.z, 0, -outward.x)
-        const nextEye = currentEye
-          .clone()
-          .addScaledVector(
-            outward,
-            -intent.radial *
-              intent.speedMetersPerSecond *
-              substepSeconds,
-          )
-          .addScaledVector(
-            tangent,
-            intent.tangential *
-              intent.speedMetersPerSecond *
-              substepSeconds,
-          )
         projectScaleEncounterLandPointOutsideBounds(
           nextEye,
           collisionMinimum,
           collisionMaximum,
         )
-        const nextOffset = nextEye
-          .sub(encounter.placement.orbitCenter)
-          .setY(0)
-        const maximumRadius = scaleEncounterLandRadiusAtDistance(
-          encounter.placement,
-          encounter.definition.maximumDistance,
-        )
-        if (nextOffset.length() > maximumRadius) {
-          nextOffset.setLength(maximumRadius)
-        }
-        const nextRadius = Math.max(nextOffset.length(), 0.001)
-        const nextDirection = nextOffset.clone().divideScalar(nextRadius)
-        const nextAngle = unwrapScaleEncounterOrbitAngle(
-          encounter.orbitAngleRadians,
-          baseDirection,
-          nextDirection,
-        )
-        const minimumDistance = minimumScaleEncounterDistanceForProfile(
-          encounter.placement,
-          encounter.definition,
-          encounter.profile,
-          nextAngle,
-        )
-        encounter.orbitAngleRadians = nextAngle
-        encounter.observerDistance = scaleEncounterLandDistanceForRadius(
-          encounter.placement,
-          nextRadius,
-          minimumDistance,
-          encounter.definition.maximumDistance,
-        )
-        continue
       }
-
-      const radius = Math.max(
-        scaleEncounterLandRadiusAtDistance(
-          encounter.placement,
-          encounter.observerDistance,
-        ),
-        0.001,
+      const nextOffset = nextEye
+        .sub(encounter.placement.orbitCenter)
+        .setY(0)
+      const maximumRadius = scaleEncounterLandRadiusAtDistance(
+        encounter.placement,
+        encounter.definition.maximumDistance,
       )
-      const nextAngle =
-        encounter.orbitAngleRadians +
-        (intent.tangential *
-          intent.speedMetersPerSecond *
-          substepSeconds) /
-          radius
-      const minimumDistance = minimumScaleEncounterDistanceForProfile(
+      if (nextOffset.length() > maximumRadius) {
+        nextOffset.setLength(maximumRadius)
+      }
+      const nextRadius = Math.max(nextOffset.length(), 0.001)
+      const nextDirection = nextOffset.clone().divideScalar(nextRadius)
+      let nextAngle = encounter.orbitAngleRadians
+      let minimumDistance = minimumScaleEncounterDistanceForProfile(
         encounter.placement,
         encounter.definition,
         encounter.profile,
         nextAngle,
       )
-      const minimumRadius = scaleEncounterLandRadiusAtDistance(
-        encounter.placement,
-        minimumDistance,
-      )
-      const maximumRadius = scaleEncounterLandRadiusAtDistance(
-        encounter.placement,
-        encounter.definition.maximumDistance,
-      )
-      const desiredRadius =
-        radius -
-        intent.radial * intent.speedMetersPerSecond * substepSeconds
-      const nextRadius = MathUtils.clamp(
-        desiredRadius,
-        Math.min(minimumRadius, maximumRadius),
-        Math.max(minimumRadius, maximumRadius),
-      )
-      encounter.orbitAngleRadians = Number.isFinite(nextAngle)
-        ? nextAngle
-        : encounter.orbitAngleRadians
-      encounter.observerDistance = scaleEncounterLandDistanceForRadius(
+      let nextDistance = scaleEncounterLandDistanceForRadius(
         encounter.placement,
         nextRadius,
         minimumDistance,
         encounter.definition.maximumDistance,
       )
+      // Distance changes can rotate a head-targeted authored rail relative to
+      // the body-centred pivot. Resolve distance and compensating angle
+      // together so the requested Cartesian step is faithfully reconstructed.
+      for (let iteration = 0; iteration < 2; iteration += 1) {
+        nextAngle = scaleEncounterLandOrbitAngleForWorldDirection(
+          encounter.placement,
+          nextDistance,
+          encounter.orbitAngleRadians,
+          nextDirection,
+        )
+        minimumDistance = minimumScaleEncounterDistanceForProfile(
+          encounter.placement,
+          encounter.definition,
+          encounter.profile,
+          nextAngle,
+        )
+        nextDistance = scaleEncounterLandDistanceForRadius(
+          encounter.placement,
+          nextRadius,
+          minimumDistance,
+          encounter.definition.maximumDistance,
+        )
+      }
+      encounter.orbitAngleRadians = nextAngle
+      encounter.observerDistance = nextDistance
     }
 
     encounter.targetObserverDistance = encounter.observerDistance
@@ -3574,6 +3603,29 @@ export class ViewerController {
     current.modelRoot.updateMatrixWorld(true)
     this.renderer.domElement.dataset.animationPaused = 'true'
     return true
+  }
+
+  /**
+   * Renders and exports the current transparent WebGL frame for the headed
+   * review-browser preview workflow. Capturing immediately after render avoids
+   * losing the drawing buffer when preserveDrawingBuffer remains disabled in
+   * the normal interactive viewer.
+   */
+  captureReviewFramePng(): string | null {
+    if (
+      import.meta.env.MODE !== 'review' &&
+      import.meta.env.MODE !== 'model-still' &&
+      import.meta.env.MODE !== 'e2e'
+    ) {
+      return null
+    }
+    const current = this.current
+    if (!current) {
+      return null
+    }
+    current.modelRoot.updateMatrixWorld(true)
+    this.renderer.render(this.scene, this.camera)
+    return this.renderer.domElement.toDataURL('image/png')
   }
 
   setFocusMode(focused: boolean): void {
@@ -4675,7 +4727,7 @@ export class ViewerController {
       this.computeScaleEncounterObserverEyePosition(
         encounter.placement,
         encounter.definition,
-        encounter.definition.defaultDistance,
+        encounter.observerDistance,
         encounter.orbitAngleRadians,
       ),
     )
@@ -5208,9 +5260,22 @@ export class ViewerController {
     const configuredVerticalOffset = isPortrait
       ? (current.descriptor.presentation.verticalOffset?.portrait ?? 0)
       : (current.descriptor.presentation.verticalOffset?.landscape ?? 0)
+    const modelViewport = this.container.closest<HTMLElement>(
+      '.model-viewport',
+    )
+    const previewReferenceWidth = Number(
+      modelViewport?.dataset.previewReferenceWidth,
+    )
+    const previewReferenceHeight = Number(
+      modelViewport?.dataset.previewReferenceHeight,
+    )
     const modelScale = modelScaleForViewport(
-      containerWidth,
-      containerHeight,
+      Number.isFinite(previewReferenceWidth) && previewReferenceWidth > 0
+        ? previewReferenceWidth
+        : containerWidth,
+      Number.isFinite(previewReferenceHeight) && previewReferenceHeight > 0
+        ? previewReferenceHeight
+        : containerHeight,
     )
     const zoomProfile = viewerZoomProfileForPointer(
       this.coarsePointerQuery.matches,

@@ -19,7 +19,10 @@ import {
   updateScaleEncounterEnvironment,
   type ScaleEncounterEnvironmentVariant,
 } from '../src/viewer/scale-encounter-environment'
-import type { ScaleEncounterHabitat } from '../src/viewer/scale-encounter'
+import {
+  SCALE_ENCOUNTER_DEFINITIONS,
+  type ScaleEncounterHabitat,
+} from '../src/viewer/scale-encounter'
 
 const habitats = ['land', 'air', 'water'] as const satisfies readonly ScaleEncounterHabitat[]
 const generatedVariants = [
@@ -170,6 +173,80 @@ describe('scale encounter environment', () => {
     disposeScaleEncounterEnvironment(environment)
   })
 
+  it('supports the land Archaeopteryx on a scanned low fallen log', () => {
+    const sourceTexture = new Texture()
+    const sourceGeometry = new BoxGeometry(3.05, 0.29, 0.34)
+    const sourceMaterial = new MeshBasicMaterial({ map: sourceTexture })
+    const sourceLog = new Mesh(sourceGeometry, sourceMaterial)
+    sourceLog.name = 'dead_tree_trunk'
+    const forestProps = new Group()
+    forestProps.add(sourceLog)
+    const environment = createScaleEncounterEnvironment(
+      'land',
+      'production-slice',
+      null,
+      { animalId: 'archaeopteryx', forestProps },
+    )
+    expect(environment).not.toBeNull()
+    if (!environment) return
+
+    const perch = environment.root.getObjectByName(
+      'scale-encounter-archaeopteryx-perch',
+    )
+    expect(perch).toBeDefined()
+    if (!perch) return
+    expect(perch.userData.scaleEncounterPerch).toMatchObject({
+      asset: 'forest-props-real-v1',
+      form: 'fallen-log',
+    })
+    expect(
+      perch.getObjectByName(
+        'scale-encounter-archaeopteryx-perch-scanned-log',
+      ),
+    ).toBeDefined()
+
+    const supportTopY =
+      SCALE_ENCOUNTER_DEFINITIONS.archaeopteryx.animalPosition.y
+    const scannedLog = perch.getObjectByName(
+      'scale-encounter-archaeopteryx-perch-scanned-log',
+    ) as Mesh
+    const supportMetadata = scannedLog.userData
+      .scaleEncounterPerchSupportZone as {
+      readonly fittedSupportY: number
+      readonly footprintSampleCount: number
+      readonly groundEmbedDepth: number
+      readonly sampledSupportY: number
+    }
+    expect(supportMetadata.sampledSupportY).toBeGreaterThan(0)
+    expect(supportMetadata.footprintSampleCount).toBeGreaterThan(1)
+    expect(supportMetadata.groundEmbedDepth).toBeCloseTo(0.055, 8)
+    expect(supportMetadata.fittedSupportY).toBeCloseTo(
+      supportTopY - perch.position.y,
+      8,
+    )
+    const bounds = new Box3().setFromObject(perch)
+    expect(bounds.min.y).toBeLessThan(-0.05)
+    expect(bounds.min.y).toBeGreaterThan(-0.06)
+    // The uneven scan is fitted at the central standing patch. Natural knots
+    // near an end may rise a little higher than the bird's foot plane.
+    expect(bounds.max.y).toBeGreaterThanOrEqual(supportTopY)
+    expect(bounds.max.y).toBeLessThan(supportTopY + 0.12)
+    expect(
+      environment.animalContactCue?.userData
+        .scaleEncounterContactGroundY,
+    ).toBeCloseTo(supportTopY + 0.009, 8)
+    perch.traverse((object) => {
+      if (!(object instanceof Mesh)) return
+      expect(object.castShadow).toBe(true)
+      expect(object.receiveShadow).toBe(true)
+    })
+
+    disposeScaleEncounterEnvironment(environment)
+    sourceGeometry.dispose()
+    sourceMaterial.dispose()
+    sourceTexture.dispose()
+  })
+
   it('marks the tyrannosaurus hybrid slice as waiting for reviewed middle-distance art', () => {
     const environment = createScaleEncounterEnvironment(
       'land',
@@ -209,7 +286,7 @@ describe('scale encounter environment', () => {
       | { readonly drawCalls: number; readonly instanceCount: number }
       | undefined
     expect(groundDetailMetadata).toMatchObject({
-      drawCalls: 3,
+      drawCalls: 2,
       instanceCount: 520,
     })
     const farDepth = environment?.root.getObjectByName(
@@ -267,16 +344,15 @@ describe('scale encounter environment', () => {
   })
 
   it.each([
-    ['current', 180, 520, 24, 15, 114, 917],
-    ['1.25x', 226, 650, 34, 19, 143, 1_152],
-    ['1.5x', 270, 780, 46, 19, 171, 1_382],
+    ['current', 180, 520, 15, 114, 893],
+    ['1.25x', 226, 650, 19, 143, 1_118],
+    ['1.5x', 270, 780, 19, 171, 1_336],
   ] as const)(
     'builds the %s ecology population as a shareable environment version',
     (
       ecologyDensity,
       midgroundCount,
       groundDetailCount,
-      rootCount,
       farTreeCount,
       understoryCount,
       totalCount,
@@ -307,7 +383,6 @@ describe('scale encounter environment', () => {
         groundDetail?.userData.scaleEncounterProductionGroundDetail,
       ).toMatchObject({
         instanceCount: groundDetailCount,
-        rootInstanceCount: rootCount,
       })
       const farDepth = environment?.root.getObjectByName(
         'scale-encounter-production-far-depth',

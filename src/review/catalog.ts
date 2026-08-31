@@ -19,13 +19,15 @@ import { animal as sauropeltaDraft } from './animals/sauropelta/package'
 import { animal as rhamphorhynchusDraft } from './animals/rhamphorhynchus/package'
 import { animal as tupandactylusDraft } from './animals/tupandactylus/package'
 import { animal as meganeuraDraft } from './animals/meganeura/package'
+import { animal as spinosaurusDraft } from './animals/spinosaurus/package'
+import { animal as lystrosaurusDraft } from './animals/lystrosaurus/package'
+import { animal as baryonyxDraft } from './animals/baryonyx/package'
+import { animal as archaeopteryxDraft } from './animals/archaeopteryx/package'
+import { animal as carnotaurusDraft } from './animals/carnotaurus/package'
+import { animal as anomalocarisDraft } from './animals/anomalocaris/package'
 import type {
   CompleteDraftAnimalPackage,
   DisplayableAnimalPackage,
-} from './types'
-import {
-  reviewNarrationAssetFor,
-  reviewNarrationPlanFor,
 } from './types'
 
 const reviewedStegosaurus = {
@@ -86,34 +88,8 @@ function mergePublishedReviewAnimal(
     return productionAnimal
   }
   return {
-    ...reviewAnimal,
-    status: 'published',
+    ...productionAnimal,
     review: reviewAnimal.review,
-    content: {
-      'zh-CN': reviewAnimal.content['zh-CN'],
-      en: reviewAnimal.content.en ?? productionAnimal.content.en,
-    },
-    narration: {
-      'zh-CN':
-        reviewNarrationPlanFor(reviewAnimal.narration, 'zh-CN') ??
-        productionAnimal.narration['zh-CN'],
-      en:
-        reviewNarrationPlanFor(reviewAnimal.narration, 'en') ??
-        productionAnimal.narration.en,
-    },
-    assets: {
-      ...reviewAnimal.assets,
-      narration: {
-        'zh-CN':
-          reviewNarrationAssetFor(
-            reviewAnimal.assets.narration,
-            'zh-CN',
-          ) ?? productionAnimal.assets.narration['zh-CN'],
-        en:
-          reviewNarrationAssetFor(reviewAnimal.assets.narration, 'en') ??
-          productionAnimal.assets.narration.en,
-      },
-    },
   }
 }
 
@@ -139,6 +115,12 @@ const onboardingDrafts: readonly CompleteDraftAnimalPackage[] = [
   rhamphorhynchusDraft,
   tupandactylusDraft,
   meganeuraDraft,
+  spinosaurusDraft,
+  lystrosaurusDraft,
+  baryonyxDraft,
+  archaeopteryxDraft,
+  carnotaurusDraft,
+  anomalocarisDraft,
 ]
 
 // The production collection is authoritative. A local draft automatically

@@ -44,9 +44,9 @@ It is designed mainly for children aged 2–6 with a grown-up nearby, but curios
 <details>
 <summary><strong>See the full collection</strong></summary>
 
-- **Land:** Stegosaurus, Pachycephalosaurus, Tyrannosaurus rex, Triceratops, Apatosaurus, Gigantoraptor, Woolly mammoth, Maiasaura, Sauropelta, and Dilophosaurus.
-- **Sky:** Pteranodon, Rhamphorhynchus, Tupandactylus, and Meganeura.
-- **Sea:** Ichthyosaurs, Plesiosaurs, Megalodon, and Mosasaurus.
+- **Land:** Stegosaurus, Pachycephalosaurus, Tyrannosaurus rex, Triceratops, Apatosaurus, Gigantoraptor, Woolly mammoth, Maiasaura, Sauropelta, Dilophosaurus, Spinosaurus, Lystrosaurus, Baryonyx, and Carnotaurus.
+- **Sky:** Pteranodon, Rhamphorhynchus, Tupandactylus, Meganeura, and Archaeopteryx.
+- **Sea:** Ichthyosaurs, Plesiosaurs, Megalodon, Mosasaurus, and Anomalocaris.
 
 </details>
 

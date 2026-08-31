@@ -196,6 +196,70 @@ describe('scale encounter geometry', () => {
     expect(secondStep).toBeCloseTo(firstStep, 8)
   })
 
+  it('keeps the Spinosaurus child readable at entry while letting close viewing reach its AABB boundary', () => {
+    const definition = SCALE_ENCOUNTER_DEFINITIONS.spinosaurus
+    const placement = createScaleEncounterPlacement(
+      'spinosaurus',
+      new Vector3(-4.698872, 0, -1.356681),
+      new Vector3(9.682645, 5.158696, 2.046446),
+      1.1,
+    )
+    const profile = normalizeScaleEncounterProfile({
+      approach: 'close',
+      gender: 'girl',
+      heightCm: 110,
+    })
+    const collisionMinimum = minimumScaleEncounterDistanceForProfile(
+      placement,
+      definition,
+      profile,
+      0,
+    )
+    const horizontalRail = placement.observerRailDirection.clone().setY(0)
+    const headOnOffsetRadians = Math.atan2(
+      Math.abs(horizontalRail.z),
+      Math.abs(horizontalRail.x),
+    )
+
+    expect(collisionMinimum).toBeLessThan(4)
+    expect(placement.defaultEyePosition.distanceTo(placement.target)).toBeCloseTo(
+      12.5,
+      8,
+    )
+    expect(MathUtils.radToDeg(headOnOffsetRadians)).toBeCloseTo(42, 8)
+    expect(placement.defaultEyePosition.z).toBeGreaterThan(placement.target.z)
+    expect(definition.defaultDistance).toBe(12.5)
+    expect(definition.minimumDistance).toBe(9)
+    expect(definition.maximumDistance).toBe(25)
+    expect(definition.defaultDistance).toBeGreaterThan(collisionMinimum)
+  })
+
+  it('places the Archaeopteryx child on a short diagonal rail without changing the half-metre animal scale', () => {
+    const definition = SCALE_ENCOUNTER_DEFINITIONS.archaeopteryx
+    const placement = createScaleEncounterPlacement(
+      'archaeopteryx',
+      new Vector3(1.95, 0.3, -0.21),
+      new Vector3(2.45, 0.62, 0.21),
+      0.985,
+    )
+    const horizontalRail = placement.observerRailDirection.clone().setY(0)
+    const screenDepthOffsetRadians = Math.atan2(
+      Math.abs(horizontalRail.z),
+      Math.abs(horizontalRail.x),
+    )
+
+    expect(definition.displayedMeters).toBe(0.5)
+    expect(definition.measurement).toBe('body-length')
+    expect(definition.defaultDistance).toBe(1.8)
+    expect(placement.defaultEyePosition.distanceTo(placement.target)).toBeCloseTo(
+      1.8,
+      8,
+    )
+    expect(MathUtils.radToDeg(screenDepthOffsetRadians)).toBeCloseTo(30, 8)
+    expect(placement.defaultEyePosition.x).toBeLessThan(placement.target.x)
+    expect(placement.defaultEyePosition.z).toBeGreaterThan(placement.target.z)
+  })
+
   it.each([
     ['front-left leg side', MathUtils.degToRad(60)],
     ['rear-left leg side', MathUtils.degToRad(120)],

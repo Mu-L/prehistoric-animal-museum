@@ -11,7 +11,10 @@ import {
 import {
   scaleEncounterPanoramaThemeFor,
 } from '../src/scale-encounter/environment-review-candidate'
-import { SCALE_ENCOUNTER_ANIMAL_IDS } from '../src/scale-encounter/types'
+import {
+  REVIEW_SCALE_ENCOUNTER_ANIMAL_IDS,
+  SCALE_ENCOUNTER_ANIMAL_IDS,
+} from '../src/scale-encounter/types'
 import {
   SCALE_ENCOUNTER_DEFINITIONS,
 } from '../src/viewer/scale-encounter'
@@ -36,12 +39,30 @@ const expectedThemes = {
   meganeura: 'forest',
   dilophosaurus: 'forest',
   mosasaurus: 'ocean',
+  spinosaurus: 'forest',
+  lystrosaurus: 'forest',
+  baryonyx: 'forest',
+  archaeopteryx: 'forest',
+  carnotaurus: 'forest',
+  anomalocaris: 'ocean',
 } as const
 
-describe('complete eighteen-animal scale encounter catalog', () => {
-  it('matches the published museum collection exactly', () => {
+const expansionAnimalIds = [
+  'spinosaurus',
+  'lystrosaurus',
+  'baryonyx',
+  'archaeopteryx',
+  'carnotaurus',
+  'anomalocaris',
+] as const
+
+describe('complete twenty-four-animal scale encounter catalog', () => {
+  it('keeps the published collection exact with no local-only animals', () => {
     expect(SCALE_ENCOUNTER_ANIMAL_IDS).toEqual(mainCollection.animalIds)
-    expect(Object.keys(SCALE_ENCOUNTER_DEFINITIONS)).toHaveLength(18)
+    expect(REVIEW_SCALE_ENCOUNTER_ANIMAL_IDS).toEqual([])
+    expect(Object.keys(SCALE_ENCOUNTER_DEFINITIONS)).toHaveLength(
+      SCALE_ENCOUNTER_ANIMAL_IDS.length,
+    )
   })
 
   it('maps every animal to one of the four shared review environments', () => {
@@ -51,13 +72,53 @@ describe('complete eighteen-animal scale encounter catalog', () => {
       )
     }
     expect(Object.values(expectedThemes).filter((theme) => theme === 'forest'))
-      .toHaveLength(10)
+      .toHaveLength(15)
     expect(Object.values(expectedThemes).filter((theme) => theme === 'sky'))
       .toHaveLength(3)
     expect(Object.values(expectedThemes).filter((theme) => theme === 'ocean'))
-      .toHaveLength(4)
+      .toHaveLength(5)
     expect(Object.values(expectedThemes).filter((theme) => theme === 'glacier'))
       .toHaveLength(1)
+  })
+
+  it('keeps all six promoted animals on their accepted compare calibration', () => {
+    expect(
+      expansionAnimalIds.map((animalId) => {
+        const definition = SCALE_ENCOUNTER_DEFINITIONS[animalId]
+        return [
+          animalId,
+          definition.environmentTheme,
+          definition.displayedMeters,
+          definition.measurementAxis,
+        ]
+      }),
+    ).toEqual([
+      ['spinosaurus', 'forest', 14.5, 'x'],
+      ['lystrosaurus', 'forest', 1.5, 'x'],
+      ['baryonyx', 'forest', 8.75, 'x'],
+      ['archaeopteryx', 'forest', 0.5, 'x'],
+      ['carnotaurus', 'forest', 8, 'x'],
+      ['anomalocaris', 'ocean', 0.6, 'x'],
+    ])
+    for (const animalId of expansionAnimalIds) {
+      const definition = SCALE_ENCOUNTER_DEFINITIONS[animalId]
+      expect(definition.calibratedModelSha256).toMatch(/^[a-f0-9]{64}$/)
+      expect(definition.referenceAnimationTimeSeconds).toBe(0)
+      expect(definition.minimumDistance).toBeLessThan(definition.defaultDistance)
+      expect(definition.maximumDistance).toBeGreaterThan(definition.defaultDistance)
+    }
+    const archaeopteryx = SCALE_ENCOUNTER_DEFINITIONS.archaeopteryx
+    expect(archaeopteryx.animalPosition.toArray()).toEqual([2.2, 0.3, 0])
+    expect(archaeopteryx).toMatchObject({
+      avatarMotionPolicy: 'adaptive-land',
+      avatarProfile: 'land-explorer',
+      defaultDistance: 1.8,
+      habitat: 'land',
+      maximumDistance: 5,
+      minimumDistance: 1.4,
+      modelYawRadians: -Math.PI / 2,
+      support: 'ground',
+    })
   })
 
   it('derives avatar packages and panoramas from the shared catalog', () => {
@@ -88,7 +149,12 @@ describe('complete eighteen-animal scale encounter catalog', () => {
           SCALE_ENCOUNTER_DEFINITIONS[animalId].scaleConfidence ===
           'representative',
       ),
-    ).toEqual(['ichthyosaur', 'plesiosaurus'])
+    ).toEqual([
+      'ichthyosaur',
+      'plesiosaurus',
+      'archaeopteryx',
+      'carnotaurus',
+    ])
     for (const locale of ['zh-CN', 'en'] as const) {
       for (const animalId of ['ichthyosaur', 'plesiosaurus'] as const) {
         const measurement = scaleEncounterContentFor(animalId, locale).copy

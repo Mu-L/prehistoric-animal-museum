@@ -287,7 +287,9 @@ export function DirectScaleEncounter({
   const [approach, setApproach] = useState<NonNullable<ChildProfile['approach']>>(
     profile?.approach ?? 'comfortable',
   )
-  const [voiceEnabled, setVoiceEnabled] = useState(true)
+  const [voiceEnabled, setVoiceEnabled] = useState(
+    content.narrationAvailable,
+  )
   const [ambientEnabled, setAmbientEnabled] = useState(false)
   const [captionsEnabled, setCaptionsEnabled] = useState(true)
   const [playbackMenuOpen, setPlaybackMenuOpen] = useState(false)
@@ -416,8 +418,13 @@ export function DirectScaleEncounter({
     )
     controller.setScaleEncounterEcologyDensity(ecologyDensity)
     controller.setScaleEncounterEnvironmentVariant(environmentVariant)
-    if (animal.id === 'tyrannosaurus-rex' && environmentVariant !== 'baseline') {
-      const productionEcology = environmentVariant === 'production-slice'
+    const shouldLoadReviewForestProps =
+      environmentVariant !== 'baseline' &&
+      (animal.id === 'tyrannosaurus-rex' || animal.id === 'archaeopteryx')
+    if (shouldLoadReviewForestProps) {
+      const productionEcology =
+        animal.id === 'tyrannosaurus-rex' &&
+        environmentVariant === 'production-slice'
       const request = productionEcology
         ? (forestEcologyLoadRef.current ??=
             loadReviewCandidateForestEcology())
@@ -435,7 +442,7 @@ export function DirectScaleEncounter({
         })
         .catch((error: unknown) => {
           console.warn(
-            'Real forest ecology candidate unavailable; keeping reviewed fallback props.',
+            'Real forest prop candidate unavailable; keeping reviewed fallback props.',
             error,
           )
           return null
@@ -688,10 +695,25 @@ export function DirectScaleEncounter({
       }, 2_200)
 
       try {
-        const [candidateLease, environmentLease] = await Promise.all([
-          ensureReviewCandidateAvatar(nextProfile),
-          ensureReviewCandidateEnvironment(),
-        ])
+        const archaeopteryxForestProps =
+          animal.id === 'archaeopteryx' &&
+          environmentVariant !== 'baseline'
+            ? (forestPropsLoadRef.current ??=
+                loadReviewCandidateForestProps().catch((error: unknown) => {
+                  forestPropsLoadRef.current = null
+                  console.warn(
+                    'Scanned Archaeopteryx perch unavailable; keeping the natural-form fallback.',
+                    error,
+                  )
+                  return null
+                }))
+            : Promise.resolve(null)
+        const [candidateLease, environmentLease, encounterForestProps] =
+          await Promise.all([
+            ensureReviewCandidateAvatar(nextProfile),
+            ensureReviewCandidateEnvironment(),
+            archaeopteryxForestProps,
+          ])
         if (
           !mountedRef.current ||
           beginTokenRef.current !== beginToken
@@ -718,7 +740,7 @@ export function DirectScaleEncounter({
         }
         controller.setScaleEncounterAvatarFactory(candidateLease.factory)
         controller.setScaleEncounterForestProps?.(
-          environmentLease?.sceneProps ?? null,
+          environmentLease?.sceneProps ?? encounterForestProps,
         )
         if (environmentLease?.preparedLandBiome) {
           controller.setScaleEncounterPanoramaTexture(
@@ -799,6 +821,7 @@ export function DirectScaleEncounter({
       }
     },
     [
+      animal.id,
       animal.name,
       content.copy,
       controller,
@@ -929,9 +952,11 @@ export function DirectScaleEncounter({
     ] as const) {
       // Register sources without fetching them. The exact line switches to
       // auto and calls load() only when the sequence reaches that line.
+      const source = content.audio[kind]
+      if (!source) continue
       const audio = new Audio()
       audio.preload = 'none'
-      audio.src = content.audio[kind]
+      audio.src = source
       bank.set(kind, audio)
     }
     return () => {
@@ -1193,7 +1218,7 @@ export function DirectScaleEncounter({
       // The guide describes each scene's actions and equipment from the
       // child's point of view. Outfit production and bounds regression remain
       // separate gates, while the setup keeps every encounter imaginative.
-      if (!voiceEnabledRef.current) {
+      if (!content.narrationAvailable || !voiceEnabledRef.current) {
         return Promise.resolve(false)
       }
       let audio = audioBankRef.current.get(kind)
@@ -1236,7 +1261,7 @@ export function DirectScaleEncounter({
         void audio.play().catch(handleFailure)
       })
     },
-    [content.audio, content.copy, restoreAmbientVolume],
+    [content.audio, content.copy, content.narrationAvailable, restoreAmbientVolume],
   )
 
   const startPovSequence = useCallback(async () => {
@@ -1389,6 +1414,7 @@ export function DirectScaleEncounter({
   }
 
   const toggleVoice = () => {
+    if (!content.narrationAvailable) return
     const next = !voiceEnabledRef.current
     voiceEnabledRef.current = next
     setVoiceEnabled(next)
@@ -1716,6 +1742,7 @@ export function DirectScaleEncounter({
                 <button
                   aria-label={content.copy.audioLabel}
                   aria-pressed={voiceEnabled}
+                  disabled={!content.narrationAvailable}
                   onClick={toggleVoice}
                   type="button"
                 >
@@ -1726,7 +1753,13 @@ export function DirectScaleEncounter({
                   )}
                   <div>
                     <strong>{content.copy.narrationLabel}</strong>
-                    <small>{content.copy.narrationHint}</small>
+                    <small>
+                      {content.narrationAvailable
+                        ? content.copy.narrationHint
+                        : locale === 'zh-CN'
+                          ? '本轮先评审画面与比例，旁白随后制作'
+                          : 'Visual and scale review first; narration follows'}
+                    </small>
                   </div>
                   <b>{voiceEnabled ? content.copy.audioOn : content.copy.audioOff}</b>
                 </button>

@@ -4,8 +4,8 @@
   "productionApproved": true,
   "publicDistributionDecision": "approved",
   "approvedBy": "Leon",
-  "approvedOn": "2026-08-24",
-  "approvalEvidence": "Leon explicitly confirmed that requesting the final implementation constitutes approval of the selected narration, child-avatar and environment runtime assets.",
+  "approvedOn": "2026-09-01",
+  "approvalEvidence": "Leon explicitly accepted all 24 animals and confirmed production installation of the selected narration, child-avatar and environment runtime assets.",
   "assetGroups": {
     "avatars": {
       "status": "production-approved",
@@ -38,7 +38,7 @@
     },
     "narration": {
       "status": "production-approved",
-      "binaryCount": 112,
+      "binaryCount": 148,
       "manifest": "../audio/narration-candidates.json"
     }
   }
