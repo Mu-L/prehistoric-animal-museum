@@ -1,8 +1,11 @@
 # Animal package authoring guide
 
-This guide is the maintainer workflow for adding or replacing one public
-prehistoric-animal presentation. Work on one animal at a time. A package is
-not published merely because it renders locally.
+This guide is the maintainer workflow for adding or replacing a public
+prehistoric-animal presentation. Multiple high-risk animals may advance in
+parallel when the owner explicitly chooses that tradeoff. Give every animal an
+independent run directory, review contract, model lock, evidence package and
+promotion transaction so one animal's exception or failure cannot unlock
+another. A package is not published merely because it renders locally.
 
 ## 1. Package layout
 
@@ -75,18 +78,38 @@ node validate-glb.mjs \
 Use `--clip none` for a static exhibit. Do not retain root-travelling or
 frightening animation merely to make the model animated.
 
-Current delivery gates:
+The onboarding tool owns one three-tier model budget contract. Targets are
+optimisation goals, review ceilings are the normal automated gate, and the
+absolute column is available only through a profile-bound exception recording
+the affected metrics, reason, risk owner and date.
 
-- encoded GLB target/hard ceiling: 12/20 MiB;
-- complete animal package target/hard ceiling: 14/23 MiB;
-- triangles target/hard ceiling: 100,000/250,000;
-- draw calls target/hard ceiling: 12/24;
-- bones target/hard ceiling: 120/200;
-- no external buffers or textures;
-- textures normally at or below 2K, with decoded-memory review on a real phone.
+| Metric | Target | Normal review ceiling | Absolute exception ceiling |
+| --- | ---: | ---: | ---: |
+| Encoded GLB | 12 MiB | 20 MiB | 20 MiB |
+| Triangles | 100,000 | 120,000 | 250,000 |
+| Draw calls | 12 | 24 | 32 |
+| Materials | 8 | 16 | 16 |
+| Bones | 120 | 160 | 200 |
+
+Exceeding a target produces an optimisation warning. Exceeding a normal review
+ceiling without `model.budgetException` is invalid even if the model looks
+acceptable. An exception never waives self-containment, the exact eight-second
+Idle contract, full-loop visual review or the absolute ceiling. The complete
+animal package target/hard ceiling remains 14/23 MiB. Use no external buffers
+or textures; keep textures normally at or below 2K and review decoded memory on
+a real phone.
 
 Record every transformation: removed animations or props, material conversion,
 texture resizing, geometry or pose changes, and the final byte count and hash.
+
+Do not let the shared normalizer choose biological or presentation semantics.
+The onboarding profile must explicitly select habitat, motion, tail direction,
+initial view, shadow policy and a processing strategy after source inspection.
+`replace-with-project-morph` is the only strategy implemented by the shared
+normalizer; replacing an existing armature or animation requires an explicit
+destructive-replacement record. Use a dedicated L3 Blender operation for
+`preserve-source-rig-retime` or `custom-rebuild` so an existing rig or 7.5-second
+clip is never silently baked away.
 
 ## 4. Content and presentation
 
@@ -159,19 +182,18 @@ The landscape and portrait posters and the thumbnail must show the same model,
 material, pose direction, and matching scene as the published package.
 
 The transparent images used while WebGL loads are generated artifacts, not
-animal-authored layout. After the GLB and `presentation` values are final, run:
-
-```sh
-npm run generate:model-previews -- <animal-id>
-npm run validate:model-previews
-```
-
-The generator automatically produces every shared landscape and portrait
-profile plus a manifest containing the source-model hash and presentation
-signature. Do not add per-animal media queries, CSS offsets, or hand-cropped
-loading images. A model or presentation change intentionally makes the build
-fail until this command is rerun. For owner-only candidates, use
-`npm run generate:review-model-previews -- <animal-id>` instead.
+animal-authored layout. Capture candidate evidence and clean derivative sources
+through the already-open headed Browser or Chrome workflow in the onboarding
+Skill. Its local report validates hashes, declared state effects and artifact
+completeness, while browser provenance remains explicitly collector-attested
+because the control surface supplies no signed receipt. Use a separate task for
+the agent visual review. Then run its model-lock-guarded deterministic
+derivative command. Do not
+run the current `generate:model-previews` or `generate:review-model-previews`
+scripts while they depend on a headless browser; the workspace browser policy
+prohibits that path. Validate any retained preview manifest against the final
+model hash and presentation signature. Do not add per-animal media queries, CSS
+offsets, or hand-cropped loading images.
 
 ## 6. Narration
 
@@ -189,7 +211,7 @@ wrapper loads the shared local checkpoint and can generate one or both
 configured locales:
 
 ```sh
-../.runtime/qwen3-tts/venv/bin/python \
+<qwen-venv-python> \
   tools/animal-onboarding/audio/generate_narration.py \
   <profile.json> --locale zh-CN --locale en
 ```
@@ -304,8 +326,17 @@ npm test -- --run
 npm run validate:content
 npm run validate:model-previews
 npm run build
-npm run test:e2e
 ```
+
+Use the already-open headed Browser or Chrome control surface for responsive
+interaction verification. Do not substitute the repository's headless E2E path
+for visual review in this workspace.
+
+Set the declared base camera before applying zoom, orbit or pan. Record the
+observed post-interaction camera rather than copying the planned base values;
+the onboarding gate compares closest and initial distance and rejects identical
+screenshots. Every capture plan must also retain the passing production-golden
+report digest.
 
 Check 360×640, 390×844, 844×390, 768×1024, and 1440×900. Confirm:
 

@@ -1,161 +1,163 @@
 ---
 name: prehistoric-animal-onboarding
-description: Run the prehistoric-animal-museum candidate intake, rights scoring, Blender normalization, visibly verified body and conditional mouth Idle templates, pinned Qwen3-TTS Serena narration, measured initial head orientation and land grounding, deterministic GLB and responsive-browser QA, evidence reporting, local review preparation, explicit owner-approval recording, and atomic draft-to-production promotion. Use when adding, evaluating, rejecting, repairing, reviewing, approving, or promoting a prehistoric animal, including complaints that the initial view faces the wrong way, motion is invisible, an eligible open mouth should relax naturally, narration sounds like system TTS, or a land animal appears to float; never convert an automated pass into owner approval.
+description: Prepare, repair, review, approve, or promote prehistoric-animal-museum 3D animal assets through a portable staged workflow with source-rights intake, requirements contracts, L0-L3 risk routing, Blender normalization, exact model budgets and eight-second Idle, collector-attested headed capture with hash/state integrity checks, independent agent visual review, owner model locks, derivative generation, bilingual Qwen narration, and atomic promotion. Use for new animals and for defects such as wrong limbs, detached teeth, static tails or appendages, wing clipping/flicker, wrong initial camera distance, invisible motion, floating feet, stale screenshots, or silent contract exceptions. Parallel L3 work is allowed when explicitly accepted and isolated per animal; automated or agent passes never become owner approval.
 ---
 
 # Prehistoric Animal Onboarding
 
-Use the project’s deterministic tools to turn a licensed candidate into an
-evidenced local review draft. Keep source archives, generated media, Blender
-files and reports in the ignored local incubation directories. Do not add a new
-candidate to the production collection without a new explicit owner approval.
+Turn a licensed source into a small, hash-bound review packet. The agent should
+find defects before the owner sees the asset; the owner should decide tradeoffs,
+taste and release boundaries, not manually rediscover every engineering error.
 
-## Start here
+## Authority boundaries
 
-Work from the `prehistoric-animal-museum` repository root. Read:
+Keep these states separate:
 
-1. `docs/specification/animal-onboarding-standard.md`;
-2. the candidate `profile.json`;
-3. `references/workflow-contract.md` for command order and report semantics.
+1. **Machine pass** proves rights fields, file structure, budgets, clip timing,
+   hashes and evidence completeness.
+2. **Agent visual pass** proves the contract's anatomy, deformation, full-loop,
+   presentation and child-comfort checks against the exact GLB.
+3. **Owner decision** may accept L3 investment, lock a model for finishing, and
+   later approve public distribution. Never infer or auto-record it.
 
-Before candidate work, run:
+A model lock authorizes derivative and narration work for one GLB SHA. It does
+not authorize publication. Production approval remains a later separate record.
 
-```sh
-node --import tsx tools/animal-onboarding/src/cli.ts baseline verify
-node --import tsx tools/animal-onboarding/src/cli.ts golden regress
-```
+## Load only what the task needs
 
-Treat the original 12 production animals as an immutable ordered prefix. The
-collection may grow only through an explicitly approved promotion transaction;
-the baseline verifier requires the production directories and current
-collection to agree. Treat `maiasaura`, `plesiosaurus`, and `megalodon` as
-read-only golden samples.
+Always read `references/workflow-contract.md` before running commands.
 
-## Workflow
+Also read `references/failure-regressions.md` when repairing an existing asset,
+handling L2/L3 work, defining a review contract, or explaining a budget/Idle
+deviation. Reuse its regression checks rather than relying on memory.
 
-1. Record at least eight unique candidates in an intake JSON. Do not infer a
-   missing author, upstream chain, license or redistribution right.
-2. Score with `intake score`. A high score never overrides a hard failure.
-3. For an advancing candidate, archive both the chosen GLB and source download,
-   create `profile.json`, and keep every human approval false unless the owner
-   explicitly supplied it.
-4. Run Blender headlessly with `normalize_animal.py`. Preserve its normalization
-   log, landmarks, neutral renders, three fixed-camera motion renders, `.blend`,
-   and runtime GLB. Do not accept clip-name/duration metadata alone: the
-   fixed-camera renders and the real viewer must both show measurable pixel
-   change. Declare `presentation.initialHeadSide`; QA must project the measured
-   head and tail through the initial yaw and reject the wrong side or an
-   ambiguous near-frontal view. Inspect an open-mouth source before choosing
-   `model.mouthMotion`: visible teeth, tongue and mouth interior are necessary
-   but not sufficient. Prefer `source-rig` only when a unique weighted jaw and
-   declared tongue chain can be measured. Use `curated-components` only with a
-   per-model hinge, exact connected-component/vertex counts and a bounded soft
-   tissue mask. Otherwise record `disabled`; never move a broad guessed head
-   region just to manufacture mouth motion.
-5. Generate both localized narrations with `audio/generate_narration.py` in the
-   pinned Qwen3-TTS environment. Require the 0.6B CustomVoice checkpoint, the
-   pinned model revision and two byte-identical seeded raw runs for each
-   locale. The approved voice matrix is Serena / Chinese for `zh-CN` and
-   Serena / English for `en`. Keep the scripts, MP3s, metrics and listening
-   decisions independent; never substitute one locale for the other or use
-   macOS `say`, Tingting, or another system TTS.
-6. Run `qa ... --model-only --autofix`. In this command, safe autofix is
-   deliberately limited to refreshing QA reports, recorded hashes and the
-   draft manifest. Regenerate Blender output, backgrounds or review derivatives
-   only with their explicit stage commands. No command may decide scientific
-   identity, anatomy, aesthetic quality, motion naturalness, narration quality,
-   or production approval.
-7. Add the complete package only to the explicit local-review allowlist. Do not
-   create `src/content/animals/<id>/animal.ts` or edit the production collection.
-8. Run `composition <profile.json>` for the five required real browser
-   viewports. Use its paired canvas-visible/hidden evidence, screenshots and
-   contact sheet. Require the viewer's actual runtime initial yaw to match the
-   profile in every viewport. For land animals, rotate measured contacts by that
-   yaw, require the contact shadow to cover the resulting foot cluster and place
-   the feet over a continuous, visually readable ground patch in every viewport.
-   For every animated draft, use the review-only
-   animation clock to freeze the same camera at exactly 0 and 2 seconds; require
-   the recorded paused/time state and pixel difference to show a visible Idle
-   instead of merely finding an `Idle` clip or relying on screenshot timing.
-   When mouth motion is enabled, additionally require fixed Blender mouth
-   close-ups at 0/4/8 seconds and exact browser states at 0/4 seconds. Treat
-   tooth clearance, tongue following, mouth-corner/soft-tissue continuity and
-   child comfort as human-only even after the pixel and loop gates pass.
-9. Run `review prepare <profile.json>`, then
-   `promote <profile.json> --dry-run`. A code `3` after otherwise-valid inputs
-   is the expected result while owner production approval is absent.
-10. Only after the owner explicitly accepts every human-only category,
-    including both localized content records and complete listening of both
-    narrations, plus production/public distribution, record the decision with `approval record
-    <profile.json...> --by <owner> --on <YYYY-MM-DD>`. This command requires an
-    already-passed complete local draft, updates the profile review statuses,
-    and writes a hashed `approval-record.json`; never run it from inference.
-11. Remove pending wording from both approved localized editorial records, rerun
-    `review prepare`, then run one approved batch dry-run. For real promotion,
-    use `promote-batch <profile.json...> --collection main`. The tool validates
-    every animal before writing, assembles canonical packages under each run’s
-    `promotion-staging/`, installs all non-catalog files first, exposes
-    `animal.ts` last, updates the collection once, regenerates credits/notices,
-    validates content, and rolls back the whole batch on failure. The local
-    review catalog treats the production collection as authoritative and
-    automatically replaces the same-ID private draft assets after promotion;
-    do not maintain a second manual “promoted” list. Same-hash
-    reruns must report every target as `identical`; differing or partial
-    targets hard-fail.
-12. Run `promote verify <profile.json>` for every installed animal, golden
-    regression, and the repository’s complete verification suite. Confirm the
-    production count equals the current collection and that all original 12
-    entries and three golden samples remain unchanged.
+The tracked tool and this Skill are the portable source of truth. Do not depend
+on ignored `docs/specification/` files or another worktree's local scripts.
 
-## Repair loop
+## Stage order and locks
 
-When QA reports a hard failure, make only the smallest deterministic repair
-supported by the profile and rerun the failed stage:
+Run from the `prehistoric-animal-museum` repository root. Every animal gets its
+own candidate directory and `.handoff/animal-onboarding-runs/<animal-id>/`.
+Create both from the tracked source model with `run init`; its deliberately
+blocking placeholders must be replaced with verified source, science, model and
+presentation facts before their respective gates can pass.
 
-- source/evidence failure: stop and find a verifiable source;
-- validator, clip or budget failure: rerun the Blender or GLB stage and retain
-  the new log;
-- invisible Idle: strengthen the relevant motion template, rerun Blender, then
-  rerun browser composition; never waive the pixel-change hard gate;
-- invalid mouth Idle: first fix source-object vertex correspondence, bone/weight
-  selection or the exact curated mask; use only a slow partial close. If teeth,
-  tongue and soft tissue cannot remain coherent, set the profile to `disabled`
-  with evidence or send the asset for manual rigging—never widen the mask or
-  waive the 0/4/8-second evidence gate;
-- narration engine failure: regenerate the affected locale with the pinned
-  Qwen3-TTS Serena / declared-language pair; a technically valid system-TTS
-  MP3, cross-language fallback or copied narration is still a hard failure;
-- floating land animal: move the animal onto a continuous readable ground patch,
-  then correct the yaw-rotated, contact-derived shadow center/depth/opacity and
-  rerun all five browser viewports; mathematical shadow coverage does not
-  replace the contact-sheet review;
-- wrong initial head side: correct `initialYawDegrees`, move any asymmetric
-  shadow offset with the rotated contacts, then rerun composition; never change
-  `initialHeadSide` merely to make a wrong view pass;
-- landmarks or composition failure: correct profile orientation/presentation,
-  rerun Blender if landmarks changed, then rerun all five viewports;
-- missing derivative or hash mismatch: regenerate from the reviewed source;
-- science, anatomy, material, background, natural motion, Simplified Chinese or
-  English copy, either locale's complete audio listening, or publication
-  decision: leave it pending for a human.
+1. **Environment lock.** Run `doctor`, baseline verification and golden
+   regression. On a fresh worktree, capture the local golden record only after
+   production baseline verification passes, then regress it. Stop on a doctor
+   or baseline failure.
+2. **Requirement lock.** Resolve all four `source-record.json` blockers, then
+   write and validate `review-contract.json` before model edits. Add real
+   task-specific issues, invariants and evidence beyond the starter template.
+   Name target defects, unchanged invariants, Given/When/Then interaction
+   semantics and the exact evidence that closes each item. Every
+   `asset-inspection.json` known issue must bind one exact contract subject and
+   its complete evidence set.
+3. **Source/risk lock.** Record `asset-inspection.json`; route it to L0-L3.
+   Rights or identity blockers stop work. L3 and owner-requested parallel work
+   may proceed only with explicit acceptance, an isolated animal workspace and
+   an independent stage lock. An explicit owner instruction to advance named
+   L3 animals in parallel already accepts that named L3 investment; record it
+   without asking the same question again. A generic preference for concurrency
+   does not.
+4. **Model lock candidate.** Inspect the source rig and animation, then select
+   the processing strategy explicitly. The shared Blender normalizer implements
+   only `replace-with-project-morph`; it may discard a source rig or animation
+   only when that destructive replacement is recorded. Use a dedicated L3
+   operation for `preserve-source-rig-retime` or `custom-rebuild`. Retain
+   structure/rig/log/landmark evidence and run model-only QA. The model input
+   must be the exact rights-verified source path; derived revisions belong in
+   the output path and hash-bound processing log. Profile, normalization log,
+   risk route and accepted L3 operations must name the same processing
+   strategy. Use the smallest bounded operation consistent with the contract.
+   Complete `risk-evidence-manifest.json` for every route-required proof before
+   owner review. Do not create backgrounds, posters, narration or editorial
+   packages yet.
+5. **Runtime evidence lock.** Create a review-efficient capture plan and execute
+   it through the already-open headed Browser or Chrome control Skill. Load that
+   Skill at this stage, start the documented local review server, and execute
+   every emitted request in order. Never
+   launch Playwright, Puppeteer, Chrome, Chromium or another headless browser.
+   The collector must record a name, Codex task identity and the exact
+   collector attestation. The local validator proves internal consistency,
+   state effects and hashes; because Browser/Chrome control does not provide a
+   signed receipt, it must describe capture origin as collector-attested, never
+   cryptographically verified. Ingest the evidence so every screenshot is
+   bound to the final and actually loaded GLB SHA, viewport, observed camera,
+   state, exact paused animation time and file digest. Set the base camera
+   before applying interaction actions; a closest-state capture must show a
+   smaller observed distance and different pixels than its paired initial
+   state. In review-efficient mode, every primary and auxiliary angle covers
+   0/2/4/6/8 seconds; the validator proves each contract perspective × time
+   combination rather than counting files. A transparency full-cycle contract
+   requires at least two angles and no sampling gap above 0.25 seconds. The
+   production golden baseline is mandatory and hash-bound in the persisted
+   plan; it cannot be omitted after planning.
+6. **Agent visual lock.** Generate the agent-review template, inspect the actual
+   evidence and fill every category with a concrete finding and evidence path.
+   For animated animals inspect 0/2/4/6/8 seconds at every declared primary and
+   auxiliary angle. Static stills cannot prove a full loop, and PNG sequences
+   cannot be labelled as continuous video. For L3, use an agent/task other than
+   the model author and the capture collector. Record both reviewer name and
+   reviewer task identity; the machine rejects reuse of the collector task.
+7. **Owner model lock.** Generate the one-page owner packet only after machine
+   and agent checks pass. Owner preparation reruns strict model-only QA into
+   `owner-model-qa.json` and shows measured budgets, warnings, L3 acceptance,
+   route-evidence completion, capture-provenance limits and key agent findings.
+   Record `model-lock.json` only from an explicit owner decision. The lock binds
+   that fresh QA decision plus normalization log, normalized Blend, landmarks,
+   validator, risk manifest and capture/review evidence. Any bound change
+   reopens the model stage.
+8. **Finishing lock.** After the model lock, generate landscape/portrait
+   backgrounds, poster, portrait poster, thumbnail, localized editorial records
+   and independent `zh-CN`/`en` Qwen3-TTS Serena narration. Run complete QA and
+   prepare the promotion manifest.
+9. **Publication lock.** Record final approval only after the owner accepts
+   science, visual quality, motion, both complete narration listening reviews
+   and public distribution. Dry-run the whole batch, promote atomically, then
+   verify baseline, installed hashes and original collection order.
 
-Never repair a rights or science failure by weakening a threshold or changing a
-gate category.
+Do not advance downstream artifacts while the preceding lock is missing or
+stale. A failure in one parallel animal never unlocks or invalidates another.
+
+## Model contract
+
+Use the target, normal review and absolute exception budgets from
+`ANIMAL_AUTHORING_GUIDE.md`; the executable values live in
+`tools/animal-onboarding/src/budget-policy.ts`. A profile may tighten a limit. Raising a normal ceiling
+requires a metric-scoped `budgetException` with reason, risk owner and date, and
+may never exceed the absolute ceiling.
+
+Every animated runtime has exactly one self-contained `Idle` lasting eight
+seconds at 24 fps, continuous at 0/8 seconds and without root drift. Retiming a
+7.5-second clip is mandatory; it is not a budget exception. Clip metadata alone
+does not prove visible or natural motion.
+
+For mouth motion, use `source-rig` only with a verified weighted jaw/tongue
+chain, or `curated-components` with an exact per-model hinge and bounded vertex
+selection. Otherwise record `disabled`. Never move a guessed broad head region.
+
+## Repair rule
+
+On failure, repair the smallest deterministic region and rerun that stage plus
+all downstream locks whose hashes changed. Do not weaken shared gates to make a
+candidate pass. Convert recurring visual failures into contract invariants and
+evidence requirements using `failure-regressions.md`.
+
+If a repair needs new rigging, full rebind, anatomy reconstruction, complex
+transparency work or mouth reconstruction, route it as L3. Owner acceptance
+allows the investment; it does not make the result acceptable.
 
 ## Handoff
 
-Report, for every draft:
+Give the owner one compact packet per animal with:
 
-- automated pass/fail and exact evidence paths;
-- declared mouth-motion mode, measured affected region and, when enabled, both
-  Blender 0/4/8-second and browser 0/4-second evidence;
-- warnings;
-- all still-pending human-only decisions, listed separately for `zh-CN` and
-  `en` content and narration where applicable;
-- promotion dry-run and, when authorized, `promotion-result.json` plus the
-  exact tracked-file list;
-- proof that production directories equal the current collection, the original
-  12-animal prefix is preserved, and all golden hashes still pass.
+- risk level, route and any explicitly accepted exception;
+- exact model SHA and machine gate result;
+- agent findings with full-loop and multi-view evidence links;
+- unresolved blockers only;
+- the precise decision requested: accept model for finishing, or approve final
+  public promotion.
 
-Say “automated pass” or “local review draft ready”; never say “approved” unless
-the corresponding owner approval is explicitly present.
+Say “machine pass”, “agent visual pass”, “model locked for finishing”, or
+“owner-approved for promotion” precisely. Never collapse them into “approved”.
