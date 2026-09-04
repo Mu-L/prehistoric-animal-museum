@@ -5647,13 +5647,13 @@ html[data-model-preview-capture] .viewer-host::after {
   }
 }
 
-/* Water / 海洋 Cards - Sunlit Translucent Sea-Glass Cards */
+/* Water / 海洋 Cards - Aquatic Marine Cyan-Tinted Sea-Glass Cards */
 .collection-sheet[data-habitat="water"] .collection-card,
 .collection-grid[data-habitat="water"] .collection-card,
 .collection-card[data-habitat="water"] {
-  background: rgba(255, 255, 255, 0.94);
-  border-color: rgba(75, 190, 200, 0.4);
-  color: #0f404b;
+  background: #ddf2f7;
+  border-color: rgba(60, 180, 195, 0.42);
+  color: #0a3a44;
   box-shadow: 0 6px 20px -3px rgba(15, 65, 75, 0.1);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -5662,7 +5662,7 @@ html[data-model-preview-capture] .viewer-host::after {
 .collection-sheet[data-habitat="water"] .collection-card:hover,
 .collection-grid[data-habitat="water"] .collection-card:hover,
 .collection-card[data-habitat="water"]:hover {
-  background: #ffffff;
+  background: #e9f8fa;
   border-color: rgba(14, 145, 158, 0.75);
   box-shadow: 0 14px 34px -4px rgba(15, 65, 75, 0.16);
   transform: translateY(-2px);
@@ -5672,7 +5672,7 @@ html[data-model-preview-capture] .viewer-host::after {
 .collection-grid[data-habitat="water"] .collection-card[data-current="true"],
 .collection-card[data-habitat="water"][data-current="true"] {
   border-color: #0b828f;
-  background: #ffffff;
+  background: #edf9fb;
   transform: translateY(-2px);
   animation: card-water-current-breathe 4s ease-in-out infinite;
 }
@@ -5680,25 +5680,25 @@ html[data-model-preview-capture] .viewer-host::after {
 .collection-sheet[data-habitat="water"] .collection-card__image,
 .collection-grid[data-habitat="water"] .collection-card__image,
 .collection-card[data-habitat="water"] .collection-card__image {
-  background: #d4eff3;
+  background: #c8ecf2;
 }
 
 .collection-sheet[data-habitat="water"] .collection-card__copy strong,
 .collection-grid[data-habitat="water"] .collection-card__copy strong,
 .collection-card[data-habitat="water"] .collection-card__copy strong {
-  color: #0f404b;
+  color: #0a3a44;
 }
 
 .collection-sheet[data-habitat="water"] .collection-card__copy small,
 .collection-grid[data-habitat="water"] .collection-card__copy small,
 .collection-card[data-habitat="water"] .collection-card__copy small {
-  color: #386772;
+  color: #27626e;
 }
 
 .collection-sheet[data-habitat="water"] .collection-card__number,
 .collection-grid[data-habitat="water"] .collection-card__number,
 .collection-card[data-habitat="water"] .collection-card__number {
-  color: rgba(11, 130, 143, 0.5);
+  color: rgba(11, 130, 143, 0.6);
 }
 
 /* Air / 苍穹 Cards - Ethereal Weightless High-Key Cards */
