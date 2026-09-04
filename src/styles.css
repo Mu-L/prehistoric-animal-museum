@@ -5648,70 +5648,61 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 /* Water / 海洋 Cards - Aquatic Marine Cyan-Tinted Sea-Glass Cards */
-.collection-sheet[data-habitat="water"] .collection-card,
 .collection-grid[data-habitat="water"] .collection-card,
 .collection-card[data-habitat="water"] {
-  background: #ddf2f7;
-  border-color: rgba(60, 180, 195, 0.42);
-  color: #0a3a44;
-  box-shadow: 0 6px 20px -3px rgba(15, 65, 75, 0.1);
+  background: #ebf7fa;
+  border-color: rgba(60, 180, 195, 0.35);
+  color: #0e3d47;
+  box-shadow: 0 6px 20px -3px rgba(15, 65, 75, 0.08);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
-.collection-sheet[data-habitat="water"] .collection-card:hover,
 .collection-grid[data-habitat="water"] .collection-card:hover,
 .collection-card[data-habitat="water"]:hover {
-  background: #e9f8fa;
+  background: #f4fcfe;
   border-color: rgba(14, 145, 158, 0.75);
-  box-shadow: 0 14px 34px -4px rgba(15, 65, 75, 0.16);
+  box-shadow: 0 14px 34px -4px rgba(15, 65, 75, 0.14);
   transform: translateY(-2px);
 }
 
-.collection-sheet[data-habitat="water"] .collection-card[data-current="true"],
 .collection-grid[data-habitat="water"] .collection-card[data-current="true"],
 .collection-card[data-habitat="water"][data-current="true"] {
   border-color: #0b828f;
-  background: #edf9fb;
+  background: #f0fafd;
   transform: translateY(-2px);
   animation: card-water-current-breathe 4s ease-in-out infinite;
 }
 
-.collection-sheet[data-habitat="water"] .collection-card__image,
 .collection-grid[data-habitat="water"] .collection-card__image,
 .collection-card[data-habitat="water"] .collection-card__image {
-  background: #c8ecf2;
+  background: #daf1f5;
 }
 
-.collection-sheet[data-habitat="water"] .collection-card__copy strong,
 .collection-grid[data-habitat="water"] .collection-card__copy strong,
 .collection-card[data-habitat="water"] .collection-card__copy strong {
-  color: #0a3a44;
+  color: #0e3d47;
 }
 
-.collection-sheet[data-habitat="water"] .collection-card__copy small,
 .collection-grid[data-habitat="water"] .collection-card__copy small,
 .collection-card[data-habitat="water"] .collection-card__copy small {
-  color: #27626e;
+  color: #356d78;
 }
 
-.collection-sheet[data-habitat="water"] .collection-card__number,
 .collection-grid[data-habitat="water"] .collection-card__number,
 .collection-card[data-habitat="water"] .collection-card__number {
-  color: rgba(11, 130, 143, 0.6);
+  color: rgba(11, 130, 143, 0.55);
 }
 
 /* Air / 苍穹 Cards - Ethereal Weightless High-Key Cards */
-.collection-sheet[data-habitat="air"] .collection-card,
 .collection-grid[data-habitat="air"] .collection-card,
 .collection-card[data-habitat="air"] {
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.95);
   border-color: rgba(140, 195, 215, 0.35);
   color: #153949;
   box-shadow: 0 10px 24px -6px rgba(45, 95, 125, 0.1);
 }
 
-.collection-sheet[data-habitat="air"] .collection-card:hover,
 .collection-grid[data-habitat="air"] .collection-card:hover,
 .collection-card[data-habitat="air"]:hover {
   background: #ffffff;
@@ -5720,7 +5711,6 @@ html[data-model-preview-capture] .viewer-host::after {
   transform: translateY(-2px);
 }
 
-.collection-sheet[data-habitat="air"] .collection-card[data-current="true"],
 .collection-grid[data-habitat="air"] .collection-card[data-current="true"],
 .collection-card[data-habitat="air"][data-current="true"] {
   border-color: #1e86a8;
@@ -5729,38 +5719,52 @@ html[data-model-preview-capture] .viewer-host::after {
   animation: card-air-current-breathe 4s ease-in-out infinite;
 }
 
-.collection-sheet[data-habitat="air"] .collection-card__image,
 .collection-grid[data-habitat="air"] .collection-card__image,
 .collection-card[data-habitat="air"] .collection-card__image {
   background: #e5f2f7;
 }
 
-.collection-sheet[data-habitat="air"] .collection-card__copy strong,
 .collection-grid[data-habitat="air"] .collection-card__copy strong,
 .collection-card[data-habitat="air"] .collection-card__copy strong {
   color: #153949;
 }
 
-.collection-sheet[data-habitat="air"] .collection-card__copy small,
 .collection-grid[data-habitat="air"] .collection-card__copy small,
 .collection-card[data-habitat="air"] .collection-card__copy small {
   color: #5e8494;
 }
 
-.collection-sheet[data-habitat="air"] .collection-card__number,
 .collection-grid[data-habitat="air"] .collection-card__number,
 .collection-card[data-habitat="air"] .collection-card__number {
   color: rgba(31, 107, 138, 0.45);
 }
 
 /* Land / 陆地 Cards - Warm Mineral Jade/Earth Character */
-.collection-sheet[data-habitat="land"] .collection-card[data-current="true"],
+.collection-grid[data-habitat="land"] .collection-card,
+.collection-card[data-habitat="land"] {
+  background: #f5f0df;
+  border-color: rgba(46, 72, 58, 0.15);
+  color: var(--ink);
+}
+
+.collection-grid[data-habitat="land"] .collection-card:hover,
+.collection-card[data-habitat="land"]:hover {
+  background: #faf7eb;
+  border-color: rgba(46, 107, 86, 0.5);
+  transform: translateY(-2px);
+}
+
 .collection-grid[data-habitat="land"] .collection-card[data-current="true"],
 .collection-card[data-habitat="land"][data-current="true"] {
   border-color: #2e6b56;
-  background: #ffffff;
+  background: #fbf9ef;
   transform: translateY(-2px);
   animation: card-land-current-breathe 4s ease-in-out infinite;
+}
+
+.collection-grid[data-habitat="land"] .collection-card__image,
+.collection-card[data-habitat="land"] .collection-card__image {
+  background: #dfe7c9;
 }
 
 @media (min-width: 1280px) {
