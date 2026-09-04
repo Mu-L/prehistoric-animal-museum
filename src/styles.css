@@ -4174,24 +4174,34 @@ html[data-model-preview-capture] .viewer-host::after {
   color: var(--ink-muted);
 }
 
-/* Water / 蔚蓝海洋 (-200m) Atmosphere - Sunlit Crystalline Marine Lagoon */
+/* Water / 蔚蓝海洋 (-200m) Atmosphere - Sunlit Surface to Deep Marine Aqua Gradient (上浅下深) */
 .collection-sheet[data-habitat="water"] {
-  background: #f2f9f9;
-  border-color: rgba(90, 195, 195, 0.35);
-  box-shadow: 0 28px 90px rgba(18, 52, 60, 0.22), 0 0 70px rgba(120, 210, 215, 0.25);
+  background: linear-gradient(180deg, #f0fafb 0%, #e2f4f6 30%, #ceeff3 65%, #b4e5ec 100%);
+  border-color: rgba(60, 185, 195, 0.38);
+  box-shadow: 0 28px 90px rgba(14, 48, 56, 0.2), 0 0 70px rgba(100, 205, 215, 0.25);
 }
 
 .collection-sheet[data-habitat="water"] .collection-atmosphere__caustics {
   opacity: 1;
   background:
-    /* Diagonal sunbeams shimmering through clear shallow ocean water */
-    linear-gradient(155deg,
-      rgba(255, 255, 255, 0.75) 0%,
-      rgba(180, 238, 242, 0.35) 25%,
-      rgba(130, 215, 222, 0.15) 55%,
-      transparent 85%
+    /* Surface sunlight penetration from the top */
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(255, 255, 255, 0.4) 15%,
+      transparent 45%
     ),
-    radial-gradient(120% 80% at 50% -10%, rgba(160, 230, 236, 0.5) 0%, rgba(242, 249, 249, 0.2) 60%, transparent 100%);
+    /* Downward water depth gradient: darker marine turquoise at the bottom */
+    linear-gradient(180deg,
+      transparent 35%,
+      rgba(20, 140, 155, 0.08) 70%,
+      rgba(14, 115, 130, 0.18) 100%
+    ),
+    /* Soft diagonal water caustics */
+    linear-gradient(160deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(150, 230, 238, 0.25) 30%,
+      transparent 70%
+    );
 }
 
 .collection-sheet[data-habitat="water"] .collection-atmosphere__caustics::before {
@@ -4199,9 +4209,10 @@ html[data-model-preview-capture] .viewer-host::after {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 30% 20%, rgba(200, 248, 250, 0.4) 0%, transparent 45%),
-    radial-gradient(circle at 75% 15%, rgba(150, 225, 232, 0.35) 0%, transparent 40%),
-    linear-gradient(176deg, rgba(160, 235, 240, 0.2) 0%, transparent 55%);
+    /* Shimmering surface water caustics concentrated in upper layer */
+    radial-gradient(ellipse 90% 45% at 50% 10%, rgba(255, 255, 255, 0.6) 0%, transparent 60%),
+    radial-gradient(circle at 25% 18%, rgba(180, 245, 250, 0.35) 0%, transparent 45%),
+    radial-gradient(circle at 78% 22%, rgba(140, 235, 242, 0.3) 0%, transparent 40%);
   animation: underwater-sun-shafts 12s ease-in-out infinite alternate;
 }
 
@@ -4217,20 +4228,20 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-sheet[data-habitat="water"] .collection-sheet__handle {
-  background: #9fc6cc;
+  background: #89c5cc;
 }
 
 .collection-sheet[data-habitat="water"] .collection-sheet__eyebrow {
-  color: #117a8b;
+  color: #0a7582;
 }
 
 .collection-sheet[data-habitat="water"] .collection-sheet__header h2 {
-  color: #134552;
-  text-shadow: 0 1px 12px rgba(150, 220, 226, 0.3);
+  color: #0e3d47;
+  text-shadow: 0 1px 12px rgba(130, 215, 222, 0.3);
 }
 
 .collection-sheet[data-habitat="water"] .collection-sheet__header p:last-child {
-  color: #4a727c;
+  color: #3b6d78;
 }
 
 .collection-sheet:focus {
@@ -4680,6 +4691,8 @@ html[data-model-preview-capture] .viewer-host::after {
 
 .elevator-zone--water {
   padding-bottom: max(64px, calc(env(safe-area-inset-bottom) + 40px));
+  background: linear-gradient(180deg, transparent 0%, rgba(185, 235, 242, 0.15) 30%, rgba(140, 218, 228, 0.28) 100%);
+  border-radius: 20px;
 }
 
 .elevator-zone__header {
@@ -4692,7 +4705,7 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-sheet[data-habitat="water"] .elevator-zone__header {
-  border-bottom-color: rgba(110, 231, 222, 0.25);
+  border-bottom-color: rgba(60, 185, 195, 0.3);
 }
 
 .elevator-zone__badge {
@@ -5602,15 +5615,15 @@ html[data-model-preview-capture] .viewer-host::after {
 @keyframes card-water-current-breathe {
   0%, 100% {
     box-shadow:
-      inset 4px 0 0 #14919b,
-      0 6px 18px -4px rgba(20, 145, 155, 0.2),
-      0 0 0 1px rgba(20, 145, 155, 0.3);
+      inset 4px 0 0 #0b828f,
+      0 6px 18px -4px rgba(11, 130, 143, 0.22),
+      0 0 0 1px rgba(11, 130, 143, 0.32);
   }
   50% {
     box-shadow:
-      inset 4px 0 0 #14919b,
-      0 10px 26px -4px rgba(20, 145, 155, 0.32),
-      0 0 12px rgba(20, 145, 155, 0.22);
+      inset 4px 0 0 #0b828f,
+      0 10px 26px -4px rgba(11, 130, 143, 0.35),
+      0 0 14px rgba(11, 130, 143, 0.25);
   }
 }
 
@@ -5618,10 +5631,10 @@ html[data-model-preview-capture] .viewer-host::after {
 .collection-sheet[data-habitat="water"] .collection-card,
 .collection-grid[data-habitat="water"] .collection-card,
 .collection-card[data-habitat="water"] {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(120, 205, 205, 0.38);
-  color: #134552;
-  box-shadow: 0 8px 24px -4px rgba(20, 70, 75, 0.08);
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(75, 190, 200, 0.4);
+  color: #0f404b;
+  box-shadow: 0 6px 20px -3px rgba(15, 65, 75, 0.1);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -5630,15 +5643,15 @@ html[data-model-preview-capture] .viewer-host::after {
 .collection-grid[data-habitat="water"] .collection-card:hover,
 .collection-card[data-habitat="water"]:hover {
   background: #ffffff;
-  border-color: rgba(70, 185, 185, 0.7);
-  box-shadow: 0 14px 34px -4px rgba(20, 70, 75, 0.14);
+  border-color: rgba(14, 145, 158, 0.75);
+  box-shadow: 0 14px 34px -4px rgba(15, 65, 75, 0.16);
   transform: translateY(-2px);
 }
 
 .collection-sheet[data-habitat="water"] .collection-card[data-current="true"],
 .collection-grid[data-habitat="water"] .collection-card[data-current="true"],
 .collection-card[data-habitat="water"][data-current="true"] {
-  border-color: #14919b;
+  border-color: #0b828f;
   background: #ffffff;
   transform: translateY(-2px);
   animation: card-water-current-breathe 4s ease-in-out infinite;
@@ -5647,25 +5660,25 @@ html[data-model-preview-capture] .viewer-host::after {
 .collection-sheet[data-habitat="water"] .collection-card__image,
 .collection-grid[data-habitat="water"] .collection-card__image,
 .collection-card[data-habitat="water"] .collection-card__image {
-  background: #dff2f2;
+  background: #d4eff3;
 }
 
 .collection-sheet[data-habitat="water"] .collection-card__copy strong,
 .collection-grid[data-habitat="water"] .collection-card__copy strong,
 .collection-card[data-habitat="water"] .collection-card__copy strong {
-  color: #134552;
+  color: #0f404b;
 }
 
 .collection-sheet[data-habitat="water"] .collection-card__copy small,
 .collection-grid[data-habitat="water"] .collection-card__copy small,
 .collection-card[data-habitat="water"] .collection-card__copy small {
-  color: #4a727c;
+  color: #386772;
 }
 
 .collection-sheet[data-habitat="water"] .collection-card__number,
 .collection-grid[data-habitat="water"] .collection-card__number,
 .collection-card[data-habitat="water"] .collection-card__number {
-  color: rgba(20, 110, 120, 0.45);
+  color: rgba(11, 130, 143, 0.5);
 }
 
 /* Air / 苍穹 Cards - Ethereal Weightless High-Key Cards */
