@@ -1,0 +1,632 @@
+/**
+ * 博物学家折叠全景卷轴 (Naturalist's Pocket Panorama)
+ * -------------------------------------------------------------
+ * Physical Papercraft Physics & Aesthetics:
+ * - Continuous accordion-folded pocket panorama ribbon (Leporello folding book)
+ * - Mountain (凸折) and Valley (凹折) paper creases with physical highlight & shadow physics
+ * - Cabinet of curiosities / specimen compartment elevation on active state
+ * - Multi-terminal ergonomics (Desktop panorama strip, iPad tactile ribbon, Mobile scrollable pocket accordion)
+ * - Authentic 19th-century naturalist mineral washes (Ochre, Azure, Moss, Prussian Teal)
+ */
+
+:root {
+  --ps-ink: #1c382b;
+  --ps-ink-rgb: 28, 56, 43;
+  --ps-ink-muted: #4e6358;
+  --ps-ink-faint: #80968b;
+  --ps-paper-cream: #fffdf7;
+  --ps-paper-vellum: #f8f4ea;
+  --ps-paper-wash-all: #faf6eb;
+  --ps-paper-wash-air: #f1f7fb;
+  --ps-paper-wash-land: #f4f6ec;
+  --ps-paper-wash-water: #edf6f6;
+  --ps-border-crease: rgba(28, 56, 43, 0.16);
+  --ps-gold-leaf: #c99e4b;
+  --ps-gold-foil: #dfba6a;
+  --ps-gold-burnish: #8f6e29;
+}
+
+/* ==========================================================================
+   1. Master Outer Wrapper & Ribbon Architecture
+   ========================================================================== */
+
+.panorama-scroll-root {
+  position: relative;
+  width: 100%;
+  padding: 0 30px 16px;
+  flex-shrink: 0;
+  user-select: none;
+  isolation: isolate;
+}
+
+/* The Continuous Accordion Ribbon Track */
+.panorama-ribbon {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(120px, 0.82fr) repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  background: var(--ps-paper-cream);
+  border-radius: 16px;
+  padding: 4px;
+  border: 1px solid rgba(28, 56, 43, 0.14);
+  box-shadow:
+    0 2px 4px rgba(28, 56, 43, 0.04),
+    0 8px 24px -4px rgba(28, 56, 43, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  gap: 0;
+}
+
+/* Continuous background mineral wash running across the folding ribbon */
+.panorama-ribbon__backdrop-wash {
+  position: absolute;
+  inset: 0;
+  border-radius: 15px;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(
+    90deg,
+    #faf6ec 0%,
+    #f8f4ea 24%,
+    #edf4f9 48%,
+    #f0f5ec 74%,
+    #e8f3f4 100%
+  );
+  opacity: 0.65;
+}
+
+/* Top & Bottom Archival Measurement Ticks (经折装边缘对齐压痕) */
+.panorama-ribbon__ruler {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.28;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--ps-ink) 0px,
+    var(--ps-ink) 1px,
+    transparent 1px,
+    transparent 12px
+  );
+}
+
+.panorama-ribbon__ruler--top {
+  top: 1px;
+}
+
+.panorama-ribbon__ruler--bottom {
+  bottom: 1px;
+}
+
+/* ==========================================================================
+   2. Individual Accordion Fold Panel (.panorama-fold)
+   ========================================================================== */
+
+.panorama-fold-item {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  z-index: 2;
+}
+
+.panorama-fold {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ps-ink);
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 200ms ease;
+}
+
+/* Hover Lift - Simulating paper leaf elastic tension */
+.panorama-fold:hover:not([data-active="true"]) {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(28, 56, 43, 0.12);
+  box-shadow:
+    0 4px 14px -2px rgba(28, 56, 43, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+/* Tactile Active Press - Paper compression feedback */
+.panorama-fold:active {
+  transform: translateY(0) scale(0.99) !important;
+  transition-duration: 90ms;
+}
+
+/* Accessible Focus Ring matching archival museum style */
+.panorama-fold:focus-visible {
+  outline: 2px solid var(--ps-gold-leaf);
+  outline-offset: 2px;
+  z-index: 8;
+}
+
+/* ==========================================================================
+   3. Woodcut Engraving Specimen Well (.panorama-fold__visual)
+   ========================================================================== */
+
+.panorama-fold__visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  border: 1px solid rgba(28, 56, 43, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 1px 2px rgba(28, 56, 43, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.9);
+  transition:
+    background 240ms ease,
+    border-color 240ms ease,
+    transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 240ms ease;
+}
+
+/* The SVG Woodcut Engraving */
+.panorama-fold__svg {
+  width: 32px;
+  height: 32px;
+  display: block;
+  stroke: var(--ps-ink);
+  fill: none;
+  transition:
+    stroke 220ms ease,
+    transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.panorama-fold:hover:not([data-active="true"]) .panorama-fold__svg {
+  transform: scale(1.05);
+}
+
+/* ==========================================================================
+   4. Naturalist Taxonomic Typography & Specimen Plaque (.panorama-fold__info)
+   ========================================================================== */
+
+.panorama-fold__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.panorama-fold__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+/* Roman Folio Tag (e.g. "FOL. I", "FOL. II") */
+.panorama-fold__folio {
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ps-ink-faint);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  transition: color 200ms ease;
+}
+
+/* Latin Taxonomic Sphere Label (e.g. "COMPENDIUM", "AEROSPHERE") */
+.panorama-fold__latin {
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ps-ink-muted);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 200ms ease;
+}
+
+/* Chinese Specimen Habitat Title */
+.panorama-fold__title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.panorama-fold__title {
+  font-size: 0.96rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--ps-ink);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: color 200ms ease;
+}
+
+/* Naturalist Specimen Count Tag / Archival Number Stamp */
+.panorama-fold__count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(28, 56, 43, 0.06);
+  border: 1px solid rgba(28, 56, 43, 0.09);
+  font-size: 0.68rem;
+  font-weight: 750;
+  color: var(--ps-ink-muted);
+  line-height: 1.3;
+  flex-shrink: 0;
+  transition:
+    background 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease;
+}
+
+.panorama-fold__count-num {
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.panorama-fold__count-unit {
+  font-size: 0.62rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* Subtitle / Specimen Range Descriptor */
+.panorama-fold__subtitle {
+  font-size: 0.68rem;
+  color: var(--ps-ink-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 200ms ease;
+}
+
+/* ==========================================================================
+   5. Active State Physics (Opened Cabinet / Unfolded Paper Leaf)
+   ========================================================================== */
+
+.panorama-fold[data-active="true"] {
+  z-index: 6;
+  transform: translateY(-3px) scale(1.015);
+  box-shadow:
+    0 6px 20px -3px rgba(28, 56, 43, 0.22),
+    0 2px 6px -1px rgba(28, 56, 43, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* 5.1 Habitat A: 全景 (Compendium / Antique Parchment Gold) */
+.panorama-fold[data-habitat="all"][data-active="true"] {
+  background: linear-gradient(140deg, #254b3b 0%, #173629 100%);
+  border-color: #173629;
+}
+
+.panorama-fold[data-habitat="all"][data-active="true"] .panorama-fold__visual {
+  background: rgba(201, 158, 75, 0.24);
+  border-color: var(--ps-gold-foil);
+  box-shadow:
+    0 0 12px rgba(201, 158, 75, 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.panorama-fold[data-habitat="all"][data-active="true"] .panorama-fold__svg {
+  stroke: var(--ps-gold-foil);
+}
+
+/* 5.2 Habitat B: 苍穹 (Air / Morning Azure Wash) */
+.panorama-fold[data-habitat="air"][data-active="true"] {
+  background: linear-gradient(140deg, #285b7e 0%, #163d58 100%);
+  border-color: #163d58;
+}
+
+.panorama-fold[data-habitat="air"][data-active="true"] .panorama-fold__visual {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 0 12px rgba(90, 160, 205, 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.panorama-fold[data-habitat="air"][data-active="true"] .panorama-fold__svg {
+  stroke: #e6f3fc;
+}
+
+/* 5.3 Habitat C: 陆表 (Land / Warm Ochre & Primeval Moss) */
+.panorama-fold[data-habitat="land"][data-active="true"] {
+  background: linear-gradient(140deg, #2f5d44 0%, #1b3d2c 100%);
+  border-color: #1b3d2c;
+}
+
+.panorama-fold[data-habitat="land"][data-active="true"] .panorama-fold__visual {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 0 12px rgba(80, 160, 110, 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.panorama-fold[data-habitat="land"][data-active="true"] .panorama-fold__svg {
+  stroke: #edf7ee;
+}
+
+/* 5.4 Habitat D: 深渊 (Water / Prussian Navy & Abyssal Teal) */
+.panorama-fold[data-habitat="water"][data-active="true"] {
+  background: linear-gradient(140deg, #185a62 0%, #0d3b41 100%);
+  border-color: #0d3b41;
+}
+
+.panorama-fold[data-habitat="water"][data-active="true"] .panorama-fold__visual {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 0 12px rgba(60, 175, 185, 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.panorama-fold[data-habitat="water"][data-active="true"] .panorama-fold__svg {
+  stroke: #e2f7f7;
+}
+
+/* Active State Typography - Crisp contrast on mineral wash */
+.panorama-fold[data-active="true"] .panorama-fold__title {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.panorama-fold[data-habitat="all"][data-active="true"] .panorama-fold__title {
+  color: #fffaf0;
+}
+
+.panorama-fold[data-active="true"] .panorama-fold__folio {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.panorama-fold[data-active="true"] .panorama-fold__latin {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.panorama-fold[data-active="true"] .panorama-fold__subtitle {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.panorama-fold[data-active="true"] .panorama-fold__count-badge {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+
+/* Active Gold Leaf Corner Tabs (压痕折角护边) */
+.panorama-fold__active-clip {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ps-gold-leaf);
+  box-shadow:
+    0 0 6px rgba(201, 158, 75, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* ==========================================================================
+   6. Physical Crease Physics (.panorama-crease)
+   ========================================================================== */
+
+.panorama-crease {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  margin: 0 -5px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* 6.1 Mountain Fold (凸折 - Ridge Crease): Catches Glance Light */
+.panorama-crease--mountain::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    -1px 0 2px rgba(28, 56, 43, 0.16),
+    1px 0 2px rgba(255, 255, 255, 0.8);
+}
+
+/* 6.2 Valley Fold (凹折 - Trough Crease): Inward Shadow Groove */
+.panorama-crease--valley::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: rgba(28, 56, 43, 0.24);
+  box-shadow:
+    inset -1px 0 2px rgba(0, 0, 0, 0.15),
+    inset 1px 0 2px rgba(0, 0, 0, 0.15);
+  border-radius: 1px;
+}
+
+/* ==========================================================================
+   7. Multi-terminal Ergonomics & Breakpoints
+   ========================================================================== */
+
+/* 7.1 Desktop (>=1024px) */
+@media (min-width: 1024px) {
+  .panorama-scroll-root {
+    padding: 0 30px 16px;
+  }
+
+  .panorama-fold {
+    min-height: 72px;
+    padding: 10px 14px;
+  }
+
+  .panorama-fold__visual {
+    width: 48px;
+    height: 48px;
+  }
+
+  .panorama-fold__svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .panorama-fold__title {
+    font-size: 1rem;
+  }
+}
+
+/* 7.2 Tablet / iPad (768px ~ 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .panorama-scroll-root {
+    padding: 0 20px 14px;
+  }
+
+  .panorama-ribbon {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .panorama-fold {
+    min-height: 64px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .panorama-fold__visual {
+    width: 42px;
+    height: 42px;
+  }
+
+  .panorama-fold__svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .panorama-fold__latin {
+    display: none;
+  }
+
+  .panorama-fold__title {
+    font-size: 0.9rem;
+  }
+
+  .panorama-fold__subtitle {
+    font-size: 0.64rem;
+  }
+}
+
+/* 7.3 Mobile (<768px): Fluid Horizontal Scrollable Pocket Panorama */
+@media (max-width: 767px) {
+  .panorama-scroll-root {
+    padding: 0 12px 10px;
+    overflow: hidden;
+  }
+
+  .panorama-ribbon {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    border-radius: 14px;
+    padding: 3px;
+  }
+
+  .panorama-ribbon::-webkit-scrollbar {
+    display: none;
+  }
+
+  .panorama-fold-item {
+    flex: 0 0 auto;
+    width: clamp(142px, 44vw, 175px);
+    scroll-snap-align: start;
+  }
+
+  .panorama-fold {
+    min-height: 56px;
+    padding: 7px 10px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+
+  .panorama-fold__visual {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+  }
+
+  .panorama-fold__svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .panorama-fold__latin {
+    display: none;
+  }
+
+  .panorama-fold__folio {
+    font-size: 0.58rem;
+  }
+
+  .panorama-fold__title {
+    font-size: 0.88rem;
+  }
+
+  .panorama-fold__subtitle {
+    display: none;
+  }
+
+  .panorama-fold__count-badge {
+    padding: 0 4px;
+    font-size: 0.64rem;
+  }
+
+  .panorama-crease {
+    width: 6px;
+    margin: 0 -3px;
+  }
+}
+
+/* ==========================================================================
+   8. Reduced Motion Accessibility
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .panorama-fold,
+  .panorama-fold__visual,
+  .panorama-fold__svg,
+  .panorama-fold__title,
+  .panorama-fold__count-badge {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}

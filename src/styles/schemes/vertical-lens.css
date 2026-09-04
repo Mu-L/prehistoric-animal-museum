@@ -1,0 +1,649 @@
+/**
+ * Vertical Altitude/Depth Lens (生态纵深测深仪)
+ * Direction A: Physical Vertical Altitude & Depth Exploration Gauge
+ *
+ * Physical Metaphor:
+ * A precision natural history museum bathymeter / stratigraphic caliper.
+ * Depicts Earth's vertical ecological stratification across 4 continuous altitude zones:
+ *   +500m 苍穹 (Air / Flyers)
+ *     0m 原始陆表 (Land / Terrestrial Giants)
+ *  -200m 远古深渊 (Water / Deep Swimmers)
+ *      ⊙ 全景透镜 (All / Master Optical Loupe)
+ *
+ * Visual Palette:
+ *   Deep Green: #1c382b, #264939, #356859
+ *   Warm Cream Paper: #fffdf7, #f7f4ea, #ede8d8
+ *   Weathered Brass & Copper: #c29b62, #b28a50, #8c8270, #5a6e64
+ *   Lithographic Ink: #172b21
+ */
+
+:root {
+  --lens-brass-glow: rgba(194, 155, 98, 0.28);
+  --lens-brass-border: rgba(194, 155, 98, 0.45);
+  --lens-moss-green: #1c382b;
+  --lens-paper-cream: #fffdf7;
+  --lens-parchment: #f7f4ea;
+  --lens-earth-line: #3a5749;
+  --lens-ink: #172b21;
+  --lens-muted: #728279;
+}
+
+/* ==========================================================================
+   Root Instrument Chassis
+   ========================================================================== */
+
+.vertical-lens {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 252px;
+  padding: 16px 14px 14px;
+  background: var(--lens-paper-cream, #fffdf7);
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(247, 244, 234, 0.8) 0%, transparent 75%),
+    linear-gradient(180deg, #fffdf7 0%, #fcf9f0 100%);
+  border: 1px solid rgba(58, 87, 73, 0.22);
+  border-radius: 20px;
+  box-shadow:
+    0 16px 40px -10px rgba(28, 56, 43, 0.16),
+    0 4px 12px rgba(28, 56, 43, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(194, 155, 98, 0.12);
+  user-select: none;
+  touch-action: pan-y;
+  isolation: isolate;
+  font-family:
+    "Noto Sans SC Variable", "Noto Sans SC", "PingFang SC",
+    system-ui, sans-serif;
+  color: var(--lens-ink, #172b21);
+}
+
+/* Engraved perimeter registration marks */
+.vertical-lens::before,
+.vertical-lens::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.vertical-lens::before {
+  top: 6px;
+  left: 6px;
+  border-top: 1px solid var(--lens-earth-line, #3a5749);
+  border-left: 1px solid var(--lens-earth-line, #3a5749);
+}
+
+.vertical-lens::after {
+  bottom: 6px;
+  right: 6px;
+  border-bottom: 1px solid var(--lens-earth-line, #3a5749);
+  border-right: 1px solid var(--lens-earth-line, #3a5749);
+}
+
+/* ==========================================================================
+   Instrument Header (Fine Brass & Litho Finial)
+   ========================================================================== */
+
+.vertical-lens__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 10px;
+  border-bottom: 1px dashed rgba(58, 87, 73, 0.18);
+  margin-bottom: 12px;
+}
+
+.vertical-lens__header-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.vertical-lens__instrument-label {
+  font-family:
+    "Nunito Variable", "Fredoka Variable", ui-monospace, monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lens-muted, #728279);
+}
+
+.vertical-lens__instrument-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--lens-moss-green, #1c382b);
+}
+
+.vertical-lens__rivet {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f7ecd5, #c29b62 60%, #8c6838 100%);
+  border: 1px solid rgba(140, 104, 56, 0.6);
+  box-shadow: 0 1px 2px rgba(28, 56, 43, 0.2);
+}
+
+.vertical-lens__rivet::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 1px;
+  background: rgba(80, 50, 20, 0.55);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* ==========================================================================
+   Instrument Body (Graduation Rail + Stations)
+   ========================================================================== */
+
+.vertical-lens__body {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+/* ==========================================================================
+   Physical Graduation Rail (Vertical Caliper Ruler)
+   ========================================================================== */
+
+.vertical-lens__rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 26px;
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+
+/* Continuous vertical brass rail spine */
+.vertical-lens__rail-track {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    180deg,
+    rgba(194, 155, 98, 0.4) 0%,
+    rgba(58, 87, 73, 0.3) 35%,
+    rgba(28, 56, 43, 0.4) 70%,
+    rgba(194, 155, 98, 0.4) 100%
+  );
+  border-radius: 2px;
+}
+
+/* Fine engraved tick marks */
+.vertical-lens__ticks {
+  position: absolute;
+  inset: 14px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.vertical-lens__tick-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.vertical-lens__tick {
+  height: 1px;
+  background: rgba(90, 110, 100, 0.3);
+}
+
+.vertical-lens__tick--major {
+  width: 14px;
+  height: 1.5px;
+  background: rgba(194, 155, 98, 0.85);
+  border-radius: 1px;
+}
+
+.vertical-lens__tick--medium {
+  width: 9px;
+  background: rgba(58, 87, 73, 0.45);
+}
+
+.vertical-lens__tick--minor {
+  width: 5px;
+  background: rgba(58, 87, 73, 0.25);
+}
+
+/* ==========================================================================
+   Stations Container & Sliding Vernier Cursor
+   ========================================================================== */
+
+.vertical-lens__stations {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Physical sliding brass-edge vernier cursor */
+.vertical-lens__cursor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--cursor-height, 60px);
+  transform: translateY(var(--cursor-top, 0px));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 253, 247, 0.98) 0%,
+    rgba(247, 244, 234, 0.96) 60%,
+    rgba(240, 234, 218, 0.95) 100%
+  );
+  border: 1.5px solid rgba(194, 155, 98, 0.75);
+  border-radius: 14px;
+  box-shadow:
+    0 8px 24px -4px rgba(28, 56, 43, 0.16),
+    0 2px 6px rgba(194, 155, 98, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+  z-index: 1;
+  transition:
+    transform 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 220ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+  will-change: transform, height;
+}
+
+/* Left-pointing Vernier index needle */
+.vertical-lens__cursor-notch {
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  width: 8px;
+  height: 10px;
+  transform: translateY(-50%);
+  background: #c29b62;
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+  filter: drop-shadow(-1px 0 1px rgba(28, 56, 43, 0.2));
+}
+
+.vertical-lens[data-dragging="true"] .vertical-lens__cursor {
+  transition:
+    transform 80ms linear,
+    height 120ms ease;
+  box-shadow:
+    0 12px 28px -4px rgba(28, 56, 43, 0.22),
+    0 2px 8px rgba(194, 155, 98, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  border-color: #b28a50;
+}
+
+/* ==========================================================================
+   Station Interactive Buttons
+   ========================================================================== */
+
+.vertical-lens__station {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  padding: 8px 10px;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 160ms ease;
+}
+
+.vertical-lens__station:hover:not([aria-checked="true"]) {
+  background: rgba(247, 244, 234, 0.55);
+  border-color: rgba(194, 155, 98, 0.2);
+}
+
+.vertical-lens__station:active {
+  transform: scale(0.985);
+}
+
+.vertical-lens__station:focus-visible {
+  outline: 2px solid var(--lens-moss-green, #1c382b);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Station Glyph Medallion (Woodcut Engraving Icon)
+   ========================================================================== */
+
+.vertical-lens__glyph-plate {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 11px;
+  background: rgba(247, 244, 234, 0.7);
+  border: 1px solid rgba(194, 155, 98, 0.3);
+  color: var(--lens-earth-line, #3a5749);
+  box-shadow:
+    0 2px 4px rgba(28, 56, 43, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition:
+    background-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 260ms ease,
+    color 260ms ease,
+    box-shadow 260ms ease,
+    transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.vertical-lens__glyph-svg {
+  width: 26px;
+  height: 26px;
+  transition: stroke 200ms ease;
+}
+
+/* Active Station State */
+.vertical-lens__station[aria-checked="true"] .vertical-lens__glyph-plate {
+  background: var(--lens-moss-green, #1c382b);
+  border-color: var(--lens-moss-green, #1c382b);
+  color: #fffdf7;
+  box-shadow:
+    0 4px 12px rgba(28, 56, 43, 0.25),
+    0 1px 3px rgba(194, 155, 98, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* ==========================================================================
+   Station Textual Information (Title, Elevation, Specimen Count)
+   ========================================================================== */
+
+.vertical-lens__station-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.vertical-lens__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  line-height: 1.15;
+}
+
+.vertical-lens__elevation {
+  font-family:
+    "Nunito Variable", "Fredoka Variable", ui-monospace, monospace;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: #8c8270;
+  transition: color 200ms ease;
+}
+
+.vertical-lens__station[aria-checked="true"] .vertical-lens__elevation {
+  color: var(--lens-moss-green, #1c382b);
+  font-weight: 900;
+}
+
+.vertical-lens__station-title {
+  font-size: 0.94rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #384d43;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 200ms ease;
+}
+
+.vertical-lens__station[aria-checked="true"] .vertical-lens__station-title {
+  color: var(--lens-moss-green, #1c382b);
+  font-weight: 800;
+}
+
+.vertical-lens__count-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vertical-lens__count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  color: var(--lens-muted, #728279);
+  font-variant-numeric: tabular-nums;
+  transition: color 200ms ease;
+}
+
+.vertical-lens__station[aria-checked="true"] .vertical-lens__count-badge {
+  color: #214c3c;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Footer Legend Bar
+   ========================================================================== */
+
+.vertical-lens__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(58, 87, 73, 0.16);
+  font-size: 0.64rem;
+  color: #8c8270;
+  letter-spacing: 0.06em;
+}
+
+.vertical-lens__footer-axis {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vertical-lens__footer-axis svg {
+  width: 10px;
+  height: 10px;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Multi-Terminal Ergonomics: Tablet / iPad (768px - 1024px)
+   Positioned in the natural right-hand thumb arc for single/two-hand holding.
+   Touch targets strictly >= 48px (58px active).
+   ========================================================================== */
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .vertical-lens {
+    max-width: 242px;
+    padding: 14px 12px 12px;
+  }
+
+  .vertical-lens__station {
+    min-height: 56px;
+    padding: 8px 10px;
+  }
+
+  .vertical-lens__glyph-plate {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* ==========================================================================
+   Multi-Terminal Ergonomics: Mobile (< 640px)
+   Compact edge gauge that never obscures 3D specimen cards.
+   ========================================================================== */
+
+@media (max-width: 640px) {
+  .vertical-lens {
+    max-width: 100%;
+    padding: 10px 8px;
+    border-radius: 16px;
+  }
+
+  .vertical-lens__header,
+  .vertical-lens__footer {
+    display: none;
+  }
+
+  .vertical-lens__rail {
+    display: none;
+  }
+
+  .vertical-lens__body {
+    gap: 0;
+  }
+
+  .vertical-lens__stations {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .vertical-lens__cursor {
+    height: 100%;
+    width: var(--cursor-width, 25%);
+    transform: translateX(var(--cursor-left, 0px));
+    top: 0;
+    bottom: 0;
+    border-radius: 12px;
+    transition:
+      transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
+      width 200ms ease;
+  }
+
+  .vertical-lens__cursor-notch {
+    display: none;
+  }
+
+  .vertical-lens__station {
+    flex: 1;
+    min-height: 52px;
+    padding: 6px 4px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+    text-align: center;
+  }
+
+  .vertical-lens__glyph-plate {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+
+  .vertical-lens__glyph-svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .vertical-lens__station-meta {
+    align-items: center;
+    gap: 0;
+  }
+
+  .vertical-lens__title-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .vertical-lens__elevation {
+    font-size: 0.65rem;
+    line-height: 1;
+  }
+
+  .vertical-lens__station-title {
+    display: none;
+  }
+
+  .vertical-lens__count-row {
+    font-size: 0.62rem;
+  }
+
+  .vertical-lens__count-badge {
+    font-size: 0.62rem;
+  }
+}
+
+/* Optional Docked Edge Mode (for floating edge usage on mobile/desktop) */
+.vertical-lens--docked {
+  position: fixed;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  box-shadow: 0 20px 50px -10px rgba(18, 32, 25, 0.35);
+}
+
+/* Optional Compact Edge Gauge (pure vertical icon+badge strip) */
+.vertical-lens--compact {
+  max-width: 68px;
+  padding: 12px 6px;
+}
+
+.vertical-lens--compact .vertical-lens__header,
+.vertical-lens--compact .vertical-lens__footer,
+.vertical-lens--compact .vertical-lens__rail,
+.vertical-lens--compact .vertical-lens__station-title,
+.vertical-lens--compact .vertical-lens__count-badge span:not(:last-child) {
+  display: none;
+}
+
+.vertical-lens--compact .vertical-lens__station {
+  flex-direction: column;
+  padding: 6px 2px;
+  min-height: 52px;
+  align-items: center;
+}
+
+.vertical-lens--compact .vertical-lens__station-meta {
+  align-items: center;
+}
+
+/* ==========================================================================
+   Accessibility & Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .vertical-lens__cursor,
+  .vertical-lens__glyph-plate,
+  .vertical-lens__station {
+    transition: none !important;
+  }
+}
