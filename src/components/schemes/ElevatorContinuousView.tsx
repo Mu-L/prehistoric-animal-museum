@@ -14,6 +14,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -137,8 +138,8 @@ export function ElevatorContinuousView({
     [onHabitatInViewChange, scrollRef],
   )
 
-  // Initial auto-scroll to current animal on mount
-  useEffect(() => {
+  // Initial pre-paint instant scroll directly to current animal's habitat section
+  useLayoutEffect(() => {
     if (hasAutoScrolledRef.current) return
     const container = scrollRef.current
     if (!container) return
@@ -149,15 +150,19 @@ export function ElevatorContinuousView({
     const targetEl = container.querySelector<HTMLElement>(`#${station.sectionId}`)
     if (targetEl) {
       hasAutoScrolledRef.current = true
+      isProgrammaticScrollRef.current = true
       setActiveStation(initialHabitat)
-      onHabitatInViewChange?.(initialHabitat)
 
       const containerTop = container.getBoundingClientRect().top
       const targetTop = targetEl.getBoundingClientRect().top
       const relativeTop = targetTop - containerTop + container.scrollTop
       container.scrollTop = Math.max(0, relativeTop)
+
+      requestAnimationFrame(() => {
+        isProgrammaticScrollRef.current = false
+      })
     }
-  }, [initialHabitat, onHabitatInViewChange, scrollRef])
+  }, [initialHabitat, scrollRef])
 
   // Scroll listener with hysteresis buffer: track active habitat without jitter
   const handleScroll = useCallback(
@@ -316,12 +321,14 @@ export function ElevatorContinuousView({
         className="elevator-totem-shaft"
       >
         <div className="elevator-totem-shaft__track">
-          {/* Moving Living Creature Beacon */}
+          {/* Moving Living Creature Beacon (Responsive slider driven by CSS custom property) */}
           <div
             className="elevator-totem-shaft__slider"
-            style={{
-              transform: `translateY(${Math.max(0, stationIndex) * 64}px)`,
-            }}
+            style={
+              {
+                '--station-index': Math.max(0, stationIndex),
+              } as React.CSSProperties
+            }
           >
             <LivingCreatureBeacon currentHabitat={activeStation} />
           </div>

@@ -55,16 +55,16 @@ describe('AnimalCollectionSheet', () => {
     expect(screen.getByLabelText('生态海拔升降梯操纵轨')).toBeInTheDocument()
 
     // Check elevator zones
-    expect(screen.getByRole('heading', { name: /苍穹展区/ })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /原始陆表/ })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /远古深渊/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /远古苍穹/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /原始大地/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /蔚蓝海洋/ })).toBeInTheDocument()
 
     // In elevator mode, all 6 cards exist simultaneously without layout destruction
     const cards = screen.getAllByRole('button', { name: /展台/ })
     expect(cards).toHaveLength(6)
 
     // Living creature beacon exists
-    expect(screen.getByLabelText(/当前生态信标/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/当前生境/)).toBeInTheDocument()
   })
 
   it('intelligently initializes to water habitat when current animal is an ocean creature', () => {
@@ -72,20 +72,20 @@ describe('AnimalCollectionSheet', () => {
 
     const sheet = screen.getByRole('dialog')
     expect(sheet).toHaveAttribute('data-habitat', 'water')
-    expect(screen.getByLabelText(/当前生态信标：深海/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/当前生境：海洋游鱼/)).toBeInTheDocument()
   })
 
   it('switches living creature beacon when clicking habitat totem nodes', () => {
     renderSheet({ currentAnimalId: 'stegosaurus' })
 
     // Stegosaurus is land
-    expect(screen.getByLabelText(/当前生态信标：原始陆兽/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/当前生境：大地剑龙/)).toBeInTheDocument()
 
     // Click Sea waypoint
     const seaNode = screen.getByRole('button', { name: /海洋/ })
     fireEvent.click(seaNode)
 
-    expect(screen.getByLabelText(/当前生态信标：深海/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/当前生境：海洋游鱼/)).toBeInTheDocument()
   })
 
   it('renders tabs mode with habitat counts and filters animals smoothly', () => {
@@ -225,5 +225,46 @@ describe('AnimalCollectionSheet', () => {
     const elevatorBtn = screen.getByRole('radio', { name: /垂直升降梯/ })
     fireEvent.click(elevatorBtn)
     expect(onChange).toHaveBeenCalledWith('elevator')
+  })
+
+  it('synchronously aligns activeHabitat when opening with an ocean creature', () => {
+    const { rerender } = render(
+      <I18nProvider initialState={{ locale: 'zh-CN', preference: 'zh-CN' }}>
+        <AnimalCollectionSheet
+          animals={mockAnimals}
+          currentAnimalId="ichthyosaur"
+          loadingAnimalId={null}
+          loadingPhase={null}
+          loadingPercent={null}
+          onClose={vi.fn()}
+          onSelect={vi.fn()}
+          open={false}
+          returnFocusTo={{ current: null }}
+          uxMode="elevator"
+        />
+      </I18nProvider>,
+    )
+
+    // Open sheet
+    rerender(
+      <I18nProvider initialState={{ locale: 'zh-CN', preference: 'zh-CN' }}>
+        <AnimalCollectionSheet
+          animals={mockAnimals}
+          currentAnimalId="ichthyosaur"
+          loadingAnimalId={null}
+          loadingPhase={null}
+          loadingPercent={null}
+          onClose={vi.fn()}
+          onSelect={vi.fn()}
+          open={true}
+          returnFocusTo={{ current: null }}
+          uxMode="elevator"
+        />
+      </I18nProvider>,
+    )
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveAttribute('data-habitat', 'water')
+    expect(screen.getByLabelText(/当前生境：海洋游鱼/)).toBeInTheDocument()
   })
 })

@@ -86,6 +86,17 @@ export function AnimalCollectionSheet({
     return 'all'
   })
   const lastHeightRef = useRef<number | null>(null)
+  const prevOpenRef = useRef(open)
+
+  // Synchronously align activeHabitat on open in elevator mode before first paint
+  if (!prevOpenRef.current && open) {
+    prevOpenRef.current = true
+    if (uxMode === 'elevator' && currentAnimalHabitat && activeHabitat !== currentAnimalHabitat) {
+      setActiveHabitat(currentAnimalHabitat)
+    }
+  } else if (prevOpenRef.current && !open) {
+    prevOpenRef.current = false
+  }
 
   useEffect(() => {
     if (open && uxMode === 'elevator' && currentAnimalHabitat) {
