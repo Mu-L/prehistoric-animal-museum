@@ -5,9 +5,10 @@
  * 核心设计哲学：
  * 1. 视窗定海神针 (Rock-Solid Fixed Stage)：外框高度恒定锁定，绝不因内容产生 1px 的高度晃动。
  * 2. 空间永续 (Spatial Permanence)：海陆空 24 只史前生物全部并存于地球垂直生态长卷中，零删卡、零卡片颠簸动效。
- * 3. 灵动生灵生态柱 (Living Creature Totem)：去字化、去 AI SaaS 药丸感，滑动信标随生境在翼龙、剑龙、鱼龙间优雅流转。
+ * 3. 灵动生灵生态柱 (Living Creature Totem)：儿童视角直觉图标（☁️ 苍穹白云 / ⛰️ 原始大山 / 🌊 深海波浪），滑动信标随生境在飞鸟、剑龙、游鱼间优雅流转。
  * 4. 迟滞缓冲 (Hysteresis Tracking)：宽裕的视窗交叉判定，避免滑动几像素过早切出生境。
- * 5. 隐形轻质滚动条 (Transient Scrollbar)：接入博物馆统一的平滑浮现与淡出滚动指示。
+ * 5. 隐形自适应轻质滚动条 (Transient Scrollbar)：接入博物馆统一的平滑浮现与淡出滚动指示，随生境色彩自适应。
+ * 6. 完整双语支持 (Bilingual i18n)：全馆多语言无缝切换。
  */
 
 import {
@@ -24,6 +25,7 @@ import type { Habitat } from '../../content/types'
 import { LivingCreatureBeacon } from './LivingCreatureBeacon'
 import { useTransientScrollbar } from '../useTransientScrollbar'
 import { TransientScrollbar } from '../TransientScrollbar'
+import { useI18n } from '../../i18n/I18nProvider'
 
 export interface ElevatorContinuousViewProps {
   readonly animals: readonly CollectionAnimal[]
@@ -32,35 +34,27 @@ export interface ElevatorContinuousViewProps {
   readonly onHabitatInViewChange?: (habitat: Habitat) => void
 }
 
-interface ElevationStation {
+interface ElevationStationConfig {
   readonly id: Habitat
   readonly sectionId: string
-  readonly nameZh: string
-  readonly nameEn: string
   readonly glyph: string
 }
 
-const STATIONS: readonly ElevationStation[] = [
+const STATIONS: readonly ElevationStationConfig[] = [
   {
     id: 'air',
     sectionId: 'elevator-section-air',
-    nameZh: '苍穹',
-    nameEn: 'Sky',
-    glyph: '🪶',
+    glyph: '☁️', // Child-friendly intuitive cloud
   },
   {
     id: 'land',
     sectionId: 'elevator-section-land',
-    nameZh: '陆表',
-    nameEn: 'Land',
-    glyph: '🌿',
+    glyph: '⛰️', // Child-friendly primeval mountain
   },
   {
     id: 'water',
     sectionId: 'elevator-section-water',
-    nameZh: '深海',
-    nameEn: 'Sea',
-    glyph: '🌊',
+    glyph: '🌊', // Child-friendly ocean wave
   },
 ]
 
@@ -70,6 +64,8 @@ export function ElevatorContinuousView({
   renderCard,
   onHabitatInViewChange,
 }: ElevatorContinuousViewProps) {
+  const { messages } = useI18n()
+
   // Find current animal's habitat for initial intelligent location
   const currentAnimal = useMemo(
     () => (currentAnimalId ? animals.find((a) => a.id === currentAnimalId) : null),
@@ -219,6 +215,12 @@ export function ElevatorContinuousView({
   // Determine active index for beacon positioning (0: Air, 1: Land, 2: Water)
   const stationIndex = STATIONS.findIndex((s) => s.id === activeStation)
 
+  const totemLabels: Record<Habitat, string> = {
+    air: messages.collection.elevatorTotemAir,
+    land: messages.collection.elevatorTotemLand,
+    water: messages.collection.elevatorTotemWater,
+  }
+
   return (
     <div className="elevator-layout">
       {/* 1. Continuous Vertical Strata Viewport with Transient Scrollbar */}
@@ -237,11 +239,11 @@ export function ElevatorContinuousView({
           >
             <header className="elevator-zone__header">
               <div className="elevator-zone__badge">
-                <span aria-hidden="true" className="elevator-zone__icon">🪶</span>
-                <h3 id="elevator-heading-air">苍穹展区</h3>
+                <span aria-hidden="true" className="elevator-zone__icon">🌤️</span>
+                <h3 id="elevator-heading-air">{messages.collection.elevatorStrataSky}</h3>
               </div>
               <span className="elevator-zone__count">
-                {airAnimals.length} 位天空飞客
+                {messages.collection.elevatorAirCount(airAnimals.length)}
               </span>
             </header>
             <div className="collection-grid" data-habitat="air" role="list">
@@ -252,7 +254,7 @@ export function ElevatorContinuousView({
           {/* Strata Horizon Divider: Sky to Earth */}
           <div aria-hidden="true" className="elevator-strata-divider elevator-strata-divider--air-land">
             <span className="elevator-strata-line" />
-            <span className="elevator-strata-tag">地平线界线 · DATUM 0m</span>
+            <span className="elevator-strata-tag">{messages.collection.elevatorHorizonSkyLand}</span>
             <span className="elevator-strata-line" />
           </div>
 
@@ -264,11 +266,11 @@ export function ElevatorContinuousView({
           >
             <header className="elevator-zone__header">
               <div className="elevator-zone__badge">
-                <span aria-hidden="true" className="elevator-zone__icon">🌿</span>
-                <h3 id="elevator-heading-land">原始陆表</h3>
+                <span aria-hidden="true" className="elevator-zone__icon">⛰️</span>
+                <h3 id="elevator-heading-land">{messages.collection.elevatorStrataLand}</h3>
               </div>
               <span className="elevator-zone__count">
-                {landAnimals.length} 位陆行恐龙与巨兽
+                {messages.collection.elevatorLandCount(landAnimals.length)}
               </span>
             </header>
             <div className="collection-grid" data-habitat="land" role="list">
@@ -279,7 +281,7 @@ export function ElevatorContinuousView({
           {/* Strata Horizon Divider: Land to Sea */}
           <div aria-hidden="true" className="elevator-strata-divider elevator-strata-divider--land-water">
             <span className="elevator-strata-line" />
-            <span className="elevator-strata-tag">大陆架下潜界线 · SUB-SURFACE</span>
+            <span className="elevator-strata-tag">{messages.collection.elevatorHorizonLandSea}</span>
             <span className="elevator-strata-line" />
           </div>
 
@@ -292,10 +294,10 @@ export function ElevatorContinuousView({
             <header className="elevator-zone__header">
               <div className="elevator-zone__badge">
                 <span aria-hidden="true" className="elevator-zone__icon">🌊</span>
-                <h3 id="elevator-heading-water">远古深渊</h3>
+                <h3 id="elevator-heading-water">{messages.collection.elevatorStrataWater}</h3>
               </div>
               <span className="elevator-zone__count">
-                {waterAnimals.length} 位海怪与水生潜游
+                {messages.collection.elevatorWaterCount(waterAnimals.length)}
               </span>
             </header>
             <div className="collection-grid" data-habitat="water" role="list">
@@ -304,11 +306,11 @@ export function ElevatorContinuousView({
           </section>
         </div>
 
-        {/* Elegant Transient Scrollbar (fades in on scroll, out when idle) */}
+        {/* Elegant Transient Scrollbar (fades in on scroll, out when idle, themed by habitat) */}
         <TransientScrollbar isScrolling={isScrolling} metrics={metrics} />
       </div>
 
-      {/* 2. Kid-Friendly Living Creature Totem Guide (De-textified & Tactile) */}
+      {/* 2. Kid-Friendly Living Creature Totem Guide (Intuitive Icons & Bilingual) */}
       <aside
         aria-label="生态海拔升降梯操纵轨"
         className="elevator-totem-shaft"
@@ -328,23 +330,24 @@ export function ElevatorContinuousView({
           <div className="elevator-totem-shaft__nodes">
             {STATIONS.map((station) => {
               const active = activeStation === station.id
+              const label = totemLabels[station.id]
 
               return (
                 <button
                   aria-current={active ? 'true' : undefined}
-                  aria-label={`前往${station.nameZh}展区`}
+                  aria-label={`${messages.collection.filterByHabitat(label)}`}
                   className="elevator-totem-shaft__node-btn"
                   data-active={active}
                   key={station.id}
                   onClick={() => scrollToStation(station.id)}
-                  title={`${station.nameZh}生态展区`}
+                  title={label}
                   type="button"
                 >
                   <span className="elevator-totem-shaft__node-glyph" aria-hidden="true">
                     {station.glyph}
                   </span>
                   <span className="elevator-totem-shaft__node-label">
-                    {station.nameZh}
+                    {label}
                   </span>
                 </button>
               )

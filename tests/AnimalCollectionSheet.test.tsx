@@ -72,20 +72,20 @@ describe('AnimalCollectionSheet', () => {
 
     const sheet = screen.getByRole('dialog')
     expect(sheet).toHaveAttribute('data-habitat', 'water')
-    expect(screen.getByLabelText('当前生态信标：深海潜游（鱼龙）')).toBeInTheDocument()
+    expect(screen.getByLabelText(/当前生态信标：深海/)).toBeInTheDocument()
   })
 
   it('switches living creature beacon when clicking habitat totem nodes', () => {
     renderSheet({ currentAnimalId: 'stegosaurus' })
 
     // Stegosaurus is land
-    expect(screen.getByLabelText('当前生态信标：原始陆兽（剑龙）')).toBeInTheDocument()
+    expect(screen.getByLabelText(/当前生态信标：原始陆兽/)).toBeInTheDocument()
 
     // Click Sea waypoint
-    const seaNode = screen.getByRole('button', { name: /前往深海展区/ })
+    const seaNode = screen.getByRole('button', { name: /海洋/ })
     fireEvent.click(seaNode)
 
-    expect(screen.getByLabelText('当前生态信标：深海潜游（鱼龙）')).toBeInTheDocument()
+    expect(screen.getByLabelText(/当前生态信标：深海/)).toBeInTheDocument()
   })
 
   it('renders tabs mode with habitat counts and filters animals smoothly', () => {

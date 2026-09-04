@@ -2055,6 +2055,32 @@ html[data-model-preview-capture] .viewer-host::after {
   transition-duration: 150ms;
 }
 
+/* Habitat-Adaptive Transient Scrollbars */
+.collection-sheet[data-habitat="water"] .museum-scrollbar-visual {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.collection-sheet[data-habitat="water"] .museum-scrollbar-visual > span {
+  background: linear-gradient(180deg, #6ee7de 0%, #38b2ac 100%);
+  box-shadow: 0 0 10px rgba(110, 231, 222, 0.45);
+}
+
+.collection-sheet[data-habitat="air"] .museum-scrollbar-visual {
+  background: rgba(46, 72, 58, 0.08);
+}
+
+.collection-sheet[data-habitat="air"] .museum-scrollbar-visual > span {
+  background: linear-gradient(180deg, #3d7968 0%, #204b3b 100%);
+}
+
+.collection-sheet[data-habitat="land"] .museum-scrollbar-visual {
+  background: rgba(74, 62, 32, 0.08);
+}
+
+.collection-sheet[data-habitat="land"] .museum-scrollbar-visual > span {
+  background: linear-gradient(180deg, #7c683b 0%, #4a3e20 100%);
+}
+
 .fact-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -4076,18 +4102,18 @@ html[data-model-preview-capture] .viewer-host::after {
   color: var(--ink-muted);
 }
 
-/* Water / 远古深渊 (-200m) Atmosphere - Harmonious Mineral Marine Depth */
+/* Water / 远古深渊 (-200m) Atmosphere - Luminous Mineral Marine Depth */
 .collection-sheet[data-habitat="water"] {
-  background: linear-gradient(180deg, #1b3a44 0%, #122930 100%);
-  border-color: rgba(110, 231, 222, 0.32);
+  background: linear-gradient(180deg, #225261 0%, #1e4754 45%, #183c48 100%);
+  border-color: rgba(110, 231, 222, 0.38);
   box-shadow: 0 36px 90px -10px rgba(10, 28, 34, 0.65), 0 0 50px -10px rgba(60, 150, 165, 0.25);
 }
 
 .collection-sheet[data-habitat="water"] .collection-atmosphere__caustics {
-  opacity: 0.85;
+  opacity: 0.9;
   background:
-    radial-gradient(130% 90% at 50% -10%, rgba(70, 175, 185, 0.28) 0%, rgba(20, 50, 60, 0.5) 45%, #122930 95%),
-    linear-gradient(180deg, rgba(110, 231, 222, 0.1) 0%, transparent 40%);
+    radial-gradient(130% 90% at 50% -10%, rgba(95, 210, 220, 0.32) 0%, rgba(28, 70, 84, 0.5) 45%, #183c48 95%),
+    linear-gradient(180deg, rgba(110, 231, 222, 0.14) 0%, transparent 40%);
 }
 
 .collection-sheet[data-habitat="water"] .collection-atmosphere__caustics::before {
@@ -4622,6 +4648,19 @@ html[data-model-preview-capture] .viewer-host::after {
   color: #a4d0d6;
 }
 
+.elevator-zone--water .elevator-zone__badge h3 {
+  color: #ffffff !important;
+  text-shadow: 0 2px 14px rgba(78, 220, 212, 0.45);
+}
+
+.elevator-zone--water .elevator-zone__count {
+  color: #c5ece8 !important;
+}
+
+.elevator-zone--water .elevator-zone__icon {
+  filter: drop-shadow(0 2px 8px rgba(78, 220, 212, 0.4));
+}
+
 /* Strata Horizon Dividers */
 .elevator-strata-divider {
   display: flex;
@@ -4873,10 +4912,35 @@ html[data-model-preview-capture] .viewer-host::after {
     display: none; /* Hide on compact mobile row */
   }
 
+  .elevator-totem-shaft__node-btn {
+    width: 64px;
+    height: 48px;
+    border-radius: 14px;
+  }
+
   .elevator-totem-shaft__node-btn[data-active="true"] {
     opacity: 1;
-    background: #214c3c;
-    color: #fffdf7;
+    background: #356859;
+    box-shadow: 0 3px 12px rgba(46, 72, 58, 0.28);
+  }
+
+  .elevator-totem-shaft__node-btn[data-active="true"] .elevator-totem-shaft__node-glyph {
+    transform: scale(1.1);
+  }
+
+  .elevator-totem-shaft__node-btn[data-active="true"] .elevator-totem-shaft__node-label {
+    color: #ffffff !important;
+    font-weight: 850;
+  }
+
+  .collection-sheet[data-habitat="water"] .elevator-totem-shaft__node-btn[data-active="true"] {
+    background: #6ee7de;
+    box-shadow: 0 3px 12px rgba(110, 231, 222, 0.45);
+  }
+
+  .collection-sheet[data-habitat="water"] .elevator-totem-shaft__node-btn[data-active="true"] .elevator-totem-shaft__node-label {
+    color: #062028 !important;
+    font-weight: 850;
   }
 }
 
