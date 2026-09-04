@@ -62,6 +62,30 @@ describe('AnimalCollectionSheet', () => {
     // In elevator mode, all 6 cards exist simultaneously without layout destruction
     const cards = screen.getAllByRole('button', { name: /展台/ })
     expect(cards).toHaveLength(6)
+
+    // Living creature beacon exists
+    expect(screen.getByLabelText(/当前生态信标/)).toBeInTheDocument()
+  })
+
+  it('intelligently initializes to water habitat when current animal is an ocean creature', () => {
+    renderSheet({ currentAnimalId: 'ichthyosaur' })
+
+    const sheet = screen.getByRole('dialog')
+    expect(sheet).toHaveAttribute('data-habitat', 'water')
+    expect(screen.getByLabelText('当前生态信标：深海潜游（鱼龙）')).toBeInTheDocument()
+  })
+
+  it('switches living creature beacon when clicking habitat totem nodes', () => {
+    renderSheet({ currentAnimalId: 'stegosaurus' })
+
+    // Stegosaurus is land
+    expect(screen.getByLabelText('当前生态信标：原始陆兽（剑龙）')).toBeInTheDocument()
+
+    // Click Sea waypoint
+    const seaNode = screen.getByRole('button', { name: /前往深海展区/ })
+    fireEvent.click(seaNode)
+
+    expect(screen.getByLabelText('当前生态信标：深海潜游（鱼龙）')).toBeInTheDocument()
   })
 
   it('renders tabs mode with habitat counts and filters animals smoothly', () => {

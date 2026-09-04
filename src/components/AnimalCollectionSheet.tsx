@@ -74,8 +74,24 @@ export function AnimalCollectionSheet({
   const contentBodyRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
 
-  const [activeHabitat, setActiveHabitat] = useState<HabitatFilter>('all')
+  const currentAnimalHabitat = useMemo(() => {
+    if (!currentAnimalId) return null
+    return animals.find((a) => a.id === currentAnimalId)?.habitat || null
+  }, [animals, currentAnimalId])
+
+  const [activeHabitat, setActiveHabitat] = useState<HabitatFilter>(() => {
+    if (uxMode === 'elevator' && currentAnimalHabitat) {
+      return currentAnimalHabitat
+    }
+    return 'all'
+  })
   const lastHeightRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (open && uxMode === 'elevator' && currentAnimalHabitat) {
+      setActiveHabitat(currentAnimalHabitat)
+    }
+  }, [open, uxMode, currentAnimalHabitat])
 
   const handleHabitatSelect = (habitat: HabitatFilter) => {
     if (habitat === activeHabitat) return
@@ -554,6 +570,7 @@ export function AnimalCollectionSheet({
         {uxMode === 'elevator' ? (
           <ElevatorContinuousView
             animals={animals}
+            currentAnimalId={currentAnimalId}
             onHabitatInViewChange={setActiveHabitat}
             renderCard={renderCard}
           />

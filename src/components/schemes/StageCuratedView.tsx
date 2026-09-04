@@ -6,11 +6,14 @@
  * 1. 视窗定海神针 (Invariant Viewport)：无论展出 5 只还是 24 只，舞台面积绝对恒定，绝不随内容高度抽搐。
  * 2. 空灵策展留白 (Curated Negative Space)：5 只深海或天空生物居中陈列，周围尽显生境光影与意境留白。
  * 3. 舞台换幕交融 (Theatrical Cross-Dissolve)：生境切换如大剧场换幕，旧景渐隐，新幕平滑漫入。
+ * 4. 隐形轻质滚动条 (Transient Scrollbar)：接入博物馆统一的平滑浮现与淡出滚动指示。
  */
 
 import { useMemo, type JSX } from 'react'
 import type { CollectionAnimal, HabitatFilter } from '../AnimalCollectionSheet'
 import { useI18n } from '../../i18n/I18nProvider'
+import { useTransientScrollbar } from '../useTransientScrollbar'
+import { TransientScrollbar } from '../TransientScrollbar'
 
 export interface StageCuratedViewProps {
   readonly animals: readonly CollectionAnimal[]
@@ -34,6 +37,13 @@ export function StageCuratedView({
 }: StageCuratedViewProps) {
   const { messages } = useI18n()
 
+  const {
+    handleScroll,
+    isScrolling,
+    metrics,
+    scrollRef,
+  } = useTransientScrollbar(true)
+
   const habitatCounts = useMemo(() => {
     const counts = { all: animals.length, land: 0, air: 0, water: 0 }
     for (const a of animals) {
@@ -49,7 +59,7 @@ export function StageCuratedView({
       {
         id: 'all',
         label: messages.collection.all,
-        glyph: '🏛️',
+        glyph: '🌐',
         count: habitatCounts.all,
       },
       {
@@ -109,21 +119,27 @@ export function StageCuratedView({
         </div>
       </nav>
 
-      {/* 2. Invariant Pedestal Stage Canvas (Height Never Resizes) */}
-      <div
-        aria-label="远古生态视窗展台"
-        className="stage-canvas-viewport"
-        data-habitat={activeHabitat}
-        data-sparse={isSparse ? 'true' : 'false'}
-      >
+      {/* 2. Invariant Pedestal Stage Canvas (Height Never Resizes) with Transient Scrollbar */}
+      <div className="stage-canvas-wrapper">
         <div
-          className={`collection-grid stage-grid ${isSparse ? 'stage-grid--sparse' : ''}`.trim()}
+          aria-label="远古生态视窗展台"
+          className="stage-canvas-viewport"
           data-habitat={activeHabitat}
-          key={`stage-${activeHabitat}`}
-          role="list"
+          data-sparse={isSparse ? 'true' : 'false'}
+          onScroll={handleScroll}
+          ref={scrollRef}
         >
-          {displayedAnimals.map((animal, idx) => renderCard(animal, idx))}
+          <div
+            className={`collection-grid stage-grid ${isSparse ? 'stage-grid--sparse' : ''}`.trim()}
+            data-habitat={activeHabitat}
+            key={`stage-${activeHabitat}`}
+            role="list"
+          >
+            {displayedAnimals.map((animal, idx) => renderCard(animal, idx))}
+          </div>
         </div>
+
+        <TransientScrollbar isScrolling={isScrolling} metrics={metrics} />
       </div>
     </div>
   )
