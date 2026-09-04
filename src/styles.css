@@ -2043,7 +2043,9 @@ html[data-model-preview-capture] .viewer-host::after {
   transform: translate3d(0, var(--museum-scrollbar-thumb-offset), 0);
   transition:
     height 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 90ms linear;
+    transform 90ms linear,
+    background 400ms ease,
+    box-shadow 400ms ease;
 }
 
 .museum-scrollbar-visual[data-visible="true"],
@@ -2056,29 +2058,31 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 /* Habitat-Adaptive Transient Scrollbars */
-.collection-sheet[data-habitat="water"] .museum-scrollbar-visual {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.collection-sheet[data-habitat="water"] .museum-scrollbar-visual > span {
-  background: linear-gradient(180deg, #6ee7de 0%, #38b2ac 100%);
-  box-shadow: 0 0 10px rgba(110, 231, 222, 0.45);
-}
-
 .collection-sheet[data-habitat="air"] .museum-scrollbar-visual {
-  background: rgba(46, 72, 58, 0.08);
+  background: rgba(30, 134, 168, 0.08);
 }
 
 .collection-sheet[data-habitat="air"] .museum-scrollbar-visual > span {
-  background: linear-gradient(180deg, #3d7968 0%, #204b3b 100%);
+  background: linear-gradient(180deg, #38a5c7 0%, #1e86a8 100%);
+  box-shadow: 0 1px 4px rgba(30, 134, 168, 0.28);
+}
+
+.collection-sheet[data-habitat="water"] .museum-scrollbar-visual {
+  background: rgba(11, 130, 143, 0.1);
+}
+
+.collection-sheet[data-habitat="water"] .museum-scrollbar-visual > span {
+  background: linear-gradient(180deg, #168e9b 0%, #096672 100%);
+  box-shadow: 0 1px 4px rgba(9, 102, 114, 0.35);
 }
 
 .collection-sheet[data-habitat="land"] .museum-scrollbar-visual {
-  background: rgba(74, 62, 32, 0.08);
+  background: rgba(46, 107, 86, 0.08);
 }
 
 .collection-sheet[data-habitat="land"] .museum-scrollbar-visual > span {
-  background: linear-gradient(180deg, #7c683b 0%, #4a3e20 100%);
+  background: linear-gradient(180deg, #448970 0%, #2e6b56 100%);
+  box-shadow: 0 1px 4px rgba(46, 107, 86, 0.25);
 }
 
 .fact-grid {
@@ -4026,14 +4030,14 @@ html[data-model-preview-capture] .viewer-host::after {
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 72%);
   border-radius: 28px;
-  background: #fffdf7;
+  background-color: #fffdf7;
   box-shadow: 0 28px 90px rgb(18 32 25 / 34%);
   pointer-events: auto;
   animation: collection-sheet-expand 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transition:
-    background 850ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    border-color 850ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    box-shadow 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    background-color 650ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 650ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 650ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .collection-sheet[data-exiting="true"] {
@@ -4093,13 +4097,13 @@ html[data-model-preview-capture] .viewer-host::after {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: opacity 650ms cubic-bezier(0.2, 0.8, 0.2, 1);
   pointer-events: none;
 }
 
 /* Sky / 苍穹 (+500m) Atmosphere - High-Altitude Radiant Morning Light */
 .collection-sheet[data-habitat="air"] {
-  background: #f7fafc;
+  background-color: #f7fafc;
   border-color: rgba(180, 220, 238, 0.7);
   box-shadow: 0 28px 90px rgba(28, 64, 88, 0.2), 0 0 70px rgba(185, 225, 245, 0.4);
 }
@@ -4144,7 +4148,7 @@ html[data-model-preview-capture] .viewer-host::after {
 
 /* Land / 原始陆表 (0m) Atmosphere - Warm Primeval Canopy Light */
 .collection-sheet[data-habitat="land"] {
-  background: #fffdf7;
+  background-color: #fffdf7;
   border-color: rgba(53, 104, 89, 0.2);
   box-shadow: 0 28px 90px rgba(18, 32, 25, 0.3);
 }
@@ -4176,7 +4180,7 @@ html[data-model-preview-capture] .viewer-host::after {
 
 /* Water / 蔚蓝海洋 (-200m) Atmosphere - Sunlit Surface to Deep Marine Aqua Gradient (上浅下深) */
 .collection-sheet[data-habitat="water"] {
-  background: linear-gradient(180deg, #f0fafb 0%, #e2f4f6 30%, #ceeff3 65%, #b4e5ec 100%);
+  background-color: #eaf6f8;
   border-color: rgba(60, 185, 195, 0.38);
   box-shadow: 0 28px 90px rgba(14, 48, 56, 0.2), 0 0 70px rgba(100, 205, 215, 0.25);
 }
@@ -4190,18 +4194,14 @@ html[data-model-preview-capture] .viewer-host::after {
       rgba(255, 255, 255, 0.4) 15%,
       transparent 45%
     ),
-    /* Downward water depth gradient: darker marine turquoise at the bottom */
-    linear-gradient(180deg,
-      transparent 35%,
-      rgba(20, 140, 155, 0.08) 70%,
-      rgba(14, 115, 130, 0.18) 100%
-    ),
     /* Soft diagonal water caustics */
     linear-gradient(160deg,
       rgba(255, 255, 255, 0.5) 0%,
       rgba(150, 230, 238, 0.25) 30%,
       transparent 70%
-    );
+    ),
+    /* Base water depth gradient: light sunlit cyan at top to rich marine aqua at bottom (上浅下深) */
+    linear-gradient(180deg, #f0fafb 0%, #e2f4f6 30%, #ceeff3 65%, #b4e5ec 100%);
 }
 
 .collection-sheet[data-habitat="water"] .collection-atmosphere__caustics::before {
@@ -4292,12 +4292,16 @@ html[data-model-preview-capture] .viewer-host::after {
   font-size: clamp(2rem, 4vw, 2.8rem);
   font-weight: 400;
   line-height: 1.08;
+  transition:
+    color 500ms ease,
+    text-shadow 500ms ease;
 }
 
 .collection-sheet__header p:last-child {
   margin: 8px 0 0;
   color: var(--ink-muted);
   font-size: 0.9rem;
+  transition: color 500ms ease;
 }
 
 .collection-dev-dock {
@@ -4702,6 +4706,7 @@ html[data-model-preview-capture] .viewer-host::after {
   padding: 6px 4px 14px;
   border-bottom: 1px dashed rgba(46, 72, 58, 0.15);
   margin-bottom: 14px;
+  transition: border-bottom-color 500ms ease;
 }
 
 .collection-sheet[data-habitat="water"] .elevator-zone__header {
@@ -4728,6 +4733,7 @@ html[data-model-preview-capture] .viewer-host::after {
 .elevator-zone__count {
   font-size: 0.76rem;
   color: var(--ink-muted);
+  transition: color 500ms ease;
 }
 
 .collection-sheet[data-habitat="water"] .elevator-zone__count {
@@ -4774,6 +4780,7 @@ html[data-model-preview-capture] .viewer-host::after {
   letter-spacing: 0.12em;
   color: #728279;
   text-transform: uppercase;
+  transition: color 500ms ease;
 }
 
 .collection-sheet[data-habitat="water"] .elevator-strata-tag {
@@ -4805,6 +4812,10 @@ html[data-model-preview-capture] .viewer-host::after {
   border: 1px solid rgba(46, 72, 58, 0.12);
   box-shadow: 0 4px 18px rgba(28, 56, 43, 0.06);
   backdrop-filter: blur(10px);
+  transition:
+    background 500ms ease,
+    border-color 500ms ease,
+    box-shadow 500ms ease;
 }
 
 .collection-sheet[data-habitat="water"] .elevator-totem-shaft__track {
@@ -4864,6 +4875,7 @@ html[data-model-preview-capture] .viewer-host::after {
   color: #3b584a;
   margin-top: 3px;
   letter-spacing: 0.04em;
+  transition: color 500ms ease;
 }
 
 .collection-sheet[data-habitat="water"] .elevator-totem-shaft__node-label {
