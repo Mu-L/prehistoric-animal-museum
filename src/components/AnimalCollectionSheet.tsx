@@ -1,10 +1,14 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
-  Check,
+  Compass,
   Feather,
   Footprints,
+  GalleryVerticalEnd,
+  Grid2X2,
   Layers,
+  SlidersVertical,
+  Split,
   Trees,
   Waves,
   X,
@@ -379,12 +383,7 @@ export function AnimalCollectionSheet({
             <strong>{animal.name}</strong>
             <small>{animal.classification}</small>
           </span>
-          {current ? (
-            <span className="collection-card__state">
-              <Check aria-hidden="true" size={15} strokeWidth={2.5} />
-              {messages.collection.current}
-            </span>
-          ) : loading ? (
+          {loading ? (
             <span className="collection-card__state">
               {loadingPhase === 'preparing'
                 ? messages.collection.opening

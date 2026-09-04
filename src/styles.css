@@ -4174,31 +4174,24 @@ html[data-model-preview-capture] .viewer-host::after {
   color: var(--ink-muted);
 }
 
-/* Water / 远古深渊 (-200m) Atmosphere - Luminous Marine Depth with Surface God Rays */
+/* Water / 蔚蓝海洋 (-200m) Atmosphere - Sunlit Crystalline Marine Lagoon */
 .collection-sheet[data-habitat="water"] {
-  background: linear-gradient(180deg, #225261 0%, #1e4754 45%, #183c48 100%);
-  border-color: rgba(110, 231, 222, 0.38);
-  box-shadow: 0 36px 90px -10px rgba(10, 28, 34, 0.65), 0 0 50px -10px rgba(60, 150, 165, 0.25);
+  background: #f2f9f9;
+  border-color: rgba(90, 195, 195, 0.35);
+  box-shadow: 0 28px 90px rgba(18, 52, 60, 0.22), 0 0 70px rgba(120, 210, 215, 0.25);
 }
 
 .collection-sheet[data-habitat="water"] .collection-atmosphere__caustics {
-  opacity: 0.95;
+  opacity: 1;
   background:
-    /* Diagonal volumetric Sunbeams penetrating downward from surface (God Rays) */
-    linear-gradient(168deg,
-      rgba(160, 245, 250, 0.28) 0%,
-      rgba(110, 230, 240, 0.16) 18%,
-      rgba(60, 190, 210, 0.08) 42%,
-      transparent 75%
+    /* Diagonal sunbeams shimmering through clear shallow ocean water */
+    linear-gradient(155deg,
+      rgba(255, 255, 255, 0.75) 0%,
+      rgba(180, 238, 242, 0.35) 25%,
+      rgba(130, 215, 222, 0.15) 55%,
+      transparent 85%
     ),
-    linear-gradient(194deg,
-      rgba(180, 252, 255, 0.22) 0%,
-      rgba(100, 220, 235, 0.14) 22%,
-      rgba(50, 170, 195, 0.06) 48%,
-      transparent 80%
-    ),
-    /* Deep marine radial pool */
-    radial-gradient(130% 90% at 50% -10%, rgba(95, 215, 225, 0.35) 0%, rgba(28, 70, 84, 0.52) 45%, #183c48 95%);
+    radial-gradient(120% 80% at 50% -10%, rgba(160, 230, 236, 0.5) 0%, rgba(242, 249, 249, 0.2) 60%, transparent 100%);
 }
 
 .collection-sheet[data-habitat="water"] .collection-atmosphere__caustics::before {
@@ -4206,60 +4199,38 @@ html[data-model-preview-capture] .viewer-host::after {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 28% 22%, rgba(130, 240, 245, 0.2) 0%, transparent 48%),
-    radial-gradient(circle at 74% 16%, rgba(80, 205, 225, 0.22) 0%, transparent 42%),
-    /* Secondary shimmering shafts */
-    linear-gradient(176deg, rgba(140, 235, 245, 0.18) 0%, transparent 55%);
-  animation: underwater-sun-shafts 11s ease-in-out infinite alternate;
+    radial-gradient(circle at 30% 20%, rgba(200, 248, 250, 0.4) 0%, transparent 45%),
+    radial-gradient(circle at 75% 15%, rgba(150, 225, 232, 0.35) 0%, transparent 40%),
+    linear-gradient(176deg, rgba(160, 235, 240, 0.2) 0%, transparent 55%);
+  animation: underwater-sun-shafts 12s ease-in-out infinite alternate;
 }
 
 @keyframes underwater-sun-shafts {
   0% {
-    opacity: 0.7;
-    transform: scale(1) translateY(0) rotate(0deg);
-  }
-  50% {
-    opacity: 0.95;
-    transform: scale(1.04) translateY(6px) rotate(1.2deg);
+    opacity: 0.6;
+    transform: scale(1) translateY(0);
   }
   100% {
-    opacity: 0.8;
-    transform: scale(1.02) translateY(-4px) rotate(-1deg);
+    opacity: 0.9;
+    transform: scale(1.03) translateY(4px);
   }
 }
 
 .collection-sheet[data-habitat="water"] .collection-sheet__handle {
-  background: #4a7580;
+  background: #9fc6cc;
 }
 
 .collection-sheet[data-habitat="water"] .collection-sheet__eyebrow {
-  color: #6ee7de;
+  color: #117a8b;
 }
 
 .collection-sheet[data-habitat="water"] .collection-sheet__header h2 {
-  color: #ffffff;
-  text-shadow: 0 2px 18px rgba(60, 180, 190, 0.35);
+  color: #134552;
+  text-shadow: 0 1px 12px rgba(150, 220, 226, 0.3);
 }
 
 .collection-sheet[data-habitat="water"] .collection-sheet__header p:last-child {
-  color: #b0d7dd;
-}
-
-.collection-sheet[data-habitat="water"] .icon-button {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #d1eded;
-}
-
-.collection-sheet[data-habitat="water"] .icon-button:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-}
-
-.collection-sheet[data-habitat="water"] .language-menu__trigger {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #d1eded;
+  color: #4a727c;
 }
 
 .collection-sheet:focus {
@@ -4747,50 +4718,21 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-sheet[data-habitat="water"] .elevator-zone__count {
-  color: #a4d0d6;
+  color: #4a727c;
 }
 
 .elevator-zone--water .elevator-zone__badge h3 {
-  color: #174854;
-  transition: color 600ms cubic-bezier(0.2, 0.8, 0.2, 1), text-shadow 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  color: #134552;
+  transition: color 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .elevator-zone--water .elevator-zone__count {
-  color: #4a7580;
+  color: #4a727c;
   transition: color 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .elevator-zone--water .elevator-zone__icon {
   transition: filter 600ms ease;
-}
-
-.collection-sheet[data-habitat="water"] .elevator-zone--water .elevator-zone__badge h3 {
-  color: #ffffff !important;
-  text-shadow: 0 2px 14px rgba(78, 220, 212, 0.45);
-}
-
-.collection-sheet[data-habitat="water"] .elevator-zone--water .elevator-zone__count {
-  color: #c5ece8 !important;
-}
-
-.collection-sheet[data-habitat="water"] .elevator-zone--water .elevator-zone__icon {
-  filter: drop-shadow(0 2px 8px rgba(78, 220, 212, 0.4));
-}
-
-.collection-sheet[data-habitat="water"] .elevator-zone--land .elevator-zone__badge h3 {
-  color: #e5dfcf;
-}
-
-.collection-sheet[data-habitat="water"] .elevator-zone--land .elevator-zone__count {
-  color: #b3ab94;
-}
-
-.collection-sheet[data-habitat="water"] .elevator-zone--air .elevator-zone__badge h3 {
-  color: #d8eef6;
-}
-
-.collection-sheet[data-habitat="water"] .elevator-zone--air .elevator-zone__count {
-  color: #92b8c5;
 }
 
 /* Strata Horizon Dividers */
@@ -4809,7 +4751,7 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-sheet[data-habitat="water"] .elevator-strata-line {
-  background: linear-gradient(90deg, transparent, rgba(110, 231, 222, 0.32), transparent);
+  background: linear-gradient(90deg, transparent, rgba(90, 195, 195, 0.3), transparent);
 }
 
 .elevator-strata-tag {
@@ -4822,7 +4764,7 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-sheet[data-habitat="water"] .elevator-strata-tag {
-  color: #83c6cc;
+  color: #5d8b92;
 }
 
 /* Kid-Friendly Ecological Totem Shaft */
@@ -4853,9 +4795,9 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-sheet[data-habitat="water"] .elevator-totem-shaft__track {
-  background: rgba(27, 58, 68, 0.75);
-  border-color: rgba(110, 231, 222, 0.25);
-  box-shadow: 0 4px 18px rgba(6, 20, 26, 0.4);
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(90, 195, 195, 0.25);
+  box-shadow: 0 4px 18px rgba(18, 52, 60, 0.08);
 }
 
 .elevator-totem-shaft__slider {
@@ -4912,7 +4854,7 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-sheet[data-habitat="water"] .elevator-totem-shaft__node-label {
-  color: #9cd5db;
+  color: #25585f;
 }
 
 .elevator-totem-shaft__node-btn:hover .elevator-totem-shaft__node-glyph {
@@ -5093,9 +5035,9 @@ html[data-model-preview-capture] .viewer-host::after {
   }
 
   .collection-sheet[data-habitat="water"] .elevator-totem-shaft__track {
-    background: rgba(27, 58, 68, 0.82);
-    border-color: rgba(110, 231, 222, 0.3);
-    box-shadow: 0 4px 18px rgba(6, 20, 26, 0.45);
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(90, 195, 195, 0.25);
+    box-shadow: 0 4px 16px rgba(18, 52, 60, 0.08);
   }
 
   .elevator-totem-shaft__slider {
@@ -5160,7 +5102,7 @@ html[data-model-preview-capture] .viewer-host::after {
   }
 
   .collection-sheet[data-habitat="water"] .elevator-totem-shaft__node-btn .elevator-totem-shaft__node-label {
-    color: #9cd5db;
+    color: #25585f;
   }
 }
 
@@ -5544,8 +5486,8 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-card[data-loading="true"] {
-  border-style: dashed;
   border-color: var(--animal-accent);
+  opacity: 0.88;
 }
 
 .collection-card__number {
@@ -5610,12 +5552,14 @@ html[data-model-preview-capture] .viewer-host::after {
   font-weight: 820;
 }
 
-.collection-card[data-current="true"] .collection-card__state {
+.collection-card[data-loading="true"] .collection-card__state {
   padding: 2.5px 8px 2.5px 6px;
   border-radius: 999px;
   font-size: 0.65rem;
   font-weight: 780;
   letter-spacing: 0.02em;
+  background: rgba(46, 72, 58, 0.08);
+  border: 1px solid rgba(46, 72, 58, 0.15);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
@@ -5658,26 +5602,26 @@ html[data-model-preview-capture] .viewer-host::after {
 @keyframes card-water-current-breathe {
   0%, 100% {
     box-shadow:
-      inset 4px 0 0 #5fdcd4,
-      0 8px 22px -4px rgba(6, 20, 26, 0.65),
-      0 0 8px rgba(95, 220, 212, 0.16);
+      inset 4px 0 0 #14919b,
+      0 6px 18px -4px rgba(20, 145, 155, 0.2),
+      0 0 0 1px rgba(20, 145, 155, 0.3);
   }
   50% {
     box-shadow:
-      inset 4px 0 0 #5fdcd4,
-      0 12px 28px -4px rgba(6, 20, 26, 0.75),
-      0 0 16px rgba(95, 220, 212, 0.32);
+      inset 4px 0 0 #14919b,
+      0 10px 26px -4px rgba(20, 145, 155, 0.32),
+      0 0 12px rgba(20, 145, 155, 0.22);
   }
 }
 
-/* Water / 海洋 Cards - Mineral Sea Glass Slabs with High Legibility */
+/* Water / 海洋 Cards - Sunlit Translucent Sea-Glass Cards */
 .collection-sheet[data-habitat="water"] .collection-card,
 .collection-grid[data-habitat="water"] .collection-card,
 .collection-card[data-habitat="water"] {
-  background: rgba(27, 58, 68, 0.85);
-  border-color: rgba(110, 231, 222, 0.32);
-  color: #f7fcfa;
-  box-shadow: 0 8px 24px -4px rgba(6, 20, 26, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(120, 205, 205, 0.38);
+  color: #134552;
+  box-shadow: 0 8px 24px -4px rgba(20, 70, 75, 0.08);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -5685,17 +5629,17 @@ html[data-model-preview-capture] .viewer-host::after {
 .collection-sheet[data-habitat="water"] .collection-card:hover,
 .collection-grid[data-habitat="water"] .collection-card:hover,
 .collection-card[data-habitat="water"]:hover {
-  background: rgba(35, 74, 86, 0.95);
-  border-color: rgba(110, 231, 222, 0.75);
-  box-shadow: 0 14px 34px -4px rgba(6, 20, 26, 0.55), 0 0 18px rgba(110, 231, 222, 0.3);
+  background: #ffffff;
+  border-color: rgba(70, 185, 185, 0.7);
+  box-shadow: 0 14px 34px -4px rgba(20, 70, 75, 0.14);
   transform: translateY(-2px);
 }
 
 .collection-sheet[data-habitat="water"] .collection-card[data-current="true"],
 .collection-grid[data-habitat="water"] .collection-card[data-current="true"],
 .collection-card[data-habitat="water"][data-current="true"] {
-  border-color: rgba(95, 220, 212, 0.85);
-  background: rgba(33, 71, 82, 0.98);
+  border-color: #14919b;
+  background: #ffffff;
   transform: translateY(-2px);
   animation: card-water-current-breathe 4s ease-in-out infinite;
 }
@@ -5703,33 +5647,25 @@ html[data-model-preview-capture] .viewer-host::after {
 .collection-sheet[data-habitat="water"] .collection-card__image,
 .collection-grid[data-habitat="water"] .collection-card__image,
 .collection-card[data-habitat="water"] .collection-card__image {
-  background: rgba(15, 38, 46, 0.7);
+  background: #dff2f2;
 }
 
 .collection-sheet[data-habitat="water"] .collection-card__copy strong,
 .collection-grid[data-habitat="water"] .collection-card__copy strong,
 .collection-card[data-habitat="water"] .collection-card__copy strong {
-  color: #ffffff;
+  color: #134552;
 }
 
 .collection-sheet[data-habitat="water"] .collection-card__copy small,
 .collection-grid[data-habitat="water"] .collection-card__copy small,
 .collection-card[data-habitat="water"] .collection-card__copy small {
-  color: #b0d7dd;
+  color: #4a727c;
 }
 
 .collection-sheet[data-habitat="water"] .collection-card__number,
 .collection-grid[data-habitat="water"] .collection-card__number,
 .collection-card[data-habitat="water"] .collection-card__number {
-  color: rgba(110, 231, 222, 0.65);
-}
-
-.collection-sheet[data-habitat="water"] .collection-card[data-current="true"] .collection-card__state,
-.collection-grid[data-habitat="water"] .collection-card[data-current="true"] .collection-card__state,
-.collection-card[data-habitat="water"][data-current="true"] .collection-card__state {
-  background: rgba(95, 220, 212, 0.18);
-  border: 1px solid rgba(95, 220, 212, 0.38);
-  color: #8bf5ed;
+  color: rgba(20, 110, 120, 0.45);
 }
 
 /* Air / 苍穹 Cards - Ethereal Weightless High-Key Cards */
@@ -5784,14 +5720,6 @@ html[data-model-preview-capture] .viewer-host::after {
   color: rgba(31, 107, 138, 0.45);
 }
 
-.collection-sheet[data-habitat="air"] .collection-card[data-current="true"] .collection-card__state,
-.collection-grid[data-habitat="air"] .collection-card[data-current="true"] .collection-card__state,
-.collection-card[data-habitat="air"][data-current="true"] .collection-card__state {
-  background: rgba(30, 134, 168, 0.12);
-  border: 1px solid rgba(30, 134, 168, 0.28);
-  color: #0f617d;
-}
-
 /* Land / 陆地 Cards - Warm Mineral Jade/Earth Character */
 .collection-sheet[data-habitat="land"] .collection-card[data-current="true"],
 .collection-grid[data-habitat="land"] .collection-card[data-current="true"],
@@ -5800,14 +5728,6 @@ html[data-model-preview-capture] .viewer-host::after {
   background: #ffffff;
   transform: translateY(-2px);
   animation: card-land-current-breathe 4s ease-in-out infinite;
-}
-
-.collection-sheet[data-habitat="land"] .collection-card[data-current="true"] .collection-card__state,
-.collection-grid[data-habitat="land"] .collection-card[data-current="true"] .collection-card__state,
-.collection-card[data-habitat="land"][data-current="true"] .collection-card__state {
-  background: rgba(46, 107, 86, 0.12);
-  border: 1px solid rgba(46, 107, 86, 0.28);
-  color: #215443;
 }
 
 @media (min-width: 1280px) {

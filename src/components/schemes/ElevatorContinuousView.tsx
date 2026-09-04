@@ -138,7 +138,7 @@ export function ElevatorContinuousView({
     [onHabitatInViewChange, scrollRef],
   )
 
-  // Initial pre-paint instant scroll directly to current animal's habitat section
+  // Initial pre-paint instant scroll directly to current animal's card or habitat section
   useLayoutEffect(() => {
     if (hasAutoScrolledRef.current) return
     const container = scrollRef.current
@@ -147,15 +147,30 @@ export function ElevatorContinuousView({
     const station = STATIONS.find((s) => s.id === initialHabitat)
     if (!station) return
 
-    const targetEl = container.querySelector<HTMLElement>(`#${station.sectionId}`)
-    if (targetEl) {
+    const targetCard = currentAnimalId
+      ? container.querySelector<HTMLElement>(`[data-collection-animal-id="${currentAnimalId}"]`)
+      : null
+    const targetSection = container.querySelector<HTMLElement>(`#${station.sectionId}`)
+
+    if (targetCard || targetSection) {
       hasAutoScrolledRef.current = true
       isProgrammaticScrollRef.current = true
       setActiveStation(initialHabitat)
 
-      const targetOffset = targetEl.offsetTop > 0
-        ? targetEl.offsetTop
-        : Math.max(0, targetEl.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop)
+      const containerRect = container.getBoundingClientRect()
+      let targetOffset = 0
+
+      if (targetCard) {
+        const cardRect = targetCard.getBoundingClientRect()
+        const relativeCardTop = cardRect.top - containerRect.top + container.scrollTop
+        // Center the target animal card vertically in the scroll container
+        const idealCenter = relativeCardTop - (container.clientHeight - targetCard.clientHeight) / 2
+        targetOffset = Math.max(0, idealCenter)
+      } else if (targetSection) {
+        targetOffset = targetSection.offsetTop > 0
+          ? targetSection.offsetTop
+          : Math.max(0, targetSection.getBoundingClientRect().top - containerRect.top + container.scrollTop)
+      }
 
       // Ensure zero animated scrolling during initial positioning
       container.style.scrollBehavior = 'auto'
@@ -167,15 +182,25 @@ export function ElevatorContinuousView({
 
       // Reinforce in case of any dynamic sub-pixel layout settling
       requestAnimationFrame(() => {
-        if (container && Math.abs(container.scrollTop - targetOffset) > 2) {
-          container.scrollTop = Math.max(0, targetOffset)
+        if (!container) return
+        const cRect = container.getBoundingClientRect()
+        const card = currentAnimalId
+          ? container.querySelector<HTMLElement>(`[data-collection-animal-id="${currentAnimalId}"]`)
+          : null
+        if (card) {
+          const cardR = card.getBoundingClientRect()
+          const rTop = cardR.top - cRect.top + container.scrollTop
+          const ideal = Math.max(0, rTop - (container.clientHeight - card.clientHeight) / 2)
+          if (Math.abs(container.scrollTop - ideal) > 2) {
+            container.scrollTop = ideal
+          }
         }
         requestAnimationFrame(() => {
           isProgrammaticScrollRef.current = false
         })
       })
     }
-  }, [initialHabitat, scrollRef])
+  }, [currentAnimalId, initialHabitat, scrollRef])
 
   // Scroll listener with hysteresis buffer: track active habitat without jitter
   const handleScroll = useCallback(
