@@ -116,18 +116,18 @@ export function ElevatorContinuousView({
       setActiveStation(stationId)
       onHabitatInViewChange?.(stationId)
 
-      // Calculate relative offset within the scrollable container
-      const containerTop = container.getBoundingClientRect().top
-      const targetTop = targetEl.getBoundingClientRect().top
-      const relativeTop = targetTop - containerTop + container.scrollTop - 8
+      // Calculate target offset within the scrollable container
+      const targetOffset = targetEl.offsetTop > 0
+        ? targetEl.offsetTop - 8
+        : Math.max(0, targetEl.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 8)
 
       if (typeof container.scrollTo === 'function') {
         container.scrollTo({
-          top: Math.max(0, relativeTop),
+          top: Math.max(0, targetOffset),
           behavior: 'smooth',
         })
       } else {
-        container.scrollTop = Math.max(0, relativeTop)
+        container.scrollTop = Math.max(0, targetOffset)
       }
 
       // Reset programmatic flag after smooth animation
@@ -153,13 +153,26 @@ export function ElevatorContinuousView({
       isProgrammaticScrollRef.current = true
       setActiveStation(initialHabitat)
 
-      const containerTop = container.getBoundingClientRect().top
-      const targetTop = targetEl.getBoundingClientRect().top
-      const relativeTop = targetTop - containerTop + container.scrollTop
-      container.scrollTop = Math.max(0, relativeTop)
+      const targetOffset = targetEl.offsetTop > 0
+        ? targetEl.offsetTop
+        : Math.max(0, targetEl.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop)
 
+      // Ensure zero animated scrolling during initial positioning
+      container.style.scrollBehavior = 'auto'
+      if (typeof container.scrollTo === 'function') {
+        container.scrollTo({ top: Math.max(0, targetOffset), behavior: 'instant' })
+      } else {
+        container.scrollTop = Math.max(0, targetOffset)
+      }
+
+      // Reinforce in case of any dynamic sub-pixel layout settling
       requestAnimationFrame(() => {
-        isProgrammaticScrollRef.current = false
+        if (container && Math.abs(container.scrollTop - targetOffset) > 2) {
+          container.scrollTop = Math.max(0, targetOffset)
+        }
+        requestAnimationFrame(() => {
+          isProgrammaticScrollRef.current = false
+        })
       })
     }
   }, [initialHabitat, scrollRef])
