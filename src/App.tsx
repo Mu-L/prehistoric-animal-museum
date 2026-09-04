@@ -37,9 +37,7 @@ import {
 import {
   AnimalCollectionSheet,
   type CollectionAnimal,
-  type CollectionUxMode,
 } from './components/AnimalCollectionSheet'
-import { CollectionUxDevDock } from './components/CollectionUxDevDock'
 import { AboutDrawer } from './components/AboutDrawer'
 import { GitHubStarPrompt } from './components/GitHubStarPrompt'
 import { IconButton } from './components/IconButton'
@@ -932,48 +930,6 @@ function MuseumApp({
     useState<ViewerFailureKind | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collectionOpen, setCollectionOpen] = useState(false)
-  const [collectionUxMode, setCollectionUxMode] = useState<CollectionUxMode>(() => {
-    if (typeof window === 'undefined') return 'lens'
-    const urlParam = new URLSearchParams(window.location.search).get('collection_ux')
-    if (
-      urlParam === 'lens' ||
-      urlParam === 'panorama' ||
-      urlParam === 'tabs' ||
-      urlParam === 'grouped' ||
-      urlParam === 'cards' ||
-      urlParam === 'classic'
-    ) {
-      return urlParam
-    }
-    try {
-      const stored = window.localStorage.getItem('museum_collection_ux_mode')
-      if (
-        stored === 'lens' ||
-        stored === 'panorama' ||
-        stored === 'tabs' ||
-        stored === 'grouped' ||
-        stored === 'cards' ||
-        stored === 'classic'
-      ) {
-        return stored
-      }
-    } catch {
-      // ignore
-    }
-    return 'lens'
-  })
-
-  const handleCollectionUxModeChange = useCallback((newMode: CollectionUxMode) => {
-    setCollectionUxMode(newMode)
-    try {
-      window.localStorage.setItem('museum_collection_ux_mode', newMode)
-      const url = new URL(window.location.href)
-      url.searchParams.set('collection_ux', newMode)
-      window.history.replaceState(null, '', url.toString())
-    } catch {
-      // ignore
-    }
-  }, [])
   const [aboutOpen, setAboutOpen] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
   const [scaleEncounterOpen, setScaleEncounterOpen] = useState(false)
@@ -2730,7 +2686,6 @@ function MuseumApp({
         }}
         open={collectionOpen && !focusMode}
         returnFocusTo={collectionTriggerRef}
-        uxMode={collectionUxMode}
       />
       </main>
       <ParentDrawer
@@ -2745,12 +2700,6 @@ function MuseumApp({
         open={aboutOpen && !focusMode}
         returnFocusTo={aboutTriggerRef}
       />
-      {collectionOpen && !focusMode && (
-        <CollectionUxDevDock
-          currentMode={collectionUxMode}
-          onChange={handleCollectionUxModeChange}
-        />
-      )}
     </div>
   )
 }
