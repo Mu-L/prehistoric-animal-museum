@@ -2059,12 +2059,12 @@ html[data-model-preview-capture] .viewer-host::after {
 
 /* Habitat-Adaptive Transient Scrollbars */
 .collection-sheet[data-habitat="air"] .museum-scrollbar-visual {
-  background: rgba(30, 134, 168, 0.08);
+  background: rgba(81, 158, 195, 0.08);
 }
 
 .collection-sheet[data-habitat="air"] .museum-scrollbar-visual > span {
-  background: linear-gradient(180deg, #38a5c7 0%, #1e86a8 100%);
-  box-shadow: 0 1px 4px rgba(30, 134, 168, 0.28);
+  background: linear-gradient(180deg, #82c8e5 0%, #519ec3 100%);
+  box-shadow: 0 1px 3px rgba(81, 158, 195, 0.22);
 }
 
 .collection-sheet[data-habitat="water"] .museum-scrollbar-visual {
