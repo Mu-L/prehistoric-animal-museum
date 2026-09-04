@@ -3971,7 +3971,7 @@ html[data-model-preview-capture] .viewer-host::after {
   left: 0;
   display: flex;
   flex-direction: column;
-  width: min(980px, calc(100% - 28px));
+  width: min(1040px, calc(100% - 28px));
   max-height: calc(100dvh - max(28px, env(safe-area-inset-top)));
   margin: 0 auto;
   overflow: hidden;
@@ -3981,6 +3981,161 @@ html[data-model-preview-capture] .viewer-host::after {
   box-shadow: 0 28px 90px rgb(18 32 25 / 34%);
   pointer-events: auto;
   animation: collection-enter 260ms cubic-bezier(0.2, 0.82, 0.2, 1) both;
+  transition:
+    background 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Level 3 Invariant Viewport Stability: Zero Height Jumps */
+.collection-sheet[data-ux-mode="elevator"],
+.collection-sheet[data-ux-mode="stage"] {
+  height: min(740px, 82vh);
+}
+
+/* ==========================================================================
+   Atmospheric Stage & Habitat Immersion System
+   ========================================================================== */
+.collection-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.collection-atmosphere__sky-rays,
+.collection-atmosphere__caustics,
+.collection-atmosphere__strata,
+.collection-atmosphere__vignette {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+/* Sky / 苍穹 (+500m) Atmosphere */
+.collection-sheet[data-habitat="air"] {
+  background: #f7fafc;
+  border-color: rgba(180, 220, 238, 0.7);
+  box-shadow: 0 28px 90px rgba(28, 64, 88, 0.2), 0 0 70px rgba(185, 225, 245, 0.4);
+}
+
+.collection-sheet[data-habitat="air"] .collection-atmosphere__sky-rays {
+  opacity: 1;
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(195, 232, 248, 0.75) 0%, rgba(240, 248, 252, 0.3) 55%, transparent 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(215, 240, 250, 0.25) 35%, transparent 70%);
+}
+
+.collection-sheet[data-habitat="air"] .collection-sheet__handle {
+  background: #9bc0cf;
+}
+
+.collection-sheet[data-habitat="air"] .collection-sheet__eyebrow {
+  color: #1f6b8a;
+}
+
+.collection-sheet[data-habitat="air"] .collection-sheet__header h2 {
+  color: #153949;
+  text-shadow: 0 1px 12px rgba(190, 225, 240, 0.4);
+}
+
+.collection-sheet[data-habitat="air"] .collection-sheet__header p:last-child {
+  color: #557888;
+}
+
+/* Land / 原始陆表 (0m) Atmosphere */
+.collection-sheet[data-habitat="land"] {
+  background: #fffdf7;
+  border-color: rgba(53, 104, 89, 0.2);
+  box-shadow: 0 28px 90px rgba(18, 32, 25, 0.3);
+}
+
+.collection-sheet[data-habitat="land"] .collection-atmosphere__strata {
+  opacity: 1;
+  background:
+    radial-gradient(110% 60% at 50% 10%, rgba(53, 104, 89, 0.12) 0%, rgba(245, 240, 223, 0.4) 45%, transparent 80%),
+    linear-gradient(180deg, rgba(248, 244, 230, 0.35) 0%, transparent 60%);
+}
+
+.collection-sheet[data-habitat="land"] .collection-sheet__handle {
+  background: #b8b5a3;
+}
+
+.collection-sheet[data-habitat="land"] .collection-sheet__eyebrow {
+  color: var(--leaf);
+}
+
+.collection-sheet[data-habitat="land"] .collection-sheet__header h2 {
+  color: #214c3c;
+}
+
+.collection-sheet[data-habitat="land"] .collection-sheet__header p:last-child {
+  color: var(--ink-muted);
+}
+
+/* Water / 远古深渊 (-200m) Atmosphere - Complete Deep Sea Immersion */
+.collection-sheet[data-habitat="water"] {
+  background: #061318;
+  border-color: rgba(78, 220, 212, 0.28);
+  box-shadow: 0 36px 110px -10px rgba(0, 5, 8, 0.9), 0 0 70px -10px rgba(32, 130, 150, 0.3);
+}
+
+.collection-sheet[data-habitat="water"] .collection-atmosphere__caustics {
+  opacity: 1;
+  background:
+    radial-gradient(130% 90% at 50% -10%, rgba(40, 160, 175, 0.42) 0%, rgba(14, 40, 50, 0.85) 45%, #061318 95%),
+    linear-gradient(180deg, rgba(78, 220, 212, 0.08) 0%, transparent 40%);
+}
+
+.collection-sheet[data-habitat="water"] .collection-atmosphere__caustics::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 25%, rgba(78, 220, 212, 0.12) 0%, transparent 45%),
+              radial-gradient(circle at 75% 15%, rgba(40, 180, 200, 0.15) 0%, transparent 40%);
+  animation: caustics-drift 10s ease-in-out infinite alternate;
+}
+
+@keyframes caustics-drift {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.04) translate(-10px, 8px); }
+}
+
+.collection-sheet[data-habitat="water"] .collection-sheet__handle {
+  background: #345c66;
+}
+
+.collection-sheet[data-habitat="water"] .collection-sheet__eyebrow {
+  color: #4edcd4;
+}
+
+.collection-sheet[data-habitat="water"] .collection-sheet__header h2 {
+  color: #f0fdfa;
+  text-shadow: 0 2px 24px rgba(78, 220, 212, 0.45);
+}
+
+.collection-sheet[data-habitat="water"] .collection-sheet__header p:last-child {
+  color: #8daab0;
+}
+
+.collection-sheet[data-habitat="water"] .icon-button {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #d1eded;
+}
+
+.collection-sheet[data-habitat="water"] .icon-button:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.collection-sheet[data-habitat="water"] .language-menu__trigger {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #d1eded;
 }
 
 .collection-sheet:focus {
@@ -3996,9 +4151,13 @@ html[data-model-preview-capture] .viewer-host::after {
   border-radius: 999px;
   background: #b8b5a3;
   transform: translateX(-50%);
+  z-index: 2;
+  transition: background 400ms ease;
 }
 
 .collection-sheet__header {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -4016,6 +4175,7 @@ html[data-model-preview-capture] .viewer-host::after {
   font-size: 0.76rem;
   font-weight: 820;
   letter-spacing: 0.08em;
+  transition: color 400ms ease;
 }
 
 .collection-sheet__header h2 {
@@ -4263,31 +4423,81 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-grid[data-ux-mode="tabs"] > div,
-.collection-grid[data-ux-mode="cards"] > div,
-.collection-grid[data-ux-mode="lens"] > div,
-.collection-grid[data-ux-mode="panorama"] > div {
+/* Card Entrance Physics by Habitat */
+.collection-grid > div {
   animation: collection-card-glide-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(var(--card-index, 0) * 16ms);
 }
 
+.collection-sheet[data-habitat="air"] .collection-grid > div {
+  animation: collection-card-lift 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--card-index, 0) * 22ms);
+}
+
+.collection-sheet[data-habitat="water"] .collection-grid > div {
+  animation: collection-card-buoyant-ascent 500ms cubic-bezier(0.12, 0.96, 0.24, 1) both;
+  animation-delay: calc(var(--card-index, 0) * 26ms);
+}
+
+.collection-sheet[data-habitat="land"] .collection-grid > div {
+  animation: collection-card-grounding 340ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation-delay: calc(var(--card-index, 0) * 18ms);
+}
+
+@keyframes collection-card-lift {
+  from {
+    opacity: 0;
+    transform: translateY(32px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes collection-card-buoyant-ascent {
+  from {
+    opacity: 0;
+    transform: translateY(42px) scale(0.92);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes collection-card-grounding {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .collection-lens-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 256px;
+  display: flex;
+  align-items: flex-start;
   gap: 20px;
-  align-items: start;
   padding: 4px 30px max(30px, env(safe-area-inset-bottom));
 }
 
 .collection-lens-grid-area {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .collection-lens-grid-area .collection-grid {
   padding: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
-@media (min-width: 1140px) {
+@media (min-width: 1200px) {
   .collection-lens-grid-area .collection-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -4295,15 +4505,16 @@ html[data-model-preview-capture] .viewer-host::after {
 
 .collection-lens-rail-area {
   position: sticky;
-  top: 0;
+  top: 4px;
   display: flex;
   justify-content: center;
   flex-shrink: 0;
+  width: 210px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 860px) {
   .collection-lens-workspace {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: 14px;
     padding: 0 14px max(20px, env(safe-area-inset-bottom));
   }
@@ -4316,8 +4527,332 @@ html[data-model-preview-capture] .viewer-host::after {
 
   .collection-lens-grid-area .collection-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    gap: 8px;
   }
+}
+
+/* ==========================================================================
+   Level 3: Elevator Continuous Strata Layout & Console Rail
+   ========================================================================== */
+.elevator-layout {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 20px 20px 30px;
+  gap: 16px;
+}
+
+.elevator-scrollable {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  padding-right: 10px;
+}
+
+.elevator-zone {
+  position: relative;
+  padding: 10px 0 24px;
+}
+
+.elevator-zone__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 6px 4px 14px;
+  border-bottom: 1px dashed rgba(46, 72, 58, 0.15);
+  margin-bottom: 14px;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-zone__header {
+  border-bottom-color: rgba(78, 220, 212, 0.2);
+}
+
+.elevator-zone__badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.elevator-zone__elevation {
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(46, 72, 58, 0.1);
+  color: #214c3c;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-zone__elevation {
+  background: rgba(78, 220, 212, 0.15);
+  color: #5eead4;
+}
+
+.elevator-zone__badge h3 {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: inherit;
+}
+
+.elevator-zone__count {
+  font-size: 0.76rem;
+  color: var(--ink-muted);
+}
+
+.collection-sheet[data-habitat="water"] .elevator-zone__count {
+  color: #7fa5ab;
+}
+
+/* Strata Horizon Dividers */
+.elevator-strata-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0;
+  user-select: none;
+}
+
+.elevator-strata-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(46, 72, 58, 0.22), transparent);
+}
+
+.collection-sheet[data-habitat="water"] .elevator-strata-line {
+  background: linear-gradient(90deg, transparent, rgba(78, 220, 212, 0.3), transparent);
+}
+
+.elevator-strata-tag {
+  font-family: ui-monospace, monospace;
+  font-size: 0.65rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  color: #728279;
+  text-transform: uppercase;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-strata-tag {
+  color: #64b4bc;
+}
+
+/* Elevator Console Rail */
+.elevator-console {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 140px;
+  flex-shrink: 0;
+  padding: 10px 0;
+}
+
+.elevator-console__track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(46, 72, 58, 0.15);
+  box-shadow: 0 4px 16px rgba(28, 56, 43, 0.06);
+  backdrop-filter: blur(8px);
+}
+
+.collection-sheet[data-habitat="water"] .elevator-console__track {
+  background: rgba(14, 38, 48, 0.85);
+  border-color: rgba(78, 220, 212, 0.28);
+  box-shadow: 0 6px 20px rgba(0, 5, 8, 0.5);
+}
+
+.elevator-console__btn {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: all 180ms ease;
+}
+
+.elevator-console__btn:hover {
+  background: rgba(46, 72, 58, 0.06);
+}
+
+.collection-sheet[data-habitat="water"] .elevator-console__btn:hover {
+  background: rgba(78, 220, 212, 0.1);
+}
+
+.elevator-console__btn[data-active="true"] {
+  background: #214c3c;
+  color: #fffdf7;
+  box-shadow: 0 4px 12px rgba(33, 76, 60, 0.28);
+}
+
+.collection-sheet[data-habitat="water"] .elevator-console__btn[data-active="true"] {
+  background: #4edcd4;
+  color: #041014;
+  box-shadow: 0 4px 14px rgba(78, 220, 212, 0.4);
+}
+
+.elevator-console__btn-glyph {
+  font-size: 1.1rem;
+}
+
+.elevator-console__btn-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.elevator-console__altitude {
+  font-family: ui-monospace, monospace;
+  font-size: 0.6rem;
+  font-weight: 750;
+  opacity: 0.8;
+}
+
+.elevator-console__title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.elevator-console__count {
+  font-size: 0.62rem;
+  opacity: 0.75;
+}
+
+@media (max-width: 860px) {
+  .elevator-layout {
+    flex-direction: column;
+    padding: 0 14px 14px;
+    gap: 8px;
+  }
+
+  .elevator-console {
+    position: static;
+    width: 100%;
+    order: -1;
+    padding: 0 0 6px;
+  }
+
+  .elevator-console__track {
+    flex-direction: row;
+    gap: 6px;
+    padding: 4px;
+  }
+
+  .elevator-console__btn {
+    flex: 1;
+    padding: 6px 8px;
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   Level 3: Stage Curated Layout (Fixed Pedestal & Theatrical Cross-Dissolve)
+   ========================================================================== */
+.stage-curated-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 30px 24px;
+}
+
+.stage-horizon-nav {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.stage-horizon-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(46, 72, 58, 0.08);
+  border: 1px solid rgba(46, 72, 58, 0.12);
+}
+
+.collection-sheet[data-habitat="water"] .stage-horizon-track {
+  background: rgba(14, 38, 48, 0.8);
+  border-color: rgba(78, 220, 212, 0.25);
+}
+
+.stage-horizon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.8rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.stage-horizon-btn[data-active="true"] {
+  background: #214c3c;
+  color: #fffdf7;
+  box-shadow: 0 2px 8px rgba(33, 76, 60, 0.25);
+}
+
+.collection-sheet[data-habitat="water"] .stage-horizon-btn[data-active="true"] {
+  background: #4edcd4;
+  color: #041014;
+  box-shadow: 0 2px 10px rgba(78, 220, 212, 0.35);
+}
+
+.stage-canvas-viewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+}
+
+.stage-grid--sparse {
+  align-content: center;
+  min-height: 280px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.collection-dev-dock__btn--highlight {
+  border-color: rgba(244, 184, 95, 0.6) !important;
+  background: rgba(244, 184, 95, 0.16) !important;
+  font-weight: 850 !important;
+}
+
+.collection-dev-dock__btn--highlight[data-active="true"] {
+  background: #f4b85f !important;
+  color: #2b1f07 !important;
+  box-shadow: 0 2px 10px rgba(244, 184, 95, 0.45) !important;
 }
 
 .collection-story-cards {
@@ -4656,6 +5191,84 @@ html[data-model-preview-capture] .viewer-host::after {
   color: var(--animal-accent);
   font-size: 0.66rem;
   font-weight: 820;
+}
+
+/* ==========================================================================
+   Card Habitat Adaptations (Air / Land / Water Immersion)
+   ========================================================================== */
+
+/* Water / 深渊 Cards - Luminescent Subaquatic Slabs */
+.collection-sheet[data-habitat="water"] .collection-card {
+  background: rgba(13, 34, 42, 0.88);
+  border-color: rgba(78, 220, 212, 0.24);
+  color: #e6f6f5;
+  box-shadow: 0 8px 24px -4px rgba(0, 8, 12, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.collection-sheet[data-habitat="water"] .collection-card:hover {
+  background: rgba(18, 46, 56, 0.98);
+  border-color: rgba(78, 220, 212, 0.65);
+  box-shadow: 0 14px 34px -4px rgba(0, 8, 12, 0.75), 0 0 18px rgba(78, 220, 212, 0.25);
+  transform: translateY(-2px);
+}
+
+.collection-sheet[data-habitat="water"] .collection-card[data-current="true"] {
+  border-color: #4edcd4;
+  background: rgba(22, 54, 66, 0.95);
+  box-shadow: inset 3px 0 #4edcd4, 0 0 20px rgba(78, 220, 212, 0.25);
+}
+
+.collection-sheet[data-habitat="water"] .collection-card__image {
+  background: #081a22;
+}
+
+.collection-sheet[data-habitat="water"] .collection-card__copy strong {
+  color: #f0fdfa;
+}
+
+.collection-sheet[data-habitat="water"] .collection-card__copy small {
+  color: #8daab0;
+}
+
+.collection-sheet[data-habitat="water"] .collection-card__number {
+  color: rgba(78, 220, 212, 0.5);
+}
+
+.collection-sheet[data-habitat="water"] .collection-card__state {
+  color: #4edcd4;
+}
+
+/* Air / 苍穹 Cards - Ethereal Weightless High-Key Cards */
+.collection-sheet[data-habitat="air"] .collection-card {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(140, 195, 215, 0.35);
+  color: #153949;
+  box-shadow: 0 10px 24px -6px rgba(45, 95, 125, 0.1);
+}
+
+.collection-sheet[data-habitat="air"] .collection-card:hover {
+  background: #ffffff;
+  border-color: rgba(80, 165, 200, 0.65);
+  box-shadow: 0 16px 36px -6px rgba(45, 95, 125, 0.18);
+  transform: translateY(-2px);
+}
+
+.collection-sheet[data-habitat="air"] .collection-card__image {
+  background: #e5f2f7;
+}
+
+.collection-sheet[data-habitat="air"] .collection-card__copy strong {
+  color: #153949;
+}
+
+.collection-sheet[data-habitat="air"] .collection-card__copy small {
+  color: #5e8494;
+}
+
+.collection-sheet[data-habitat="air"] .collection-card__number {
+  color: rgba(31, 107, 138, 0.45);
 }
 
 @keyframes collection-enter {

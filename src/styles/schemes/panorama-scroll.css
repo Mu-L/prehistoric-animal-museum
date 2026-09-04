@@ -617,6 +617,48 @@
 }
 
 /* ==========================================================================
+   Habitat Stage Adaptations for Panorama Ribbon
+   ========================================================================== */
+.collection-sheet[data-habitat="water"] .panorama-ribbon {
+  background: rgba(10, 27, 34, 0.94);
+  border-color: rgba(78, 220, 212, 0.3);
+  box-shadow:
+    0 4px 16px rgba(0, 5, 8, 0.5),
+    0 12px 32px -4px rgba(0, 5, 8, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.collection-sheet[data-habitat="water"] .panorama-fold {
+  color: #c9e8ea;
+}
+
+.collection-sheet[data-habitat="water"] .panorama-fold[data-active="true"] {
+  background: rgba(18, 48, 58, 0.96);
+  border-color: rgba(78, 220, 212, 0.7);
+  box-shadow: 0 8px 24px -4px rgba(0, 5, 8, 0.6), 0 0 16px rgba(78, 220, 212, 0.2);
+}
+
+.collection-sheet[data-habitat="water"] .panorama-fold__title {
+  color: #f0fdfa;
+}
+
+.collection-sheet[data-habitat="water"] .panorama-fold__folio {
+  color: #6ee7df;
+}
+
+.collection-sheet[data-habitat="water"] .panorama-fold__subtitle {
+  color: #8daab0;
+}
+
+.collection-sheet[data-habitat="air"] .panorama-ribbon {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(160, 210, 230, 0.55);
+  box-shadow:
+    0 8px 24px -4px rgba(35, 75, 100, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+/* ==========================================================================
    8. Reduced Motion Accessibility
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {

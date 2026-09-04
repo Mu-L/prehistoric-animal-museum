@@ -47,8 +47,25 @@ describe('AnimalCollectionSheet', () => {
     return { ...result, onSelect, onClose }
   }
 
-  it('renders all animals and default tabs mode with habitat counts', () => {
+  it('renders default elevator mode with continuous ecological zones and altitude rail', () => {
     renderSheet()
+
+    expect(screen.getByRole('heading', { name: '全馆图鉴' })).toBeInTheDocument()
+    expect(screen.getByLabelText('史前地球垂直生态长卷')).toBeInTheDocument()
+    expect(screen.getByLabelText('生态海拔升降梯操纵轨')).toBeInTheDocument()
+
+    // Check elevator zones
+    expect(screen.getByRole('heading', { name: /苍穹展区/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /原始陆表/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /远古深渊/ })).toBeInTheDocument()
+
+    // In elevator mode, all 6 cards exist simultaneously without layout destruction
+    const cards = screen.getAllByRole('button', { name: /展台/ })
+    expect(cards).toHaveLength(6)
+  })
+
+  it('renders tabs mode with habitat counts and filters animals smoothly', () => {
+    renderSheet({ uxMode: 'tabs' })
 
     expect(screen.getByRole('heading', { name: '全馆图鉴' })).toBeInTheDocument()
     
@@ -63,16 +80,8 @@ describe('AnimalCollectionSheet', () => {
     expect(airTab).toHaveTextContent('2')
     expect(waterTab).toHaveTextContent('2')
 
-    // In 'all' tab, all 6 cards are rendered
-    const cards = screen.getAllByRole('button', { name: /展台/ })
-    expect(cards).toHaveLength(6)
-  })
-
-  it('filters animals smoothly when habitat tab is clicked', () => {
-    renderSheet()
-
     // Click sky tab
-    fireEvent.click(screen.getByRole('tab', { name: /天空/ }))
+    fireEvent.click(airTab)
 
     const skyCards = screen.getAllByRole('button', { name: /展台/ })
     expect(skyCards).toHaveLength(2)
@@ -165,13 +174,32 @@ describe('AnimalCollectionSheet', () => {
     expect(screen.queryByText('剑龙')).not.toBeInTheDocument()
   })
 
+  it('renders stage mode with StageCuratedView and filters on horizon selection', () => {
+    renderSheet({ uxMode: 'stage' })
+
+    expect(screen.getByLabelText('远古生态视窗展台')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /全部/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /天空/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /陆地/ })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /海洋/ })).toBeInTheDocument()
+
+    // Initially all 6 cards are rendered
+    expect(screen.getAllByRole('button', { name: /展台/ })).toHaveLength(6)
+
+    // Click air horizon
+    fireEvent.click(screen.getByRole('tab', { name: /天空/ }))
+    expect(screen.getAllByRole('button', { name: /展台/ })).toHaveLength(2)
+    expect(screen.getByText('无齿翼龙')).toBeInTheDocument()
+    expect(screen.queryByText('剑龙')).not.toBeInTheDocument()
+  })
+
   it('handles mode changes via CollectionUxDevDock', () => {
     const onChange = vi.fn()
     render(<CollectionUxDevDock currentMode="tabs" onChange={onChange} />)
 
-    expect(screen.getByText('方案对比')).toBeInTheDocument()
-    const lensBtn = screen.getByRole('radio', { name: /测深仪/ })
-    fireEvent.click(lensBtn)
-    expect(onChange).toHaveBeenCalledWith('lens')
+    expect(screen.getByText('设计演进脉络')).toBeInTheDocument()
+    const elevatorBtn = screen.getByRole('radio', { name: /垂直升降梯/ })
+    fireEvent.click(elevatorBtn)
+    expect(onChange).toHaveBeenCalledWith('elevator')
   })
 })

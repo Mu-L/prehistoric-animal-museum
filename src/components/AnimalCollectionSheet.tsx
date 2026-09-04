@@ -15,9 +15,13 @@ import { IconButton } from './IconButton'
 import { LanguageMenu } from './LanguageMenu'
 import { VerticalAltitudeLens } from './schemes/VerticalAltitudeLens'
 import { PanoramaScroll } from './schemes/PanoramaScroll'
+import { ElevatorContinuousView } from './schemes/ElevatorContinuousView'
+import { StageCuratedView } from './schemes/StageCuratedView'
 
 export type HabitatFilter = 'all' | Habitat
 export type CollectionUxMode =
+  | 'elevator'
+  | 'stage'
   | 'lens'
   | 'panorama'
   | 'tabs'
@@ -62,7 +66,7 @@ export function AnimalCollectionSheet({
   onSelect,
   open,
   returnFocusTo,
-  uxMode = 'tabs',
+  uxMode = 'elevator',
 }: AnimalCollectionSheetProps) {
   const { messages } = useI18n()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -87,7 +91,17 @@ export function AnimalCollectionSheet({
     const startHeight = lastHeightRef.current
     lastHeightRef.current = null
 
-    if (!sheet || startHeight === null || typeof window === 'undefined') return
+    if (
+      !sheet ||
+      startHeight === null ||
+      typeof window === 'undefined' ||
+      uxMode === 'elevator' ||
+      uxMode === 'stage' ||
+      uxMode === 'lens' ||
+      uxMode === 'panorama'
+    ) {
+      return
+    }
 
     const prefersReducedMotion = window.matchMedia?.(
       '(prefers-reduced-motion: reduce)',
@@ -283,6 +297,7 @@ export function AnimalCollectionSheet({
           className="collection-card"
           data-collection-animal-id={animal.id}
           data-current={current}
+          data-habitat={animal.habitat}
           data-loading={loading}
           onClick={() => onSelect(animal.id)}
           type="button"
@@ -343,10 +358,18 @@ export function AnimalCollectionSheet({
         aria-labelledby={titleId}
         aria-modal="true"
         className="collection-sheet"
+        data-habitat={activeHabitat}
+        data-ux-mode={uxMode}
         ref={dialogRef}
         role="dialog"
         tabIndex={-1}
       >
+        <div aria-hidden="true" className="collection-atmosphere">
+          <div className="collection-atmosphere__sky-rays" />
+          <div className="collection-atmosphere__caustics" />
+          <div className="collection-atmosphere__strata" />
+          <div className="collection-atmosphere__vignette" />
+        </div>
         <div aria-hidden="true" className="collection-sheet__handle" />
         <header className="collection-sheet__header">
           <div>
@@ -528,15 +551,30 @@ export function AnimalCollectionSheet({
           />
         )}
 
-        <div
-          className="collection-sheet__scrollable"
-          ref={contentBodyRef}
-        >
+        {uxMode === 'elevator' ? (
+          <ElevatorContinuousView
+            animals={animals}
+            onHabitatInViewChange={setActiveHabitat}
+            renderCard={renderCard}
+          />
+        ) : uxMode === 'stage' ? (
+          <StageCuratedView
+            activeHabitat={activeHabitat}
+            animals={animals}
+            onSelectHabitat={handleHabitatSelect}
+            renderCard={renderCard}
+          />
+        ) : (
+          <div
+            className="collection-sheet__scrollable"
+            ref={contentBodyRef}
+          >
           {uxMode === 'lens' ? (
             <div className="collection-lens-workspace">
               <div className="collection-lens-grid-area">
                 <div
                   className="collection-grid"
+                  data-habitat={activeHabitat}
                   data-ux-mode="lens"
                   key={`lens-${activeHabitat}`}
                   role="list"
@@ -594,6 +632,7 @@ export function AnimalCollectionSheet({
           ) : (
             <div
               className="collection-grid"
+              data-habitat={activeHabitat}
               data-ux-mode={uxMode}
               key={`${uxMode}-${activeHabitat}`}
               role="list"
@@ -602,6 +641,7 @@ export function AnimalCollectionSheet({
             </div>
           )}
         </div>
+      )}
       </section>
     </div>,
     document.body,
