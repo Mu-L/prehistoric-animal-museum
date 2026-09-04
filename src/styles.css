@@ -4532,6 +4532,14 @@ html[data-model-preview-capture] .viewer-host::after {
   padding: 4px 30px max(30px, env(safe-area-inset-bottom));
 }
 
+@media (max-width: 640px) {
+  .collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 3px 10px max(15px, env(safe-area-inset-bottom));
+  }
+}
+
 /* Card Entrance Physics by Habitat - scoped to tab-based filtering */
 .collection-grid[data-ux-mode="tabs"] > div,
 .collection-grid[data-ux-mode="cards"] > div,
@@ -6163,19 +6171,19 @@ html[data-model-preview-capture] .viewer-host::after {
   }
 
   .collection-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    padding: 3px 10px max(15px, env(safe-area-inset-bottom));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 4px 10px max(16px, env(safe-area-inset-bottom));
   }
 
   .collection-card {
     display: flex;
     min-height: 0;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
     align-items: stretch;
-    padding: 5px;
-    border-radius: 12px;
+    padding: 6px;
+    border-radius: 14px;
   }
 
   .collection-card[data-current="true"] {
@@ -6194,17 +6202,17 @@ html[data-model-preview-capture] .viewer-host::after {
     width: 100%;
     height: auto;
     aspect-ratio: 1.22;
-    border-radius: 8px;
+    border-radius: 10px;
   }
 
   .collection-card__copy {
-    gap: 1px;
+    gap: 2px;
     text-align: center;
   }
 
   .collection-card__copy strong {
-    font-size: clamp(0.78rem, 3.8vw, 0.94rem);
-    line-height: 1.2;
+    font-size: clamp(0.82rem, 3.8vw, 0.98rem);
+    line-height: 1.25;
   }
 
   .collection-card__copy small {
