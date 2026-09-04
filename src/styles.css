@@ -4008,9 +4008,9 @@ html[data-model-preview-capture] .viewer-host::after {
   pointer-events: auto;
   animation: collection-enter 260ms cubic-bezier(0.2, 0.82, 0.2, 1) both;
   transition:
-    background 500ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 500ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 500ms cubic-bezier(0.16, 1, 0.3, 1);
+    background 850ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 850ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* Level 3 Invariant Viewport Stability: Zero Height Jumps */
@@ -4020,7 +4020,7 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 /* ==========================================================================
-   Atmospheric Stage & Habitat Immersion System
+   Atmospheric Stage & Habitat Immersion System (Serene Museum Breathing Light)
    ========================================================================== */
 .collection-atmosphere {
   position: absolute;
@@ -4037,11 +4037,11 @@ html[data-model-preview-capture] .viewer-host::after {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
   pointer-events: none;
 }
 
-/* Sky / 苍穹 (+500m) Atmosphere */
+/* Sky / 苍穹 (+500m) Atmosphere - High-Altitude Radiant Morning Light */
 .collection-sheet[data-habitat="air"] {
   background: #f7fafc;
   border-color: rgba(180, 220, 238, 0.7);
@@ -4051,8 +4051,22 @@ html[data-model-preview-capture] .viewer-host::after {
 .collection-sheet[data-habitat="air"] .collection-atmosphere__sky-rays {
   opacity: 1;
   background:
-    radial-gradient(120% 70% at 50% -10%, rgba(195, 232, 248, 0.75) 0%, rgba(240, 248, 252, 0.3) 55%, transparent 100%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(215, 240, 250, 0.25) 35%, transparent 70%);
+    /* Diagonal morning celestial sunray */
+    linear-gradient(138deg, rgba(255, 250, 235, 0.75) 0%, rgba(220, 244, 252, 0.45) 35%, transparent 75%),
+    radial-gradient(120% 70% at 50% -10%, rgba(195, 235, 250, 0.85) 0%, rgba(240, 248, 254, 0.35) 55%, transparent 100%);
+}
+
+.collection-sheet[data-habitat="air"] .collection-atmosphere__sky-rays::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(255, 245, 220, 0.35) 0%, transparent 45%);
+  animation: sky-breeze-glow 14s ease-in-out infinite alternate;
+}
+
+@keyframes sky-breeze-glow {
+  0% { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 0.9; transform: scale(1.05) translate(8px, 4px); }
 }
 
 .collection-sheet[data-habitat="air"] .collection-sheet__handle {
@@ -4072,7 +4086,7 @@ html[data-model-preview-capture] .viewer-host::after {
   color: #557888;
 }
 
-/* Land / 原始陆表 (0m) Atmosphere */
+/* Land / 原始陆表 (0m) Atmosphere - Warm Primeval Canopy Light */
 .collection-sheet[data-habitat="land"] {
   background: #fffdf7;
   border-color: rgba(53, 104, 89, 0.2);
@@ -4082,8 +4096,10 @@ html[data-model-preview-capture] .viewer-host::after {
 .collection-sheet[data-habitat="land"] .collection-atmosphere__strata {
   opacity: 1;
   background:
-    radial-gradient(110% 60% at 50% 10%, rgba(53, 104, 89, 0.12) 0%, rgba(245, 240, 223, 0.4) 45%, transparent 80%),
-    linear-gradient(180deg, rgba(248, 244, 230, 0.35) 0%, transparent 60%);
+    /* Dappled forest sunlight filtering through prehistoric canopy */
+    radial-gradient(90% 60% at 75% 0%, rgba(255, 245, 215, 0.65) 0%, rgba(245, 240, 223, 0.3) 45%, transparent 80%),
+    radial-gradient(100% 70% at 20% 10%, rgba(125, 175, 140, 0.16) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(253, 249, 238, 0.5) 0%, transparent 70%);
 }
 
 .collection-sheet[data-habitat="land"] .collection-sheet__handle {
@@ -4102,7 +4118,7 @@ html[data-model-preview-capture] .viewer-host::after {
   color: var(--ink-muted);
 }
 
-/* Water / 远古深渊 (-200m) Atmosphere - Luminous Mineral Marine Depth */
+/* Water / 远古深渊 (-200m) Atmosphere - Luminous Marine Depth with Surface God Rays */
 .collection-sheet[data-habitat="water"] {
   background: linear-gradient(180deg, #225261 0%, #1e4754 45%, #183c48 100%);
   border-color: rgba(110, 231, 222, 0.38);
@@ -4110,24 +4126,50 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-sheet[data-habitat="water"] .collection-atmosphere__caustics {
-  opacity: 0.9;
+  opacity: 0.95;
   background:
-    radial-gradient(130% 90% at 50% -10%, rgba(95, 210, 220, 0.32) 0%, rgba(28, 70, 84, 0.5) 45%, #183c48 95%),
-    linear-gradient(180deg, rgba(110, 231, 222, 0.14) 0%, transparent 40%);
+    /* Diagonal volumetric Sunbeams penetrating downward from surface (God Rays) */
+    linear-gradient(168deg,
+      rgba(160, 245, 250, 0.28) 0%,
+      rgba(110, 230, 240, 0.16) 18%,
+      rgba(60, 190, 210, 0.08) 42%,
+      transparent 75%
+    ),
+    linear-gradient(194deg,
+      rgba(180, 252, 255, 0.22) 0%,
+      rgba(100, 220, 235, 0.14) 22%,
+      rgba(50, 170, 195, 0.06) 48%,
+      transparent 80%
+    ),
+    /* Deep marine radial pool */
+    radial-gradient(130% 90% at 50% -10%, rgba(95, 215, 225, 0.35) 0%, rgba(28, 70, 84, 0.52) 45%, #183c48 95%);
 }
 
 .collection-sheet[data-habitat="water"] .collection-atmosphere__caustics::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 30% 25%, rgba(110, 231, 222, 0.14) 0%, transparent 45%),
-              radial-gradient(circle at 75% 15%, rgba(60, 190, 205, 0.16) 0%, transparent 40%);
-  animation: caustics-drift 10s ease-in-out infinite alternate;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(130, 240, 245, 0.2) 0%, transparent 48%),
+    radial-gradient(circle at 74% 16%, rgba(80, 205, 225, 0.22) 0%, transparent 42%),
+    /* Secondary shimmering shafts */
+    linear-gradient(176deg, rgba(140, 235, 245, 0.18) 0%, transparent 55%);
+  animation: underwater-sun-shafts 11s ease-in-out infinite alternate;
 }
 
-@keyframes caustics-drift {
-  0% { transform: scale(1) translate(0, 0); }
-  100% { transform: scale(1.04) translate(-10px, 8px); }
+@keyframes underwater-sun-shafts {
+  0% {
+    opacity: 0.7;
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.04) translateY(6px) rotate(1.2deg);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1.02) translateY(-4px) rotate(-1deg);
+  }
 }
 
 .collection-sheet[data-habitat="water"] .collection-sheet__handle {
@@ -4649,16 +4691,46 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .elevator-zone--water .elevator-zone__badge h3 {
+  color: #174854;
+  transition: color 600ms cubic-bezier(0.2, 0.8, 0.2, 1), text-shadow 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.elevator-zone--water .elevator-zone__count {
+  color: #4a7580;
+  transition: color 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.elevator-zone--water .elevator-zone__icon {
+  transition: filter 600ms ease;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-zone--water .elevator-zone__badge h3 {
   color: #ffffff !important;
   text-shadow: 0 2px 14px rgba(78, 220, 212, 0.45);
 }
 
-.elevator-zone--water .elevator-zone__count {
+.collection-sheet[data-habitat="water"] .elevator-zone--water .elevator-zone__count {
   color: #c5ece8 !important;
 }
 
-.elevator-zone--water .elevator-zone__icon {
+.collection-sheet[data-habitat="water"] .elevator-zone--water .elevator-zone__icon {
   filter: drop-shadow(0 2px 8px rgba(78, 220, 212, 0.4));
+}
+
+.collection-sheet[data-habitat="water"] .elevator-zone--land .elevator-zone__badge h3 {
+  color: #e5dfcf;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-zone--land .elevator-zone__count {
+  color: #b3ab94;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-zone--air .elevator-zone__badge h3 {
+  color: #d8eef6;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-zone--air .elevator-zone__count {
+  color: #92b8c5;
 }
 
 /* Strata Horizon Dividers */
@@ -4802,7 +4874,7 @@ html[data-model-preview-capture] .viewer-host::after {
   background: #214c3c;
   color: #fffdf7;
   box-shadow: 0 6px 18px rgba(33, 76, 60, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
-  transition: background-color 340ms ease, box-shadow 340ms ease;
+  transition: background 850ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .living-creature-beacon[data-habitat="air"] {
@@ -4818,6 +4890,40 @@ html[data-model-preview-capture] .viewer-host::after {
 .living-creature-beacon[data-habitat="water"] {
   background: linear-gradient(135deg, #2a7c88 0%, #154c54 100%);
   box-shadow: 0 6px 20px rgba(10, 45, 52, 0.55), 0 0 16px rgba(110, 231, 222, 0.4);
+}
+
+/* Beacon Living Breathing Halo */
+.living-creature-beacon__halo {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.6;
+  animation: beacon-halo-breathe 4.5s ease-in-out infinite alternate;
+  transition: box-shadow 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.living-creature-beacon[data-habitat="air"] .living-creature-beacon__halo {
+  box-shadow: 0 0 16px rgba(180, 235, 250, 0.6), inset 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+.living-creature-beacon[data-habitat="land"] .living-creature-beacon__halo {
+  box-shadow: 0 0 16px rgba(240, 215, 150, 0.5), inset 0 0 8px rgba(255, 250, 230, 0.3);
+}
+
+.living-creature-beacon[data-habitat="water"] .living-creature-beacon__halo {
+  box-shadow: 0 0 22px rgba(110, 235, 230, 0.7), inset 0 0 10px rgba(180, 250, 255, 0.45);
+}
+
+@keyframes beacon-halo-breathe {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
 }
 
 .living-creature-beacon__vessel {

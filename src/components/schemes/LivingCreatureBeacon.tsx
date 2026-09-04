@@ -161,7 +161,7 @@ export function LivingCreatureBeacon({
           </svg>
         </div>
 
-        {/* 3. Water Habitat: Gliding Ichthyosaur / Marine Fish */}
+        {/* 3. Water Habitat: Robust Majestic Ichthyosaur / Ancient Marine Giant */}
         <div
           aria-hidden={currentHabitat !== 'water'}
           className="creature-figure creature-figure--water"
@@ -173,28 +173,47 @@ export function LivingCreatureBeacon({
             fill="currentColor"
             xmlns="http://www.w3.org/2000/svg"
           >
-            {/* Water wake curves */}
+            {/* Water wake & bubble currents */}
             <path
               className="creature-water-wave"
-              d="M6 46 C16 43, 26 49, 36 45 C46 41, 54 45, 58 43"
+              d="M4 48 C15 44, 25 51, 38 46 C48 42, 56 46, 60 44"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.8"
+              strokeWidth="2.2"
               strokeLinecap="round"
               opacity="0.35"
             />
-            {/* Fish / Ichthyosaur streamlined body */}
+            <circle cx="56" cy="18" r="1.5" opacity="0.3" />
+            <circle cx="60" cy="24" r="1" opacity="0.4" />
+
+            {/* Robust, Muscular Marine Body (Fuller proportions matching Bird and Stegosaurus) */}
             <path
-              d="M58 28 C53 26, 47 24, 38 25 C28 26, 17 32, 10 33 C8 30, 6 25, 4 23 C5 28, 6 36, 5 41 C7 38, 9 35, 12 35 C18 35, 27 34, 38 32 C48 31, 54 30, 58 28 Z"
+              d="M58 29 C54 24, 46 19, 36 20 C24 21, 16 28, 11 31 C8 26, 5 19, 3 17 C4 26, 5 37, 3 46 C6 44, 8 37, 12 36 C17 36, 24 43, 35 43 C47 43, 54 36, 58 29 Z"
             />
-            {/* Dorsal Fin */}
-            <path d="M30 25 L34 16 L37 25 Z" />
-            {/* Front flipper */}
-            <path d="M39 32 L36 43 L42 34 Z" opacity="0.9" />
-            {/* Rear flipper */}
-            <path d="M22 34 L20 40 L24 35 Z" opacity="0.8" />
-            {/* Eye point */}
-            <circle cx="50" cy="27" r="1.4" fill="#fffdf7" />
+            {/* Majestic Dorsal Fin */}
+            <path
+              d="M28 20 L33 10 L38 20 Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+            {/* Broad Front Pectoral Flipper */}
+            <path
+              d="M37 36 C40 44, 38 52, 33 54 C32 52, 33 45, 35 37 Z"
+              opacity="0.95"
+            />
+            {/* Rear Pelvic Flipper */}
+            <path
+              d="M20 37 C21 43, 20 48, 17 50 C16 48, 17 43, 19 37 Z"
+              opacity="0.85"
+            />
+            {/* Powerful Crescent Tail Fluke */}
+            <path
+              d="M12 33 C8 31, 4 23, 2 18 C4 26, 5 36, 3 45 C5 41, 9 35, 12 34 Z"
+              opacity="0.95"
+            />
+            {/* Luminous Eye Point */}
+            <circle cx="49" cy="27" r="1.6" fill="#fffdf7" />
           </svg>
         </div>
       </div>
