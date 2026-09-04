@@ -88,6 +88,36 @@ export function AnimalCollectionSheet({
   const lastHeightRef = useRef<number | null>(null)
   const prevOpenRef = useRef(open)
 
+  // Animated mount/unmount lifecycle for organic breathing expand and collapse
+  const [isRendered, setIsRendered] = useState(open)
+  const [isExiting, setIsExiting] = useState(false)
+  const exitTimerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      if (exitTimerRef.current !== null) {
+        window.clearTimeout(exitTimerRef.current)
+        exitTimerRef.current = null
+      }
+      setIsRendered(true)
+      setIsExiting(false)
+    } else if (isRendered) {
+      setIsExiting(true)
+      exitTimerRef.current = window.setTimeout(() => {
+        exitTimerRef.current = null
+        setIsRendered(false)
+        setIsExiting(false)
+      }, 260)
+    }
+
+    return () => {
+      if (exitTimerRef.current !== null) {
+        window.clearTimeout(exitTimerRef.current)
+        exitTimerRef.current = null
+      }
+    }
+  }, [open, isRendered])
+
   // Synchronously align activeHabitat on open in elevator mode before first paint
   if (!prevOpenRef.current && open) {
     prevOpenRef.current = true
@@ -303,8 +333,13 @@ export function AnimalCollectionSheet({
     }
   }, [currentAnimalId, open, returnFocusTo])
 
-  if (!open) {
+  if (!isRendered) {
     return null
+  }
+
+  const handleClose = () => {
+    if (isExiting) return
+    onClose()
   }
 
   const renderCard = (animal: CollectionAnimal, index = 0) => {
@@ -375,20 +410,24 @@ export function AnimalCollectionSheet({
       <div
         aria-hidden="true"
         className="collection-backdrop"
+        data-exiting={isExiting ? 'true' : undefined}
         onMouseDown={(event) => {
-          if (event.currentTarget === event.target) {
-            onClose()
+          if (!isExiting && event.currentTarget === event.target) {
+            handleClose()
           }
         }}
       />
       <section
+        aria-hidden={isExiting ? 'true' : undefined}
         aria-labelledby={titleId}
-        aria-modal="true"
+        aria-modal={isExiting ? undefined : 'true'}
         className="collection-sheet"
+        data-exiting={isExiting ? 'true' : undefined}
         data-habitat={activeHabitat}
         data-ux-mode={uxMode}
+        inert={isExiting ? true : undefined}
         ref={dialogRef}
-        role="dialog"
+        role={isExiting ? undefined : 'dialog'}
         tabIndex={-1}
       >
         <div aria-hidden="true" className="collection-atmosphere">
@@ -413,7 +452,7 @@ export function AnimalCollectionSheet({
               hideTooltipOnFocus
               icon={X}
               label={messages.collection.close}
-              onClick={onClose}
+              onClick={handleClose}
               ref={closeButtonRef}
             />
           </div>

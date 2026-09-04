@@ -3988,6 +3988,29 @@ html[data-model-preview-capture] .viewer-host::after {
   pointer-events: auto;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  animation: collection-backdrop-enter 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.collection-backdrop[data-exiting="true"] {
+  animation: collection-backdrop-exit 260ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes collection-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes collection-backdrop-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .collection-sheet {
@@ -4006,11 +4029,44 @@ html[data-model-preview-capture] .viewer-host::after {
   background: #fffdf7;
   box-shadow: 0 28px 90px rgb(18 32 25 / 34%);
   pointer-events: auto;
-  animation: collection-enter 260ms cubic-bezier(0.2, 0.82, 0.2, 1) both;
+  animation: collection-sheet-expand 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transition:
     background 850ms cubic-bezier(0.2, 0.8, 0.2, 1),
     border-color 850ms cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.collection-sheet[data-exiting="true"] {
+  animation: collection-sheet-collapse 260ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none;
+}
+
+@keyframes collection-sheet-expand {
+  0% {
+    opacity: 0;
+    transform: translateY(32px) scale(0.965);
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes collection-sheet-collapse {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
 }
 
 /* Level 3 Invariant Viewport Stability: Zero Height Jumps */
@@ -5548,18 +5604,76 @@ html[data-model-preview-capture] .viewer-host::after {
   bottom: 8px;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   color: var(--animal-accent);
   font-size: 0.66rem;
   font-weight: 820;
+}
+
+.collection-card[data-current="true"] .collection-card__state {
+  padding: 2.5px 8px 2.5px 6px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 780;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 /* ==========================================================================
    Card Habitat Adaptations (Air / Land / Water Immersion)
    ========================================================================== */
 
-/* Water / 深渊 Cards - Mineral Sea Glass Slabs with High Legibility */
-.collection-sheet[data-habitat="water"] .collection-card {
+/* Breathing Pulse Animations for Current Cards across Habitats */
+@keyframes card-air-current-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 4px 0 0 #1e86a8,
+      0 6px 18px -4px rgba(30, 134, 168, 0.22),
+      0 0 0 1px rgba(30, 134, 168, 0.3);
+  }
+  50% {
+    box-shadow:
+      inset 4px 0 0 #1e86a8,
+      0 10px 26px -4px rgba(30, 134, 168, 0.35),
+      0 0 12px rgba(30, 134, 168, 0.24);
+  }
+}
+
+@keyframes card-land-current-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 4px 0 0 #2e6b56,
+      0 6px 18px -4px rgba(46, 107, 86, 0.2),
+      0 0 0 1px rgba(46, 107, 86, 0.3);
+  }
+  50% {
+    box-shadow:
+      inset 4px 0 0 #2e6b56,
+      0 10px 26px -4px rgba(46, 107, 86, 0.32),
+      0 0 12px rgba(46, 107, 86, 0.22);
+  }
+}
+
+@keyframes card-water-current-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 4px 0 0 #5fdcd4,
+      0 8px 22px -4px rgba(6, 20, 26, 0.65),
+      0 0 8px rgba(95, 220, 212, 0.16);
+  }
+  50% {
+    box-shadow:
+      inset 4px 0 0 #5fdcd4,
+      0 12px 28px -4px rgba(6, 20, 26, 0.75),
+      0 0 16px rgba(95, 220, 212, 0.32);
+  }
+}
+
+/* Water / 海洋 Cards - Mineral Sea Glass Slabs with High Legibility */
+.collection-sheet[data-habitat="water"] .collection-card,
+.collection-grid[data-habitat="water"] .collection-card,
+.collection-card[data-habitat="water"] {
   background: rgba(27, 58, 68, 0.85);
   border-color: rgba(110, 231, 222, 0.32);
   color: #f7fcfa;
@@ -5568,80 +5682,132 @@ html[data-model-preview-capture] .viewer-host::after {
   -webkit-backdrop-filter: blur(8px);
 }
 
-.collection-sheet[data-habitat="water"] .collection-card:hover {
+.collection-sheet[data-habitat="water"] .collection-card:hover,
+.collection-grid[data-habitat="water"] .collection-card:hover,
+.collection-card[data-habitat="water"]:hover {
   background: rgba(35, 74, 86, 0.95);
   border-color: rgba(110, 231, 222, 0.75);
   box-shadow: 0 14px 34px -4px rgba(6, 20, 26, 0.55), 0 0 18px rgba(110, 231, 222, 0.3);
   transform: translateY(-2px);
 }
 
-.collection-sheet[data-habitat="water"] .collection-card[data-current="true"] {
-  border-color: #6ee7de;
-  background: rgba(38, 80, 92, 0.98);
-  box-shadow: inset 3px 0 #6ee7de, 0 0 22px rgba(110, 231, 222, 0.35);
+.collection-sheet[data-habitat="water"] .collection-card[data-current="true"],
+.collection-grid[data-habitat="water"] .collection-card[data-current="true"],
+.collection-card[data-habitat="water"][data-current="true"] {
+  border-color: rgba(95, 220, 212, 0.85);
+  background: rgba(33, 71, 82, 0.98);
+  transform: translateY(-2px);
+  animation: card-water-current-breathe 4s ease-in-out infinite;
 }
 
-.collection-sheet[data-habitat="water"] .collection-card__image {
+.collection-sheet[data-habitat="water"] .collection-card__image,
+.collection-grid[data-habitat="water"] .collection-card__image,
+.collection-card[data-habitat="water"] .collection-card__image {
   background: rgba(15, 38, 46, 0.7);
 }
 
-.collection-sheet[data-habitat="water"] .collection-card__copy strong {
+.collection-sheet[data-habitat="water"] .collection-card__copy strong,
+.collection-grid[data-habitat="water"] .collection-card__copy strong,
+.collection-card[data-habitat="water"] .collection-card__copy strong {
   color: #ffffff;
 }
 
-.collection-sheet[data-habitat="water"] .collection-card__copy small {
+.collection-sheet[data-habitat="water"] .collection-card__copy small,
+.collection-grid[data-habitat="water"] .collection-card__copy small,
+.collection-card[data-habitat="water"] .collection-card__copy small {
   color: #b0d7dd;
 }
 
-.collection-sheet[data-habitat="water"] .collection-card__number {
+.collection-sheet[data-habitat="water"] .collection-card__number,
+.collection-grid[data-habitat="water"] .collection-card__number,
+.collection-card[data-habitat="water"] .collection-card__number {
   color: rgba(110, 231, 222, 0.65);
 }
 
-.collection-sheet[data-habitat="water"] .collection-card__state {
-  color: #6ee7de;
+.collection-sheet[data-habitat="water"] .collection-card[data-current="true"] .collection-card__state,
+.collection-grid[data-habitat="water"] .collection-card[data-current="true"] .collection-card__state,
+.collection-card[data-habitat="water"][data-current="true"] .collection-card__state {
+  background: rgba(95, 220, 212, 0.18);
+  border: 1px solid rgba(95, 220, 212, 0.38);
+  color: #8bf5ed;
 }
 
 /* Air / 苍穹 Cards - Ethereal Weightless High-Key Cards */
-.collection-sheet[data-habitat="air"] .collection-card {
+.collection-sheet[data-habitat="air"] .collection-card,
+.collection-grid[data-habitat="air"] .collection-card,
+.collection-card[data-habitat="air"] {
   background: rgba(255, 255, 255, 0.94);
   border-color: rgba(140, 195, 215, 0.35);
   color: #153949;
   box-shadow: 0 10px 24px -6px rgba(45, 95, 125, 0.1);
 }
 
-.collection-sheet[data-habitat="air"] .collection-card:hover {
+.collection-sheet[data-habitat="air"] .collection-card:hover,
+.collection-grid[data-habitat="air"] .collection-card:hover,
+.collection-card[data-habitat="air"]:hover {
   background: #ffffff;
   border-color: rgba(80, 165, 200, 0.65);
   box-shadow: 0 16px 36px -6px rgba(45, 95, 125, 0.18);
   transform: translateY(-2px);
 }
 
-.collection-sheet[data-habitat="air"] .collection-card__image {
+.collection-sheet[data-habitat="air"] .collection-card[data-current="true"],
+.collection-grid[data-habitat="air"] .collection-card[data-current="true"],
+.collection-card[data-habitat="air"][data-current="true"] {
+  border-color: #1e86a8;
+  background: #ffffff;
+  transform: translateY(-2px);
+  animation: card-air-current-breathe 4s ease-in-out infinite;
+}
+
+.collection-sheet[data-habitat="air"] .collection-card__image,
+.collection-grid[data-habitat="air"] .collection-card__image,
+.collection-card[data-habitat="air"] .collection-card__image {
   background: #e5f2f7;
 }
 
-.collection-sheet[data-habitat="air"] .collection-card__copy strong {
+.collection-sheet[data-habitat="air"] .collection-card__copy strong,
+.collection-grid[data-habitat="air"] .collection-card__copy strong,
+.collection-card[data-habitat="air"] .collection-card__copy strong {
   color: #153949;
 }
 
-.collection-sheet[data-habitat="air"] .collection-card__copy small {
+.collection-sheet[data-habitat="air"] .collection-card__copy small,
+.collection-grid[data-habitat="air"] .collection-card__copy small,
+.collection-card[data-habitat="air"] .collection-card__copy small {
   color: #5e8494;
 }
 
-.collection-sheet[data-habitat="air"] .collection-card__number {
+.collection-sheet[data-habitat="air"] .collection-card__number,
+.collection-grid[data-habitat="air"] .collection-card__number,
+.collection-card[data-habitat="air"] .collection-card__number {
   color: rgba(31, 107, 138, 0.45);
 }
 
-@keyframes collection-enter {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.985);
-  }
+.collection-sheet[data-habitat="air"] .collection-card[data-current="true"] .collection-card__state,
+.collection-grid[data-habitat="air"] .collection-card[data-current="true"] .collection-card__state,
+.collection-card[data-habitat="air"][data-current="true"] .collection-card__state {
+  background: rgba(30, 134, 168, 0.12);
+  border: 1px solid rgba(30, 134, 168, 0.28);
+  color: #0f617d;
+}
 
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+/* Land / 陆地 Cards - Warm Mineral Jade/Earth Character */
+.collection-sheet[data-habitat="land"] .collection-card[data-current="true"],
+.collection-grid[data-habitat="land"] .collection-card[data-current="true"],
+.collection-card[data-habitat="land"][data-current="true"] {
+  border-color: #2e6b56;
+  background: #ffffff;
+  transform: translateY(-2px);
+  animation: card-land-current-breathe 4s ease-in-out infinite;
+}
+
+.collection-sheet[data-habitat="land"] .collection-card[data-current="true"] .collection-card__state,
+.collection-grid[data-habitat="land"] .collection-card[data-current="true"] .collection-card__state,
+.collection-card[data-habitat="land"][data-current="true"] .collection-card__state {
+  background: rgba(46, 107, 86, 0.12);
+  border: 1px solid rgba(46, 107, 86, 0.28);
+  color: #215443;
 }
 
 @media (min-width: 1280px) {
@@ -8434,4 +8600,16 @@ html[data-locale="en"] .collection-card__copy strong {
     animation: none;
     height: 12px;
   }
+
+  .collection-backdrop,
+  .collection-backdrop[data-exiting="true"],
+  .collection-sheet,
+  .collection-sheet[data-exiting="true"] {
+    animation-duration: 1ms !important;
+  }
+
+  .collection-card[data-current="true"] {
+    animation: none !important;
+  }
 }
+
