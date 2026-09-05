@@ -230,6 +230,7 @@ export function AnimalCollectionSheet({
         className="collection-sheet"
         data-exiting={isExiting ? 'true' : undefined}
         data-habitat={activeHabitat}
+        data-ux-mode="elevator"
         inert={isExiting ? true : undefined}
         ref={dialogRef}
         role={isExiting ? undefined : 'dialog'}
