@@ -56,56 +56,44 @@ export function AnimalCollectionSheet({
     return animals.find((a) => a.id === currentAnimalId)?.habitat || null
   }, [animals, currentAnimalId])
 
+  const [prevOpen, setPrevOpen] = useState(open)
+  const [prevAnimalId, setPrevAnimalId] = useState(currentAnimalId)
   const [activeHabitat, setActiveHabitat] = useState<HabitatFilter>(() => {
     return currentAnimalHabitat ?? 'air'
   })
-  const prevOpenRef = useRef(open)
 
   // Animated mount/unmount lifecycle for organic breathing expand and collapse
   const [isRendered, setIsRendered] = useState(open)
   const [isExiting, setIsExiting] = useState(false)
-  const exitTimerRef = useRef<number | null>(null)
 
-  useEffect(() => {
+  // Synchronously align activeHabitat and mount state when sheet opens/closes or current animal changes
+  if (open !== prevOpen || currentAnimalId !== prevAnimalId) {
+    setPrevOpen(open)
+    setPrevAnimalId(currentAnimalId)
+
     if (open) {
-      if (exitTimerRef.current !== null) {
-        window.clearTimeout(exitTimerRef.current)
-        exitTimerRef.current = null
-      }
       setIsRendered(true)
       setIsExiting(false)
+      if (currentAnimalHabitat && activeHabitat !== currentAnimalHabitat) {
+        setActiveHabitat(currentAnimalHabitat)
+      }
     } else if (isRendered) {
       setIsExiting(true)
-      exitTimerRef.current = window.setTimeout(() => {
-        exitTimerRef.current = null
-        setIsRendered(false)
-        setIsExiting(false)
-      }, 260)
     }
-
-    return () => {
-      if (exitTimerRef.current !== null) {
-        window.clearTimeout(exitTimerRef.current)
-        exitTimerRef.current = null
-      }
-    }
-  }, [open, isRendered])
-
-  // Synchronously align activeHabitat on open before first paint
-  if (!prevOpenRef.current && open) {
-    prevOpenRef.current = true
-    if (currentAnimalHabitat && activeHabitat !== currentAnimalHabitat) {
-      setActiveHabitat(currentAnimalHabitat)
-    }
-  } else if (prevOpenRef.current && !open) {
-    prevOpenRef.current = false
   }
 
   useEffect(() => {
-    if (open && currentAnimalHabitat) {
-      setActiveHabitat(currentAnimalHabitat)
+    if (!isExiting) return
+
+    const timer = window.setTimeout(() => {
+      setIsRendered(false)
+      setIsExiting(false)
+    }, 260)
+
+    return () => {
+      window.clearTimeout(timer)
     }
-  }, [open, currentAnimalHabitat])
+  }, [isExiting])
 
   const animalNumberMap = useMemo(() => {
     const map = new Map<string, string>()
