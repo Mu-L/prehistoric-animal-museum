@@ -1004,6 +1004,7 @@ function MuseumApp({
         id: animal.id,
         name: animal.name,
         thumbnail: animal.assets.thumbnail,
+        habitat: animal.habitat,
       })),
     [animals],
   )

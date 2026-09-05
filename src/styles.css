@@ -2043,7 +2043,9 @@ html[data-model-preview-capture] .viewer-host::after {
   transform: translate3d(0, var(--museum-scrollbar-thumb-offset), 0);
   transition:
     height 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 90ms linear;
+    transform 90ms linear,
+    background 400ms ease,
+    box-shadow 400ms ease;
 }
 
 .museum-scrollbar-visual[data-visible="true"],
@@ -2053,6 +2055,34 @@ html[data-model-preview-capture] .viewer-host::after {
   transform: scaleX(1);
   transition-delay: 0ms;
   transition-duration: 150ms;
+}
+
+/* Habitat-Adaptive Transient Scrollbars */
+.collection-sheet[data-habitat="air"] .museum-scrollbar-visual {
+  background: rgba(81, 158, 195, 0.08);
+}
+
+.collection-sheet[data-habitat="air"] .museum-scrollbar-visual > span {
+  background: linear-gradient(180deg, #82c8e5 0%, #519ec3 100%);
+  box-shadow: 0 1px 3px rgba(81, 158, 195, 0.22);
+}
+
+.collection-sheet[data-habitat="water"] .museum-scrollbar-visual {
+  background: rgba(11, 130, 143, 0.1);
+}
+
+.collection-sheet[data-habitat="water"] .museum-scrollbar-visual > span {
+  background: linear-gradient(180deg, #168e9b 0%, #096672 100%);
+  box-shadow: 0 1px 4px rgba(9, 102, 114, 0.35);
+}
+
+.collection-sheet[data-habitat="land"] .museum-scrollbar-visual {
+  background: rgba(46, 107, 86, 0.08);
+}
+
+.collection-sheet[data-habitat="land"] .museum-scrollbar-visual > span {
+  background: linear-gradient(180deg, #448970 0%, #2e6b56 100%);
+  box-shadow: 0 1px 4px rgba(46, 107, 86, 0.25);
 }
 
 .fact-grid {
@@ -3962,6 +3992,29 @@ html[data-model-preview-capture] .viewer-host::after {
   pointer-events: auto;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  animation: collection-backdrop-enter 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.collection-backdrop[data-exiting="true"] {
+  animation: collection-backdrop-exit 260ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes collection-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes collection-backdrop-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .collection-sheet {
@@ -3969,18 +4022,226 @@ html[data-model-preview-capture] .viewer-host::after {
   right: 0;
   bottom: max(14px, env(safe-area-inset-bottom));
   left: 0;
-  display: grid;
-  width: min(980px, calc(100% - 28px));
+  display: flex;
+  flex-direction: column;
+  width: min(1040px, calc(100% - 28px));
   max-height: calc(100dvh - max(28px, env(safe-area-inset-top)));
-  grid-template-rows: auto minmax(0, 1fr);
   margin: 0 auto;
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 72%);
   border-radius: 28px;
-  background: #fffdf7;
+  background-color: #fffdf7;
   box-shadow: 0 28px 90px rgb(18 32 25 / 34%);
   pointer-events: auto;
-  animation: collection-enter 260ms cubic-bezier(0.2, 0.82, 0.2, 1) both;
+  animation: collection-sheet-expand 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    background-color 650ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 650ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 650ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.collection-sheet[data-exiting="true"] {
+  animation: collection-sheet-collapse 260ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none;
+}
+
+@keyframes collection-sheet-expand {
+  0% {
+    opacity: 0;
+    transform: translateY(32px) scale(0.965);
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes collection-sheet-collapse {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+}
+
+/* Level 3 Invariant Viewport Stability: Zero Height Jumps */
+.collection-sheet,
+.collection-sheet[data-ux-mode="elevator"] {
+  height: min(740px, 82vh);
+}
+
+/* ==========================================================================
+   Atmospheric Stage & Habitat Immersion System (Serene Museum Breathing Light)
+   ========================================================================== */
+.collection-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.collection-atmosphere__sky-rays,
+.collection-atmosphere__caustics,
+.collection-atmosphere__strata,
+.collection-atmosphere__vignette {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 650ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+/* Sky / 苍穹 (+500m) Atmosphere - High-Altitude Radiant Morning Light */
+.collection-sheet[data-habitat="air"] {
+  background-color: #f7fafc;
+  border-color: rgba(180, 220, 238, 0.7);
+  box-shadow: 0 28px 90px rgba(28, 64, 88, 0.2), 0 0 70px rgba(185, 225, 245, 0.4);
+}
+
+.collection-sheet[data-habitat="air"] .collection-atmosphere__sky-rays {
+  opacity: 1;
+  background:
+    /* Diagonal morning celestial sunray */
+    linear-gradient(138deg, rgba(255, 250, 235, 0.75) 0%, rgba(220, 244, 252, 0.45) 35%, transparent 75%),
+    radial-gradient(120% 70% at 50% -10%, rgba(195, 235, 250, 0.85) 0%, rgba(240, 248, 254, 0.35) 55%, transparent 100%);
+}
+
+.collection-sheet[data-habitat="air"] .collection-atmosphere__sky-rays::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(255, 245, 220, 0.35) 0%, transparent 45%);
+  animation: sky-breeze-glow 14s ease-in-out infinite alternate;
+}
+
+@keyframes sky-breeze-glow {
+  0% { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 0.9; transform: scale(1.05) translate(8px, 4px); }
+}
+
+.collection-sheet[data-habitat="air"] .collection-sheet__handle {
+  background: #9bc0cf;
+}
+
+.collection-sheet[data-habitat="air"] .collection-sheet__eyebrow {
+  color: #1f6b8a;
+}
+
+.collection-sheet[data-habitat="air"] .collection-sheet__header h2 {
+  color: #153949;
+  text-shadow: 0 1px 12px rgba(190, 225, 240, 0.4);
+}
+
+.collection-sheet[data-habitat="air"] .collection-sheet__header p:last-child {
+  color: #557888;
+}
+
+/* Land / 原始陆表 (0m) Atmosphere - Warm Primeval Canopy Light */
+.collection-sheet[data-habitat="land"] {
+  background-color: #fffdf7;
+  border-color: rgba(53, 104, 89, 0.2);
+  box-shadow: 0 28px 90px rgba(18, 32, 25, 0.3);
+}
+
+.collection-sheet[data-habitat="land"] .collection-atmosphere__strata {
+  opacity: 1;
+  background:
+    /* Dappled forest sunlight filtering through prehistoric canopy */
+    radial-gradient(90% 60% at 75% 0%, rgba(255, 245, 215, 0.65) 0%, rgba(245, 240, 223, 0.3) 45%, transparent 80%),
+    radial-gradient(100% 70% at 20% 10%, rgba(125, 175, 140, 0.16) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(253, 249, 238, 0.5) 0%, transparent 70%);
+}
+
+.collection-sheet[data-habitat="land"] .collection-sheet__handle {
+  background: #b8b5a3;
+}
+
+.collection-sheet[data-habitat="land"] .collection-sheet__eyebrow {
+  color: var(--leaf);
+}
+
+.collection-sheet[data-habitat="land"] .collection-sheet__header h2 {
+  color: #214c3c;
+}
+
+.collection-sheet[data-habitat="land"] .collection-sheet__header p:last-child {
+  color: var(--ink-muted);
+}
+
+/* Water / 蔚蓝海洋 (-200m) Atmosphere - Sunlit Surface to Deep Marine Aqua Gradient (上浅下深) */
+.collection-sheet[data-habitat="water"] {
+  background-color: #eaf6f8;
+  border-color: rgba(60, 185, 195, 0.38);
+  box-shadow: 0 28px 90px rgba(14, 48, 56, 0.2), 0 0 70px rgba(100, 205, 215, 0.25);
+}
+
+.collection-sheet[data-habitat="water"] .collection-atmosphere__caustics {
+  opacity: 1;
+  background:
+    /* Surface sunlight penetration from the top */
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(255, 255, 255, 0.4) 15%,
+      transparent 45%
+    ),
+    /* Soft diagonal water caustics */
+    linear-gradient(160deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(150, 230, 238, 0.25) 30%,
+      transparent 70%
+    ),
+    /* Base water depth gradient: light sunlit cyan at top to rich marine aqua at bottom (上浅下深) */
+    linear-gradient(180deg, #f0fafb 0%, #e2f4f6 30%, #ceeff3 65%, #b4e5ec 100%);
+}
+
+.collection-sheet[data-habitat="water"] .collection-atmosphere__caustics::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    /* Shimmering surface water caustics concentrated in upper layer */
+    radial-gradient(ellipse 90% 45% at 50% 10%, rgba(255, 255, 255, 0.6) 0%, transparent 60%),
+    radial-gradient(circle at 25% 18%, rgba(180, 245, 250, 0.35) 0%, transparent 45%),
+    radial-gradient(circle at 78% 22%, rgba(140, 235, 242, 0.3) 0%, transparent 40%);
+  animation: underwater-sun-shafts 12s ease-in-out infinite alternate;
+}
+
+@keyframes underwater-sun-shafts {
+  0% {
+    opacity: 0.6;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(1.03) translateY(4px);
+  }
+}
+
+.collection-sheet[data-habitat="water"] .collection-sheet__handle {
+  background: #89c5cc;
+}
+
+.collection-sheet[data-habitat="water"] .collection-sheet__eyebrow {
+  color: #0a7582;
+}
+
+.collection-sheet[data-habitat="water"] .collection-sheet__header h2 {
+  color: #0e3d47;
+  text-shadow: 0 1px 12px rgba(130, 215, 222, 0.3);
+}
+
+.collection-sheet[data-habitat="water"] .collection-sheet__header p:last-child {
+  color: #3b6d78;
 }
 
 .collection-sheet:focus {
@@ -3996,14 +4257,19 @@ html[data-model-preview-capture] .viewer-host::after {
   border-radius: 999px;
   background: #b8b5a3;
   transform: translateX(-50%);
+  z-index: 2;
+  transition: background 400ms ease;
 }
 
 .collection-sheet__header {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
   padding: 28px 30px 16px;
+  flex-shrink: 0;
 }
 
 .collection-sheet__eyebrow {
@@ -4015,6 +4281,7 @@ html[data-model-preview-capture] .viewer-host::after {
   font-size: 0.76rem;
   font-weight: 820;
   letter-spacing: 0.08em;
+  transition: color 400ms ease;
 }
 
 .collection-sheet__header h2 {
@@ -4025,12 +4292,16 @@ html[data-model-preview-capture] .viewer-host::after {
   font-size: clamp(2rem, 4vw, 2.8rem);
   font-weight: 400;
   line-height: 1.08;
+  transition:
+    color 500ms ease,
+    text-shadow 500ms ease;
 }
 
 .collection-sheet__header p:last-child {
   margin: 8px 0 0;
   color: var(--ink-muted);
   font-size: 0.9rem;
+  transition: color 500ms ease;
 }
 
 .collection-grid {
@@ -4038,8 +4309,500 @@ html[data-model-preview-capture] .viewer-host::after {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   padding: 4px 30px max(30px, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 640px) {
+  .collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 3px 10px max(15px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ==========================================================================
+   Level 3: Elevator Continuous Strata Layout & Living Creature Totem Shaft
+   ========================================================================== */
+.elevator-layout {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 20px 20px 30px;
+  gap: 16px;
+}
+
+.elevator-viewport-wrapper {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}
+
+.elevator-scrollable {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
+  padding-right: 14px;
+  scrollbar-width: none; /* Firefox */
+}
+
+.elevator-scrollable::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.elevator-viewport-wrapper .museum-scrollbar-visual {
+  top: 8px;
+  right: 0;
+  bottom: 8px;
+}
+
+.elevator-zone {
+  position: relative;
+  padding: 10px 0 24px;
+}
+
+.elevator-zone--water {
+  padding-bottom: max(64px, calc(env(safe-area-inset-bottom) + 40px));
+  background: linear-gradient(180deg, transparent 0%, rgba(185, 235, 242, 0.15) 30%, rgba(140, 218, 228, 0.28) 100%);
+  border-radius: 20px;
+}
+
+.elevator-zone__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 6px 4px 14px;
+  border-bottom: 1px dashed rgba(46, 72, 58, 0.15);
+  margin-bottom: 14px;
+  transition: border-bottom-color 500ms ease;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-zone__header {
+  border-bottom-color: rgba(60, 185, 195, 0.3);
+}
+
+.elevator-zone__badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.elevator-zone__icon {
+  font-size: 1.25rem;
+}
+
+.elevator-zone__badge h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 850;
+  color: inherit;
+}
+
+.elevator-zone__count {
+  font-size: 0.76rem;
+  color: var(--ink-muted);
+  transition: color 500ms ease;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-zone__count {
+  color: #4a727c;
+}
+
+.elevator-zone--water .elevator-zone__badge h3 {
+  color: #134552;
+  transition: color 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.elevator-zone--water .elevator-zone__count {
+  color: #4a727c;
+  transition: color 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.elevator-zone--water .elevator-zone__icon {
+  transition: filter 600ms ease;
+}
+
+/* Strata Horizon Dividers */
+.elevator-strata-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0;
+  user-select: none;
+}
+
+.elevator-strata-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(46, 72, 58, 0.22), transparent);
+}
+
+.collection-sheet[data-habitat="water"] .elevator-strata-line {
+  background: linear-gradient(90deg, transparent, rgba(90, 195, 195, 0.3), transparent);
+}
+
+.elevator-strata-tag {
+  font-family: ui-monospace, monospace;
+  font-size: 0.65rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  color: #728279;
+  text-transform: uppercase;
+  transition: color 500ms ease;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-strata-tag {
+  color: #5d8b92;
+}
+
+/* Kid-Friendly Ecological Totem Shaft */
+.elevator-totem-shaft {
+  position: sticky;
+  top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 68px;
+  flex-shrink: 0;
+  padding: 4px 0;
+  user-select: none;
+}
+
+.elevator-totem-shaft__track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 8px 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(46, 72, 58, 0.12);
+  box-shadow: 0 4px 18px rgba(28, 56, 43, 0.06);
+  backdrop-filter: blur(10px);
+  transition:
+    background 500ms ease,
+    border-color 500ms ease,
+    box-shadow 500ms ease;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-totem-shaft__track {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(90, 195, 195, 0.25);
+  box-shadow: 0 4px 18px rgba(18, 52, 60, 0.08);
+}
+
+.elevator-totem-shaft__slider {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  margin-left: -25px;
+  width: 50px;
+  height: 50px;
+  z-index: 2;
+  pointer-events: none;
+  transform: translateY(calc(var(--station-index, 0) * 64px));
+  transition: transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.elevator-totem-shaft__nodes {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.elevator-totem-shaft__node-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  margin: 0 auto;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.elevator-totem-shaft__node-glyph {
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: transform 180ms ease;
+}
+
+.elevator-totem-shaft__node-label {
+  font-size: 0.64rem;
+  font-weight: 800;
+  color: #3b584a;
+  margin-top: 3px;
+  letter-spacing: 0.04em;
+  transition: color 500ms ease;
+}
+
+.collection-sheet[data-habitat="water"] .elevator-totem-shaft__node-label {
+  color: #25585f;
+}
+
+.elevator-totem-shaft__node-btn:hover .elevator-totem-shaft__node-glyph {
+  transform: scale(1.15);
+}
+
+.elevator-totem-shaft__node-btn[data-active="true"] {
+  opacity: 0.12; /* Living creature beacon hovers directly over it */
+}
+
+/* Living Creature Beacon */
+.living-creature-beacon {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #214c3c;
+  color: #fffdf7;
+  box-shadow: 0 6px 18px rgba(33, 76, 60, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  transition: background 850ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.living-creature-beacon[data-habitat="air"] {
+  background: linear-gradient(135deg, #3d7968 0%, #204b3b 100%);
+  box-shadow: 0 6px 18px rgba(32, 75, 59, 0.35), 0 0 12px rgba(230, 245, 240, 0.4);
+}
+
+.living-creature-beacon[data-habitat="land"] {
+  background: linear-gradient(135deg, #7c683b 0%, #4a3e20 100%);
+  box-shadow: 0 6px 18px rgba(74, 62, 32, 0.35), 0 0 12px rgba(244, 218, 160, 0.3);
+}
+
+.living-creature-beacon[data-habitat="water"] {
+  background: linear-gradient(135deg, #2a7c88 0%, #154c54 100%);
+  box-shadow: 0 6px 20px rgba(10, 45, 52, 0.55), 0 0 16px rgba(110, 231, 222, 0.4);
+}
+
+/* Beacon Living Breathing Halo */
+.living-creature-beacon__halo {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.6;
+  animation: beacon-halo-breathe 4.5s ease-in-out infinite alternate;
+  transition: box-shadow 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.living-creature-beacon[data-habitat="air"] .living-creature-beacon__halo {
+  box-shadow: 0 0 16px rgba(180, 235, 250, 0.6), inset 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+.living-creature-beacon[data-habitat="land"] .living-creature-beacon__halo {
+  box-shadow: 0 0 16px rgba(240, 215, 150, 0.5), inset 0 0 8px rgba(255, 250, 230, 0.3);
+}
+
+.living-creature-beacon[data-habitat="water"] .living-creature-beacon__halo {
+  box-shadow: 0 0 22px rgba(110, 235, 230, 0.7), inset 0 0 10px rgba(180, 250, 255, 0.45);
+}
+
+@keyframes beacon-halo-breathe {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+.living-creature-beacon__vessel {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.creature-figure {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.7) rotate(-8deg);
+  transition: opacity 300ms cubic-bezier(0.16, 1, 0.3, 1), transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.creature-figure[data-active="true"] {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.creature-svg {
+  width: 100%;
+  height: 100%;
+  color: #fffdf7;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
+/* Micro-animations for creatures */
+.creature-figure--air[data-active="true"] .creature-svg--pterosaur {
+  animation: pterosaur-glide 3.2s ease-in-out infinite alternate;
+}
+
+.creature-figure--land[data-active="true"] .creature-svg--stegosaurus {
+  animation: stegosaurus-step 2.8s ease-in-out infinite alternate;
+}
+
+.creature-figure--water[data-active="true"] .creature-svg--ichthyosaur {
+  animation: ichthyosaur-swim 3.4s ease-in-out infinite alternate;
+}
+
+@keyframes pterosaur-glide {
+  0% { transform: translateY(1px) rotate(-2deg); }
+  100% { transform: translateY(-2px) rotate(3deg); }
+}
+
+@keyframes stegosaurus-step {
+  0% { transform: translateX(-1px); }
+  100% { transform: translateX(1px); }
+}
+
+@keyframes ichthyosaur-swim {
+  0% { transform: translateY(1px) scaleY(0.97); }
+  100% { transform: translateY(-1px) scaleY(1.03); }
+}
+
+@media (max-width: 860px) {
+  .collection-sheet,
+  .collection-sheet[data-ux-mode="elevator"] {
+    height: min(84dvh, 660px);
+  }
+
+  .elevator-layout {
+    flex-direction: column;
+    padding: 0 14px max(12px, env(safe-area-inset-bottom));
+    gap: 8px;
+    min-height: 0;
+  }
+
+  .elevator-viewport-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .elevator-totem-shaft {
+    position: static;
+    width: 100%;
+    order: -1;
+    display: flex;
+    justify-content: center;
+    padding: 0 0 6px;
+  }
+
+  .elevator-totem-shaft__track {
+    position: relative;
+    width: 216px;
+    height: 54px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(46, 72, 58, 0.14);
+    box-shadow: 0 4px 16px rgba(28, 56, 43, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .collection-sheet[data-habitat="water"] .elevator-totem-shaft__track {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(90, 195, 195, 0.25);
+    box-shadow: 0 4px 16px rgba(18, 52, 60, 0.08);
+  }
+
+  .elevator-totem-shaft__slider {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    top: 50%;
+    left: 11px;
+    margin-left: 0;
+    margin-top: -24px;
+    width: 48px;
+    height: 48px;
+    transform: translateX(calc(var(--station-index, 0) * 73px)) !important;
+    transition: transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .elevator-totem-shaft__slider .living-creature-beacon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .elevator-totem-shaft__nodes {
+    flex-direction: row;
+    gap: 19px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .elevator-totem-shaft__node-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 46px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    transition: opacity 280ms ease, transform 280ms ease;
+  }
+
+  .elevator-totem-shaft__node-btn[data-active="true"] {
+    opacity: 0.12; /* Living creature beacon hovers directly over it */
+  }
+
+  .elevator-totem-shaft__node-btn:not([data-active="true"]) {
+    opacity: 0.85;
+  }
+
+  .elevator-totem-shaft__node-btn .elevator-totem-shaft__node-glyph {
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
+  .elevator-totem-shaft__node-btn .elevator-totem-shaft__node-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    margin-top: 2px;
+    color: #55685d;
+  }
+
+  .collection-sheet[data-habitat="water"] .elevator-totem-shaft__node-btn .elevator-totem-shaft__node-label {
+    color: #25585f;
+  }
 }
 
 .collection-card {
@@ -4077,8 +4840,8 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .collection-card[data-loading="true"] {
-  border-style: dashed;
   border-color: var(--animal-accent);
+  opacity: 0.88;
 }
 
 .collection-card__number {
@@ -4137,22 +4900,192 @@ html[data-model-preview-capture] .viewer-host::after {
   bottom: 8px;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   color: var(--animal-accent);
   font-size: 0.66rem;
   font-weight: 820;
 }
 
-@keyframes collection-enter {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.985);
-  }
+.collection-card[data-loading="true"] .collection-card__state {
+  padding: 2.5px 8px 2.5px 6px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 780;
+  letter-spacing: 0.02em;
+  background: rgba(46, 72, 58, 0.08);
+  border: 1px solid rgba(46, 72, 58, 0.15);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
 
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+/* ==========================================================================
+   Card Habitat Adaptations (Air / Land / Water Immersion)
+   ========================================================================== */
+
+/* Breathing Pulse Animations for Current Cards across Habitats */
+@keyframes card-air-current-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 4px 0 0 #1e86a8,
+      0 6px 18px -4px rgba(30, 134, 168, 0.22),
+      0 0 0 1px rgba(30, 134, 168, 0.3);
   }
+  50% {
+    box-shadow:
+      inset 4px 0 0 #1e86a8,
+      0 10px 26px -4px rgba(30, 134, 168, 0.35),
+      0 0 12px rgba(30, 134, 168, 0.24);
+  }
+}
+
+@keyframes card-land-current-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 4px 0 0 #2e6b56,
+      0 6px 18px -4px rgba(46, 107, 86, 0.2),
+      0 0 0 1px rgba(46, 107, 86, 0.3);
+  }
+  50% {
+    box-shadow:
+      inset 4px 0 0 #2e6b56,
+      0 10px 26px -4px rgba(46, 107, 86, 0.32),
+      0 0 12px rgba(46, 107, 86, 0.22);
+  }
+}
+
+@keyframes card-water-current-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 4px 0 0 #0b828f,
+      0 6px 18px -4px rgba(11, 130, 143, 0.22),
+      0 0 0 1px rgba(11, 130, 143, 0.32);
+  }
+  50% {
+    box-shadow:
+      inset 4px 0 0 #0b828f,
+      0 10px 26px -4px rgba(11, 130, 143, 0.35),
+      0 0 14px rgba(11, 130, 143, 0.25);
+  }
+}
+
+/* Water / 海洋 Cards - Aquatic Marine Cyan-Tinted Sea-Glass Cards */
+.collection-grid[data-habitat="water"] .collection-card,
+.collection-card[data-habitat="water"] {
+  background: #ebf7fa;
+  border-color: rgba(60, 180, 195, 0.35);
+  color: #0e3d47;
+  box-shadow: 0 6px 20px -3px rgba(15, 65, 75, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.collection-grid[data-habitat="water"] .collection-card:hover,
+.collection-card[data-habitat="water"]:hover {
+  background: #f4fcfe;
+  border-color: rgba(14, 145, 158, 0.75);
+  box-shadow: 0 14px 34px -4px rgba(15, 65, 75, 0.14);
+  transform: translateY(-2px);
+}
+
+.collection-grid[data-habitat="water"] .collection-card[data-current="true"],
+.collection-card[data-habitat="water"][data-current="true"] {
+  border-color: #0b828f;
+  background: #f0fafd;
+  transform: translateY(-2px);
+  animation: card-water-current-breathe 4s ease-in-out infinite;
+}
+
+.collection-grid[data-habitat="water"] .collection-card__image,
+.collection-card[data-habitat="water"] .collection-card__image {
+  background: #daf1f5;
+}
+
+.collection-grid[data-habitat="water"] .collection-card__copy strong,
+.collection-card[data-habitat="water"] .collection-card__copy strong {
+  color: #0e3d47;
+}
+
+.collection-grid[data-habitat="water"] .collection-card__copy small,
+.collection-card[data-habitat="water"] .collection-card__copy small {
+  color: #356d78;
+}
+
+.collection-grid[data-habitat="water"] .collection-card__number,
+.collection-card[data-habitat="water"] .collection-card__number {
+  color: rgba(11, 130, 143, 0.55);
+}
+
+/* Air / 苍穹 Cards - Ethereal Weightless High-Key Cards */
+.collection-grid[data-habitat="air"] .collection-card,
+.collection-card[data-habitat="air"] {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(140, 195, 215, 0.35);
+  color: #153949;
+  box-shadow: 0 10px 24px -6px rgba(45, 95, 125, 0.1);
+}
+
+.collection-grid[data-habitat="air"] .collection-card:hover,
+.collection-card[data-habitat="air"]:hover {
+  background: #ffffff;
+  border-color: rgba(80, 165, 200, 0.65);
+  box-shadow: 0 16px 36px -6px rgba(45, 95, 125, 0.18);
+  transform: translateY(-2px);
+}
+
+.collection-grid[data-habitat="air"] .collection-card[data-current="true"],
+.collection-card[data-habitat="air"][data-current="true"] {
+  border-color: #1e86a8;
+  background: #ffffff;
+  transform: translateY(-2px);
+  animation: card-air-current-breathe 4s ease-in-out infinite;
+}
+
+.collection-grid[data-habitat="air"] .collection-card__image,
+.collection-card[data-habitat="air"] .collection-card__image {
+  background: #e5f2f7;
+}
+
+.collection-grid[data-habitat="air"] .collection-card__copy strong,
+.collection-card[data-habitat="air"] .collection-card__copy strong {
+  color: #153949;
+}
+
+.collection-grid[data-habitat="air"] .collection-card__copy small,
+.collection-card[data-habitat="air"] .collection-card__copy small {
+  color: #5e8494;
+}
+
+.collection-grid[data-habitat="air"] .collection-card__number,
+.collection-card[data-habitat="air"] .collection-card__number {
+  color: rgba(31, 107, 138, 0.45);
+}
+
+/* Land / 陆地 Cards - Warm Mineral Jade/Earth Character */
+.collection-grid[data-habitat="land"] .collection-card,
+.collection-card[data-habitat="land"] {
+  background: #f5f0df;
+  border-color: rgba(46, 72, 58, 0.15);
+  color: var(--ink);
+}
+
+.collection-grid[data-habitat="land"] .collection-card:hover,
+.collection-card[data-habitat="land"]:hover {
+  background: #faf7eb;
+  border-color: rgba(46, 107, 86, 0.5);
+  transform: translateY(-2px);
+}
+
+.collection-grid[data-habitat="land"] .collection-card[data-current="true"],
+.collection-card[data-habitat="land"][data-current="true"] {
+  border-color: #2e6b56;
+  background: #fbf9ef;
+  transform: translateY(-2px);
+  animation: card-land-current-breathe 4s ease-in-out infinite;
+}
+
+.collection-grid[data-habitat="land"] .collection-card__image,
+.collection-card[data-habitat="land"] .collection-card__image {
+  background: #dfe7c9;
 }
 
 @media (min-width: 1280px) {
@@ -4455,37 +5388,38 @@ html[data-model-preview-capture] .viewer-host::after {
   .collection-sheet {
     bottom: max(7px, env(safe-area-inset-bottom));
     width: calc(100% - 14px);
-    max-height: min(76dvh, 620px);
+    height: min(84dvh, 660px);
+    max-height: min(84dvh, 660px);
     border-radius: 22px;
   }
 
   .collection-sheet__header {
-    padding: 23px 16px 11px;
+    padding: 20px 14px 10px;
   }
 
   .collection-sheet__header h2 {
-    font-size: 2rem;
+    font-size: 1.9rem;
   }
 
   .collection-sheet__header p:last-child {
-    margin-top: 4px;
-    font-size: 0.76rem;
+    margin-top: 3px;
+    font-size: 0.75rem;
   }
 
   .collection-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    padding: 3px 10px max(15px, env(safe-area-inset-bottom));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 4px 10px max(16px, env(safe-area-inset-bottom));
   }
 
   .collection-card {
     display: flex;
     min-height: 0;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
     align-items: stretch;
-    padding: 5px;
-    border-radius: 12px;
+    padding: 6px;
+    border-radius: 14px;
   }
 
   .collection-card[data-current="true"] {
@@ -4504,17 +5438,17 @@ html[data-model-preview-capture] .viewer-host::after {
     width: 100%;
     height: auto;
     aspect-ratio: 1.22;
-    border-radius: 8px;
+    border-radius: 10px;
   }
 
   .collection-card__copy {
-    gap: 1px;
+    gap: 2px;
     text-align: center;
   }
 
   .collection-card__copy strong {
-    font-size: clamp(0.78rem, 3.8vw, 0.94rem);
-    line-height: 1.2;
+    font-size: clamp(0.82rem, 3.8vw, 0.98rem);
+    line-height: 1.25;
   }
 
   .collection-card__copy small {
@@ -4728,6 +5662,7 @@ html[data-model-preview-capture] .viewer-host::after {
   .collection-sheet {
     bottom: 7px;
     width: calc(100% - 14px);
+    height: min(88dvh, calc(100dvh - 14px));
     max-height: calc(100dvh - 14px);
     border-radius: 20px;
   }
@@ -6855,4 +7790,16 @@ html[data-locale="en"] .collection-card__copy strong {
     animation: none;
     height: 12px;
   }
+
+  .collection-backdrop,
+  .collection-backdrop[data-exiting="true"],
+  .collection-sheet,
+  .collection-sheet[data-exiting="true"] {
+    animation-duration: 1ms !important;
+  }
+
+  .collection-card[data-current="true"] {
+    animation: none !important;
+  }
 }
+
