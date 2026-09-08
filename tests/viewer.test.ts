@@ -1,3 +1,6 @@
+import { createEncounterMotionFootprint } from '../src/viewer/scale-encounter-motion-footprint'
+import { clearsAnimalGroundFootprint } from '../src/viewer/scale-encounter-ground-footprint'
+import { loadTexturelessAnimal } from './helpers/load-textureless-animal'
 import {
   AnimationClip,
   AnimationMixer,
@@ -28,6 +31,7 @@ import {
   modelScaleForViewport,
 } from '../src/viewer/model-preview-profiles'
 import { disposeObject3D } from '../src/viewer/dispose'
+import type { RiverVisitor } from '../src/viewer/scale-encounter-water-interaction'
 import {
   computeContactShadowLayout,
   classifyModelResourceTiming,
@@ -803,9 +807,11 @@ describe('scale encounter avatar locomotion', () => {
 
       harness.controller.adjustScaleEncounterOrbit(1)
       for (let frame = 1; frame <= 12; frame += 1) {
+        internals.updateScaleEncounterDistance(1 / 60, frame * 16)
         internals.updateScaleEncounterOrbit(1 / 60, frame * 16)
         internals.updateScaleEncounterAvatarMotion(1 / 60)
       }
+      expect(harness.encounter.orbitAngleRadians).toBeGreaterThan(0.01)
       expect(
         harness.encounter.targetOrbitAngleRadians -
           harness.encounter.orbitAngleRadians,
@@ -1767,6 +1773,43 @@ function createGroundedPovController(
   }
 }
 
+describe('scale encounter visitor water contact', () => {
+  it('reports terrain plus jump height, independent of the eye or animated model root', () => {
+    const { controller, encounter } = createGroundedPovController(1.5, 'meganeura')
+    encounter.environment = { groundHeightAtWorld: () => -0.62 }
+    encounter.avatarPreviousEyePosition.set(2, 4, 3)
+    encounter.jumpOffsetMeters = 0.3
+    encounter.jumpVelocityMetersPerSecond = -1.5
+    encounter.jumpPhase = 'airborne'
+    const position = computeScaleEncounterOrbitedEyePosition(
+      encounter.placement, 'land', encounter.observerDistance, encounter.orbitAngleRadians,
+    )
+    const internals = controller as unknown as { scaleEncounterRiverVisitor(): RiverVisitor | null }
+    expect(internals.scaleEncounterRiverVisitor()).toEqual({
+      x: position.x, z: position.z, feetY: -0.32, heightMeters: 1,
+      verticalVelocity: -1.5, airborne: true,
+    })
+    encounter.avatarPreviousEyePosition.add(new Vector3(0.02, 0.1, 0.01))
+    expect(internals.scaleEncounterRiverVisitor()?.x).toBe(position.x)
+    expect(internals.scaleEncounterRiverVisitor()?.z).toBe(position.z)
+  })
+
+  it('disables visitor impacts during overview, scripted transitions and underwater encounters', () => {
+    const { controller, encounter } = createGroundedPovController(1.5, 'meganeura')
+    encounter.environment = { groundHeightAtWorld: () => -0.62 }
+    const internals = controller as unknown as { scaleEncounterRiverVisitor(): RiverVisitor | null }
+    expect(internals.scaleEncounterRiverVisitor()).not.toBeNull()
+    encounter.view = 'overview'
+    expect(internals.scaleEncounterRiverVisitor()).toBeNull()
+    encounter.view = 'pov'
+    encounter.transition = { targetView: 'pov' }
+    expect(internals.scaleEncounterRiverVisitor()).toBeNull()
+    encounter.transition = null
+    encounter.definition = SCALE_ENCOUNTER_DEFINITIONS.mosasaurus
+    expect(internals.scaleEncounterRiverVisitor()).toBeNull()
+  })
+})
+
 describe('scale encounter child viewpoint switch', () => {
   it('moves the eye-view camera with the child instead of pinning it at the initial distance', () => {
     const harness = createGroundedPovController(
@@ -2216,8 +2259,9 @@ describe('grounded scale encounter POV clearance', () => {
     )
     for (const [index, eye] of eyes.entries()) {
       expect(eye.y).toBeCloseTo(placement.defaultEyePosition.y, 10)
-      expect(eye.distanceTo(placement.target)).toBeCloseTo(
-        distances[index]!,
+      const centre = new Vector3().copy(placement.orbitCenter).setY(eye.y)
+      expect(eye.distanceTo(centre)).toBeCloseTo(
+        placement.defaultEyePosition.distanceTo(centre) * distances[index]! / placement.defaultDistance,
         8,
       )
       expect(eye.z).toBeCloseTo(eyes[0]!.z, 10)
@@ -3244,3 +3288,61 @@ describe('disposeObject3D', () => {
     }
   })
 })
+
+
+// Preserve all 24 approaches and held-input frames on slower CI runners.
+it.each(Object.values(SCALE_ENCOUNTER_DEFINITIONS).filter(definition => definition.habitat === 'land'))(
+  'walks around $id using its shipped footprint and the real held-input collision path', async (definition) => {
+  const model = await loadTexturelessAnimal(definition.id, 'Idle')
+  const group = new Group().add(model)
+  model.rotation.y = definition.modelYawRadians
+  group.updateMatrixWorld(true)
+  const raw = new Box3().setFromObject(model, true)
+  const scale = definition.displayedMeters / raw.getSize(new Vector3())[definition.measurementAxis]
+  const centre = raw.getCenter(new Vector3())
+  group.scale.setScalar(scale)
+  group.position.set(definition.animalPosition.x - centre.x * scale,
+    definition.animalPosition.y - raw.min.y * scale,
+    definition.animalPosition.z - centre.z * scale)
+  group.updateMatrixWorld(true)
+  const bounds = new Box3().setFromObject(model, true)
+  const hull = createEncounterMotionFootprint(definition)
+  let recoveredCorners = 0
+  for (let i = 0; i < 24; i++) {
+    const {controller, encounter} = createGroundedPovController(1.5, definition.id, bounds.min, bounds.max)
+    encounter.placement = createScaleEncounterPlacement(definition.id, bounds.min, bounds.max, .985, hull)
+    encounter.profile = {...encounter.profile, approach: 'close', heightCm: 110, heightMeters: 1.1}
+    encounter.orbitAngleRadians = i * Math.PI / 12
+    encounter.targetOrbitAngleRadians = encounter.orbitAngleRadians
+    controller.setScaleEncounterDistanceMotion(1)
+    const internals = controller as unknown as {updateScaleEncounterDistance(dt: number, now: number): void}
+    for (let frame = 0; frame < 500; frame++) {
+      const previousDistance = encounter.observerDistance
+      const previousAngle = encounter.orbitAngleRadians
+      internals.updateScaleEncounterDistance(.1, frame * 100)
+      const eye = computeScaleEncounterOrbitedEyePosition(encounter.placement, 'land', encounter.observerDistance, encounter.orbitAngleRadians)
+      expect(clearsAnimalGroundFootprint(eye, hull, .55 - 1e-5)).toBe(true)
+      if (Math.abs(encounter.observerDistance - previousDistance) < 1e-8 &&
+          Math.abs(encounter.orbitAngleRadians - previousAngle) < 1e-8) break
+    }
+    const minimum = minimumScaleEncounterDistanceForProfile(encounter.placement, encounter.definition, encounter.profile, encounter.orbitAngleRadians)
+    expect(encounter.observerDistance, `approach angle ${i}`).toBeLessThan(minimum + .03)
+    const eye = computeScaleEncounterOrbitedEyePosition(encounter.placement, 'land', encounter.observerDistance, encounter.orbitAngleRadians)
+    if (eye.x > bounds.min.x - .55 && eye.x < bounds.max.x + .55 && eye.z > bounds.min.z - .55 && eye.z < bounds.max.z + .55) recoveredCorners++
+    // Pure orbit input must remain outside the swept area while making progress.
+    controller.setScaleEncounterDistanceMotion(0)
+    for (const direction of [-1, 1] as const) {
+      const start = encounter.orbitAngleRadians
+      controller.setScaleEncounterOrbitMotion(direction)
+      for (let frame = 0; frame < 15; frame++) {
+        internals.updateScaleEncounterDistance(.1, frame * 100)
+        const eye = computeScaleEncounterOrbitedEyePosition(encounter.placement, 'land', encounter.observerDistance, encounter.orbitAngleRadians)
+        expect(clearsAnimalGroundFootprint(eye, hull, .55 - 1e-5)).toBe(true)
+      }
+      expect(Math.abs(encounter.orbitAngleRadians - start)).toBeGreaterThan(.02)
+    }
+  }
+  if (['baryonyx', 'carnotaurus'].includes(definition.id)) {
+    expect(recoveredCorners).toBeGreaterThan(4)
+  }
+}, 120_000)

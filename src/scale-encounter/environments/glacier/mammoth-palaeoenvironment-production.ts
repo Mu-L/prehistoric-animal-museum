@@ -943,7 +943,8 @@ function createGroundGeometry(): PlaneGeometry {
 }
 
 function createGroundSurface(): Mesh<PlaneGeometry, MeshStandardMaterial> {
-  const albedo = new TextureLoader().load(mammothTundraGroundAlbedoUrl)
+  const albedoReady = { value: 0 }
+  const albedo = new TextureLoader().load(mammothTundraGroundAlbedoUrl, () => { albedoReady.value = 1 })
   albedo.name = 'mammoth-tundra-ground-albedo-v2'
   albedo.colorSpace = SRGBColorSpace
   albedo.wrapS = MirroredRepeatWrapping
@@ -974,8 +975,10 @@ function createGroundSurface(): Mesh<PlaneGeometry, MeshStandardMaterial> {
     transparent: true,
   })
   material.name = 'mammoth-steppe-ground-frost-distance-blend-v3'
+  material.userData.mammothGroundAlbedoReady = albedoReady
   material.userData.mammothFrostBlend = frostBlend
   material.onBeforeCompile = (shader) => {
+    shader.uniforms.mammothGroundAlbedoReady = albedoReady
     shader.uniforms.mammothFrostBlend = frostBlend
     shader.vertexShader = shader.vertexShader
       .replace(
@@ -992,7 +995,14 @@ function createGroundSurface(): Mesh<PlaneGeometry, MeshStandardMaterial> {
     shader.fragmentShader = shader.fragmentShader
       .replace(
         '#include <common>',
-        '#include <common>\nuniform float mammothFrostBlend;\nvarying float vMammothGroundDistance;\nvarying vec2 vMammothGroundWorldXZ;',
+        '#include <common>\nuniform float mammothGroundAlbedoReady;\nuniform float mammothFrostBlend;\nvarying float vMammothGroundDistance;\nvarying vec2 vMammothGroundWorldXZ;',
+      )
+      .replace(
+        '#include <map_fragment>',
+        `#include <map_fragment>
+        // A pending (or failed) image is a black GPU sampler. Supply lit soil
+        // colour before lighting, so the first overview always has ground.
+        if (mammothGroundAlbedoReady < 0.5) diffuseColor.rgb = vec3(0.42, 0.36, 0.26);`,
       )
       .replace(
         '#include <opaque_fragment>',
@@ -2168,7 +2178,7 @@ function addAtmosphere(atmosphere: Group): void {
 }
 
 function addWorldLighting(background: Group): void {
-  const hemisphere = new HemisphereLight('#c8d9e0', '#87795d', 2.08)
+  const hemisphere = new HemisphereLight('#d5e3eb', '#b9c7d0', 2.65)
   hemisphere.name = 'glacier-world-hemisphere-light'
 
   const sun = new DirectionalLight('#ffe5bd', 3.8)
@@ -2185,7 +2195,7 @@ function addWorldLighting(background: Group): void {
   sun.shadow.bias = -0.0001
   sun.shadow.normalBias = 0.025
 
-  const skyFill = new DirectionalLight('#a9c6d5', 1.18)
+  const skyFill = new DirectionalLight('#c6e0ed', 2.1)
   skyFill.name = 'glacier-world-sky-fill'
   skyFill.position.set(38, 28, -26)
   skyFill.castShadow = false

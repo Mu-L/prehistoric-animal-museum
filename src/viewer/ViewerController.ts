@@ -1,3 +1,5 @@
+import { createEncounterMotionFootprint } from './scale-encounter-motion-footprint'
+import { clearsAnimalGroundFootprint, projectOutsideAnimalGroundFootprint } from './scale-encounter-ground-footprint'
 import {
   ACESFilmicToneMapping,
   AnimationMixer,
@@ -84,6 +86,8 @@ import {
   type ScaleEncounterEnvironmentVariant,
   type ScaleEncounterSurfaceTextures,
 } from './scale-encounter-environment'
+import type { RiverVisitor } from './scale-encounter-water-interaction'
+import { createAnimalPresence, type AnimalPresence } from './scale-encounter-animal-presence'
 import type { ScaleEncounterEcologyDensity } from './scale-encounter-ecology-density'
 import { inspectScaleEncounterSceneResources } from './scale-encounter-performance'
 import type { ScaleEncounterSceneCandidateVariant } from '../scale-encounter/environments/scene-candidate'
@@ -352,6 +356,7 @@ interface ScaleEncounterCameraTransition {
 }
 
 interface ScaleEncounterRuntime {
+  animalPresence: AnimalPresence | null
   actionBoostActive: boolean
   actionBoostMultiplier: number
   avatar: ScaleEncounterAvatar
@@ -681,9 +686,8 @@ export function viewerZoomProfileForPointer(
  * different child eye anchor, below) the land plane.
  *
  * On land the useful interaction is a horizontal dolly at the child's eye
- * height. Existing animals retain their reviewed head-relative rail.
- * Apatosaurus alone uses a body-centred linear radius: rotating its old
- * head-relative rail around a 23 m body left an irreducible multi-metre gap at
+ * height. Every land animal uses a body-centred linear radius: rotating a
+ * head-relative rail around elongated bodies left an irreducible gap at
  * the legs, while the slant-distance projection collapsed the last part of an
  * approach into a visible forward snap. Air and water retain their authored
  * three-dimensional rails unchanged.
@@ -707,22 +711,6 @@ export function computeScaleEncounterPovEyePosition(
     placement.defaultEyePosition.y,
     SCALE_ENCOUNTER_GROUNDED_CAMERA_MINIMUM_HEIGHT,
   )
-  if (placement.animalId !== 'apatosaurus') {
-    const verticalDistance = placement.target.y - eyeHeight
-    const horizontalDistance = Math.sqrt(
-      Math.max(distance * distance - verticalDistance * verticalDistance, 0),
-    )
-    result.copy(placement.observerRailDirection).setY(0)
-    if (result.lengthSq() < 1e-8) {
-      result.copy(placement.defaultEyePosition).sub(placement.target).setY(0)
-    }
-    if (result.lengthSq() < 1e-8) result.set(-1, 0, 0)
-    return result
-      .normalize()
-      .multiplyScalar(horizontalDistance)
-      .add(placement.target)
-      .setY(eyeHeight)
-  }
   result.copy(placement.defaultEyePosition).sub(placement.orbitCenter).setY(0)
   if (result.lengthSq() < 1e-8) result.set(-1, 0, 0)
   return result
@@ -769,7 +757,7 @@ export function scaleEncounterLandRadiusAtDistance(
 /**
  * Inverts a land animal's existing observation rail by world radius. This is
  * what keeps 1.4/2.8 m/s honest on both the legacy slant-distance rails and
- * Apatosaurus's body-centred linear rail without changing either composition.
+ * the long animals' body-centred linear rails without changing either composition.
  */
 export function scaleEncounterLandDistanceForRadius(
   placement: ScaleEncounterPlacement,
@@ -889,6 +877,9 @@ function scaleEncounterEyeClearsExpandedAnimalBounds(
     distance,
     orbitAngleRadians,
   )
+  if (definition.habitat === 'land' && placement.groundFootprint && placement.groundFootprint.length >= 3) {
+    return clearsAnimalGroundFootprint(eye, placement.groundFootprint, marginMeters)
+  }
   const radial = eye.clone().sub(placement.orbitCenter)
   const halfExtents = new Vector3()
     .subVectors(
@@ -944,7 +935,8 @@ export function minimumScaleEncounterDistanceForProfile(
 ): number {
   if (
     profile.approach !== 'close' &&
-    placement.animalId !== 'apatosaurus'
+    placement.animalId !== 'apatosaurus' &&
+    !placement.groundFootprint
   ) {
     return definition.minimumDistance
   }
@@ -1368,6 +1360,7 @@ export class ViewerController {
   private firstFrameConfirmationFrame: number | null = null
   private readonly scaleEncounterListeners = new Set<() => void>()
   private scaleEncounter: ScaleEncounterRuntime | null = null
+  private readonly animalPresenceVisitorEye = new Vector3()
   private scaleEncounterSnapshot = INACTIVE_SCALE_ENCOUNTER_SNAPSHOT
   private scaleEncounterAvatarFactory: ScaleEncounterAvatarFactory = () => {
     throw new Error('scale-encounter-avatar-factory-unavailable')
@@ -1458,6 +1451,7 @@ export class ViewerController {
     // Keep the first shadow texel attached to small shoes and claws. A 3.5 cm
     // normal offset created an obvious floating gap at child-eye height.
     this.scaleEncounterSunLight.shadow.normalBias = 0.012
+    this.scaleEncounterSunLight.shadow.radius = 1.6
     // A fixed, shadowless skylight from the opposite hemisphere preserves
     // texture on the child and animal's camera-facing backs. It stays in
     // world space so rear/POV moves do not make the lighting chase the lens.
@@ -2068,6 +2062,7 @@ export class ViewerController {
         worldBounds.min,
         worldBounds.max,
         groundedEyeHeight,
+        definition.habitat === 'land' ? createEncounterMotionFootprint(definition) : undefined,
       )
       avatar.root.rotation.y = placement.avatarYawRadians
       if (
@@ -2142,13 +2137,14 @@ export class ViewerController {
         // exposure or the child's cold-weather outfit.
         mammothAnimalGrade = applyMammothSubjectGrade(current.modelRoot, {
           midtoneExponent: 0.62,
-          minimumFill: 0.075,
+          minimumFill: 0.18,
           saturation: 1.08,
         })
       }
 
       this.camera.clearViewOffset()
       this.scaleEncounter = {
+        animalPresence: createAnimalPresence(definition.id, current.modelRoot, placement.defaultEyePosition),
         actionBoostActive: false,
         actionBoostMultiplier: 1,
         avatar,
@@ -2314,6 +2310,7 @@ export class ViewerController {
     }
     this.finishScaleEncounterTransition()
     this.resetScaleEncounterContextAction()
+    encounter.animalPresence?.restore()
 
     const normalizedProfile = normalizeScaleEncounterProfile(profile)
     const replacement = this.scaleEncounterAvatarFactory(
@@ -2332,6 +2329,7 @@ export class ViewerController {
       worldBounds.min,
       worldBounds.max,
       groundedEyeHeight,
+      encounter.definition.habitat === 'land' ? createEncounterMotionFootprint(encounter.definition) : undefined,
     )
     replacement.root.rotation.y = placement.avatarYawRadians
     const sceneReplacement =
@@ -3069,7 +3067,10 @@ export class ViewerController {
           encounter.orbitAngleRadians,
         )
         encounter.targetObserverDistance = encounter.observerDistance
-      } else if (encounter.definition.habitat === 'land') {
+      } else if (
+        encounter.definition.habitat === 'land' &&
+        encounter.targetObserverDistance !== previous
+      ) {
         const currentWorldDirection =
           computeScaleEncounterOrbitedEyePosition(
             encounter.placement,
@@ -3202,7 +3203,8 @@ export class ViewerController {
     const substepSeconds = deltaSeconds / substepCount
     const usesExpandedAnimalBounds =
       encounter.profile.approach === 'close' ||
-      encounter.placement.animalId === 'apatosaurus'
+      encounter.placement.animalId === 'apatosaurus' ||
+      Boolean(encounter.placement.groundFootprint)
     const collisionMarginMeters = Math.max(
       0.55,
       encounter.profile.heightMeters * 0.5,
@@ -3237,11 +3239,16 @@ export class ViewerController {
           intent.tangential * travelSpeedMetersPerSecond * substepSeconds,
         )
       if (usesExpandedAnimalBounds) {
-        projectScaleEncounterLandPointOutsideBounds(
-          nextEye,
-          collisionMinimum,
-          collisionMaximum,
-        )
+        const footprint = encounter.placement.groundFootprint
+        if (footprint && footprint.length >= 3) {
+          projectOutsideAnimalGroundFootprint(nextEye, footprint, collisionMarginMeters)
+        } else {
+          projectScaleEncounterLandPointOutsideBounds(
+            nextEye,
+            collisionMinimum,
+            collisionMaximum,
+          )
+        }
       }
       const nextOffset = nextEye
         .sub(encounter.placement.orbitCenter)
@@ -3422,6 +3429,7 @@ export class ViewerController {
     encounter.oceanAvatarGrade?.restore()
     encounter.oceanAnimalGrade?.restore()
     encounter.boostFlow?.dispose()
+    encounter.animalPresence?.dispose()
     encounter.environment?.root.removeFromParent()
     disposeScaleEncounterEnvironment(encounter.environment)
     disposeScaleEncounterAvatar(encounter.avatar, this.renderer)
@@ -3450,6 +3458,9 @@ export class ViewerController {
     this.resize()
     this.scaleEncounterSnapshot = INACTIVE_SCALE_ENCOUNTER_SNAPSHOT
     delete this.renderer.domElement.dataset.scaleEncounter
+    delete this.renderer.domElement.dataset.scaleEncounterAnimalAttention
+    delete this.renderer.domElement.dataset.scaleEncounterAnimalAcknowledgements
+    delete this.renderer.domElement.dataset.scaleEncounterAtmosphereParticles
     delete this.renderer.domElement.dataset.scaleEncounterCameraStage
     delete this.renderer.domElement.dataset.scaleEncounterEnvironment
     delete this.renderer.domElement.dataset.scaleEncounterSceneCandidate
@@ -4675,6 +4686,24 @@ export class ViewerController {
       motionState.speedMetersPerSecond
   }
 
+  private scaleEncounterRiverVisitor(): RiverVisitor | null {
+    const encounter = this.scaleEncounter
+    const heightAt = encounter?.environment?.groundHeightAtWorld
+    if (!encounter || !heightAt || encounter.definition.habitat !== 'land'
+      || encounter.view !== 'pov' || encounter.transition) return null
+    // Read locomotion coordinates, not the rig's breathing/head sway.
+    const { x, z } = computeScaleEncounterOrbitedEyePosition(
+      encounter.placement, 'land', encounter.observerDistance, encounter.orbitAngleRadians,
+    )
+    return {
+      x, z,
+      feetY: heightAt(x, z) + encounter.jumpOffsetMeters,
+      heightMeters: encounter.profile.heightMeters,
+      verticalVelocity: encounter.jumpVelocityMetersPerSecond,
+      airborne: encounter.jumpPhase === 'airborne',
+    }
+  }
+
   private publishScaleEncounterAvatarMotionDiagnostics(): void {
     const encounter = this.scaleEncounter
     if (!encounter) return
@@ -5484,6 +5513,7 @@ export class ViewerController {
           : null
       }
       const holdingInitialPose = time < this.initialPoseHoldUntil
+      this.scaleEncounter?.animalPresence?.restore()
       if (holdingInitialPose) {
         this.controls.autoRotate = false
         this.renderer.domElement.dataset.autoRotate = 'false'
@@ -5517,11 +5547,30 @@ export class ViewerController {
           this.reducedMotion,
         )
         this.publishScaleEncounterAvatarMotionDiagnostics()
+        const presence = this.scaleEncounter.animalPresence
+        if (presence) {
+          const impact = presence.update({
+            deltaSeconds,
+            visitorEye: this.scaleEncounter.avatar.eyeAnchor.getWorldPosition(this.animalPresenceVisitorEye),
+            active: !this.scaleEncounter.transition,
+            reducedMotion: this.reducedMotion,
+          })
+          if (impact) this.scaleEncounter.environment?.atmosphere?.settleFoot(impact)
+          this.renderer.domElement.dataset.scaleEncounterAnimalAttention = presence.yawRadians.toFixed(4)
+          this.renderer.domElement.dataset.scaleEncounterAnimalAcknowledgements = String(presence.acknowledgementCount)
+        } else {
+          this.renderer.domElement.dataset.scaleEncounterAnimalAttention = 'authored-idle'
+          this.renderer.domElement.dataset.scaleEncounterAnimalAcknowledgements = '0'
+        }
         updateScaleEncounterEnvironment(
           this.scaleEncounter.environment,
           time / 1_000,
           this.reducedMotion,
           this.camera,
+          this.scaleEncounterRiverVisitor(),
+        )
+        this.renderer.domElement.dataset.scaleEncounterAtmosphereParticles = String(
+          this.scaleEncounter.environment?.atmosphere?.particleCount ?? 0,
         )
         this.scaleEncounter.boostFlow?.update(
           deltaSeconds,
