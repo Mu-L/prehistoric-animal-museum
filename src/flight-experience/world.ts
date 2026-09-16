@@ -70,16 +70,20 @@ export function regionAt(x: number, z: number): 'coast' | 'hills' | 'valley' | '
 export interface Prop { id: string; x: number; y: number; z: number; scale: number; yaw: number; kind: 'rock' | 'plant'; priority: number }
 export function scatter(address: Address): Prop[] {
   const result: Prop[] = []
-  const spacing = 64
-  const startX = address.x * 8, startZ = address.z * 8
-  for (let z = startZ; z < startZ + 8; z++) for (let x = startX; x < startX + 8; x++) {
-    const wx = (x + .15 + hash(x, z, 31) * .7) * spacing
-    const wz = (z + .15 + hash(x, z, 32) * .7) * spacing
-    const sample = terrainAt(wx, wz)
-    if (sample.height < 8 || normalAt(wx, wz)[1] < .84 || sample.valley > .82) continue
+  const spacing = 32
+  const startX = address.x * 16, startZ = address.z * 16
+  for (let z = startZ; z < startZ + 16; z++) for (let x = startX; x < startX + 16; x++) {
+    const wx = (x + .12 + hash(x, z, 31) * .76) * spacing
+    const wz = (z + .12 + hash(x, z, 32) * .76) * spacing
+    const sample = terrainAt(wx, wz), slope = normalAt(wx, wz)[1]
+    if (sample.height < 7) continue
+    const woodland = noise(wx / 240, wz / 240, 71)
+    const kind = hash(x, z, 35) < .2 + (1 - slope) * .8 ? 'rock' : 'plant'
+    if (kind === 'plant' && (slope < .82 || woodland < .43 || hash(x, z, 72) > woodland * .95)) continue
+    if (kind === 'rock' && (slope < .45 || hash(x, z, 73) > .35 + (1 - slope))) continue
     result.push({ id: `${x}:${z}`, x: wx, y: sample.height, z: wz,
-      scale: 2 + hash(x, z, 33) * 5, yaw: hash(x, z, 34) * Math.PI * 2,
-      kind: sample.moisture > .36 && hash(x, z, 35) > .26 ? 'plant' : 'rock', priority: hash(x, z, 36) })
+      scale: 2 + hash(x, z, 33) * 4, yaw: hash(x, z, 34) * Math.PI * 2,
+      kind, priority: hash(x, z, 36) })
   }
   return result
 }

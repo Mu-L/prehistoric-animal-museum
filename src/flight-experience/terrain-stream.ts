@@ -1,5 +1,5 @@
 import { sampleDisplayed, type DisplayedSurface } from './displayed-surface'
-import { Box3, Sphere, Vector3, TextureLoader, RepeatWrapping, SRGBColorSpace, Vector2, type Texture, BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial } from 'three'
+import { Box3, Sphere, Vector3, TextureLoader, RepeatWrapping, SRGBColorSpace, Vector2, Vector4, type Texture, BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial } from 'three'
 import { chunkWindow, localChunkPosition, type WantedChunk } from './chunk-window'
 import { generateTerrain, resultBytes, validTerrainResult, type TerrainJob, type TerrainResult } from './terrain-protocol'
 import { CHUNK_SIZE, WORLD, chunkAt, chunkKey, terrainAt, type Address } from './world'
@@ -13,6 +13,8 @@ export class TerrainStream {
   readonly material = new MeshStandardMaterial({ vertexColors: true, roughness: .96, metalness: 0 })
   readonly sessionId = ++nextSession
   readonly metrics = { generated: 0, rejected: 0, generationMs: 0, installMs: 0, readyBytes: 0, peakReadyBytes: 0, peakResident: 0, peakQueue: 0 }
+  readonly review = { legacy: false, detail: true, bands: false, gray: false, freezeLod: false }
+  private readonly reviewUniform = { value: new Vector4(0, 1, 0, 0) }
   simplified = false
   private disposed = false
   private serial = 0
@@ -31,28 +33,37 @@ export class TerrainStream {
   radius = 4
   constructor(private readonly wake: () => void, private readonly onFailure: () => void) {
     this.material.onBeforeCompile = shader => {
+      shader.uniforms.flightReview = this.reviewUniform
       shader.uniforms.flightSurface = this.textureUniform
       shader.uniforms.flightSurfaceReady = this.textureReady
       shader.uniforms.flightSurfaceOrigin = this.surfaceOrigin
       shader.uniforms.flightStrataPhase = this.strataPhase
-      shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute float coarseHeight; attribute float terrainBlend; attribute vec3 startNormal; attribute vec3 startColor; varying vec3 flightWorld;')
+      shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute float coarseHeight; attribute float terrainBlend; attribute vec3 startNormal; attribute vec3 startColor; varying vec3 flightWorld; varying vec3 flightObjectNormal;')
         .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = normalize(mix(startNormal, normal, terrainBlend));')
-        .replace('#include <color_vertex>', '#include <color_vertex>\nvColor = mix(startColor, color, terrainBlend);')
+        .replace('#include <color_vertex>', '#include <color_vertex>\nvColor.rgb = mix(startColor, color.rgb, terrainBlend);')
         .replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.y = mix(coarseHeight, position.y, terrainBlend);')
-        .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nflightWorld = (modelMatrix * vec4(transformed, 1.)).xyz;')
-      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D flightSurface; uniform float flightSurfaceReady; uniform vec2 flightSurfaceOrigin; uniform float flightStrataPhase; varying vec3 flightWorld;')
+        .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nflightWorld = (modelMatrix * vec4(transformed, 1.)).xyz; flightObjectNormal = objectNormal;')
+      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec4 flightReview; uniform sampler2D flightSurface; uniform float flightSurfaceReady; uniform vec2 flightSurfaceOrigin; uniform float flightStrataPhase; varying vec3 flightWorld; varying vec3 flightObjectNormal;')
         .replace('#include <color_fragment>', `#include <color_fragment>
           vec2 worldUV=flightWorld.xz+flightSurfaceOrigin;
-          vec3 detail=texture2D(flightSurface,worldUV/32.).rgb;
-          float grain=dot(detail,vec3(.3,.5,.2));
+          vec3 weights=pow(abs(normalize(flightObjectNormal)),vec3(4.)); weights/=max(.001,weights.x+weights.y+weights.z);
+          vec3 point=vec3(worldUV.x,flightWorld.y,worldUV.y);
+          float grainX=dot(texture2D(flightSurface,point.zy/48.).rgb,vec3(.3,.5,.2));
+          float grainY=dot(texture2D(flightSurface,point.xz/48.).rgb,vec3(.3,.5,.2));
+          float grainZ=dot(texture2D(flightSurface,point.xy/48.).rgb,vec3(.3,.5,.2));
+          float grain=dot(weights,vec3(grainX,grainY,grainZ));
+          float farDetail=1.-smoothstep(100.,750.,length(vViewPosition));
+          float textureDetail=mix(1.,.87+grain*.6,flightSurfaceReady*flightReview.y*farDetail);
           float bands=.96+.04*sin(flightWorld.y*.3+sin(flightWorld.x*.013+flightStrataPhase)*3.);
-          diffuseColor.rgb*=mix(1.,.65+grain*1.8,flightSurfaceReady*.65)*bands;`)
+          if(flightReview.x>.5){float oldGrain=dot(texture2D(flightSurface,worldUV/32.).rgb,vec3(.3,.5,.2)); textureDetail=mix(1.,.65+oldGrain*1.8,flightSurfaceReady*flightReview.y*.65);}
+          diffuseColor.rgb*=textureDetail*mix(1.,bands,flightReview.z);
+          if(flightReview.w>.5)diffuseColor.rgb=vec3(.45);`)
     }
-    this.material.customProgramCacheKey = () => 'flight-terrain-morph-v1'
+    this.material.customProgramCacheKey = () => 'flight-terrain-morph-v2'
     this.createWorker()
     void new TextureLoader().loadAsync(new URL('../scale-encounter/assets/environments/surface-land-albedo-1024.webp', import.meta.url).href).then(texture => {
       if (this.disposed) { texture.dispose(); return }
-      texture.colorSpace = SRGBColorSpace; texture.wrapS = RepeatWrapping; texture.wrapT = RepeatWrapping
+      texture.colorSpace = SRGBColorSpace; texture.wrapS = RepeatWrapping; texture.wrapT = RepeatWrapping; texture.anisotropy = 4
       this.surfaceTexture = texture; this.textureUniform.value = texture; this.textureReady.value = 1; this.wake()
     }).catch(() => { /* Vertex colours remain a complete fallback. */ })
   }
@@ -89,6 +100,7 @@ export class TerrainStream {
   private enterFallback() { this.simplified = true; this.radius = 2; this.lastPlan = ''; this.onFailure() }
   plan(x: number, z: number, heading: number) {
     if (this.disposed) return
+    if (this.review.freezeLod && this.lastPlan) return
     const center = chunkAt(x, z)
     if (this.simplified) {
       this.fixedCenter ??= center
@@ -109,7 +121,9 @@ export class TerrainStream {
       chunk: item.chunk, lod: item.lod, configHash: 'terrain-v1' }
   }
   update(delta: number, dispatch: boolean) {
+    this.reviewUniform.value.set(Number(this.review.legacy), Number(this.review.detail), Number(this.review.bands), Number(this.review.gray))
     if (this.disposed || !dispatch) return
+    if (this.review.freezeLod) delta = 0
     for (const resident of this.resident.values()) if (resident.morph < 1) {
       resident.morph = Math.min(1, resident.morph + delta / .8)
       const attribute = resident.mesh.geometry.getAttribute('terrainBlend')
@@ -172,7 +186,7 @@ export class TerrainStream {
   }
   relocate(origin: Address) {
     this.origin = { ...origin }
-    this.surfaceOrigin.value.set(origin.x % 32, origin.z % 32)
+    this.surfaceOrigin.value.set(origin.x % 96, origin.z % 96)
     this.strataPhase.value = (origin.x * .013) % (Math.PI * 2)
     for (const resident of this.resident.values()) {
       const local = localChunkPosition(resident.result.chunk, origin)
