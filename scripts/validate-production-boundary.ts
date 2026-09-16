@@ -111,10 +111,10 @@ if (
     `expected exactly ${expectedAnimalAssetCount + expectedScaleEncounterGlbCount + expectedFlightGlbCount} production GLBs; found ${glbFiles.length}`,
   )
 }
-const flightSamples = glbFiles.filter(file => file.includes('landscape-samples-'))
+const flightSamples = glbFiles.filter(file => file.includes('ecology-r5-'))
 if (flightSamples.length !== expectedFlightGlbCount) findings.push('Flight landscape candidate escaped its build gate or is missing')
 if (expectedFlightGlbCount === 1 && flightSamples[0]) {
-  const candidate = JSON.parse(await readFile('src/flight-experience/assets/landscape/manifest.json', 'utf8')) as { sha256: string }
+  const candidate = JSON.parse(await readFile('src/flight-experience/assets/ecology-r5/manifest.json', 'utf8')) as { sha256: string }
   const hash = createHash('sha256').update(await readFile(flightSamples[0])).digest('hex')
   if (hash !== candidate.sha256) findings.push('Flight landscape candidate hash differs from its manifest')
 }

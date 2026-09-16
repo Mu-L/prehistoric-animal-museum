@@ -41,7 +41,7 @@ describe('bounded terrain lifecycle', () => {
     TestWorker.instances[0]!.onerror?.(); TestWorker.instances[1]!.onerror?.()
     expect(stream.simplified).toBe(true); expect(failed).toHaveBeenCalledTimes(1)
     stream.plan(0, 0, 0)
-    for (let i = 0; i < 30; i++) stream.update(1 / 60, true)
+    for (let i = 0; i < 500; i++) stream.update(1 / 60, true)
     expect(stream.resident.size).toBe(25); expect(stream.ready).toBe(true)
     stream.plan(1e6, 1e6, 0); stream.update(1 / 60, true)
     expect(stream.safeToEnter(1e6, 1e6)).toBe(false)
@@ -102,7 +102,8 @@ describe('flight owned resources and recovery', () => {
     runtime.update(1 / 60)
     expect(runtime.getSnapshot().phase).toBe('buffering')
     const position = { ...runtime.simulation.position }, time = runtime.simulation.time
-    for (let i = 0; i < 200; i++) { TestWorker.instances.forEach(w => w.finish()); runtime.update(1 / 60) }
+    // Fixed coastal/river coverage is denser; preserve the shared per-frame budget.
+    for (let i = 0; i < 600 && runtime.getSnapshot().phase==='buffering'; i++) { TestWorker.instances.forEach(w => w.finish()); runtime.update(1 / 60) }
     expect(runtime.getSnapshot().phase).toBe('paused'); expect(runtime.canResume).toBe(true)
     expect(runtime.simulation.position).toEqual(position); expect(runtime.simulation.time).toBe(time)
     runtime.simulation.safetyStop = true; runtime.start()

@@ -1,3 +1,4 @@
+import { flightReviewTracePlugin } from './scripts/flight/review-trace-plugin'
 import { createReadStream, readFileSync, statSync } from 'node:fs'
 import type { ServerResponse } from 'node:http'
 import { fileURLToPath } from 'node:url'
@@ -336,6 +337,7 @@ export default defineConfig(({ command, mode }) => {
     },
     plugins: [
       react(),
+      flightReviewTracePlugin(),
       scaleEncounterGlacierAssetUrls(
         scaleEncounterEnabledModes.has(mode) ? 'bundled' : 'disabled',
       ),

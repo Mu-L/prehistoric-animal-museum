@@ -7,8 +7,10 @@ export interface ExternalExperience {
   readonly running: boolean
   readonly pixelRatio: number
   readonly shadowsEnabled?: boolean
-  recordGpu?(milliseconds: number): void
+  readonly frameId?: number
+  recordGpu?(milliseconds: number, frameId?: number): void
   recordRender?(data: { cpuMs: number; calls: number; triangles: number; geometries: number; textures: number }): void
+  setFramebufferHeight?(height: number): void
   update(deltaSeconds: number): void
   resize(width: number, height: number): void
   contextLost(): void

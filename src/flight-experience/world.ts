@@ -1,6 +1,7 @@
+import { createWorldRiver } from './hydrology/world-river'
 /** Pure, order-independent world. Metres; Y up; supported logical domain ±10,000 km. */
 export interface WorldConfig { readonly id: string; readonly seed: number; readonly generator: string; readonly preset: string }
-export const WORLD: WorldConfig = Object.freeze({ id: 'coastal-valley', seed: 193706, generator: '1', preset: '1' })
+export const WORLD: WorldConfig = Object.freeze({ id: 'coastal-valley', seed: 193706, generator: '2', preset: '1' })
 export const SEA_LEVEL = -.7
 export const CHUNK_SIZE = 512
 export const SEGMENTS = [64, 32, 16, 8] as const
@@ -26,7 +27,7 @@ function coastAt(z: number): number {
   return 100 * Math.sin(z / 790) + 220 * Math.sin(z / 2300) + 95 * (noise(0, z / 900, 4) - .5)
 }
 function valleyAt(z: number): number { return coastAt(z) + 650 + 200 * Math.sin(z / 1400) }
-function terrainAt(x: number, z: number) {
+function baseTerrainAt(x: number, z: number) {
   const inland = x - coastAt(z)
   const land = smooth((inland + 95) / 300)
   const upland = smooth((inland - 110) / 760)
@@ -41,6 +42,10 @@ function terrainAt(x: number, z: number) {
   const height = (-80 + 25 * noise(x / 500, z / 500, 2)) * (1 - land) + ground * land
   const moisture = noise(x / 580, z / 580, 23)
   return { height, moisture, coastWeight: 1 - upland, uplandWeight: upland, canyonWeight: canyon * upland, valley }
+}
+function terrainAt(x:number,z:number) {
+  const t=baseTerrainAt(x,z),water=river.query(x,z)
+  return {...t,naturalHeight:t.height,height:river.height(x,z,t.height,water),moisture:Math.max(t.moisture,water?.wetness??0)}
 }
 function normalAt(x: number, z: number): [number, number, number] {
   const dx = terrainAt(x - 2, z).height - terrainAt(x + 2, z).height
@@ -75,14 +80,19 @@ function scatter(address: Address): Prop[] {
     const wx = (x + .12 + hash(x, z, 31) * .76) * spacing
     const wz = (z + .12 + hash(x, z, 32) * .76) * spacing
     const sample = terrainAt(wx, wz), slope = normalAt(wx, wz)[1]
-    if (sample.height < 7) continue
+    if (sample.height < 7 || (river.query(wx,wz)?.signedBankDistance ?? Infinity) < 6) continue
     const woodland = noise(wx / 240, wz / 240, 71)
     const kind = hash(x, z, 35) < .2 + (1 - slope) * .8 ? 'rock' : 'plant'
     if (kind === 'plant' && (slope < .82 || woodland < .43 || hash(x, z, 72) > woodland * .95)) continue
     if (kind === 'rock' && (slope < .45 || hash(x, z, 73) > .35 + (1 - slope))) continue
     result.push({ id: `${x}:${z}`, x: wx, y: sample.height, z: wz,
       scale: 2 + hash(x, z, 33) * 4, yaw: hash(x, z, 34) * Math.PI * 2,
-      kind, priority: hash(x, z, 36) })
+      kind: kind === 'rock' && slope < .85 && hash(x,z,86)<.2 ? 'cliff' : kind, priority: hash(x, z, 36) })
+    if(kind === 'plant')for(let cluster=0;cluster<2;cluster++){
+      const angle=hash(x,z,90+cluster)*Math.PI*2,r=4+hash(x,z,94+cluster)*5
+      const sx=wx+Math.cos(angle)*r,sz=wz+Math.sin(angle)*r,ground=terrainAt(sx,sz)
+      if(ground.height>4 && normalAt(sx,sz)[1]>.8 && (river.query(sx,sz)?.signedBankDistance ?? Infinity)>1)result.push({id:`understory:${x}:${z}:${cluster}`,x:sx,y:ground.height,z:sz,scale:2+hash(x,z,98+cluster)*4,yaw:angle,kind:'understory',priority:hash(x,z,102+cluster)})
+    }
   }
   return result
 }
@@ -97,7 +107,10 @@ function bathymetry(x: number, z: number) {
   const height = terrainAt(x, z).height
   return { height, depth: Math.max(0, SEA_LEVEL - height), signedShoreDistance: x - shorelineAt(z) }
 }
-return { config: world, hash, noise, coastAt, valleyAt, terrainAt, normalAt, meshHeight, safeSurface, regionAt, scatter, shorelineAt, bathymetry }
+let outletLo=coastAt(420)-300,outletHi=coastAt(420)+400
+for(let i=0;i<24;i++){const mid=(outletLo+outletHi)/2;if(baseTerrainAt(mid,420).height<SEA_LEVEL)outletLo=mid;else outletHi=mid}
+const river=createWorldRiver(world.seed,{x:(outletLo+outletHi)/2-16,z:420},valleyAt,(x,z)=>baseTerrainAt(x,z).height)
+return { river, config: world, hash, noise, coastAt, valleyAt, terrainAt, normalAt, meshHeight, safeSurface, regionAt, scatter, shorelineAt, bathymetry }
 }
 export type WorldSampler = ReturnType<typeof createWorldSampler>
 const defaultSampler = createWorldSampler()
@@ -106,4 +119,4 @@ export function chunkAt(x: number, z: number): Address {
   return { x: Math.floor(x / CHUNK_SIZE), z: Math.floor(z / CHUNK_SIZE) }
 }
 export function chunkKey(a: Address, config: WorldConfig = WORLD): string { return `${config.seed}:${config.generator}:${config.preset}:${a.x},${a.z}` }
-export interface Prop { id: string; x: number; y: number; z: number; scale: number; yaw: number; kind: 'rock' | 'plant'; priority: number }
+export interface Prop { id: string; x: number; y: number; z: number; scale: number; yaw: number; kind: 'rock' | 'plant' | 'understory' | 'cliff'; priority: number }

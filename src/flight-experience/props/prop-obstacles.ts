@@ -1,10 +1,10 @@
-import manifest from '../assets/landscape/manifest.json'
+import manifest from '../assets/ecology-r5/manifest.json'
 import { dimensions } from './prop-lod'
 import { chunkAt, type WorldSampler } from '../world'
 /** Landmarks use exactly the same metres/Y-up sample as rendering; no overhang can
  * silently extend beyond this conservative cylinder. Runtime accepts at most 2. */
 export interface PropLandmark { id: string; asset: 'cliff-0'; x: number; y: number; z: number; scale: number; yaw: number }
-export const CLIFF_SAMPLE = Object.freeze({ height: manifest.assets.find(a => a.id === 'cliff-0')!.physicalHeight, radius: manifest.assets.find(a => a.id === 'cliff-0')!.footprint.radius })
+export const CLIFF_SAMPLE = Object.freeze({ height: manifest.assets.find(a => a.id === 'cliff-group-0')!.physicalHeight, radius: manifest.assets.find(a => a.id === 'cliff-group-0')!.footprint.radius })
 export function landmarkTop(landmark: PropLandmark, x: number, z: number): number {
   return Math.hypot(x - landmark.x, z - landmark.z) <= CLIFF_SAMPLE.radius * landmark.scale ? landmark.y + CLIFF_SAMPLE.height * landmark.scale : -Infinity
 }

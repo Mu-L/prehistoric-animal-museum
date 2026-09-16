@@ -1,5 +1,6 @@
+import { sampleDisplayed } from '../../src/flight-experience/displayed-surface'
 import { describe, expect, it } from 'vitest'
-import { CHUNK_SIZE, WORLD, chunkAt, chunkKey, meshHeight, normalAt, safeSurface, scatter, terrainAt, type Lod } from '../../src/flight-experience/world'
+import { WORLD, chunkAt, chunkKey, meshHeight, normalAt, safeSurface, scatter, terrainAt, type Lod } from '../../src/flight-experience/world'
 import { FlightSimulation } from '../../src/flight-experience/simulation'
 import { FlightInputState, isFlightShortcutTarget } from '../../src/flight-experience/input'
 import { generateTerrain, validTerrainResult, type TerrainJob } from '../../src/flight-experience/terrain-protocol'
@@ -24,12 +25,12 @@ describe('flight world contracts', () => {
   it('has matching heights/normals at same-LOD edges and exact cross-LOD edge polylines', () => {
     for (const lod of [0, 1, 2, 3] as const) {
       const a = generateTerrain(job(-1, 0, lod)), b = generateTerrain(job(0, 0, lod))
-      const n = [64, 32, 16, 8][lod]!
-      for (let z = 0; z <= n; z++) {
-        const ia = (z * (n + 1) + n) * 3, ib = z * (n + 1) * 3
-        expect(a.positions[ia + 1]).toEqual(b.positions[ib + 1])
-        expect([...a.normals.slice(ia, ia + 3)]).toEqual([...b.normals.slice(ib, ib + 3)])
-        expect(a.positions[ia + 1]).toBeCloseTo(terrainAt(0, z * CHUNK_SIZE / n).height, 4)
+      for(let z=0;z<=512;z+=8){
+        const left=sampleDisplayed({result:a,morph:1,startNormals:a.normals,startColors:a.colors},512,z)
+        const right=sampleDisplayed({result:b,morph:1,startNormals:b.normals,startColors:b.colors},0,z)
+        expect(left.height).toEqual(right.height)
+        left.normal.forEach((v,i)=>expect(v).toBeCloseTo(right.normal[i]!,5))
+        expect(left.height).toBeCloseTo(terrainAt(0,z).height,4)
       }
     }
   })

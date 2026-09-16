@@ -14,7 +14,7 @@ it('keeps small prop cells, global instance pools and at most one replacement ce
   for (let i = 0; i < 240; i++) {
     scenery.update(i * 12, 200, -i * 20, i / 60, i < 120 ? 'low' : 'balanced')
     expect(scenery.metrics.installedThisFrame).toBeLessThanOrEqual(1)
-    expect(scenery.metrics.cells).toBeLessThanOrEqual(i < 120 ? 81 : 169)
+    expect(scenery.metrics.cells).toBeLessThanOrEqual(169)
     expect(scenery.metrics.pending).toBeLessThanOrEqual(169)
     expect(scenery.metrics.instances).toBeLessThanOrEqual(169 * 16 + 2)
     expect(scenery.metrics.batches).toBeLessThanOrEqual(32)

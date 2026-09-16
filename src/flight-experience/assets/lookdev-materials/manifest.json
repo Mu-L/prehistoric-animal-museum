@@ -1,0 +1,146 @@
+{
+  "reviewStatus": "needs_review",
+  "approval": null,
+  "scope": "finite lookdev only; no global terrain application",
+  "licenseSource": "https://polyhaven.com/license",
+  "modifications": "512px WebP derivatives; no baked sun; OpenGL tangent normal; ARM data",
+  "estimatedGpuBytesWithMips": 16777216,
+  "entries": [
+    {
+      "id": "rock_01",
+      "role": "rock",
+      "source": "https://polyhaven.com/a/rock_01",
+      "license": "CC0-1.0",
+      "metresPerRepeat": 1.5,
+      "scaleStatus": "lookdev calibration; verify source physical scale",
+      "maps": {
+        "albedo": {
+          "path": "rock_01-albedo.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_01/rock_01_diff_1k.jpg",
+          "downloadBytes": 688083,
+          "bytes": 87382,
+          "sha256": "a933dd4bc29096359ee71c82911aeef3dcee734108e65fbbd614f61dd39b4856",
+          "colorSpace": "srgb"
+        },
+        "normal": {
+          "path": "rock_01-normal.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_01/rock_01_nor_gl_1k.jpg",
+          "downloadBytes": 798807,
+          "bytes": 105384,
+          "sha256": "610e3c0a16e082bdc519eedab51f1fac4921a92dc9febe5c55183bc1b8b78e02",
+          "colorSpace": "linear-data"
+        },
+        "arm": {
+          "path": "rock_01-arm.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_01/rock_01_arm_1k.jpg",
+          "downloadBytes": 201562,
+          "bytes": 55070,
+          "sha256": "b043626f269cd621f5f3539832776037636ba96ded722051570c3c80af7fbc25",
+          "colorSpace": "linear-data"
+        }
+      }
+    },
+    {
+      "id": "sandy_gravel_02",
+      "role": "dry-soil",
+      "source": "https://polyhaven.com/a/sandy_gravel_02",
+      "license": "CC0-1.0",
+      "metresPerRepeat": 2.5,
+      "scaleStatus": "lookdev calibration; verify source physical scale",
+      "maps": {
+        "albedo": {
+          "path": "sandy_gravel_02-albedo.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sandy_gravel_02/sandy_gravel_02_diff_1k.jpg",
+          "downloadBytes": 947222,
+          "bytes": 66592,
+          "sha256": "680e21d87abfdfbeaae24022dd6e7f0d37316612a9b6d3ce2d9b25764fd931d9",
+          "colorSpace": "srgb"
+        },
+        "normal": {
+          "path": "sandy_gravel_02-normal.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sandy_gravel_02/sandy_gravel_02_nor_gl_1k.jpg",
+          "downloadBytes": 1185078,
+          "bytes": 131094,
+          "sha256": "3c9973281e164d092be18940af066053f74db4b0f2cf68b5066db4aad65823e0",
+          "colorSpace": "linear-data"
+        },
+        "arm": {
+          "path": "sandy_gravel_02-arm.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sandy_gravel_02/sandy_gravel_02_arm_1k.jpg",
+          "downloadBytes": 820610,
+          "bytes": 42170,
+          "sha256": "31ea7e445aeefdba504bf774e9a78e8926fd6c12368d89f4729d41b8221ccea7",
+          "colorSpace": "linear-data"
+        }
+      }
+    },
+    {
+      "id": "coast_sand_01",
+      "role": "wet-sand",
+      "source": "https://polyhaven.com/a/coast_sand_01",
+      "license": "CC0-1.0",
+      "metresPerRepeat": 2,
+      "scaleStatus": "lookdev calibration; verify source physical scale",
+      "maps": {
+        "albedo": {
+          "path": "coast_sand_01-albedo.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_sand_01/coast_sand_01_diff_1k.jpg",
+          "downloadBytes": 960614,
+          "bytes": 84388,
+          "sha256": "f76225b5603b07dba85b7b57e76a6438df00288e200e33a84c4e969332881bc0",
+          "colorSpace": "srgb"
+        },
+        "normal": {
+          "path": "coast_sand_01-normal.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_sand_01/coast_sand_01_nor_gl_1k.jpg",
+          "downloadBytes": 1146826,
+          "bytes": 143618,
+          "sha256": "2875dc88117b9a2b92f94d5c0249383ed92486185be89583b1bf88e2f096a3cd",
+          "colorSpace": "linear-data"
+        },
+        "arm": {
+          "path": "coast_sand_01-arm.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_sand_01/coast_sand_01_arm_1k.jpg",
+          "downloadBytes": 662421,
+          "bytes": 23664,
+          "sha256": "a6a8a8cc83d530ee5b9e0ea0af0bb2f00e9da92245ba6d6ef422ee26550792d5",
+          "colorSpace": "linear-data"
+        }
+      }
+    },
+    {
+      "id": "forest_ground_04",
+      "role": "forest-floor",
+      "source": "https://polyhaven.com/a/forest_ground_04",
+      "license": "CC0-1.0",
+      "metresPerRepeat": 2,
+      "scaleStatus": "lookdev calibration; verify source physical scale",
+      "maps": {
+        "albedo": {
+          "path": "forest_ground_04-albedo.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_diff_1k.jpg",
+          "downloadBytes": 1113899,
+          "bytes": 99018,
+          "sha256": "651e20cac404f4aca7454df19ab3d6063f27901ee793f5e6f18b8a81fba7c826",
+          "colorSpace": "srgb"
+        },
+        "normal": {
+          "path": "forest_ground_04-normal.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_nor_gl_1k.jpg",
+          "downloadBytes": 1326812,
+          "bytes": 155298,
+          "sha256": "657a3a1a941d2b6f9ab8a20ec6f3f309a892013c008a6e8ed398ebb77f01ee66",
+          "colorSpace": "linear-data"
+        },
+        "arm": {
+          "path": "forest_ground_04-arm.webp",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_arm_1k.jpg",
+          "downloadBytes": 882694,
+          "bytes": 60964,
+          "sha256": "f4a48e0e5233066043eccc2db9fbc10fa6666d1a5e3c7525202c9c29665e94bd",
+          "colorSpace": "linear-data"
+        }
+      }
+    }
+  ]
+}

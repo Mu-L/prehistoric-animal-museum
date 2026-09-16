@@ -1,6 +1,6 @@
 import { BackSide, DataTexture, DirectionalLight, Group, HemisphereLight, Mesh, NearestFilter, PlaneGeometry, RGBAFormat, ShaderMaterial, SphereGeometry, Vector2, Vector3, Vector4, type PerspectiveCamera, type Scene } from 'three'
-import { SEA_LEVEL, type Address } from '../world'
-import { BathymetryField, DEPTH_SIZE, DEPTH_STEP } from './bathymetry'
+import { SEA_LEVEL, terrainAt, type Address } from '../world'
+import { BathymetryField, DEPTH_SIZE, DEPTH_STEP, type BathymetryOptions } from './bathymetry'
 import { sampleEnvironment, type SolarPreset, type EnvironmentFrame } from './environment-state'
 import { envelopeOrigin, waveComponents } from './ocean-waves'
 import { ENVIRONMENT_ATMOSPHERE_GLSL as atmosphere } from './atmosphere'
@@ -13,14 +13,20 @@ void main(){gl_FragColor=vec4(distantColor(normalize(direction)),1.);
 #include <colorspace_fragment>
 }`
 const waterVertex=`varying vec3 worldPosition;void main(){worldPosition=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(worldPosition,1.);}`
-const waterFragment=`varying vec3 worldPosition;uniform vec4 waves[6];uniform vec2 envelopeOrigin;uniform sampler2D depthField;uniform vec2 depthOrigin;uniform float hasDepth;uniform float flatWater;uniform float edges;
+export interface EnvironmentUpdateOptions extends BathymetryOptions { immutableSurface?:(x:number,z:number)=>number }
+const waterFragment=`varying vec3 worldPosition;uniform vec4 waves[6];uniform vec2 envelopeOrigin;uniform sampler2D depthField;uniform sampler2D previousDepthField;uniform sampler2D coarseDepthField;uniform vec2 depthOrigin;uniform vec2 previousDepthOrigin;uniform vec2 coarseDepthOrigin;uniform float depthBlend;uniform float hasPreviousDepth;uniform float hasCoarseDepth;uniform float hasDepth;uniform float flatWater;uniform float edges;
 ${atmosphere}
 // Periodic 8192m value noise with analytic derivatives; bounded origin coordinates.
 float oceanHash(vec2 p){p=mod(p,64.);return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 vec3 oceanNoise(vec2 p){vec2 cell=floor(p),f=fract(p),u=f*f*(3.-2.*f),du=6.*f*(1.-f);
 float a=oceanHash(cell),b=oceanHash(cell+vec2(1.,0.)),c=oceanHash(cell+vec2(0.,1.)),d=oceanHash(cell+1.);
 return vec3(mix(mix(a,b,u.x),mix(c,d,u.x),u.y),mix(b-a,d-c,u.y)*du.x,mix(c-a,d-b,u.x)*du.y);}
-float ground(vec2 pixel){vec2 rg=texture2D(depthField,(pixel+.5)/130.).rg*255.;return -128.+(rg.x*256.+rg.y)/65535.*1024.;}
+float ground(sampler2D field,vec2 pixel){vec2 rg=texture2D(field,(clamp(pixel,vec2(0.),vec2(129.))+.5)/130.).rg*255.;return -128.+(rg.x*256.+rg.y)/65535.*1024.;}
+vec2 readField(sampler2D field,vec2 origin,float spacing){vec2 p=(worldPosition.xz-origin)/spacing;vec2 cell=floor(p),f=fract(p);
+float height=mix(mix(ground(field,cell),ground(field,cell+vec2(1.,0.)),f.x),mix(ground(field,cell+vec2(0.,1.)),ground(field,cell+1.),f.x),f.y);
+float edge=min(min(p.x,p.y),min(129.-p.x,129.-p.y));
+return vec2(height,smoothstep(0.,8.,edge));}
+float shallowAt(float height){return 1.-smoothstep(1.,24.,${SEA_LEVEL}-height);}
 void main(){vec3 ray=normalize(worldPosition-cameraPosition);float distanceToEye=length(worldPosition-cameraPosition);vec2 gradient=vec2(0.);
 vec2 envelopePosition=(worldPosition.xz+envelopeOrigin)/128.;
 for(int i=0;i<6;i++){
@@ -37,10 +43,14 @@ float fade=1.-smoothstep(reach*.2,reach,distanceToEye);
 gradient+=(cos(phase)*phaseGradient*amplitude+sin(phase)*envelope.yz*(.55/128.))*waves[i].z*aa*fade*.42;
 }
 vec3 n=normalize(vec3(-gradient.x*(1.-flatWater),1.,-gradient.y*(1.-flatWater)));
-vec2 p=(worldPosition.xz-depthOrigin)/${DEPTH_STEP}.;vec2 cell=floor(p),f=fract(p);
-float height=mix(mix(ground(cell),ground(cell+vec2(1.,0.)),f.x),mix(ground(cell+vec2(0.,1.)),ground(cell+1.),f.x),f.y);
-float valid=step(1.,p.x)*step(1.,p.y)*step(p.x,128.)*step(p.y,128.)*hasDepth;
-float shallow=(1.-smoothstep(1.,24.,${SEA_LEVEL}-height))*valid;
+vec2 coarse=readField(coarseDepthField,coarseDepthOrigin,32.);
+float fallback=shallowAt(coarse.x)*coarse.y*hasCoarseDepth;
+vec2 current=readField(depthField,depthOrigin,${DEPTH_STEP}.);
+vec2 previous=readField(previousDepthField,previousDepthOrigin,${DEPTH_STEP}.);
+// Each version resolves UV independently at this same world point.
+float oldShallow=mix(fallback,shallowAt(previous.x),previous.y*hasPreviousDepth);
+float newShallow=mix(fallback,shallowAt(current.x),current.y*hasDepth);
+float shallow=mix(oldShallow,newShallow,depthBlend);
 vec3 c=oceanColor(ray,n,shallow);float farMix=smoothstep(1600.,2600.,distanceToEye);c=mix(c,distantColor(ray),farMix);
 if(edges>.5){float border=step(4750.,max(abs(worldPosition.x-cameraPosition.x),abs(worldPosition.z-cameraPosition.z)));c=mix(c,vec3(1.,0.,0.),border);}
 gl_FragColor=vec4(c,1.);
@@ -50,30 +60,34 @@ gl_FragColor=vec4(c,1.);
 /** Owns only environment resources. Renderer/shadow state is leased by the runtime. */
 export class EnvironmentScene {
   readonly root=new Group()
-  readonly review={flatWater:false,freezeWater:false,oceanEdges:false,skyColors:false,shadows:true}
-  readonly metrics={bathymetrySamples:0,textureBytes:DEPTH_SIZE*DEPTH_SIZE*4,shadowMapSize:0,shadowExtent:384,bathymetryRevision:0,bathymetryMs:0,peakBathymetryMs:0}
+  readonly review={flatWater:false,freezeWater:false,oceanEdges:false,skyColors:false,shadows:true,freezeBathymetry:false}
+  readonly metrics={bathymetrySamples:0,textureBytes:DEPTH_SIZE*DEPTH_SIZE*4*3,shadowMapSize:0,shadowExtent:384,bathymetryRevision:0,bathymetryMs:0,peakBathymetryMs:0,bathymetryEpoch:0,bathymetryDirtyPages:0,bathymetryBlend:1,bathymetryUploadBytes:0,bathymetryPendingAgeFrames:0,bathymetryStarvedFrames:0}
   private currentFrame=sampleEnvironment()
   get frame():EnvironmentFrame{return this.currentFrame}
   readonly sun=new DirectionalLight(0xffffff,2.6)
   readonly fill=new HemisphereLight(0xffffff,0xffffff,1.15)
   private readonly field=new BathymetryField()
+  private readonly coarseField=new BathymetryField(32)
+  private readonly previousTexture=new DataTexture(this.field.previousData,DEPTH_SIZE,DEPTH_SIZE,RGBAFormat)
+  private readonly coarseTexture=new DataTexture(this.coarseField.data,DEPTH_SIZE,DEPTH_SIZE,RGBAFormat)
   private readonly texture=new DataTexture(this.field.data,DEPTH_SIZE,DEPTH_SIZE,RGBAFormat)
   readonly fog=createEnvironmentFog(this.currentFrame)
   private readonly uniforms=this.fog.uniforms
-  private readonly waterUniforms={...this.uniforms,envelopeOrigin:{value:new Vector2()},waves:{value:Array.from({length:6},()=>new Vector4())},depthField:{value:this.texture},depthOrigin:{value:new Vector2()},hasDepth:{value:0},flatWater:{value:0},edges:{value:0}}
+  private readonly waterUniforms={...this.uniforms,envelopeOrigin:{value:new Vector2()},waves:{value:Array.from({length:6},()=>new Vector4())},depthField:{value:this.texture},previousDepthField:{value:this.previousTexture},coarseDepthField:{value:this.coarseTexture},previousDepthOrigin:{value:new Vector2()},coarseDepthOrigin:{value:new Vector2()},depthBlend:{value:1},hasPreviousDepth:{value:0},hasCoarseDepth:{value:0},depthOrigin:{value:new Vector2()},hasDepth:{value:0},flatWater:{value:0},edges:{value:0}}
   readonly sky=new Mesh(new SphereGeometry(1,24,12),new ShaderMaterial({vertexShader:skyVertex,fragmentShader:skyFragment,uniforms:this.uniforms,side:BackSide,depthWrite:false,depthTest:false}))
   readonly water=new Mesh(new PlaneGeometry(10000,10000),new ShaderMaterial({vertexShader:waterVertex,fragmentShader:waterFragment,uniforms:this.waterUniforms}))
   private lastWaterTime=0
-  get busy(){return this.field.busy}
+  private preparationFrame=0
+  get busy(){return this.field.busy||this.coarseField.busy}
   constructor(scene:Scene,private readonly surface:(x:number,z:number)=>number){
-    this.texture.minFilter=NearestFilter;this.texture.magFilter=NearestFilter;this.texture.generateMipmaps=false
+    for(const texture of [this.texture,this.previousTexture,this.coarseTexture]){texture.minFilter=NearestFilter;texture.magFilter=NearestFilter;texture.generateMipmaps=false}
     this.sky.frustumCulled=false;this.sky.renderOrder=-10
     this.water.rotation.x=-Math.PI/2;this.water.position.y=SEA_LEVEL;this.water.frustumCulled=false
     this.sun.castShadow=true;this.sun.shadow.camera.left=-192;this.sun.shadow.camera.right=192;this.sun.shadow.camera.top=192;this.sun.shadow.camera.bottom=-192
     this.sun.shadow.camera.near=1;this.sun.shadow.camera.far=1400;this.sun.shadow.bias=-.0003;this.sun.shadow.normalBias=.8
     this.root.add(this.sky,this.water,this.sun,this.sun.target,this.fill);scene.add(this.root)
   }
-  update(camera:PerspectiveCamera,origin:Address,time:number,quality:'low'|'balanced',preset:SolarPreset='afternoon'){
+  update(camera:PerspectiveCamera,origin:Address,time:number,quality:'low'|'balanced',preset:SolarPreset='afternoon',options:EnvironmentUpdateOptions={}){
     const f=this.currentFrame=sampleEnvironment(preset,time)
     this.fog.update(f)
     this.uniforms.skyColors.value=Number(this.review.skyColors);this.sun.castShadow=this.review.shadows
@@ -94,12 +108,38 @@ export class EnvironmentScene {
     waveComponents(f.windWorld,origin,this.lastWaterTime).forEach((w,i)=>this.waterUniforms.waves.value[i]!.set(w.x,w.z,w.amplitude*f.waveStrength,w.phase))
     this.waterUniforms.flatWater.value=Number(this.review.flatWater);this.waterUniforms.edges.value=Number(this.review.oceanEdges)
     const revision=this.field.revision,started=performance.now()
-    this.metrics.bathymetrySamples=this.field.update(camera.position.x+origin.x,camera.position.z+origin.z,this.surface)
+    this.metrics.bathymetryUploadBytes=0
+    const allowPublish=options.allowPublish!==false&&!this.review.freezeBathymetry
+    const x=camera.position.x+origin.x,z=camera.position.z+origin.z
+    const coarseRevision=this.coarseField.revision
+    const coarse=()=>this.coarseField.update(x,z,options.immutableSurface??((x,z)=>terrainAt(x,z).height),1,{...(options.budget?{budget:options.budget}:{}),allowPublish,presentationSeconds:time})
+    const near=()=>this.field.update(x,z,this.surface,1,{...options,allowPublish,presentationSeconds:time})
+    this.metrics.bathymetrySamples=(this.preparationFrame++%2===0)?coarse()+near():near()+coarse()
+    if(coarseRevision!==this.coarseField.revision){this.coarseTexture.needsUpdate=true;this.metrics.bathymetryUploadBytes+=this.coarseField.data.byteLength}
+    this.metrics.bathymetryPendingAgeFrames=Math.max(this.field.pendingAgeFrames,this.coarseField.pendingAgeFrames)
+    this.metrics.bathymetryStarvedFrames=this.field.starvedFrames+this.coarseField.starvedFrames
     this.metrics.bathymetryMs=performance.now()-started
     this.metrics.peakBathymetryMs=Math.max(this.metrics.peakBathymetryMs,this.metrics.bathymetryMs)
-    if(revision!==this.field.revision)this.texture.needsUpdate=true
+    if(revision!==this.field.revision){
+      this.previousTexture.needsUpdate=true
+      this.metrics.bathymetryUploadBytes+=this.field.previousData.byteLength
+      const sameOrigin=this.field.previousX===this.field.startX&&this.field.previousZ===this.field.startZ
+      if(sameOrigin)for(const rect of this.field.publication?.dirtyRects??[]){
+        const col=Math.round((rect.minX-this.field.startX)/DEPTH_STEP),row=Math.round((rect.minZ-this.field.startZ)/DEPTH_STEP)
+        const width=Math.round((rect.maxX-rect.minX)/DEPTH_STEP)+1,height=Math.round((rect.maxZ-rect.minZ)/DEPTH_STEP)+1
+        this.metrics.bathymetryUploadBytes+=width*height*4
+        for(let r=0;r<height;r++)this.texture.addUpdateRange(((row+r)*DEPTH_SIZE+col)*4,width*4)
+      }
+      if(!sameOrigin)this.metrics.bathymetryUploadBytes+=this.field.data.byteLength
+      this.texture.needsUpdate=true
+    }
+    this.waterUniforms.depthBlend.value=this.field.blend;this.waterUniforms.hasPreviousDepth.value=Number(this.field.revision>1)
+    this.waterUniforms.hasCoarseDepth.value=Number(this.coarseField.revision>0)
+    this.waterUniforms.previousDepthOrigin.value.set(Number.isFinite(this.field.previousX)?this.field.previousX-origin.x:0,Number.isFinite(this.field.previousZ)?this.field.previousZ-origin.z:0)
+    this.waterUniforms.coarseDepthOrigin.value.set(Number.isFinite(this.coarseField.startX)?this.coarseField.startX-origin.x:0,Number.isFinite(this.coarseField.startZ)?this.coarseField.startZ-origin.z:0)
     this.metrics.bathymetryRevision=this.field.revision
+    this.metrics.bathymetryEpoch=this.field.publication?.epoch??0;this.metrics.bathymetryDirtyPages=this.field.publication?.dirtyRects.length??0;this.metrics.bathymetryBlend=this.field.blend
     this.waterUniforms.hasDepth.value=Number(this.field.revision>0);this.waterUniforms.depthOrigin.value.set(Number.isFinite(this.field.startX)?this.field.startX-origin.x:0,Number.isFinite(this.field.startZ)?this.field.startZ-origin.z:0)
   }
-  dispose(){this.root.removeFromParent();this.sky.geometry.dispose();this.sky.material.dispose();this.water.geometry.dispose();this.water.material.dispose();this.texture.dispose();this.sun.dispose();this.fill.dispose();this.root.clear()}
+  dispose(){this.root.removeFromParent();this.sky.geometry.dispose();this.sky.material.dispose();this.water.geometry.dispose();this.water.material.dispose();this.texture.dispose();this.previousTexture.dispose();this.coarseTexture.dispose();this.field.dispose();this.coarseField.dispose();this.sun.dispose();this.fill.dispose();this.root.clear()}
 }

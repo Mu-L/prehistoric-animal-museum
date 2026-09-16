@@ -58,6 +58,10 @@
 .flight-settings{max-height:calc(100dvh - 112px);overflow-y:auto;overscroll-behavior:contain}.flight-restart{border:1px solid #aebfb7;border-radius:12px;padding:10px;margin:12px 0}.flight-restart small{display:block;line-height:1.5;margin-bottom:8px}.flight-restart legend{font-weight:700;padding:0 6px}.flight-settings select{max-width:58%}
 @media(max-width:420px){.flight-setting:has(select){display:grid;gap:8px}.flight-settings select{max-width:100%;width:100%;font-size:16px}}
 
-.flight-review { max-height: 65dvh; overflow: auto; max-width: min(340px, calc(100vw - 32px)); }
+.flight-review { pointer-events: auto; max-height: 65dvh; overflow: auto; max-width: min(340px, calc(100vw - 32px)); }
 .flight-review select { max-width: 170px; }
 .flight-review textarea { width: 100%; min-height: 150px; font: 10px monospace; }
+
+/* Review-only finite lookdev stage: keep specimen comparison unobstructed. */
+.flight-experience:has(.flight-review[data-lookdev-active="true"]) .flight-intro,
+.flight-experience:has(.flight-review[data-lookdev-active="true"]) .flight-controls { display:none; }

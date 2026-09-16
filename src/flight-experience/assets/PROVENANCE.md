@@ -50,3 +50,37 @@ Run `node scripts/flight/assets/validate-landscape.mjs` for actual exported budg
 and hash checks. Source Blender files and additional review angles remain local; the
 candidate GLB and runtime cutouts are imported only by the disabled-by-default flight module.
 Human material, silhouette, scale and device-performance approval remain pending.
+
+## R4 finite lookdev candidates (development only, needs review)
+
+`lookdev-r4/PROVENANCE.md` records nine project-original tree, understory,
+rock and cliff candidates, their high-to-low baking pipeline and budgets.
+`lookdev-r4/manifest.json` retains `needs_review` with no human approval.
+These assets are displayed only by the finite development review stage and
+are not substituted into world scattering or included in the flight build.
+
+The four surfaces in `lookdev-materials/manifest.json` are 512px WebP
+transformations of Poly Haven's CC0 assets: Rock 01, Sandy Gravel 02,
+Coast Sand 01 and Forest Ground 04. Each channel records its source URL,
+download bytes, derivative bytes, SHA-256 and colour-space handling.
+Albedo uses sRGB; OpenGL tangent normals and packed AO/roughness/metallic
+are linear data. Chosen repeat sizes are lookdev calibration candidates,
+not verified survey measurements. Source licence: https://polyhaven.com/license.
+The review stage shares the runtime lighting and does not bake direct sun
+into these albedo maps. The global terrain material remains unchanged.
+
+## Integrated static ecology
+
+`ecology-r5/` derives the four tree families, two understory clusters, two rock groups
+and continuous cliff outcrop from the project-original R4 source recipe, licensed
+CC-BY-NC-SA-4.0. Rock albedo/normal/ARM derivatives use Poly Haven Rock 01 (CC0),
+with source records in `lookdev-materials/manifest.json`. High-to-low PBR baking
+retains metre dimensions and three authored LODs; 512px transparent front/side/top
+canopy views are captured from the exact baked LOD0 using unlit albedo emission.
+Family 1 adds inner foliage sprays and larger blades for a denser crown.
+
+The flight scene uses this ecological set. The four terrain materials remain
+in an isolated development preview with stochastic sampling and terrain blending.
+Asset hashes, triangle counts and map resolutions are in `ecology-r5/manifest.json`.
+Reproduction uses the create/bake/optimize lookdev scripts with the ecology output
+directory, followed by `capture-ecology-impostors.py` before optimization.

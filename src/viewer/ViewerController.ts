@@ -5590,12 +5590,13 @@ export class ViewerController {
         try {
           const ratio = Math.min(window.devicePixelRatio, experience.pixelRatio)
           if (this.renderer.getPixelRatio() !== ratio) this.renderer.setPixelRatio(ratio)
+          experience.setFramebufferHeight?.(this.renderer.domElement.height)
           const flightFrameStart = performance.now()
           experience.update(rawDeltaSeconds)
           this.renderer.shadowMap.enabled = experience.shadowsEnabled ?? false
-          const gpuMs = this.externalGpuTimer?.poll()
-          if (gpuMs !== undefined && gpuMs !== null) experience.recordGpu?.(gpuMs)
-          this.externalGpuTimer?.begin()
+          const gpuMs = this.externalGpuTimer?.pollSample()
+          if (gpuMs !== undefined && gpuMs !== null) experience.recordGpu?.(gpuMs.milliseconds, gpuMs.frameId)
+          this.externalGpuTimer?.begin(experience.frameId)
           try { this.renderer.render(experience.scene, experience.camera) } finally { this.externalGpuTimer?.end() }
           experience.recordRender?.({ cpuMs: performance.now() - flightFrameStart, calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, geometries: this.renderer.info.memory.geometries, textures: this.renderer.info.memory.textures })
           this.renderer.domElement.dataset.flightResources = JSON.stringify({
