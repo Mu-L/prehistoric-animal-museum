@@ -56,3 +56,4 @@
 }
 .flight-review{position:absolute;right:16px;top:90px;z-index:6;background:#f5f6eee8;color:#294441;padding:8px;border-radius:10px;font:12px sans-serif;max-height:55vh;overflow:auto}.flight-review label{display:flex;gap:8px;align-items:center;min-height:30px}.flight-review summary{cursor:pointer}
 .flight-settings{max-height:calc(100dvh - 112px);overflow-y:auto;overscroll-behavior:contain}.flight-restart{border:1px solid #aebfb7;border-radius:12px;padding:10px;margin:12px 0}.flight-restart small{display:block;line-height:1.5;margin-bottom:8px}.flight-restart legend{font-weight:700;padding:0 6px}.flight-settings select{max-width:58%}
+@media(max-width:420px){.flight-setting:has(select){display:grid;gap:8px}.flight-settings select{max-width:100%;width:100%;font-size:16px}}
