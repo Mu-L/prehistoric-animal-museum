@@ -1,3 +1,4 @@
+import { DEFAULT_FLIGHT_SETTINGS, framingDistance, spawnState, type FlightSettings } from './settings'
 import { NormalAnimationBlendMode, AnimationClip, type AnimationAction, Box3, Fog, Group, PerspectiveCamera, Scene, Vector3 } from 'three'
 import type { StagedViewerModel, ViewerController, ViewerModelDescriptor } from 'virtual:viewer-controller'
 import type { ExperienceLease, ExternalExperience } from '../viewer/external-experience'
@@ -12,7 +13,7 @@ export type FlightPhase = 'preparing' | 'buffering' | 'ready' | 'flying' | 'paus
 export type PauseReason = 'user' | 'hidden' | 'settings' | 'terrain' | 'safety' | 'camera' | 'context' | 'error'
 export interface FlightSnapshot {
   phase: FlightPhase; reason: PauseReason | null; simplified: boolean
-  region: ReturnType<typeof regionAt>; gentle: boolean; assisted: boolean; quality: 'low' | 'balanced'
+  region: ReturnType<typeof regionAt>; gentle: boolean; assisted: boolean; quality: 'low' | 'balanced'; settings: FlightSettings
 }
 export class FlightRuntime implements ExternalExperience {
   readonly scene = new Scene()
@@ -22,7 +23,7 @@ export class FlightRuntime implements ExternalExperience {
   readonly root = new Group()
   readonly pose = new Group()
   readonly terrain: TerrainStream
-  private readonly scenery: FlightScenery
+  readonly scenery: FlightScenery
   private readonly abort = new AbortController()
   private lease: ExperienceLease | null = null
   private model: StagedViewerModel | null = null
@@ -32,7 +33,7 @@ export class FlightRuntime implements ExternalExperience {
   private origin: Address = { x: 0, z: 0 }
   private cameraInitialized = false
   private contextAvailable = true
-  private snapshot: FlightSnapshot = { phase: 'preparing', reason: null, simplified: false, region: 'coast', gentle: false, assisted: false, quality: 'low' }
+  private snapshot: FlightSnapshot = { phase: 'preparing', reason: null, simplified: false, region: 'coast', gentle: false, assisted: false, quality: 'low', settings: { ...DEFAULT_FLIGHT_SETTINGS } }
   private readonly listeners = new Set<() => void>()
   private readonly frameTimes: number[] = []
   private slowSeconds = 0
@@ -42,11 +43,14 @@ export class FlightRuntime implements ExternalExperience {
   private animationTime = 0
   private readonly followPosition = new Vector3()
   private readonly lookPosition = new Vector3()
-  constructor(private readonly controller: ViewerController, gentle: boolean) {
+  constructor(private readonly controller: ViewerController, gentle: boolean, settings: FlightSettings = DEFAULT_FLIGHT_SETTINGS) {
+    this.snapshot.settings = { ...settings }
+    const spawn = spawnState(settings); Object.assign(this.simulation.position, spawn.position); this.simulation.heading = spawn.heading
+    this.simulation.cruiseSpeed = settings.speed; this.simulation.speed = settings.speed; this.simulation.clearAccumulator()
     this.snapshot.gentle = gentle; this.simulation.gentle = gentle
     this.scene.fog = new Fog('#b8d0d3', 750, 1650)
     this.root.add(this.pose); this.scene.add(this.root)
-    this.scenery = new FlightScenery(this.scene, () => this.lease?.invalidate())
+    this.scenery = new FlightScenery(this.scene, () => this.lease?.invalidate(), (x, z) => this.terrain.displayedHeight(x, z))
     this.terrain = new TerrainStream(() => this.lease?.invalidate(), () => this.publish({ simplified: true }))
     this.scene.add(this.terrain.root)
   }
@@ -72,7 +76,7 @@ export class FlightRuntime implements ExternalExperience {
     } catch (error) { if (!this.disposed) this.fail(error) } finally { window.clearTimeout(timeout) }
   }
   get pixelRatio() { return this.snapshot.quality === 'low' ? 1 : 1.5 }
-  get running() { return !this.disposed && (this.snapshot.phase === 'flying' || this.snapshot.phase === 'preparing' || this.snapshot.phase === 'buffering') }
+  get running() { return !this.disposed && (this.snapshot.phase === 'flying' || this.snapshot.phase === 'preparing' || this.snapshot.phase === 'buffering' || (this.snapshot.phase === 'ready' && this.scenery.busy)) }
   getSnapshot = () => this.snapshot
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => this.listeners.delete(listener) }
   private publish(patch: Partial<FlightSnapshot>) {
@@ -99,6 +103,8 @@ export class FlightRuntime implements ExternalExperience {
     if (this.snapshot.phase === 'flying' || this.snapshot.phase === 'buffering')
       this.publish({ phase: reason === 'terrain' ? 'buffering' : 'paused', reason })
   }
+  refreshReview() { this.terrain.update(0, false); this.lease?.invalidate() }
+  configure(settings: FlightSettings) { this.simulation.cruiseSpeed = settings.speed; this.publish({ settings: { ...settings, start: this.snapshot.settings.start, height: this.snapshot.settings.height } }); this.lease?.invalidate() }
   setGentle(gentle: boolean) { this.simulation.gentle = gentle; this.publish({ gentle }) }
   assist() { this.simulation.assisted = true; this.publish({ assisted: true }); this.start() }
   setQuality(quality: 'low' | 'balanced', pause = true) {
@@ -118,8 +124,9 @@ export class FlightRuntime implements ExternalExperience {
     if (buffering && this.terrain.ready) this.publish({ phase: 'paused', reason: null })
     if (preparing && this.model && this.terrain.ready) this.publish({ phase: 'ready' })
     if (flying) {
-      const aheadX = p.x + Math.sin(this.simulation.heading) * 120
-      const aheadZ = p.z - Math.cos(this.simulation.heading) * 120
+      const horizon = Math.max(120, this.simulation.speed * 6)
+      const aheadX = p.x + Math.sin(this.simulation.heading) * horizon
+      const aheadZ = p.z - Math.cos(this.simulation.heading) * horizon
       if (!this.terrain.safeToEnter(aheadX, aheadZ)) this.pause('terrain')
       else {
         this.simulation.advance(deltaSeconds, this.input.read())
@@ -160,8 +167,8 @@ export class FlightRuntime implements ExternalExperience {
   }
   private updateCamera(render: RenderState, delta: number) {
     const p = render.position, heading = render.heading
-    const distance = this.camera.aspect < .85 ? 23 : 17
-    this.cameraOffset = followOffset(this.cameraOffset, heading, distance, this.cameraInitialized ? delta : 0)
+    const distance = framingDistance(this.camera.aspect, this.snapshot.settings.view)
+    if (!this.cameraInitialized || delta > 0) this.cameraOffset = followOffset(this.cameraOffset, heading, distance, this.cameraInitialized ? delta : 0)
     this.followPosition.copy(this.cameraOffset).add(new Vector3(p.x, p.y, p.z))
     const from = this.cameraInitialized ? { x: this.camera.position.x + this.origin.x, y: this.camera.position.y, z: this.camera.position.z + this.origin.z } : this.followPosition
     let safe = cameraPathSafe(from, this.followPosition, safeSurface)
@@ -189,7 +196,7 @@ export class FlightRuntime implements ExternalExperience {
       commands: { ...this.simulation.commands, mode: this.simulation.avoidance, vY: this.simulation.climbRate, aY: this.simulation.verticalAcceleration },
       origin: this.origin, originShifts: this.originShifts, droppedSeconds: this.simulation.droppedSeconds,
       frameTimeMs: { samples: sorted.length, p50: percentile(.5), p95: percentile(.95), p99: percentile(.99), spikes100: sorted.filter(n => n > 100).length },
-      terrain: this.terrain.diagnostics() }
+      props: { ...this.scenery.metrics }, terrain: this.terrain.diagnostics() }
   }
   close() { if (this.lease) this.lease.release(); else this.dispose(); this.lease = null }
   dispose() {

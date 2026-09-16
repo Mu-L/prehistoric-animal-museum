@@ -14,7 +14,10 @@ Open `/zh-CN/?animal=pteranodon&experience=flight` or the English equivalent.
 A direct link opens a stationary preview; flying requires pressing Start.
 Arrow keys/WASD steer and change height. Space pauses when a semantic control
 is not focused. Escape first closes settings, then exits. Touch users hold the
-four direction buttons. Settings offer gentle movement and low/balanced scenery.
+four direction buttons. Settings offer gentle movement, low/balanced scenery, three speeds and camera distances.
+Starting place and height are applied only with an explicit restart. Touch inputs
+combine independently by pointer ID. Assisted cruise follows a short coast-to-valley
+route; any direction input immediately returns control to the visitor.
 
 For a separately audited static candidate:
 
@@ -66,3 +69,11 @@ Use ordinary `npm run build` with MUSEUM_FLIGHT unset. Verify the disabled build
 with `scripts/flight/validate-build.mjs`. It removes the entry, flight module,
 Worker and unapproved Glide data while retaining the existing exhibits and
 comparison feature. Do not delete assets or weaken production checks to roll back.
+
+## Visual diagnosis in development
+
+The development-only Visual diagnostics panel isolates legacy tiling, detail,
+strata, gray geometry, frozen LOD, props and water normals/time. It is absent from
+the candidate production UI. Compare the same stationary view, seed, DPR and
+quality before interpreting artifacts. Keep real-device, art and motion review
+separate from numeric regression results.

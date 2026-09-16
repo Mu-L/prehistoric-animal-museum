@@ -1,4 +1,4 @@
-import { clamp, safeSurface, type Position } from './world'
+import { clamp, safeSurface, coastAt, valleyAt, type Position } from './world'
 export interface FlightInput { turn: number; climb: number }
 export interface RenderState { position: Position; heading: number; turnRate: number; climbRate: number; time: number }
 export const ZERO_INPUT: FlightInput = Object.freeze({ turn: 0, climb: 0 })
@@ -16,6 +16,8 @@ export class FlightSimulation {
   gentle = false
   assisted = false
   safetyStop = false
+  private scenicLeg = 0
+  private readonly scenicRoute = [{ x: coastAt(-450) + 80, z: -450 }, { x: valleyAt(-1100), z: -1100 }, { x: valleyAt(-2200), z: -2200 }]
   avoidance: 'normal' | 'avoid' | 'recover' = 'normal'
   verticalAcceleration = 0
   readonly commands = { manualTurn: 0, manualClimb: 0, finalTurn: 0, targetClimb: 0, targetSpeed: 18, risk: 0, clearance: 0, jerk: 0, side: 0 }
@@ -49,9 +51,10 @@ export class FlightSimulation {
     if (Math.abs(input.turn) + Math.abs(input.climb) > .08) this.assisted = false
     let turn = clamp(input.turn, -1, 1), climb = clamp(input.climb, -1, 1)
     if (this.assisted) {
-      const left = this.surface(this.position.x + Math.sin(this.heading - .4) * 160, this.position.z - Math.cos(this.heading - .4) * 160)
-      const right = this.surface(this.position.x + Math.sin(this.heading + .4) * 160, this.position.z - Math.cos(this.heading + .4) * 160)
-      turn = clamp((left - right) / 90, -.6, .6)
+      let target = this.scenicRoute[this.scenicLeg]!
+      if (Math.hypot(target.x - this.position.x, target.z - this.position.z) < 120 && this.scenicLeg < this.scenicRoute.length - 1) target = this.scenicRoute[++this.scenicLeg]!
+      const desired = Math.atan2(target.x - this.position.x, this.position.z - target.z)
+      turn = clamp(angleDelta(this.heading, desired) * 1.5, -.8, .8)
       climb = clamp((this.surface(this.position.x, this.position.z) + 115 - this.position.y) / 45, -.5, .8)
     }
     this.commands.manualTurn = turn; this.commands.manualClimb = climb

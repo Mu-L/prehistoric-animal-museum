@@ -1,3 +1,4 @@
+import { DEFAULT_FLIGHT_SETTINGS, type FlightSettings } from './settings'
 import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } from 'react'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronLeft, Pause, Play, Settings2, X } from 'lucide-react'
 import type { ViewerController, ViewerModelDescriptor } from 'virtual:viewer-controller'
@@ -6,7 +7,8 @@ import { FlightRuntime, type FlightSnapshot } from './FlightRuntime'
 import { isFlightShortcutTarget } from './input'
 import { flightMessages } from './messages'
 import './flight.css'
-const initial: FlightSnapshot = { phase: 'preparing', reason: null, simplified: false, region: 'coast', gentle: false, assisted: false, quality: 'low' }
+import { FlightReviewControls } from './FlightReviewControls'
+const initial: FlightSnapshot = { phase: 'preparing', reason: null, simplified: false, region: 'coast', gentle: false, assisted: false, quality: 'low', settings: { ...DEFAULT_FLIGHT_SETTINGS } }
 const noSubscription = () => () => {}
 const initialSnapshot = () => initial
 interface Props { controller: ViewerController; descriptor: ViewerModelDescriptor; onClose: () => void }
@@ -16,9 +18,11 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
   const [retry, setRetry] = useState(0), [settings, setSettings] = useState(false), [observe, setObserve] = useState(false)
   const root = useRef<HTMLElement>(null), nudgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const descriptorRef = useRef(descriptor)
+  const chosenSettings = useRef<FlightSettings>({ ...DEFAULT_FLIGHT_SETTINGS })
+  const [draft, setDraft] = useState<FlightSettings>({ ...DEFAULT_FLIGHT_SETTINGS })
   const snapshot = useSyncExternalStore(runtime?.subscribe ?? noSubscription, runtime?.getSnapshot ?? initialSnapshot, initialSnapshot)
   useEffect(() => {
-    const instance = new FlightRuntime(controller, window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    const instance = new FlightRuntime(controller, window.matchMedia('(prefers-reduced-motion: reduce)').matches, chosenSettings.current)
     let active = true
     queueMicrotask(() => { if (active) setRuntime(instance) })
     void instance.prepare(descriptorRef.current)
@@ -72,10 +76,12 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
   }, [runtime])
   const flying = snapshot.phase === 'flying'
   const start = () => { setObserve(false); runtime?.start(); root.current?.focus() }
-  const stopPointer = () => runtime?.input.point(0, 0)
+  const stopPointer = (event: PointerEvent<HTMLButtonElement>) => runtime?.input.release(event.pointerId)
   const direction = (event: PointerEvent<HTMLButtonElement>, turn: number, climb: number) => {
-    event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); runtime?.input.point(turn, climb)
+    event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); runtime?.input.point(turn, climb, event.pointerId)
   }
+  const configure = (next: FlightSettings) => { setDraft(next); chosenSettings.current = next; runtime?.configure(next) }
+  const restart = (next = draft) => { chosenSettings.current = next; setDraft(next); setSettings(false); setObserve(false); setRetry(n => n + 1) }
   const reason = snapshot.reason === 'terrain' ? copy.terrain : ['safety', 'camera'].includes(snapshot.reason ?? '') ? copy.safety : snapshot.reason === 'context' ? copy.context : snapshot.reason === 'hidden' ? copy.hidden : copy.quiet
   return <section ref={root} className="flight-experience" role="dialog" aria-modal="true" aria-label={copy.title} tabIndex={-1} data-flight-phase={snapshot.phase}>
     <header className="flight-toolbar">
@@ -90,6 +96,14 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
       <div className="flight-card__heading"><h2>{copy.settings}</h2><button type="button" aria-label={copy.close} onClick={() => setSettings(false)}><X size={20}/></button></div>
       <label className="flight-setting"><span>{copy.gentle}<small>{copy.gentleHelp}</small></span><input type="checkbox" checked={snapshot.gentle} onChange={e => runtime?.setGentle(e.target.checked)}/></label>
       <label className="flight-setting">{copy.quality}<select value={snapshot.quality} onChange={e => runtime?.setQuality(e.target.value === 'balanced' ? 'balanced' : 'low')}><option value="low">{copy.low}</option><option value="balanced">{copy.balanced}</option></select></label>
+      <label className="flight-setting">{copy.speed}<select value={draft.speed} onChange={e => configure({ ...draft, speed: Number(e.target.value) as FlightSettings['speed'] })}>{([18, 28, 36] as const).map((v, i) => <option key={v} value={v}>{copy.speeds[i]}</option>)}</select></label>
+      <label className="flight-setting">{copy.camera}<select value={draft.view} onChange={e => configure({ ...draft, view: e.target.value as FlightSettings['view'] })}>{(['near', 'standard', 'wide'] as const).map((v, i) => <option key={v} value={v}>{copy.views[i]}</option>)}</select></label>
+      <fieldset className="flight-restart"><legend>{copy.nextStart}</legend>
+        <label className="flight-setting">{copy.startPlace}<select value={draft.start} onChange={e => setDraft({ ...draft, start: e.target.value as FlightSettings['start'] })}>{(['coast', 'valley', 'overview'] as const).map((v, i) => <option key={v} value={v}>{copy.starts[i]}</option>)}</select></label>
+        <label className="flight-setting">{copy.height}<select value={draft.height} onChange={e => setDraft({ ...draft, height: Number(e.target.value) as FlightSettings['height'] })}>{([100, 190, 350] as const).map((v, i) => <option key={v} value={v}>{copy.heights[i]}</option>)}</select></label>
+        <small>{copy.restartHelp}</small><button type="button" onClick={() => restart()}>{copy.restart}</button>
+      </fieldset>
+      <button type="button" onClick={() => restart({ ...DEFAULT_FLIGHT_SETTINGS })}>{copy.defaults}</button>
       <label className="flight-setting">{copy.language}<select value={locale} onChange={e => setPreference(e.target.value === 'en' ? 'en' : 'zh-CN')}><option value="zh-CN">简体中文</option><option value="en">English</option></select></label>
       <p>{copy.art}</p><button type="button" className="flight-primary" disabled={!runtime?.canResume} onClick={() => { setSettings(false); start() }}>{copy.resume}</button>
     </section> : !flying && <section className="flight-card flight-intro" aria-live="polite">
@@ -104,11 +118,12 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
       </div>}
       <small>{copy.art}</small>
     </section>}
+    {import.meta.env.DEV && runtime && <FlightReviewControls runtime={runtime}/>}
     {flying && <>
       <div className="flight-direction-pad" role="group" aria-label={copy.directions}>
         {([{ label: copy.up, icon: ArrowUp, turn: 0, climb: 1, position: 'up' }, { label: copy.left, icon: ArrowLeft, turn: -1, climb: 0, position: 'left' }, { label: copy.down, icon: ArrowDown, turn: 0, climb: -1, position: 'down' }, { label: copy.right, icon: ArrowRight, turn: 1, climb: 0, position: 'right' }]).map(({ label, icon: Icon, turn, climb, position }) => <button type="button" key={position} className={`flight-direction flight-direction--${position}`} aria-label={label}
           onPointerDown={e => direction(e, turn, climb)} onPointerUp={stopPointer} onPointerCancel={stopPointer} onLostPointerCapture={stopPointer}
-          onClick={e => { if (e.detail === 0) { runtime?.input.point(turn, climb); if (nudgeTimer.current) clearTimeout(nudgeTimer.current); nudgeTimer.current = setTimeout(stopPointer, 300) } }}><Icon size={24}/></button>)}
+          onClick={e => { if (e.detail === 0) { runtime?.input.point(turn, climb); if (nudgeTimer.current) clearTimeout(nudgeTimer.current); nudgeTimer.current = setTimeout(() => runtime?.input.release(-1), 300) } }}><Icon size={24}/></button>)}
       </div>
       <div className="flight-assist"><button type="button" onClick={() => { runtime?.assist(); root.current?.focus() }}>{copy.assist}</button>{snapshot.assisted && <small>{copy.assisting}</small>}</div>
     </>}

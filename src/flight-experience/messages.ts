@@ -1,5 +1,6 @@
 export const flightMessages = {
   'zh-CN': {
+    speed: '飞行速度', speeds: ['观察 · 18 m/s', '巡游 · 28 m/s', '远行 · 36 m/s'], camera: '镜头距离', views: ['近景', '标准', '宽景'], nextStart: '下次起飞', startPlace: '起飞地点', starts: ['海岸入口', '山谷入口', '高处总览'], height: '离地高度', heights: ['近景 · 100 米', '巡游 · 190 米', '总览 · 350 米'], restartHelp: '更换地点或高度会重新准备；实际起飞高度会避开附近山坡。', restart: '从这里重新开始', defaults: '恢复默认并重新开始',
     title: '一起飞翔', subtitle: '跟随无齿翼龙，看看海岸那一边。', back: '返回展馆', start: '开始飞翔',
     pause: '停下来看看', resume: '继续飞翔', settings: '飞行设置', close: '收起设置', preparing: '正在准备翼龙和沿岸风景…',
     ready: '海风已经就绪', paused: '在这里看看', instruction: '方向键或 W A S D 转向、升降。松手后平稳向前，空格暂停。触屏可按住下方方向按钮。',
@@ -14,6 +15,7 @@ export const flightMessages = {
     regions: { coast: '开阔海岸', hills: '起伏丘陵', valley: '内陆山谷', canyon: '峡谷上方' },
   },
   en: {
+    speed: 'Flight speed', speeds: ['Observe · 18 m/s', 'Cruise · 28 m/s', 'Explore · 36 m/s'], camera: 'Camera distance', views: ['Near', 'Standard', 'Wide'], nextStart: 'Next takeoff', startPlace: 'Starting place', starts: ['Coast entrance', 'Valley entrance', 'High overview'], height: 'Height above ground', heights: ['Near · 100 m', 'Cruise · 190 m', 'Overview · 350 m'], restartHelp: 'Changing place or height prepares a new start. Takeoff height clears nearby hills.', restart: 'Restart from here', defaults: 'Restore defaults and restart',
     title: 'Take Flight', subtitle: 'Follow Pteranodon beyond the coastline.', back: 'Back to museum', start: 'Start flying',
     pause: 'Stop and look', resume: 'Continue flying', settings: 'Flight settings', close: 'Close settings', preparing: 'Preparing Pteranodon and the coast…',
     ready: 'The coast is waiting', paused: 'Stay a little, look around', instruction: 'Arrow keys or W A S D turn and change height. Release to cruise ahead; Space pauses. On touch screens, hold the direction buttons below.',
