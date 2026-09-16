@@ -33,13 +33,17 @@ describe('R2 numerical regressions', () => {
   })
   it.each([.15, .3, .4, .5])('does not chatter on continuous slope %s; bounds acceleration and jerk', slope => {
     const sim = new FlightSimulation((_x, z) => slope * (350 - z) + 60)
-    let changes = 0, previousTrend = 0, previousSpeed = sim.speed
+    let changes = 0, previousTrend = 0, previousSpeed = sim.speed, previousClimb = sim.climbRate, previousAcceleration = 0
     for (let i = 0; i < 5400 && !sim.safetyStop; i++) {
       sim.advance(1 / 60, { turn: 0, climb: 0 })
       const delta = sim.speed - previousSpeed, trend = Math.abs(delta) > 1e-5 ? Math.sign(delta) : 0
       if (i > 600 && trend && previousTrend && trend !== previousTrend) changes++
       if (trend) previousTrend = trend
       previousSpeed = sim.speed
+      const actualAcceleration = (sim.climbRate - previousClimb) * 60
+      expect(Math.abs(actualAcceleration)).toBeLessThanOrEqual(3.00001)
+      expect(Math.abs(actualAcceleration - previousAcceleration) * 60).toBeLessThanOrEqual(6.00001)
+      previousClimb = sim.climbRate; previousAcceleration = actualAcceleration
       expect(Math.abs(sim.verticalAcceleration)).toBeLessThanOrEqual(3.00001)
       expect(Math.abs(sim.commands.jerk)).toBeLessThanOrEqual(6.00001)
     }

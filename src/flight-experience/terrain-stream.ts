@@ -5,7 +5,7 @@ import { generateTerrain, resultBytes, validTerrainResult, type TerrainJob, type
 import { CHUNK_SIZE, WORLD, chunkAt, chunkKey, terrainAt, type Address } from './world'
 
 let nextSession = 0
-interface Resident extends DisplayedSurface { mesh: Mesh<BufferGeometry, MeshStandardMaterial> }
+interface Resident extends DisplayedSurface { replacement: TerrainResult | undefined; mesh: Mesh<BufferGeometry, MeshStandardMaterial> }
 interface Slot { worker: Worker; job: TerrainJob | null; started: number }
 export class TerrainStream {
   readonly root = new Group()
@@ -130,7 +130,8 @@ export class TerrainStream {
       ;(attribute.array as Float32Array).fill(resident.morph)
       attribute.needsUpdate = true
     }
-    if (!dispatch) return
+    const finished = [...this.resident.values()].find(r => r.replacement && r.morph === 1)
+    if (finished?.replacement) { this.install(finished.replacement, true); return }
     const ordered = [...this.wanted.entries()].sort((a, b) => a[1].priority - b[1].priority)
     // One bounded coarse tile per frame fills holes first, including behind the camera.
     const missing = ordered.find(([key]) => !this.resident.has(key))
@@ -144,7 +145,7 @@ export class TerrainStream {
     }
     if (this.simplified) return
     const pending = new Set([...this.slots.flatMap(s => s.job ? [chunkKey(s.job.chunk)] : []), ...this.prepared.map(r => chunkKey(r.chunk))])
-    const candidates = ordered.filter(([key, item]) => this.resident.get(key)?.result.lod !== item.lod && !pending.has(key)).slice(0, this.radius === 4 ? 24 : 48)
+    const candidates = ordered.filter(([key, item]) => (this.resident.get(key)?.replacement?.lod ?? this.resident.get(key)?.result.lod) !== item.lod && !pending.has(key)).slice(0, this.radius === 4 ? 24 : 48)
     this.metrics.peakQueue = Math.max(this.metrics.peakQueue, candidates.length)
     for (const slot of [...this.slots]) {
       if (slot.job && performance.now() - slot.started > 8000) { this.workerFailed(slot); continue }
@@ -155,15 +156,28 @@ export class TerrainStream {
       slot.worker.postMessage(slot.job)
     }
   }
-  private install(result: TerrainResult) {
+  private install(result: TerrainResult, settled = false) {
     const start = performance.now(), key = chunkKey(result.chunk), previous = this.resident.get(key)
+    let replacement: TerrainResult | undefined
+    if (previous && result.lod > previous.result.lod && !settled) {
+      // Keep the fine topology until it has morphed onto the coarse triangles.
+      // Replacing it immediately would discard fine interior vertices on frame zero.
+      replacement = result
+      const fine = previous.result, positions = fine.positions.slice(), normals = fine.normals.slice(), colors = fine.colors.slice()
+      const target = { result, morph: 1, startNormals: result.normals, startColors: result.colors }
+      for (let i = 0; i < positions.length / 3; i++) {
+        const sample = sampleDisplayed(target, positions[i * 3]!, positions[i * 3 + 2]!)
+        positions[i * 3 + 1] = sample.height; normals.set(sample.normal, i * 3); colors.set(sample.color, i * 3)
+      }
+      result = { ...fine, positions, normals, colors, coarseHeights: fine.coarseHeights.slice() }
+    }
     const geometry = new BufferGeometry()
     geometry.setAttribute('position', new BufferAttribute(result.positions, 3))
     geometry.setAttribute('normal', new BufferAttribute(result.normals, 3))
     geometry.setAttribute('color', new BufferAttribute(result.colors, 3))
     const morph = new Float32Array(result.coarseHeights.length)
     const startNormals = result.normals.slice(), startColors = result.colors.slice()
-    if (previous) {
+    if (previous && !settled) {
       for (let i = 0; i < morph.length; i++) {
         const sample = sampleDisplayed(previous, result.positions[i * 3]!, result.positions[i * 3 + 2]!)
         result.coarseHeights[i] = sample.height
@@ -179,7 +193,7 @@ export class TerrainStream {
     geometry.boundingSphere = geometry.boundingBox.getBoundingSphere(new Sphere())
     const mesh = new Mesh(geometry, this.material), local = localChunkPosition(result.chunk, this.origin)
     mesh.position.set(local.x, 0, local.z); this.root.add(mesh)
-    this.resident.set(key, { mesh, result, morph: previous ? 0 : 1, startNormals, startColors })
+    this.resident.set(key, { mesh, result, morph: previous && !settled ? 0 : 1, startNormals, startColors, replacement })
     if (previous) { previous.mesh.removeFromParent(); previous.mesh.geometry.dispose() }
     this.metrics.peakResident = Math.max(this.metrics.peakResident, this.resident.size)
     this.metrics.installMs = performance.now() - start
@@ -197,7 +211,7 @@ export class TerrainStream {
     const address = chunkAt(x, z), resident = this.resident.get(chunkKey(address))
     return resident ? sampleDisplayed(resident, x - address.x * CHUNK_SIZE, z - address.z * CHUNK_SIZE).height : terrainAt(x, z).height
   }
-  get ready() { return this.resident.size >= this.wanted.size && this.wanted.size > 0 && (this.simplified || [...this.wanted.entries()].every(([key, item]) => item.lod > 1 || this.resident.get(key)?.result.lod === item.lod)) }
+  get ready() { return this.resident.size >= this.wanted.size && this.wanted.size > 0 && (this.simplified || [...this.wanted.entries()].every(([key, item]) => item.lod > 1 || (this.resident.get(key)?.replacement?.lod ?? this.resident.get(key)?.result.lod) === item.lod)) }
   get busy() { return !this.ready || this.prepared.length > 0 || this.slots.some(s => s.job !== null) }
   safeToEnter(x: number, z: number) {
     return [-100, 0, 100].every(dx => [-100, 0, 100].every(dz => this.resident.has(chunkKey(chunkAt(x + dx, z + dz)))))
@@ -205,7 +219,7 @@ export class TerrainStream {
   diagnostics() {
     return { ...this.metrics, resident: this.resident.size, prepared: this.prepared.length,
       pending: this.slots.filter(s => s.job).length, sessionId: this.sessionId, simplified: this.simplified,
-      geometryBytes: [...this.resident.values()].reduce((n, r) => n + resultBytes(r.result) + r.startColors.byteLength + r.startNormals.byteLength, 0) }
+      geometryBytes: [...this.resident.values()].reduce((n, r) => n + resultBytes(r.result) + r.startColors.byteLength + r.startNormals.byteLength + (r.replacement ? resultBytes(r.replacement) : 0), 0) }
   }
   dispose() {
     if (this.disposed) return

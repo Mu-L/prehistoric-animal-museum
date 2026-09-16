@@ -98,7 +98,7 @@ export class FlightSimulation {
     const wantedAcceleration = clamp((targetClimb - this.climbRate) * 2, -3, 3)
     const oldAcceleration = this.verticalAcceleration
     this.verticalAcceleration += clamp(wantedAcceleration - this.verticalAcceleration, -6 * dt, 6 * dt)
-    this.climbRate = clamp(this.climbRate + this.verticalAcceleration * dt, -4, maxClimb)
+    this.climbRate += this.verticalAcceleration * dt
     this.speed += clamp((targetSpeed - this.speed) * 1.5, -3, 2) * dt
     this.turnRate += (turn * angularLimit - this.turnRate) * (1 - Math.exp(-dt * 3))
     Object.assign(this.commands, { finalTurn: turn, targetClimb, targetSpeed, clearance: minimumClearance, jerk: (this.verticalAcceleration - oldAcceleration) / dt })

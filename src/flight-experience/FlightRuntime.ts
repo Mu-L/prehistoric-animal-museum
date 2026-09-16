@@ -47,12 +47,13 @@ export class FlightRuntime implements ExternalExperience {
     this.snapshot.settings = { ...settings }
     const spawn = spawnState(settings); Object.assign(this.simulation.position, spawn.position); this.simulation.heading = spawn.heading
     this.simulation.cruiseSpeed = settings.speed; this.simulation.speed = settings.speed; this.simulation.clearAccumulator()
-    this.snapshot.gentle = gentle; this.simulation.gentle = gentle
+    this.snapshot.gentle = gentle || settings.gentle; this.simulation.gentle = this.snapshot.gentle
     this.scene.fog = new Fog('#b8d0d3', 750, 1650)
     this.root.add(this.pose); this.scene.add(this.root)
     this.scenery = new FlightScenery(this.scene, () => this.lease?.invalidate(), (x, z) => this.terrain.displayedHeight(x, z))
     this.terrain = new TerrainStream(() => this.lease?.invalidate(), () => this.publish({ simplified: true }))
     this.scene.add(this.terrain.root)
+    this.setQuality(settings.quality, false)
   }
   async prepare(descriptor: ViewerModelDescriptor) {
     const timeout = window.setTimeout(() => { this.abort.abort(); this.fail(new Error('flight-model-timeout')) }, 20000)
@@ -104,13 +105,17 @@ export class FlightRuntime implements ExternalExperience {
       this.publish({ phase: reason === 'terrain' ? 'buffering' : 'paused', reason })
   }
   refreshReview() { this.terrain.update(0, false); this.lease?.invalidate() }
-  configure(settings: FlightSettings) { this.simulation.cruiseSpeed = settings.speed; this.publish({ settings: { ...settings, start: this.snapshot.settings.start, height: this.snapshot.settings.height } }); this.lease?.invalidate() }
+  configure(settings: FlightSettings) { this.simulation.cruiseSpeed = settings.speed; this.setGentle(settings.gentle); if (settings.quality !== this.snapshot.quality) this.setQuality(settings.quality); this.publish({ settings: { ...settings, start: this.snapshot.settings.start, height: this.snapshot.settings.height } }); this.lease?.invalidate() }
   setGentle(gentle: boolean) { this.simulation.gentle = gentle; this.publish({ gentle }) }
   assist() { this.simulation.assisted = true; this.publish({ assisted: true }); this.start() }
   setQuality(quality: 'low' | 'balanced', pause = true) {
     if (pause) this.pause('settings'); this.terrain.radius = this.terrain.simplified ? 2 : quality === 'low' ? 4 : 6
     const fog = this.scene.fog as Fog
     fog.near = quality === 'low' ? 750 : 1200; fog.far = quality === 'low' ? 1650 : 2400
+    if (pause && ['ready', 'paused'].includes(this.snapshot.phase)) {
+      const p = this.simulation.position; this.terrain.plan(p.x, p.z, this.simulation.heading)
+      this.publish({ phase: 'buffering', reason: 'terrain' })
+    }
     this.publish({ quality }); this.lease?.invalidate()
   }
   update(deltaSeconds: number) {
