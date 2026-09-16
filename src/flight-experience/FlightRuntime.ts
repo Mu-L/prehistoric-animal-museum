@@ -2,12 +2,13 @@ import { NormalAnimationBlendMode, AnimationClip, type AnimationAction, Box3, Fo
 import type { StagedViewerModel, ViewerController, ViewerModelDescriptor } from 'virtual:viewer-controller'
 import type { ExperienceLease, ExternalExperience } from '../viewer/external-experience'
 import { FlightInputState } from './input'
-import { FlightSimulation } from './simulation'
+import { FlightSimulation, type RenderState } from './simulation'
+import { cameraPathSafe, followOffset } from './camera'
 import { CHUNK_SIZE, regionAt, safeSurface, type Address } from './world'
 import { FlightScenery } from './scenery'
 import { TerrainStream } from './terrain-stream'
 import glideData from './assets/pteranodon-glide.json'
-export type FlightPhase = 'preparing' | 'ready' | 'flying' | 'paused' | 'recovering' | 'closed'
+export type FlightPhase = 'preparing' | 'buffering' | 'ready' | 'flying' | 'paused' | 'recovering' | 'closed'
 export type PauseReason = 'user' | 'hidden' | 'settings' | 'terrain' | 'safety' | 'camera' | 'context' | 'error'
 export interface FlightSnapshot {
   phase: FlightPhase; reason: PauseReason | null; simplified: boolean
@@ -37,6 +38,8 @@ export class FlightRuntime implements ExternalExperience {
   private slowSeconds = 0
   private reportingSeconds = 0
   private originShifts = 0
+  private cameraOffset = new Vector3(0, 5, 17)
+  private animationTime = 0
   private readonly followPosition = new Vector3()
   private readonly lookPosition = new Vector3()
   constructor(private readonly controller: ViewerController, gentle: boolean) {
@@ -69,7 +72,7 @@ export class FlightRuntime implements ExternalExperience {
     } catch (error) { if (!this.disposed) this.fail(error) } finally { window.clearTimeout(timeout) }
   }
   get pixelRatio() { return this.snapshot.quality === 'low' ? 1 : 1.5 }
-  get running() { return !this.disposed && (this.snapshot.phase === 'flying' || this.snapshot.phase === 'preparing') }
+  get running() { return !this.disposed && (this.snapshot.phase === 'flying' || this.snapshot.phase === 'preparing' || this.snapshot.phase === 'buffering') }
   getSnapshot = () => this.snapshot
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => this.listeners.delete(listener) }
   private publish(patch: Partial<FlightSnapshot>) {
@@ -78,14 +81,23 @@ export class FlightRuntime implements ExternalExperience {
     if (JSON.stringify(next) === JSON.stringify(this.snapshot)) return
     this.snapshot = next; this.listeners.forEach(l => l())
   }
+  get canResume() {
+    return ['ready', 'paused'].includes(this.snapshot.phase) && this.contextAvailable &&
+      !this.simulation.safetyStop && !['camera', 'safety', 'error'].includes(this.snapshot.reason ?? '') && this.terrain.ready
+  }
   start() {
-    if (!['ready', 'paused'].includes(this.snapshot.phase) || !this.contextAvailable) return
-    this.input.clear(); this.simulation.clearAccumulator(); this.simulation.safetyStop = false
+    if (!this.canResume) {
+      if (['ready', 'paused'].includes(this.snapshot.phase) && this.contextAvailable && !this.terrain.ready && !this.simulation.safetyStop)
+        this.publish({ phase: 'buffering', reason: 'terrain' })
+      this.lease?.invalidate(); return
+    }
+    this.input.clear(); this.simulation.clearAccumulator(); this.animationTime = this.simulation.time
     this.publish({ phase: 'flying', reason: null }); this.lease?.invalidate()
   }
   pause(reason: PauseReason = 'user') {
-    this.input.clear(); this.simulation.clearAccumulator()
-    if (this.snapshot.phase === 'flying') this.publish({ phase: 'paused', reason })
+    this.input.clear(); this.simulation.clearAccumulator(); this.animationTime = this.simulation.time
+    if (this.snapshot.phase === 'flying' || this.snapshot.phase === 'buffering')
+      this.publish({ phase: reason === 'terrain' ? 'buffering' : 'paused', reason })
   }
   setGentle(gentle: boolean) { this.simulation.gentle = gentle; this.publish({ gentle }) }
   assist() { this.simulation.assisted = true; this.publish({ assisted: true }); this.start() }
@@ -97,21 +109,25 @@ export class FlightRuntime implements ExternalExperience {
   }
   update(deltaSeconds: number) {
     if (this.disposed) return
-    const preparing = this.snapshot.phase === 'preparing', flying = this.snapshot.phase === 'flying'
+    const preparing = this.snapshot.phase === 'preparing', buffering = this.snapshot.phase === 'buffering', flying = this.snapshot.phase === 'flying'
     const p = this.simulation.position
-    if (preparing || flying) {
+    if (preparing || flying || buffering) {
       this.terrain.plan(p.x, p.z, this.simulation.heading)
-      this.terrain.update(deltaSeconds, true)
+      this.terrain.update(buffering ? 0 : deltaSeconds, true)
     }
+    if (buffering && this.terrain.ready) this.publish({ phase: 'paused', reason: null })
     if (preparing && this.model && this.terrain.ready) this.publish({ phase: 'ready' })
     if (flying) {
       const aheadX = p.x + Math.sin(this.simulation.heading) * 120
       const aheadZ = p.z - Math.cos(this.simulation.heading) * 120
       if (!this.terrain.safeToEnter(aheadX, aheadZ)) this.pause('terrain')
       else {
-        const advanced = this.simulation.advance(deltaSeconds, this.input.read())
+        this.simulation.advance(deltaSeconds, this.input.read())
+        const render = this.simulation.renderState()
+        const advanced = Math.max(0, render.time - this.animationTime)
+        this.animationTime = render.time
         if (this.glideAction && this.model?.action) {
-          const glideTarget = this.simulation.climbRate > 1 ? 0 : Math.sin(this.simulation.time * .23) > -.3 ? .95 : 0
+          const glideTarget = render.climbRate > 1 ? 0 : Math.sin(render.time * .23) > -.3 ? .95 : 0
           this.glideWeight += (glideTarget - this.glideWeight) * (1 - Math.exp(-advanced * 1.8))
           this.glideAction.setEffectiveWeight(this.glideWeight)
           this.model.action.setEffectiveWeight(1 - this.glideWeight)
@@ -129,30 +145,36 @@ export class FlightRuntime implements ExternalExperience {
       this.camera.position.x -= next.x - this.origin.x; this.camera.position.z -= next.z - this.origin.z
       this.origin = next; this.originShifts++; this.terrain.relocate(next); this.scenery.relocate(next)
     }
-    this.root.position.set(p.x - this.origin.x, p.y, p.z - this.origin.z)
-    this.root.rotation.y = -this.simulation.heading
-    this.pose.rotation.z = -this.simulation.turnRate * (this.snapshot.gentle ? .6 : .78)
-    this.pose.rotation.x = this.simulation.climbRate * .025
-    this.updateCamera(flying ? Math.min(deltaSeconds, 1 / 15) : 0)
-    this.scenery.update(p.x, p.y, p.z, this.simulation.time, this.snapshot.quality)
+    const render = this.simulation.renderState(), rp = render.position
+    this.root.position.set(rp.x - this.origin.x, rp.y, rp.z - this.origin.z)
+    this.root.rotation.y = -render.heading
+    this.pose.rotation.z = -render.turnRate * (this.snapshot.gentle ? .6 : .78)
+    this.pose.rotation.x = render.climbRate * .025
+    this.updateCamera(render, flying ? Math.min(deltaSeconds, 1 / 15) : 0)
+    this.scenery.update(rp.x, rp.y, rp.z, render.time, this.snapshot.quality)
     this.reportingSeconds += deltaSeconds
     if (this.reportingSeconds > 1 || preparing) {
       this.reportingSeconds = 0
       this.publish({ region: regionAt(p.x, p.z), assisted: this.simulation.assisted })
     }
   }
-  private updateCamera(delta: number) {
-    const p = this.simulation.position, heading = this.simulation.heading
+  private updateCamera(render: RenderState, delta: number) {
+    const p = render.position, heading = render.heading
     const distance = this.camera.aspect < .85 ? 23 : 17
-    this.followPosition.set(p.x - this.origin.x - Math.sin(heading) * distance, p.y + 5,
-      p.z - this.origin.z + Math.cos(heading) * distance)
-    const ground = safeSurface(this.followPosition.x + this.origin.x, this.followPosition.z + this.origin.z)
-    // Camera's safety envelope is independent of the animal's wings.
-    if (ground + 12 > this.followPosition.y) { this.pause('camera'); this.followPosition.y = ground + 12 }
-    if (!this.cameraInitialized) { this.camera.position.copy(this.followPosition); this.cameraInitialized = true }
-    else if (delta > 0) this.camera.position.lerp(this.followPosition, 1 - Math.exp(-delta * 4))
-    this.lookPosition.set(p.x - this.origin.x + Math.sin(heading) * 20, p.y - 5,
-      p.z - this.origin.z - Math.cos(heading) * 20)
+    this.cameraOffset = followOffset(this.cameraOffset, heading, distance, this.cameraInitialized ? delta : 0)
+    this.followPosition.copy(this.cameraOffset).add(new Vector3(p.x, p.y, p.z))
+    const from = this.cameraInitialized ? { x: this.camera.position.x + this.origin.x, y: this.camera.position.y, z: this.camera.position.z + this.origin.z } : this.followPosition
+    let safe = cameraPathSafe(from, this.followPosition, safeSurface)
+    if (!safe && this.cameraInitialized) for (const side of [0, -6, 6]) {
+      const candidate = new Vector3(p.x - Math.sin(heading) * distance * .65 + Math.cos(heading) * side, p.y + 5,
+        p.z + Math.cos(heading) * distance * .65 + Math.sin(heading) * side)
+      if (cameraPathSafe(from, candidate, safeSurface)) { this.followPosition.copy(candidate); safe = true; break }
+    }
+    if (safe) {
+      this.camera.position.set(this.followPosition.x - this.origin.x, this.followPosition.y, this.followPosition.z - this.origin.z)
+      this.cameraInitialized = true
+    } else { this.pause('camera'); return }
+    this.lookPosition.set(p.x - this.origin.x + Math.sin(heading) * 20, p.y - 5, p.z - this.origin.z - Math.cos(heading) * 20)
     this.camera.up.set(0, 1, 0); this.camera.lookAt(this.lookPosition)
   }
   resize(width: number, height: number) { this.camera.aspect = width / height; this.camera.updateProjectionMatrix(); this.cameraInitialized = false }
@@ -164,6 +186,7 @@ export class FlightRuntime implements ExternalExperience {
     const percentile = (p: number) => sorted[Math.floor((sorted.length - 1) * p)] ?? null
     return { world: 'coastal-valley:193706:1:1', phase: this.snapshot.phase, quality: this.snapshot.quality,
       position: { ...this.simulation.position }, heading: this.simulation.heading, time: this.simulation.time,
+      commands: { ...this.simulation.commands, mode: this.simulation.avoidance, vY: this.simulation.climbRate, aY: this.simulation.verticalAcceleration },
       origin: this.origin, originShifts: this.originShifts, droppedSeconds: this.simulation.droppedSeconds,
       frameTimeMs: { samples: sorted.length, p50: percentile(.5), p95: percentile(.95), p99: percentile(.99), spikes100: sorted.filter(n => n > 100).length },
       terrain: this.terrain.diagnostics() }

@@ -32,10 +32,23 @@ jobs:
       - run: npm run typecheck
       - run: npm test -- --run
       - run: npm run build
+      - run: node scripts/flight/validate-build.mjs dist --disabled
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
+
+  flight-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build:flight
+      # Separate job: candidate dist is never uploaded as the Pages artifact.
 
   deploy:
     if: github.event_name != 'pull_request'

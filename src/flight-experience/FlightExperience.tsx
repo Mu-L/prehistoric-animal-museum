@@ -81,7 +81,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     <header className="flight-toolbar">
       <button type="button" onClick={onClose}><ChevronLeft size={20}/><span>{copy.back}</span></button>
       <div className="flight-toolbar__right">
-        {['flying', 'paused'].includes(snapshot.phase) && <button type="button" onClick={() => flying ? runtime?.pause() : start()}>{flying ? <Pause size={19}/> : <Play size={19}/>}<span>{flying ? copy.pause : copy.resume}</span></button>}
+        {['flying', 'paused'].includes(snapshot.phase) && <button type="button" disabled={!flying && !runtime?.canResume} onClick={() => flying ? runtime?.pause() : start()}>{flying ? <Pause size={19}/> : <Play size={19}/>}<span>{flying ? copy.pause : copy.resume}</span></button>}
         <button type="button" aria-label={copy.settings} aria-expanded={settings} onClick={() => { runtime?.pause('settings'); setSettings(v => !v) }}><Settings2 size={20}/></button>
       </div>
     </header>
@@ -91,14 +91,14 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
       <label className="flight-setting"><span>{copy.gentle}<small>{copy.gentleHelp}</small></span><input type="checkbox" checked={snapshot.gentle} onChange={e => runtime?.setGentle(e.target.checked)}/></label>
       <label className="flight-setting">{copy.quality}<select value={snapshot.quality} onChange={e => runtime?.setQuality(e.target.value === 'balanced' ? 'balanced' : 'low')}><option value="low">{copy.low}</option><option value="balanced">{copy.balanced}</option></select></label>
       <label className="flight-setting">{copy.language}<select value={locale} onChange={e => setPreference(e.target.value === 'en' ? 'en' : 'zh-CN')}><option value="zh-CN">简体中文</option><option value="en">English</option></select></label>
-      <p>{copy.art}</p><button type="button" className="flight-primary" onClick={() => { setSettings(false); start() }}>{copy.resume}</button>
+      <p>{copy.art}</p><button type="button" className="flight-primary" disabled={!runtime?.canResume} onClick={() => { setSettings(false); start() }}>{copy.resume}</button>
     </section> : !flying && <section className="flight-card flight-intro" aria-live="polite">
       <span className="flight-eyebrow">{copy.title} · PTERANODON</span>
-      <h1>{snapshot.phase === 'preparing' ? copy.preparing : snapshot.phase === 'recovering' ? copy.error : observe ? copy.observation : snapshot.phase === 'ready' ? copy.ready : copy.paused}</h1>
+      <h1>{snapshot.phase === 'buffering' ? copy.terrain : snapshot.phase === 'preparing' ? copy.preparing : snapshot.phase === 'recovering' ? copy.error : observe ? copy.observation : snapshot.phase === 'ready' ? copy.ready : copy.paused}</h1>
       <p>{observe ? copy.observeText : snapshot.phase === 'ready' ? copy.subtitle : reason}</p>
       {snapshot.phase === 'ready' && <p className="flight-instructions">{copy.instruction}</p>}
       {snapshot.phase !== 'preparing' && <div className="flight-card__actions">
-        {snapshot.phase !== 'recovering' && !['safety', 'camera'].includes(snapshot.reason ?? '') && <button type="button" className="flight-primary" onClick={start}><Play size={18}/>{snapshot.phase === 'ready' ? copy.start : copy.resume}</button>}
+        {runtime?.canResume && <button type="button" className="flight-primary" onClick={start}><Play size={18}/>{snapshot.phase === 'ready' ? copy.start : copy.resume}</button>}
         {(snapshot.phase === 'recovering' || ['safety', 'camera', 'terrain'].includes(snapshot.reason ?? '')) && <button type="button" className="flight-primary" onClick={() => setRetry(v => v + 1)}>{copy.retry}</button>}
         <button type="button" onClick={() => setObserve(v => !v)}>{copy.static}</button>
       </div>}

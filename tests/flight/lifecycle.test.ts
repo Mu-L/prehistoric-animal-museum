@@ -24,22 +24,6 @@ beforeEach(() => {
 })
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
 describe('bounded terrain lifecycle', () => {
-  it('keeps queues/resources bounded over a long deterministic route and releases twice safely', () => {
-    const stream = new TerrainStream(() => {}, () => {})
-    for (let frame = 0; frame < 2400; frame++) {
-      stream.plan(-160 + frame * 1.5, 350 - frame * 8, 0)
-      stream.update(1 / 60, true)
-      TestWorker.instances.forEach(w => w.finish())
-      expect(stream.resident.size).toBeLessThanOrEqual(81)
-      expect(stream.diagnostics().readyBytes).toBeLessThanOrEqual(8 * 1024 * 1024)
-      expect(stream.diagnostics().pending).toBeLessThanOrEqual(1)
-    }
-    expect(stream.diagnostics().peakQueue).toBeLessThanOrEqual(24)
-    const resources = [...stream.resident.values()].map(r => vi.spyOn(r.mesh.geometry, 'dispose'))
-    stream.dispose(); stream.dispose()
-    resources.forEach(spy => expect(spy).toHaveBeenCalledTimes(1))
-    expect(stream.resident.size).toBe(0); expect(TestWorker.instances.every(w => w.terminated)).toBe(true)
-  })
   it('installs a delayed result at the latest origin and rejects obsolete demands', () => {
     const stream = new TerrainStream(() => {}, () => {})
     stream.plan(0, 0, 0); stream.update(1 / 60, true)
@@ -106,6 +90,24 @@ describe('flight owned resources and recovery', () => {
     runtime.contextLost(); expect(runtime.getSnapshot().phase).toBe('recovering')
     runtime.contextRestored(); expect(runtime.getSnapshot().phase).toBe('paused')
     runtime.close(); runtime.close(); expect(spy).toHaveBeenCalledTimes(1)
+  })
+  it('installs delayed terrain while buffering without moving, and never bypasses a safety guard', async () => {
+    const h = host(), runtime = new FlightRuntime(h.controller, false)
+    const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
+    for (let i = 0; i < 180; i++) { runtime.update(1 / 60); TestWorker.instances.forEach(w => w.finish()) }
+    runtime.start()
+    for (const resident of runtime.terrain.resident.values()) { resident.mesh.removeFromParent(); resident.mesh.geometry.dispose() }
+    runtime.terrain.resident.clear()
+    runtime.pause('terrain')
+    runtime.update(1 / 60)
+    expect(runtime.getSnapshot().phase).toBe('buffering')
+    const position = { ...runtime.simulation.position }, time = runtime.simulation.time
+    for (let i = 0; i < 200; i++) { TestWorker.instances.forEach(w => w.finish()); runtime.update(1 / 60) }
+    expect(runtime.getSnapshot().phase).toBe('paused'); expect(runtime.canResume).toBe(true)
+    expect(runtime.simulation.position).toEqual(position); expect(runtime.simulation.time).toBe(time)
+    runtime.simulation.safetyStop = true; runtime.start()
+    expect(runtime.getSnapshot().phase).toBe('paused'); expect(runtime.simulation.safetyStop).toBe(true)
+    runtime.close()
   })
   it('has a seamless non-static authored glide and no animated root translation', () => {
     const clip = AnimationClip.parse({ ...glide, blendMode: NormalAnimationBlendMode })

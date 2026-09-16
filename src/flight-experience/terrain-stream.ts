@@ -1,10 +1,11 @@
-import { TextureLoader, RepeatWrapping, SRGBColorSpace, Vector2, type Texture, BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial } from 'three'
+import { sampleDisplayed, type DisplayedSurface } from './displayed-surface'
+import { Box3, Sphere, Vector3, TextureLoader, RepeatWrapping, SRGBColorSpace, Vector2, type Texture, BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial } from 'three'
 import { chunkWindow, localChunkPosition, type WantedChunk } from './chunk-window'
 import { generateTerrain, resultBytes, validTerrainResult, type TerrainJob, type TerrainResult } from './terrain-protocol'
-import { CHUNK_SIZE, WORLD, chunkAt, chunkKey, meshHeight, type Address } from './world'
+import { CHUNK_SIZE, WORLD, chunkAt, chunkKey, terrainAt, type Address } from './world'
 
 let nextSession = 0
-interface Resident { mesh: Mesh<BufferGeometry, MeshStandardMaterial>; result: TerrainResult; morph: number }
+interface Resident extends DisplayedSurface { mesh: Mesh<BufferGeometry, MeshStandardMaterial> }
 interface Slot { worker: Worker; job: TerrainJob | null; started: number }
 export class TerrainStream {
   readonly root = new Group()
@@ -34,7 +35,9 @@ export class TerrainStream {
       shader.uniforms.flightSurfaceReady = this.textureReady
       shader.uniforms.flightSurfaceOrigin = this.surfaceOrigin
       shader.uniforms.flightStrataPhase = this.strataPhase
-      shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute float coarseHeight; attribute float terrainBlend; varying vec3 flightWorld;')
+      shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute float coarseHeight; attribute float terrainBlend; attribute vec3 startNormal; attribute vec3 startColor; varying vec3 flightWorld;')
+        .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = normalize(mix(startNormal, normal, terrainBlend));')
+        .replace('#include <color_vertex>', '#include <color_vertex>\nvColor = mix(startColor, color, terrainBlend);')
         .replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.y = mix(coarseHeight, position.y, terrainBlend);')
         .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nflightWorld = (modelMatrix * vec4(transformed, 1.)).xyz;')
       shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D flightSurface; uniform float flightSurfaceReady; uniform vec2 flightSurfaceOrigin; uniform float flightStrataPhase; varying vec3 flightWorld;')
@@ -91,7 +94,7 @@ export class TerrainStream {
       this.fixedCenter ??= center
       x = (this.fixedCenter.x + .5) * CHUNK_SIZE; z = (this.fixedCenter.z + .5) * CHUNK_SIZE
     }
-    const signature = `${Math.round(x / 100)},${Math.round(z / 100)}:${this.radius}`
+    const signature = `${chunkAt(x, z).x},${chunkAt(x, z).z}:${Math.round(x / 100)},${Math.round(z / 100)}:${Math.round(heading * 4)}:${this.radius}`
     if (signature === this.lastPlan) return
     this.lastPlan = signature
     this.wanted = chunkWindow(x, z, this.radius, heading, this.wanted)
@@ -145,20 +148,24 @@ export class TerrainStream {
     geometry.setAttribute('normal', new BufferAttribute(result.normals, 3))
     geometry.setAttribute('color', new BufferAttribute(result.colors, 3))
     const morph = new Float32Array(result.coarseHeights.length)
-    // Morph from the *actual* previous triangular surface, even when skipping LODs.
+    const startNormals = result.normals.slice(), startColors = result.colors.slice()
     if (previous) {
       for (let i = 0; i < morph.length; i++) {
-        const x = result.positions[i * 3]!, z = result.positions[i * 3 + 2]!
-        const edge = x === 0 || x === CHUNK_SIZE || z === 0 || z === CHUNK_SIZE
-        result.coarseHeights[i] = edge ? result.positions[i * 3 + 1]! : meshHeight(result.chunk.x * CHUNK_SIZE + x, result.chunk.z * CHUNK_SIZE + z, [64, 32, 16, 8][previous.result.lod]!)
+        const sample = sampleDisplayed(previous, result.positions[i * 3]!, result.positions[i * 3 + 2]!)
+        result.coarseHeights[i] = sample.height
+        startNormals.set(sample.normal, i * 3); startColors.set(sample.color, i * 3)
       }
     } else { result.coarseHeights.set(result.positions.filter((_, i) => i % 3 === 1)); morph.fill(1) }
+    geometry.setAttribute('startNormal', new BufferAttribute(startNormals, 3))
+    geometry.setAttribute('startColor', new BufferAttribute(startColors, 3))
     geometry.setAttribute('coarseHeight', new BufferAttribute(result.coarseHeights, 1))
     geometry.setAttribute('terrainBlend', new BufferAttribute(morph, 1))
-    geometry.setIndex(new BufferAttribute(result.indices, 1)); geometry.computeBoundingSphere()
+    geometry.setIndex(new BufferAttribute(result.indices, 1))
+    geometry.boundingBox = new Box3(new Vector3(0, Math.min(result.bounds[1], ...result.coarseHeights), 0), new Vector3(CHUNK_SIZE, Math.max(result.bounds[4], ...result.coarseHeights), CHUNK_SIZE))
+    geometry.boundingSphere = geometry.boundingBox.getBoundingSphere(new Sphere())
     const mesh = new Mesh(geometry, this.material), local = localChunkPosition(result.chunk, this.origin)
     mesh.position.set(local.x, 0, local.z); this.root.add(mesh)
-    this.resident.set(key, { mesh, result, morph: previous ? 0 : 1 })
+    this.resident.set(key, { mesh, result, morph: previous ? 0 : 1, startNormals, startColors })
     if (previous) { previous.mesh.removeFromParent(); previous.mesh.geometry.dispose() }
     this.metrics.peakResident = Math.max(this.metrics.peakResident, this.resident.size)
     this.metrics.installMs = performance.now() - start
@@ -172,6 +179,10 @@ export class TerrainStream {
       resident.mesh.position.set(local.x, 0, local.z)
     }
   }
+  displayedHeight(x: number, z: number) {
+    const address = chunkAt(x, z), resident = this.resident.get(chunkKey(address))
+    return resident ? sampleDisplayed(resident, x - address.x * CHUNK_SIZE, z - address.z * CHUNK_SIZE).height : terrainAt(x, z).height
+  }
   get ready() { return this.resident.size >= this.wanted.size && this.wanted.size > 0 && (this.simplified || [...this.wanted.entries()].every(([key, item]) => item.lod > 1 || this.resident.get(key)?.result.lod === item.lod)) }
   get busy() { return !this.ready || this.prepared.length > 0 || this.slots.some(s => s.job !== null) }
   safeToEnter(x: number, z: number) {
@@ -180,7 +191,7 @@ export class TerrainStream {
   diagnostics() {
     return { ...this.metrics, resident: this.resident.size, prepared: this.prepared.length,
       pending: this.slots.filter(s => s.job).length, sessionId: this.sessionId, simplified: this.simplified,
-      geometryBytes: [...this.resident.values()].reduce((n, r) => n + resultBytes(r.result), 0) }
+      geometryBytes: [...this.resident.values()].reduce((n, r) => n + resultBytes(r.result) + r.startColors.byteLength + r.startNormals.byteLength, 0) }
   }
   dispose() {
     if (this.disposed) return

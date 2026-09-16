@@ -1,7 +1,8 @@
+import { deformRock, waterPhases } from './scenery-math'
 import {
   DoubleSide, MeshBasicMaterial, TextureLoader, SRGBColorSpace, type Texture, type Material, BackSide, type BufferGeometry, Color, ConeGeometry, CylinderGeometry, DirectionalLight, Group,
   HemisphereLight, IcosahedronGeometry, InstancedMesh, Mesh, MeshStandardMaterial, Object3D,
-  PlaneGeometry, ShaderMaterial, SphereGeometry, Vector3, type Scene,
+  PlaneGeometry, ShaderMaterial, SphereGeometry, Vector2, type Scene,
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { chunkAt, chunkKey, hash, scatter, type Address } from './world'
@@ -34,9 +35,9 @@ export class FlightScenery {
   readonly sky = new Mesh(new SphereGeometry(4000, 24, 12), new ShaderMaterial({
     vertexShader: skyVertex, fragmentShader: skyFragment, side: BackSide, depthWrite: false,
   }))
-  private readonly waterTime = { value: 0 }
-  private readonly waterOrigin = { value: new Vector3() }
-  private readonly waterMaterial = new MeshStandardMaterial({ color: '#358b98', roughness: .36, metalness: .22 })
+  private readonly wavePhase = { value: new Vector2() }
+
+  private readonly waterMaterial = new MeshStandardMaterial({ color: '#358b98', roughness: .48, metalness: 0 })
   private readonly water = new Mesh(new PlaneGeometry(10000, 10000, 1, 1), this.waterMaterial)
   private readonly rockGeometry = new IcosahedronGeometry(1, 1)
   private readonly crownGeometry = new ConeGeometry(1, 2.2, 7, 3)
@@ -62,21 +63,19 @@ export class FlightScenery {
     this.sky.frustumCulled = false; this.sky.renderOrder = -10
     this.water.rotation.x = -Math.PI / 2; this.water.position.y = -.7
     this.waterMaterial.onBeforeCompile = shader => {
-      shader.uniforms.flightTime = this.waterTime; shader.uniforms.flightOrigin = this.waterOrigin
+      shader.uniforms.wavePhase = this.wavePhase
       shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 waterWorld;')
         .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nwaterWorld = (modelMatrix * vec4(transformed,1.)).xyz;')
-      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform float flightTime; uniform vec3 flightOrigin; varying vec3 waterWorld;')
+      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec2 wavePhase; varying vec3 waterWorld;')
         .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
-          vec2 w=waterWorld.xz+flightOrigin.xz;
-          float ripple=sin(w.x*.035+w.y*.045+flightTime*.55)*.06+sin(w.x*.09-w.y*.055+flightTime*.7)*.025;
-          normal=normalize(normal+vec3(ripple,0.,ripple*.6));`)
+          float a=waterWorld.x*.035+waterWorld.z*.045+wavePhase.x;
+          float b=waterWorld.x*.09-waterWorld.z*.055+wavePhase.y;
+          float fade=1.-smoothstep(150.,1500.,length(vViewPosition));
+          vec2 gradient=vec2(cos(a)*.035*.8+cos(b)*.09*.25, cos(a)*.045*.8-cos(b)*.055*.25)*fade;
+          vec3 worldNormal=normalize(vec3(-gradient.x,1.,-gradient.y));
+          normal=normalize(mat3(viewMatrix)*worldNormal);`)
     }
-    const rockPositions = this.rockGeometry.getAttribute('position')
-    for (let i = 0; i < rockPositions.count; i++) {
-      const f = .8 + hash(i, 0, 50) * .35
-      rockPositions.setXYZ(i, rockPositions.getX(i) * f, rockPositions.getY(i) * f * .7, rockPositions.getZ(i) * f)
-    }
-    this.rockGeometry.computeVertexNormals()
+    deformRock(this.rockGeometry)
     const sun = new DirectionalLight('#fff0d7', 2.1); sun.position.set(-600, 650, -450)
     scene.add(new HemisphereLight('#d5e8f3', '#6e7151', 1.9), sun)
     this.root.add(this.sky, this.water); scene.add(this.root)
@@ -84,7 +83,7 @@ export class FlightScenery {
   update(x: number, y: number, z: number, time: number, quality: 'low' | 'balanced') {
     this.sky.position.set(x - this.origin.x, y, z - this.origin.z)
     this.water.position.set(x - this.origin.x, -.7, z - this.origin.z)
-    this.waterTime.value = time
+    this.wavePhase.value.set(...waterPhases(this.origin.x, this.origin.z, time))
     const center = chunkAt(x, z), wanted = new Set<string>()
     if (this.quality !== quality) { this.clearBatches(); this.quality = quality }
     for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
@@ -121,7 +120,7 @@ export class FlightScenery {
     }
   }
   relocate(origin: Address) {
-    this.origin = { ...origin }; this.waterOrigin.value.set(origin.x, 0, origin.z)
+    this.origin = { ...origin };
     for (const batch of this.batches.values()) batch.root.position.set(batch.address.x * 512 - origin.x, 0, batch.address.z * 512 - origin.z)
   }
   private clearBatches() {
