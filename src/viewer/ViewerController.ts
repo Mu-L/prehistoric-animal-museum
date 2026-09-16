@@ -1,3 +1,5 @@
+import { stopAfterAnimationFrame } from './deferred-loop-stop'
+import { rendererStateLease, type ExternalExperience, type ExperienceLease } from './external-experience'
 import { createEncounterMotionFootprint } from './scale-encounter-motion-footprint'
 import { clearsAnimalGroundFootprint, projectOutsideAnimalGroundFootprint } from './scale-encounter-ground-footprint'
 import {
@@ -1333,6 +1335,11 @@ export class ViewerController {
   }
   private readonly handleContextLost = (event: Event) => {
     event.preventDefault()
+    if (this.externalExperience) {
+      this.externalExperience.contextLost()
+      this.stopLoop()
+      return
+    }
     this.options.onFailure?.({
       kind: 'context-lost',
       message: 'WebGL 绘图环境暂时不可用。',
@@ -1346,6 +1353,62 @@ export class ViewerController {
   }
   private readonly handleControlEnd = () => {
     this.resumeRotationAt = performance.now() + 4_000
+  }
+
+  private loopRunning = false
+  private externalExperience: ExternalExperience | null = null
+  private externalRelease: (() => void) | null = null
+  private readonly handleContextRestored = () => {
+    this.renderer.domElement.removeAttribute('aria-hidden')
+    this.externalExperience?.contextRestored()
+    this.lastFrameTime = performance.now()
+    this.startLoop()
+  }
+
+  acquireExternalExperience(experience: ExternalExperience): ExperienceLease {
+    if (this.destroyed || this.externalExperience || this.scaleEncounter || this.transition) {
+      throw new Error('viewer-experience-busy')
+    }
+    const restoreRenderer = rendererStateLease(this.renderer)
+    const controlsEnabled = this.controls.enabled
+    const autoRotate = this.controls.autoRotate
+    this.controls.enabled = false
+    this.controls.autoRotate = false
+    this.externalExperience = experience
+    this.renderer.domElement.dataset.experience = 'flight'
+    this.renderer.shadowMap.enabled = false
+    this.renderer.toneMappingExposure = 1.1
+    this.renderer.setScissorTest(false)
+    this.renderer.setRenderTarget(null)
+    let released = false
+    const release = () => {
+      if (released) return
+      released = true
+      this.externalExperience = null
+      this.externalRelease = null
+      try { experience.dispose() } finally {
+        restoreRenderer()
+        this.controls.enabled = controlsEnabled
+        this.controls.autoRotate = autoRotate
+        delete this.renderer.domElement.dataset.experience
+        this.lastFrameTime = performance.now()
+        const width = Math.max(this.container.clientWidth, 1), height = Math.max(this.container.clientHeight, 1)
+        this.renderer.setSize(width, height, false)
+        this.camera.aspect = width / height; this.camera.updateProjectionMatrix()
+        if (!this.destroyed) this.startLoop()
+      }
+    }
+    this.externalRelease = release
+    try { this.resize(); this.startLoop() } catch (error) { release(); throw error }
+    return {
+      release,
+      invalidate: () => {
+        if (!released && !this.destroyed && !this.loopRunning) {
+          this.lastFrameTime = performance.now()
+          this.startLoop()
+        }
+      },
+    }
   }
 
   private current: StagedViewerModel | null = null
@@ -1419,6 +1482,7 @@ export class ViewerController {
     this.renderer.domElement.setAttribute('aria-hidden', 'true')
     this.renderer.domElement.setAttribute('aria-label', '三维动物模型，可拖动旋转并缩放')
     this.renderer.domElement.addEventListener('webglcontextlost', this.handleContextLost)
+    this.renderer.domElement.addEventListener('webglcontextrestored', this.handleContextRestored)
     this.container.append(this.renderer.domElement)
 
     this.scene.add(this.ambientHemisphereLight)
@@ -3664,6 +3728,14 @@ export class ViewerController {
     }
     const width = Math.max(this.container.clientWidth, 1)
     const height = Math.max(this.container.clientHeight, 1)
+    if (this.externalExperience) {
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.externalExperience.pixelRatio))
+      this.renderer.setSize(width, height, false)
+      this.externalExperience.resize(width, height)
+      this.lastFrameTime = performance.now()
+      this.startLoop()
+      return
+    }
     const mammothLayeredDepthOnUltraWide =
       this.scaleEncounter?.definition?.environmentTheme === 'glacier' &&
       (this.scaleEncounterSceneCandidateVariant === 'C' ||
@@ -3769,6 +3841,7 @@ export class ViewerController {
     if (this.destroyed) {
       return
     }
+    this.externalRelease?.()
     this.endScaleEncounter()
     this.destroyed = true
     this.stopLoop()
@@ -3786,6 +3859,7 @@ export class ViewerController {
     this.controls.removeEventListener('end', this.handleControlEnd)
     this.controls.dispose()
     this.renderer.domElement.removeEventListener('webglcontextlost', this.handleContextLost)
+    this.renderer.domElement.removeEventListener('webglcontextrestored', this.handleContextRestored)
     const outgoing = this.transition?.outgoing ?? null
     this.transition = null
     this.clearTransitionOpacity()
@@ -5498,9 +5572,32 @@ export class ViewerController {
   }
 
   private startLoop(): void {
+    if (this.loopRunning || this.destroyed) return
+    this.loopRunning = true
     this.renderer.setAnimationLoop((time) => {
-      const deltaSeconds = Math.min(Math.max((time - this.lastFrameTime) / 1_000, 0), 0.1)
+      const rawDeltaSeconds = Math.max((time - this.lastFrameTime) / 1_000, 0)
+      const deltaSeconds = Math.min(rawDeltaSeconds, 0.1)
       this.lastFrameTime = time
+      const experience = this.externalExperience
+      if (experience) {
+        try {
+          const ratio = Math.min(window.devicePixelRatio, experience.pixelRatio)
+          if (this.renderer.getPixelRatio() !== ratio) this.renderer.setPixelRatio(ratio)
+          experience.update(rawDeltaSeconds)
+          this.renderer.render(experience.scene, experience.camera)
+          this.renderer.domElement.dataset.flightResources = JSON.stringify({
+            calls: this.renderer.info.render.calls,
+            triangles: this.renderer.info.render.triangles,
+            geometries: this.renderer.info.memory.geometries,
+            textures: this.renderer.info.memory.textures,
+          })
+        } catch (error) { experience.fail(error) }
+        if (!experience.running) stopAfterAnimationFrame(
+          () => this.externalExperience === experience && !experience.running,
+          () => this.stopLoop(),
+        )
+        return
+      }
       if (
         import.meta.env.MODE === 'review' ||
         import.meta.env.MODE === 'e2e'
@@ -5821,6 +5918,7 @@ export class ViewerController {
   }
 
   private stopLoop(): void {
+    this.loopRunning = false
     this.renderer.setAnimationLoop(null)
   }
 }

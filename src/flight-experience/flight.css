@@ -1,0 +1,56 @@
+.museum-experience--flight .story-panel,
+.museum-experience--flight .animal-navigation,
+.museum-experience--flight .stage-actions,
+.museum-experience--flight .model-gesture-hint,
+.museum-experience--flight .model-data-notice,
+.museum-experience--flight .github-star-toast { display: none !important; }
+.museum-experience--flight .stage-panel { position: fixed !important; inset: 0; z-index: 2; overflow: hidden; }
+.museum-experience--flight .model-viewport { width: 100% !important; height: 100% !important; max-width: none; max-height: none; aspect-ratio: auto; }
+.museum-experience--flight .viewer-canvas { cursor: default; }
+.flight-experience { position: fixed; inset: 0; z-index: 30; color: #253f42; pointer-events: none; font-family: inherit; outline: none; }
+.flight-experience button, .flight-experience input, .flight-experience select, .flight-card { pointer-events: auto; }
+.flight-experience button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 12px 18px; border: 1px solid #ffffffa6; border-radius: 16px; background: #f8fbf3e8; color: #263f40; font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 2px 12px #23414c12; }
+.flight-experience button:focus-visible, .flight-experience select:focus-visible, .flight-experience input:focus-visible { outline: 3px solid #164f63; outline-offset: 4px; }
+.flight-experience button:active { background: #dce9df; }
+.flight-toolbar { position: absolute; inset: max(18px, env(safe-area-inset-top)) 24px auto; display: flex; justify-content: space-between; gap: 12px; }
+.flight-toolbar__right { display: flex; gap: 10px; }
+.flight-place { position: absolute; top: 104px; left: 32px; display: grid; gap: 5px; text-shadow: 0 1px 8px #ffffffb0; }
+.flight-place > span { font-size: 12px; letter-spacing: .15em; }
+.flight-place strong { font-size: 22px; font-weight: 600; }
+.flight-place small { max-width: 240px; }
+.flight-card { position: absolute; border: 1px solid #ffffffc9; border-radius: 24px; background: #fafcf3f2; padding: 26px 30px; box-shadow: 0 12px 50px #1d42451a; max-height: calc(100dvh - 160px); overflow-y: auto; }
+.flight-intro { width: min(520px, calc(100% - 40px)); bottom: max(28px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); }
+.flight-eyebrow { font-size: 11px; letter-spacing: .18em; color: #567073; }
+.flight-card h1 { font-size: clamp(23px, 3vw, 30px); line-height: 1.35; margin: 12px 0; font-weight: 600; }
+.flight-card p { font-size: 15px; line-height: 1.7; margin: 10px 0; }
+.flight-card small { display: block; font-size: 11px; line-height: 1.6; opacity: .75; }
+.flight-card .flight-instructions { font-size: 13px; color: #567073; }
+.flight-card__actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0 18px; }
+.flight-experience .flight-primary { background: #2e6263; color: #fffef3; border-color: #2e6263; }
+.flight-settings { right: 24px; top: 86px; width: min(390px, calc(100% - 40px)); }
+.flight-card__heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.flight-card h2 { font-size: 21px; margin: 0; }
+.flight-setting { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 20px 0; border-bottom: 1px solid #31595b1a; }
+.flight-setting input { width: 24px; height: 24px; accent-color: #2e6263; }
+.flight-setting select { min-height: 48px; max-width: 160px; border: 1px solid #bdcec3; border-radius: 8px; padding: 8px; color: inherit; background: #fffef3; }
+.flight-direction-pad { position: absolute; bottom: max(28px, env(safe-area-inset-bottom)); left: 28px; display: grid; grid-template: repeat(2, 56px) / repeat(3, 56px); gap: 8px; }
+.flight-experience .flight-direction { width: 56px; height: 56px; padding: 0; touch-action: none; user-select: none; }
+.flight-direction--up { grid-area: 1 / 2; }.flight-direction--left { grid-area: 2 / 1; }.flight-direction--down { grid-area: 2 / 2; }.flight-direction--right { grid-area: 2 / 3; }
+.flight-assist { position: absolute; right: 28px; bottom: max(28px, env(safe-area-inset-bottom)); display: grid; justify-items: end; gap: 8px; max-width: 240px; text-align: right; }
+.flight-assist small { color: #fff; text-shadow: 0 1px 4px #25484e; }
+@media (max-width: 600px) {
+ .flight-toolbar { left: 12px; right: 12px; gap: 8px; }.flight-toolbar button { padding: 10px 12px; font-size: 13px; }.flight-toolbar__right { gap: 8px; }
+ .flight-place { left: 20px; top: 92px; }.flight-place strong { font-size: 18px; }
+ .flight-card { padding: 20px; }.flight-intro { bottom: max(16px, env(safe-area-inset-bottom)); }.flight-card p { font-size: 13px; }
+ .flight-direction-pad { left: 16px; bottom: max(20px, env(safe-area-inset-bottom)); }.flight-assist { right: 16px; bottom: 20px; max-width: 120px; }
+ .flight-assist button { padding: 10px 12px; }.flight-assist small { font-size: 11px; }
+}
+@media (max-height: 520px) {
+ .flight-place { display: none; }.flight-intro { width: min(520px, calc(100% - 40px)); bottom: 12px; padding: 16px 22px; max-height: calc(100dvh - 90px); }
+ .flight-intro h1 { margin: 6px 0; font-size: 22px; }.flight-intro .flight-instructions { margin: 4px 0; }.flight-card__actions { margin: 10px 0; }
+}
+@media (min-width: 800px) {
+ .flight-intro { left: 28px; transform: none; width: 420px; }
+ .flight-experience[data-flight-phase="paused"] .flight-intro { width: 360px; padding: 20px 24px; }
+ .flight-experience[data-flight-phase="paused"] .flight-intro h1 { font-size: 23px; }
+}
