@@ -6,6 +6,9 @@ export interface ExternalExperience {
   readonly camera: PerspectiveCamera
   readonly running: boolean
   readonly pixelRatio: number
+  readonly shadowsEnabled?: boolean
+  recordGpu?(milliseconds: number): void
+  recordRender?(data: { cpuMs: number; calls: number; triangles: number; geometries: number; textures: number }): void
   update(deltaSeconds: number): void
   resize(width: number, height: number): void
   contextLost(): void
@@ -27,7 +30,7 @@ export function rendererStateLease(renderer: WebGLRenderer): () => void {
     alpha: renderer.getClearAlpha(), toneMapping: renderer.toneMapping,
     exposure: renderer.toneMappingExposure, colorSpace: renderer.outputColorSpace,
     shadows: renderer.shadowMap.enabled, shadowType: renderer.shadowMap.type,
-    shadowAutoUpdate: renderer.shadowMap.autoUpdate, autoClear: renderer.autoClear,
+    shadowAutoUpdate: renderer.shadowMap.autoUpdate, shadowNeedsUpdate: renderer.shadowMap.needsUpdate, autoClear: renderer.autoClear,
   }
   let released = false
   return () => {
@@ -45,6 +48,7 @@ export function rendererStateLease(renderer: WebGLRenderer): () => void {
     renderer.shadowMap.enabled = state.shadows
     renderer.shadowMap.type = state.shadowType
     renderer.shadowMap.autoUpdate = state.shadowAutoUpdate
+    renderer.shadowMap.needsUpdate = state.shadowNeedsUpdate
     renderer.autoClear = state.autoClear
   }
 }

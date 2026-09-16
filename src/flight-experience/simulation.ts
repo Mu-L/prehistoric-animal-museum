@@ -17,7 +17,8 @@ export class FlightSimulation {
   assisted = false
   safetyStop = false
   private scenicLeg = 0
-  private readonly scenicRoute = [{ x: coastAt(-450) + 80, z: -450 }, { x: valleyAt(-1100), z: -1100 }, { x: valleyAt(-2200), z: -2200 }]
+  private readonly scenicRoute: {x:number;z:number}[]
+  private readonly defaultRoute = [{ x: coastAt(-450) + 80, z: -450 }, { x: valleyAt(-1100), z: -1100 }, { x: valleyAt(-2200), z: -2200 }]
   avoidance: 'normal' | 'avoid' | 'recover' = 'normal'
   verticalAcceleration = 0
   readonly commands = { manualTurn: 0, manualClimb: 0, finalTurn: 0, targetClimb: 0, targetSpeed: 18, risk: 0, clearance: 0, jerk: 0, side: 0 }
@@ -25,7 +26,7 @@ export class FlightSimulation {
   private sideHold = 0
   private accumulator = 0
   private previous: RenderState
-  constructor(private readonly surface: (x: number, z: number) => number = safeSurface) { this.previous = this.capture() }
+  constructor(private readonly surface: (x: number, z: number) => number = safeSurface, route?: {x:number;z:number}[]) { this.scenicRoute = route ?? this.defaultRoute; this.previous = this.capture() }
   private capture(): RenderState { return { position: { ...this.position }, heading: this.heading, turnRate: this.turnRate, climbRate: this.climbRate, time: this.time } }
   clearAccumulator() { this.accumulator = 0; this.previous = this.capture() }
   get alpha() { return clamp(this.accumulator / FLIGHT_STEP, 0, 1) }

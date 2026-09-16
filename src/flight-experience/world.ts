@@ -1,5 +1,7 @@
 /** Pure, order-independent world. Metres; Y up; supported logical domain ±10,000 km. */
-export const WORLD = Object.freeze({ id: 'coastal-valley', seed: 193706, generator: '1', preset: '1' })
+export interface WorldConfig { readonly id: string; readonly seed: number; readonly generator: string; readonly preset: string }
+export const WORLD: WorldConfig = Object.freeze({ id: 'coastal-valley', seed: 193706, generator: '1', preset: '1' })
+export const SEA_LEVEL = -.7
 export const CHUNK_SIZE = 512
 export const SEGMENTS = [64, 32, 16, 8] as const
 export interface Address { x: number; z: number }
@@ -7,26 +9,24 @@ export interface Position extends Address { y: number }
 export type Lod = 0 | 1 | 2 | 3
 export const clamp = (v: number, low: number, high: number) => Math.min(high, Math.max(low, v))
 const smooth = (t: number) => { const v = clamp(t, 0, 1); return v * v * (3 - 2 * v) }
-export function hash(x: number, z: number, namespace = 0, seed = WORLD.seed): number {
+export function createWorldSampler(config: WorldConfig = WORLD) {
+const world = Object.freeze({ ...config })
+function hash(x: number, z: number, namespace = 0, seed = world.seed): number {
   let h = Math.imul(x, 374761393) ^ Math.imul(z, 668265263) ^ seed ^ Math.imul(namespace, 1274126177)
   h = Math.imul(h ^ (h >>> 13), 1274126177)
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296
 }
-export function noise(x: number, z: number, namespace = 0): number {
+function noise(x: number, z: number, namespace = 0): number {
   const ix = Math.floor(x), iz = Math.floor(z), u = smooth(x - ix), v = smooth(z - iz)
   const a = hash(ix, iz, namespace), b = hash(ix + 1, iz, namespace)
   const c = hash(ix, iz + 1, namespace), d = hash(ix + 1, iz + 1, namespace)
   return (a + (b - a) * u) * (1 - v) + (c + (d - c) * u) * v
 }
-export function chunkAt(x: number, z: number): Address {
-  return { x: Math.floor(x / CHUNK_SIZE), z: Math.floor(z / CHUNK_SIZE) }
-}
-export function chunkKey(a: Address): string { return `${WORLD.seed}:${WORLD.generator}:${WORLD.preset}:${a.x},${a.z}` }
-export function coastAt(z: number): number {
+function coastAt(z: number): number {
   return 100 * Math.sin(z / 790) + 220 * Math.sin(z / 2300) + 95 * (noise(0, z / 900, 4) - .5)
 }
-export function valleyAt(z: number): number { return coastAt(z) + 650 + 200 * Math.sin(z / 1400) }
-export function terrainAt(x: number, z: number) {
+function valleyAt(z: number): number { return coastAt(z) + 650 + 200 * Math.sin(z / 1400) }
+function terrainAt(x: number, z: number) {
   const inland = x - coastAt(z)
   const land = smooth((inland + 95) / 300)
   const upland = smooth((inland - 110) / 760)
@@ -42,14 +42,14 @@ export function terrainAt(x: number, z: number) {
   const moisture = noise(x / 580, z / 580, 23)
   return { height, moisture, coastWeight: 1 - upland, uplandWeight: upland, canyonWeight: canyon * upland, valley }
 }
-export function normalAt(x: number, z: number): [number, number, number] {
+function normalAt(x: number, z: number): [number, number, number] {
   const dx = terrainAt(x - 2, z).height - terrainAt(x + 2, z).height
   const dz = terrainAt(x, z - 2).height - terrainAt(x, z + 2).height
   const length = Math.hypot(dx, 4, dz)
   return [dx / length, 4 / length, dz / length]
 }
 /** Same diagonal as the mesh, not bilinear interpolation of non-coplanar quads. */
-export function meshHeight(x: number, z: number, segments: number): number {
+function meshHeight(x: number, z: number, segments: number): number {
   const step = CHUNK_SIZE / segments
   const gx = Math.floor(x / step) * step, gz = Math.floor(z / step) * step
   const u = (x - gx) / step, v = (z - gz) / step
@@ -58,17 +58,16 @@ export function meshHeight(x: number, z: number, segments: number): number {
   return u + v <= 1 ? a + u * (b - a) + v * (c - a) : d + (1 - u) * (c - d) + (1 - v) * (b - d)
 }
 /** Covers every resident/transition LOD plus the tallest 14m prop. */
-export function safeSurface(x: number, z: number): number {
+function safeSurface(x: number, z: number): number {
   return Math.max(0, terrainAt(x, z).height, ...SEGMENTS.map(n => meshHeight(x, z, n))) + 16
 }
-export function regionAt(x: number, z: number): 'coast' | 'hills' | 'valley' | 'canyon' {
+function regionAt(x: number, z: number): 'coast' | 'hills' | 'valley' | 'canyon' {
   const t = terrainAt(x, z)
   if (t.uplandWeight < .35) return 'coast'
   if (t.valley > .3) return t.canyonWeight > .35 ? 'canyon' : 'valley'
   return 'hills'
 }
-export interface Prop { id: string; x: number; y: number; z: number; scale: number; yaw: number; kind: 'rock' | 'plant'; priority: number }
-export function scatter(address: Address): Prop[] {
+function scatter(address: Address): Prop[] {
   const result: Prop[] = []
   const spacing = 32
   const startX = address.x * 16, startZ = address.z * 16
@@ -87,3 +86,24 @@ export function scatter(address: Address): Prop[] {
   }
   return result
 }
+
+/** Actual sea-level intersection for the current single-coast heightfield, metres. */
+function shorelineAt(z: number): number {
+  let lo = coastAt(z) - 300, hi = coastAt(z) + 400
+  for (let i = 0; i < 24; i++) { const mid = (lo + hi) / 2; if (terrainAt(mid, z).height < SEA_LEVEL) lo = mid; else hi = mid }
+  return (lo + hi) / 2
+}
+function bathymetry(x: number, z: number) {
+  const height = terrainAt(x, z).height
+  return { height, depth: Math.max(0, SEA_LEVEL - height), signedShoreDistance: x - shorelineAt(z) }
+}
+return { config: world, hash, noise, coastAt, valleyAt, terrainAt, normalAt, meshHeight, safeSurface, regionAt, scatter, shorelineAt, bathymetry }
+}
+export type WorldSampler = ReturnType<typeof createWorldSampler>
+const defaultSampler = createWorldSampler()
+export const { hash, noise, coastAt, valleyAt, terrainAt, normalAt, meshHeight, safeSurface, regionAt, scatter, shorelineAt, bathymetry } = defaultSampler
+export function chunkAt(x: number, z: number): Address {
+  return { x: Math.floor(x / CHUNK_SIZE), z: Math.floor(z / CHUNK_SIZE) }
+}
+export function chunkKey(a: Address, config: WorldConfig = WORLD): string { return `${config.seed}:${config.generator}:${config.preset}:${a.x},${a.z}` }
+export interface Prop { id: string; x: number; y: number; z: number; scale: number; yaw: number; kind: 'rock' | 'plant'; priority: number }

@@ -63,7 +63,7 @@ describe('R2 numerical regressions', () => {
   it('samples the actual edge-adjacent LOD surface and unfinished morph', () => {
     const r = generateTerrain({ type: 'generate', world: WORLD, sessionId: 1, requestId: 1, chunk: { x: 3, z: -2 }, lod: 1, configHash: 'terrain-v1' })
     const surface = { result: r, morph: 1, startNormals: r.normals.slice(), startColors: r.colors.slice() }
-    expect(sampleDisplayed(surface, 504, 464).height).toBeCloseTo(420.053558, 4)
+    expect(sampleDisplayed(surface, 504, 464).height).toBeCloseTo(425.719406, 4)
     const target = sampleDisplayed(surface, 504, 464).height
     r.coarseHeights.fill(300); surface.morph = .25
     expect(sampleDisplayed(surface, 504, 464).height).toBeCloseTo(300 * .75 + target * .25, 5)

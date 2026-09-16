@@ -1,24 +1,38 @@
+import { decorateShadowFade } from './environment/shadow-fade'
+import { terrainDetailFunctions, terrainDetailColor, terrainDetailRoughness, terrainDetailNormal } from './terrain-material-detail'
+import { groupTerrainPatches, patchBlend } from './terrain-patches'
 import { sampleDisplayed, type DisplayedSurface } from './displayed-surface'
-import { Box3, Sphere, Vector3, TextureLoader, RepeatWrapping, SRGBColorSpace, Vector2, Vector4, type Texture, BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial } from 'three'
+import { MeshDepthMaterial, RGBADepthPacking, Box3, Sphere, Vector3, TextureLoader, RepeatWrapping, SRGBColorSpace, Vector2, Vector4, type Texture, BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial } from 'three'
 import { chunkWindow, localChunkPosition, type WantedChunk } from './chunk-window'
 import { generateTerrain, resultBytes, validTerrainResult, type TerrainJob, type TerrainResult } from './terrain-protocol'
-import { CHUNK_SIZE, WORLD, chunkAt, chunkKey, terrainAt, type Address } from './world'
+import { CHUNK_SIZE, WORLD, chunkAt, chunkKey, createWorldSampler, type WorldConfig, type WorldSampler, type Address } from './world'
 
 let nextSession = 0
-interface Resident extends DisplayedSurface { replacement: TerrainResult | undefined; mesh: Mesh<BufferGeometry, MeshStandardMaterial> }
+interface Resident extends DisplayedSurface { replacement: TerrainResult | undefined; mesh: Mesh<BufferGeometry, MeshStandardMaterial | MeshStandardMaterial[]> }
 interface Slot { worker: Worker; job: TerrainJob | null; started: number }
 export class TerrainStream {
   readonly root = new Group()
   readonly resident = new Map<string, Resident>()
   readonly material = new MeshStandardMaterial({ vertexColors: true, roughness: .96, metalness: 0 })
+  readonly depthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking })
   readonly sessionId = ++nextSession
-  readonly metrics = { generated: 0, rejected: 0, generationMs: 0, installMs: 0, readyBytes: 0, peakReadyBytes: 0, peakResident: 0, peakQueue: 0 }
-  readonly review = { legacy: false, detail: true, bands: false, gray: false, freezeLod: false }
+  surfaceRevision = 0
+  private dirtyGround = new Set<string>()
+  private key(address: Address) { return chunkKey(address, this.world) }
+  readonly metrics = { generated: 0, rejected: 0, generationMs: 0, installMs: 0, surfacePrepareMs: 0, geometryPrepareMs: 0, retireMs: 0, installBytes: 0, peakInstallMs: 0, readyBytes: 0, peakReadyBytes: 0, peakResident: 0, peakQueue: 0,
+    fallbackGenerationMs: 0, peakFallbackGenerationMs: 0, fallbackGenerated: 0, peakGenerationMs: 0,
+    morphMs: 0, peakMorphMs: 0, morphUploadBytes: 0, updateMs: 0, peakUpdateMs: 0,
+    planMs: 0, peakPlanMs: 0, planRetireMs: 0, peakRetireMs: 0,
+    mainThreadBudgetMs: 2, budgetOverruns: 0, deferredInstalls: 0 }
+  readonly review = { legacy: false, detail: true, bands: false, gray: false, freezeLod: false, normals: false, patchGrid: false }
+  private readonly inspectUniform = { value: new Vector2() }
   private readonly reviewUniform = { value: new Vector4(0, 1, 0, 0) }
   simplified = false
+  private readonly sampler: WorldSampler
   private disposed = false
   private serial = 0
   private wanted = new Map<string, WantedChunk>()
+  private patchKeys = new Set<string>()
   private prepared: TerrainResult[] = []
   private slots: Slot[] = []
   private failures = 0
@@ -31,9 +45,15 @@ export class TerrainStream {
   private fixedCenter: Address | null = null
   origin: Address = { x: 0, z: 0 }
   radius = 4
-  constructor(private readonly wake: () => void, private readonly onFailure: () => void) {
+  constructor(private readonly wake: () => void, private readonly onFailure: () => void, readonly world: WorldConfig = WORLD) {
+    this.sampler = createWorldSampler(world)
+    this.depthMaterial.onBeforeCompile = shader => {
+      shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute float coarseHeight; attribute float terrainBlend;').replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.y = mix(coarseHeight, position.y, terrainBlend);')
+    }
+    this.depthMaterial.customProgramCacheKey = () => 'flight-terrain-depth-morph-v1'
     this.material.onBeforeCompile = shader => {
       shader.uniforms.flightReview = this.reviewUniform
+      shader.uniforms.flightInspect = this.inspectUniform
       shader.uniforms.flightSurface = this.textureUniform
       shader.uniforms.flightSurfaceReady = this.textureReady
       shader.uniforms.flightSurfaceOrigin = this.surfaceOrigin
@@ -43,23 +63,15 @@ export class TerrainStream {
         .replace('#include <color_vertex>', '#include <color_vertex>\nvColor.rgb = mix(startColor, color.rgb, terrainBlend);')
         .replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.y = mix(coarseHeight, position.y, terrainBlend);')
         .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nflightWorld = (modelMatrix * vec4(transformed, 1.)).xyz; flightObjectNormal = objectNormal;')
-      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec4 flightReview; uniform sampler2D flightSurface; uniform float flightSurfaceReady; uniform vec2 flightSurfaceOrigin; uniform float flightStrataPhase; varying vec3 flightWorld; varying vec3 flightObjectNormal;')
-        .replace('#include <color_fragment>', `#include <color_fragment>
-          vec2 worldUV=flightWorld.xz+flightSurfaceOrigin;
-          vec3 weights=pow(abs(normalize(flightObjectNormal)),vec3(4.)); weights/=max(.001,weights.x+weights.y+weights.z);
-          vec3 point=vec3(worldUV.x,flightWorld.y,worldUV.y);
-          float grainX=dot(texture2D(flightSurface,point.zy/48.).rgb,vec3(.3,.5,.2));
-          float grainY=dot(texture2D(flightSurface,point.xz/48.).rgb,vec3(.3,.5,.2));
-          float grainZ=dot(texture2D(flightSurface,point.xy/48.).rgb,vec3(.3,.5,.2));
-          float grain=dot(weights,vec3(grainX,grainY,grainZ));
-          float farDetail=1.-smoothstep(100.,750.,length(vViewPosition));
-          float textureDetail=mix(1.,.87+grain*.6,flightSurfaceReady*flightReview.y*farDetail);
-          float bands=.96+.04*sin(flightWorld.y*.3+sin(flightWorld.x*.013+flightStrataPhase)*3.);
-          if(flightReview.x>.5){float oldGrain=dot(texture2D(flightSurface,worldUV/32.).rgb,vec3(.3,.5,.2)); textureDetail=mix(1.,.65+oldGrain*1.8,flightSurfaceReady*flightReview.y*.65);}
-          diffuseColor.rgb*=textureDetail*mix(1.,bands,flightReview.z);
-          if(flightReview.w>.5)diffuseColor.rgb=vec3(.45);`)
+      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec2 flightInspect; uniform vec4 flightReview; uniform sampler2D flightSurface; uniform float flightSurfaceReady; uniform vec2 flightSurfaceOrigin; uniform float flightStrataPhase; varying vec3 flightWorld; varying vec3 flightObjectNormal;')
+        .replace('#include <color_fragment>', '#include <color_fragment>\n' + terrainDetailColor)
+        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n' + terrainDetailRoughness)
+        .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + terrainDetailNormal)
+      shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `if(flightInspect.x>.5)outgoingLight=normal*.5+.5; if(flightInspect.y>.5){vec2 edge=abs(fract((flightWorld.xz+flightSurfaceOrigin)/128.)-.5);float line=smoothstep(.485,.498,max(edge.x,edge.y));outgoingLight=mix(outgoingLight,vec3(1.,.18,.03),line);}\n#include <opaque_fragment>`)
+      shader.fragmentShader = shader.fragmentShader.replace('void main() {', terrainDetailFunctions + '\nvoid main() {')
     }
-    this.material.customProgramCacheKey = () => 'flight-terrain-morph-v2'
+    this.material.customProgramCacheKey = () => 'flight-terrain-patch-material-v3'
+    decorateShadowFade(this.material)
     this.createWorker()
     void new TextureLoader().loadAsync(new URL('../scale-encounter/assets/environments/surface-land-albedo-1024.webp', import.meta.url).href).then(texture => {
       if (this.disposed) { texture.dispose(); return }
@@ -75,12 +87,13 @@ export class TerrainStream {
         const job = slot.job; slot.job = null
         if (this.disposed || !job) return
         if (!validTerrainResult(event.data, job)) { this.metrics.rejected++; this.workerFailed(slot); return }
-        const result = event.data, wanted = this.wanted.get(chunkKey(job.chunk))
+        const result = event.data, wanted = this.wanted.get(this.key(job.chunk))
         if (wanted?.lod !== job.lod || resultBytes(result) + this.metrics.readyBytes > 8 * 1024 * 1024 || this.prepared.length >= 8) {
           this.metrics.rejected++; return
         }
         this.metrics.generated++
         this.metrics.generationMs = result.generatedInMs
+        this.metrics.peakGenerationMs = Math.max(this.metrics.peakGenerationMs, result.generatedInMs)
         this.prepared.push(result)
         this.metrics.readyBytes += resultBytes(result)
         this.metrics.peakReadyBytes = Math.max(this.metrics.peakReadyBytes, this.metrics.readyBytes)
@@ -98,7 +111,7 @@ export class TerrainStream {
     this.wake()
   }
   private enterFallback() { this.simplified = true; this.radius = 2; this.lastPlan = ''; this.onFailure() }
-  plan(x: number, z: number, heading: number) {
+  plan(x: number, z: number, heading: number, altitude = 0) {
     if (this.disposed) return
     if (this.review.freezeLod && this.lastPlan) return
     const center = chunkAt(x, z)
@@ -106,45 +119,75 @@ export class TerrainStream {
       this.fixedCenter ??= center
       x = (this.fixedCenter.x + .5) * CHUNK_SIZE; z = (this.fixedCenter.z + .5) * CHUNK_SIZE
     }
-    const signature = `${chunkAt(x, z).x},${chunkAt(x, z).z}:${Math.round(x / 100)},${Math.round(z / 100)}:${Math.round(heading * 4)}:${this.radius}`
+    const signature = `${chunkAt(x, z).x},${chunkAt(x, z).z}:${Math.round(x / 100)},${Math.round(z / 100)}:${Math.round(heading * 4)}:${this.radius}:${Math.round(altitude / 80)}`
     if (signature === this.lastPlan) return
+    const planStart=performance.now()
     this.lastPlan = signature
-    this.wanted = chunkWindow(x, z, this.radius, heading, this.wanted)
+    this.wanted = chunkWindow(x, z, this.radius, heading, this.wanted, this.world, altitude)
+    this.patchKeys = new Set([...this.wanted.entries()].filter(([,item])=>item.lod===0)
+      .sort(([,a],[,b])=>Math.hypot((a.chunk.x+.5)*CHUNK_SIZE-x,(a.chunk.z+.5)*CHUNK_SIZE-z)-Math.hypot((b.chunk.x+.5)*CHUNK_SIZE-x,(b.chunk.z+.5)*CHUNK_SIZE-z))
+      .slice(0,4).map(([key])=>key))
+    const retireStart=performance.now()
     for (const [key, resident] of this.resident) if (!this.wanted.has(key)) {
-      resident.mesh.removeFromParent(); resident.mesh.geometry.dispose(); this.resident.delete(key)
+      resident.mesh.removeFromParent(); resident.mesh.geometry.dispose(); this.resident.delete(key); this.dirtyGround.delete(key)
     }
-    this.prepared = this.prepared.filter(r => this.wanted.get(chunkKey(r.chunk))?.lod === r.lod)
+    this.metrics.planRetireMs=performance.now()-retireStart
+    this.metrics.peakRetireMs=Math.max(this.metrics.peakRetireMs,this.metrics.planRetireMs)
+    for(const [key,resident] of this.resident)resident.mesh.material=resident.result.lod===0&&this.patchKeys.has(key)?[this.material]:this.material
+    this.prepared = this.prepared.filter(r => this.wanted.get(this.key(r.chunk))?.lod === r.lod)
     this.metrics.readyBytes = this.prepared.reduce((sum, r) => sum + resultBytes(r), 0)
+    this.metrics.planMs=performance.now()-planStart
+    this.metrics.peakPlanMs=Math.max(this.metrics.peakPlanMs,this.metrics.planMs)
   }
   private job(item: WantedChunk): TerrainJob {
-    return { type: 'generate', sessionId: this.sessionId, requestId: ++this.serial, world: WORLD,
-      chunk: item.chunk, lod: item.lod, configHash: 'terrain-v1' }
+    return { type: 'generate', sessionId: this.sessionId, requestId: ++this.serial, world: this.world,
+      chunk: item.chunk, lod: item.lod, configHash: 'terrain-v2' }
   }
   update(delta: number, dispatch: boolean) {
+    this.inspectUniform.value.set(Number(this.review.normals),Number(this.review.patchGrid))
     this.reviewUniform.value.set(Number(this.review.legacy), Number(this.review.detail), Number(this.review.bands), Number(this.review.gray))
     if (this.disposed || !dispatch) return
+    const updateStart=performance.now()
+    this.metrics.installMs=0;this.metrics.installBytes=0;this.metrics.fallbackGenerationMs=0;this.metrics.retireMs=0
+    this.metrics.surfacePrepareMs=0;this.metrics.geometryPrepareMs=0;this.metrics.morphUploadBytes=0
+    try {
     if (this.review.freezeLod) delta = 0
-    for (const resident of this.resident.values()) if (resident.morph < 1) {
+    const morphStart=performance.now()
+    for (const resident of this.resident.values()) if (resident.morph < 1 && delta > 0) {
       resident.morph = Math.min(1, resident.morph + delta / .8)
       const attribute = resident.mesh.geometry.getAttribute('terrainBlend')
-      ;(attribute.array as Float32Array).fill(resident.morph)
+      const weights = attribute.array as Float32Array
+      for(let i=0;i<weights.length;i++)weights[i]=resident.result.lod<=1?patchBlend(resident.result.positions[i*3]!,resident.result.positions[i*3+2]!,resident.morph):resident.morph
+      resident.vertexBlend=weights
+      this.surfaceRevision++;this.dirtyGround.add(this.key(resident.result.chunk))
       attribute.needsUpdate = true
+      this.metrics.morphUploadBytes+=weights.byteLength
     }
+    this.metrics.morphMs=performance.now()-morphStart
+    this.metrics.peakMorphMs=Math.max(this.metrics.peakMorphMs,this.metrics.morphMs)
+    // Yield before a new atomic install when this frame's morph work has exhausted
+    // the soft CPU budget. A single install may still exceed it; record that honestly.
+    if(performance.now()-updateStart>=this.metrics.mainThreadBudgetMs){this.metrics.deferredInstalls++;return}
     const finished = [...this.resident.values()].find(r => r.replacement && r.morph === 1)
     if (finished?.replacement) { this.install(finished.replacement, true); return }
     const ordered = [...this.wanted.entries()].sort((a, b) => a[1].priority - b[1].priority)
     // One bounded coarse tile per frame fills holes first, including behind the camera.
     const missing = ordered.find(([key]) => !this.resident.has(key))
-    if (missing) this.install(generateTerrain(this.job({ ...missing[1], lod: 3 })))
+    if (missing) {
+      const generationStart=performance.now(), result=generateTerrain(this.job({ ...missing[1], lod: 3 }))
+      this.metrics.fallbackGenerationMs=performance.now()-generationStart
+      this.metrics.peakFallbackGenerationMs=Math.max(this.metrics.peakFallbackGenerationMs,this.metrics.fallbackGenerationMs)
+      this.metrics.fallbackGenerated++;this.install(result)
+    }
     else {
       const result = this.prepared.shift()
       if (result) {
         this.metrics.readyBytes -= resultBytes(result)
-        if (this.wanted.get(chunkKey(result.chunk))?.lod === result.lod) this.install(result)
+        if (this.wanted.get(this.key(result.chunk))?.lod === result.lod) this.install(result)
       }
     }
     if (this.simplified) return
-    const pending = new Set([...this.slots.flatMap(s => s.job ? [chunkKey(s.job.chunk)] : []), ...this.prepared.map(r => chunkKey(r.chunk))])
+    const pending = new Set([...this.slots.flatMap(s => s.job ? [this.key(s.job.chunk)] : []), ...this.prepared.map(r => this.key(r.chunk))])
     const candidates = ordered.filter(([key, item]) => (this.resident.get(key)?.replacement?.lod ?? this.resident.get(key)?.result.lod) !== item.lod && !pending.has(key)).slice(0, this.radius === 4 ? 24 : 48)
     this.metrics.peakQueue = Math.max(this.metrics.peakQueue, candidates.length)
     for (const slot of [...this.slots]) {
@@ -155,9 +198,14 @@ export class TerrainStream {
       slot.job = this.job(next[1]); slot.started = performance.now()
       slot.worker.postMessage(slot.job)
     }
+    } finally {
+      this.metrics.updateMs=performance.now()-updateStart
+      this.metrics.peakUpdateMs=Math.max(this.metrics.peakUpdateMs,this.metrics.updateMs)
+      if(this.metrics.updateMs>this.metrics.mainThreadBudgetMs)this.metrics.budgetOverruns++
+    }
   }
   private install(result: TerrainResult, settled = false) {
-    const start = performance.now(), key = chunkKey(result.chunk), previous = this.resident.get(key)
+    const start = performance.now(), key = this.key(result.chunk), previous = this.resident.get(key)
     let replacement: TerrainResult | undefined
     if (previous && result.lod > previous.result.lod && !settled) {
       // Keep the fine topology until it has morphed onto the coarse triangles.
@@ -171,6 +219,8 @@ export class TerrainStream {
       }
       result = { ...fine, positions, normals, colors, coarseHeights: fine.coarseHeights.slice() }
     }
+    // Includes fine-topology coarsening preparation above as well as source sampling.
+    const geometryStart = start
     const geometry = new BufferGeometry()
     geometry.setAttribute('position', new BufferAttribute(result.positions, 3))
     geometry.setAttribute('normal', new BufferAttribute(result.normals, 3))
@@ -184,23 +234,36 @@ export class TerrainStream {
         startNormals.set(sample.normal, i * 3); startColors.set(sample.color, i * 3)
       }
     } else { result.coarseHeights.set(result.positions.filter((_, i) => i % 3 === 1)); morph.fill(1) }
+    if(previous && !settled && result.lod<=1)for(let i=0;i<morph.length;i++)morph[i]=patchBlend(result.positions[i*3]!,result.positions[i*3+2]!,0)
+    this.metrics.surfacePrepareMs = performance.now() - geometryStart
+    const geometryUploadStart=performance.now()
     geometry.setAttribute('startNormal', new BufferAttribute(startNormals, 3))
     geometry.setAttribute('startColor', new BufferAttribute(startColors, 3))
     geometry.setAttribute('coarseHeight', new BufferAttribute(result.coarseHeights, 1))
     geometry.setAttribute('terrainBlend', new BufferAttribute(morph, 1))
-    geometry.setIndex(new BufferAttribute(result.indices, 1))
+    const patches = groupTerrainPatches(result)
+    geometry.setIndex(new BufferAttribute(patches.indices, 1))
+    for(const group of patches.groups)geometry.addGroup(group.start,group.count,0)
     geometry.boundingBox = new Box3(new Vector3(0, Math.min(result.bounds[1], ...result.coarseHeights), 0), new Vector3(CHUNK_SIZE, Math.max(result.bounds[4], ...result.coarseHeights), CHUNK_SIZE))
     geometry.boundingSphere = geometry.boundingBox.getBoundingSphere(new Sphere())
-    const mesh = new Mesh(geometry, this.material), local = localChunkPosition(result.chunk, this.origin)
-    mesh.position.set(local.x, 0, local.z); this.root.add(mesh)
-    this.resident.set(key, { mesh, result, morph: previous && !settled ? 0 : 1, startNormals, startColors, replacement })
+    const usePatches=result.lod===0&&this.patchKeys.has(key)
+    const mesh = new Mesh(geometry, usePatches?[this.material]:this.material), local = localChunkPosition(result.chunk, this.origin)
+    mesh.position.set(local.x, 0, local.z); mesh.customDepthMaterial=this.depthMaterial; mesh.receiveShadow=true; this.root.add(mesh)
+    this.resident.set(key, { mesh, result, morph: previous && !settled ? 0 : 1, startNormals, startColors, replacement, vertexBlend: morph })
+    this.surfaceRevision++;this.dirtyGround.add(key)
+    this.metrics.geometryPrepareMs=performance.now()-geometryUploadStart
+    this.metrics.installBytes=resultBytes(result)+startNormals.byteLength+startColors.byteLength+morph.byteLength
+    const retireStart=performance.now()
     if (previous) { previous.mesh.removeFromParent(); previous.mesh.geometry.dispose() }
+    this.metrics.retireMs=performance.now()-retireStart
+    this.metrics.peakRetireMs=Math.max(this.metrics.peakRetireMs,this.metrics.retireMs)
     this.metrics.peakResident = Math.max(this.metrics.peakResident, this.resident.size)
     this.metrics.installMs = performance.now() - start
+    this.metrics.peakInstallMs = Math.max(this.metrics.peakInstallMs, this.metrics.installMs)
   }
   relocate(origin: Address) {
     this.origin = { ...origin }
-    this.surfaceOrigin.value.set(origin.x % 96, origin.z % 96)
+    this.surfaceOrigin.value.set(origin.x, origin.z)
     this.strataPhase.value = (origin.x * .013) % (Math.PI * 2)
     for (const resident of this.resident.values()) {
       const local = localChunkPosition(resident.result.chunk, origin)
@@ -208,24 +271,30 @@ export class TerrainStream {
     }
   }
   displayedHeight(x: number, z: number) {
-    const address = chunkAt(x, z), resident = this.resident.get(chunkKey(address))
-    return resident ? sampleDisplayed(resident, x - address.x * CHUNK_SIZE, z - address.z * CHUNK_SIZE).height : terrainAt(x, z).height
+    const address = chunkAt(x, z), resident = this.resident.get(this.key(address))
+    return resident ? sampleDisplayed(resident, x - address.x * CHUNK_SIZE, z - address.z * CHUNK_SIZE).height : this.sampler.terrainAt(x, z).height
   }
+  /** Returns and clears tile keys whose actual displayed surface changed. */
+  consumeGroundDirty() { const keys=[...this.dirtyGround];this.dirtyGround.clear();return keys }
   get ready() { return this.resident.size >= this.wanted.size && this.wanted.size > 0 && (this.simplified || [...this.wanted.entries()].every(([key, item]) => item.lod > 1 || (this.resident.get(key)?.replacement?.lod ?? this.resident.get(key)?.result.lod) === item.lod)) }
   get busy() { return !this.ready || this.prepared.length > 0 || this.slots.some(s => s.job !== null) }
   safeToEnter(x: number, z: number) {
-    return [-100, 0, 100].every(dx => [-100, 0, 100].every(dz => this.resident.has(chunkKey(chunkAt(x + dx, z + dz)))))
+    return [-100, 0, 100].every(dx => [-100, 0, 100].every(dz => this.resident.has(this.key(chunkAt(x + dx, z + dz)))))
   }
   diagnostics() {
     return { ...this.metrics, resident: this.resident.size, prepared: this.prepared.length,
       pending: this.slots.filter(s => s.job).length, sessionId: this.sessionId, simplified: this.simplified,
-      geometryBytes: [...this.resident.values()].reduce((n, r) => n + resultBytes(r.result) + r.startColors.byteLength + r.startNormals.byteLength + (r.replacement ? resultBytes(r.replacement) : 0), 0) }
+      renderPatches: [...this.resident.values()].reduce((sum,r)=>sum+(Array.isArray(r.mesh.material)?r.mesh.geometry.groups.length:1),0),
+      surfaceRevision: this.surfaceRevision,
+      gpuGeometryBytes: [...this.resident.values()].reduce((sum,r)=>sum+Object.values(r.mesh.geometry.attributes).reduce((bytes,attribute)=>bytes+attribute.array.byteLength,0)+(r.mesh.geometry.index?.array.byteLength??0),0),
+      geometryBytes: [...this.resident.values()].reduce((n, r) => n + resultBytes(r.result) + r.startColors.byteLength + r.startNormals.byteLength + (r.vertexBlend?.byteLength??0)
+        + (r.mesh.geometry.index?.array===r.result.indices?0:r.mesh.geometry.index?.array.byteLength??0) + (r.replacement ? resultBytes(r.replacement) : 0), 0) }
   }
   dispose() {
     if (this.disposed) return
     this.disposed = true; this.slots.forEach(s => s.worker.terminate()); this.slots = []
-    this.prepared = []; this.wanted.clear(); this.metrics.readyBytes = 0
+    this.prepared = []; this.wanted.clear(); this.patchKeys.clear(); this.dirtyGround.clear(); this.metrics.readyBytes = 0
     this.resident.forEach(r => r.mesh.geometry.dispose()); this.resident.clear()
-    this.root.clear(); this.root.removeFromParent(); this.material.dispose(); this.surfaceTexture?.dispose()
+    this.root.clear(); this.root.removeFromParent(); this.material.dispose(); this.depthMaterial.dispose(); this.surfaceTexture?.dispose()
   }
 }

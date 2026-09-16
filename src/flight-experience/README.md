@@ -73,7 +73,33 @@ comparison feature. Do not delete assets or weaken production checks to roll bac
 ## Visual diagnosis in development
 
 The development-only Visual diagnostics panel isolates legacy tiling, detail,
-strata, gray geometry, frozen LOD, props and water normals/time. It is absent from
+strata, gray geometry, normals, patch boundaries, frozen LOD, props, water,
+sea edges, shadowing and sky colour. Fixed capture anchors and three actual world
+seeds can be selected; metadata records camera, daylight, viewport and browser/GPU. It is absent from
 the candidate production UI. Compare the same stationary view, seed, DPR and
 quality before interpreting artifacts. Keep real-device, art and motion review
 separate from numeric regression results.
+
+## Static landscape candidate
+
+WorldConfig is shared by collision, scattering and workers. The default seed keeps
+the original height recipe; three seeds have distinct deterministic output.
+Generation tiles remain 512m. The closest four fine tiles have 128m render groups
+and spatially staggered morphs; all LODs share true 8m perimeter samples. Displayed
+height and shadow depth use the same morph weights. Full tile installs are still
+atomic: the 2ms CPU allocation is a measured soft budget, not a hard GPU guarantee.
+
+Props use 128m ownership cells and shared instance pools. Near/mid meshes and far
+cutouts share a source and physical dimensions. Two bounded cliff landmarks have
+matching collision envelopes. No camera-following landmark or density-dependent
+collision is used. Asset approvals remain pending.
+
+One linear-colour environment frame drives sun, sky, fog and water. The finite near
+water blends with an analytic directional far ocean; six wind-aligned bands use
+bounded world phases and derivative filtering. Packed terrain depth avoids float
+texture filtering requirements; full fields publish atomically after budgeted
+sampling. This introduces a bounded refresh delay during terrain morphs.
+
+The current delivery is the static A+B candidate. Automatic daylight, moving cloud
+shadows, rain and wildlife remain subsequent stages after the static sample is
+reviewed. Default production still excludes flight and all landscape candidates.

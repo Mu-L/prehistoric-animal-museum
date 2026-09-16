@@ -29,7 +29,7 @@ describe('flight world contracts', () => {
         const ia = (z * (n + 1) + n) * 3, ib = z * (n + 1) * 3
         expect(a.positions[ia + 1]).toEqual(b.positions[ib + 1])
         expect([...a.normals.slice(ia, ia + 3)]).toEqual([...b.normals.slice(ib, ib + 3)])
-        expect(a.positions[ia + 1]).toBeCloseTo(meshHeight(0, z * CHUNK_SIZE / n, 8), 4)
+        expect(a.positions[ia + 1]).toBeCloseTo(terrainAt(0, z * CHUNK_SIZE / n).height, 4)
       }
     }
   })

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { extname, join, relative } from 'node:path'
 import { readFile } from 'node:fs/promises'
 
@@ -21,6 +22,7 @@ const forbiddenMarkers = [
 ]
 
 const findings: string[] = []
+const expectedFlightGlbCount = process.env.MUSEUM_FLIGHT === '1' ? 1 : 0
 const files = await collectProductionFiles(distributionRoot)
 const distributionPaths = new Set(
   files.map((absolutePath) => relative(distributionRoot, absolutePath)),
@@ -103,11 +105,18 @@ if (actualDetailPaths.length !== expectedDetailPaths.length) {
 }
 if (
   glbFiles.length !==
-  expectedAnimalAssetCount + expectedScaleEncounterGlbCount
+  expectedAnimalAssetCount + expectedScaleEncounterGlbCount + expectedFlightGlbCount
 ) {
   findings.push(
-    `expected exactly ${expectedAnimalAssetCount + expectedScaleEncounterGlbCount} production GLBs; found ${glbFiles.length}`,
+    `expected exactly ${expectedAnimalAssetCount + expectedScaleEncounterGlbCount + expectedFlightGlbCount} production GLBs; found ${glbFiles.length}`,
   )
+}
+const flightSamples = glbFiles.filter(file => file.includes('landscape-samples-'))
+if (flightSamples.length !== expectedFlightGlbCount) findings.push('Flight landscape candidate escaped its build gate or is missing')
+if (expectedFlightGlbCount === 1 && flightSamples[0]) {
+  const candidate = JSON.parse(await readFile('src/flight-experience/assets/landscape/manifest.json', 'utf8')) as { sha256: string }
+  const hash = createHash('sha256').update(await readFile(flightSamples[0])).digest('hex')
+  if (hash !== candidate.sha256) findings.push('Flight landscape candidate hash differs from its manifest')
 }
 if (
   mp3Files.length !==

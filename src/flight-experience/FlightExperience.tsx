@@ -1,3 +1,4 @@
+import { WORLD } from './world'
 import { DEFAULT_FLIGHT_SETTINGS, type FlightSettings } from './settings'
 import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } from 'react'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronLeft, Pause, Play, Settings2, X } from 'lucide-react'
@@ -22,7 +23,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
   const [draft, setDraft] = useState<FlightSettings>({ ...DEFAULT_FLIGHT_SETTINGS })
   const snapshot = useSyncExternalStore(runtime?.subscribe ?? noSubscription, runtime?.getSnapshot ?? initialSnapshot, initialSnapshot)
   useEffect(() => {
-    const instance = new FlightRuntime(controller, window.matchMedia('(prefers-reduced-motion: reduce)').matches, chosenSettings.current)
+    const instance = new FlightRuntime(controller, window.matchMedia('(prefers-reduced-motion: reduce)').matches, chosenSettings.current, import.meta.env.DEV && [193706,193707,193708].includes(Number(new URLSearchParams(location.search).get('flightSeed'))) ? {...WORLD,seed:Number(new URLSearchParams(location.search).get('flightSeed'))} : WORLD)
     let active = true
     queueMicrotask(() => { if (active) setRuntime(instance) })
     void instance.prepare(descriptorRef.current)

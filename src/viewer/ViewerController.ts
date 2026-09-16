@@ -1,3 +1,4 @@
+import { createExperienceGpuTimer, type ExperienceGpuTimer } from './experience-gpu-timer'
 import { stopAfterAnimationFrame } from './deferred-loop-stop'
 import { rendererStateLease, type ExternalExperience, type ExperienceLease } from './external-experience'
 import { createEncounterMotionFootprint } from './scale-encounter-motion-footprint'
@@ -1358,6 +1359,7 @@ export class ViewerController {
   private loopRunning = false
   private externalExperience: ExternalExperience | null = null
   private externalRelease: (() => void) | null = null
+  private externalGpuTimer: ExperienceGpuTimer | null = null
   private readonly handleContextRestored = () => {
     this.renderer.domElement.removeAttribute('aria-hidden')
     this.externalExperience?.contextRestored()
@@ -1375,8 +1377,12 @@ export class ViewerController {
     this.controls.enabled = false
     this.controls.autoRotate = false
     this.externalExperience = experience
+    const context = this.renderer.getContext()
+    if (experience.recordGpu && 'createQuery' in context) this.externalGpuTimer = createExperienceGpuTimer(context)
     this.renderer.domElement.dataset.experience = 'flight'
-    this.renderer.shadowMap.enabled = false
+    this.renderer.shadowMap.enabled = experience.shadowsEnabled ?? false
+    this.renderer.shadowMap.type = PCFShadowMap
+    this.renderer.shadowMap.autoUpdate = true
     this.renderer.toneMappingExposure = 1.1
     this.renderer.setScissorTest(false)
     this.renderer.setRenderTarget(null)
@@ -1385,6 +1391,7 @@ export class ViewerController {
       if (released) return
       released = true
       this.externalExperience = null
+      this.externalGpuTimer?.dispose(); this.externalGpuTimer = null
       this.externalRelease = null
       try { experience.dispose() } finally {
         restoreRenderer()
@@ -5583,8 +5590,14 @@ export class ViewerController {
         try {
           const ratio = Math.min(window.devicePixelRatio, experience.pixelRatio)
           if (this.renderer.getPixelRatio() !== ratio) this.renderer.setPixelRatio(ratio)
+          const flightFrameStart = performance.now()
           experience.update(rawDeltaSeconds)
-          this.renderer.render(experience.scene, experience.camera)
+          this.renderer.shadowMap.enabled = experience.shadowsEnabled ?? false
+          const gpuMs = this.externalGpuTimer?.poll()
+          if (gpuMs !== undefined && gpuMs !== null) experience.recordGpu?.(gpuMs)
+          this.externalGpuTimer?.begin()
+          try { this.renderer.render(experience.scene, experience.camera) } finally { this.externalGpuTimer?.end() }
+          experience.recordRender?.({ cpuMs: performance.now() - flightFrameStart, calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, geometries: this.renderer.info.memory.geometries, textures: this.renderer.info.memory.textures })
           this.renderer.domElement.dataset.flightResources = JSON.stringify({
             calls: this.renderer.info.render.calls,
             triangles: this.renderer.info.render.triangles,
