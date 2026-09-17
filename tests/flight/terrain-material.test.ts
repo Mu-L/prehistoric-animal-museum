@@ -90,3 +90,12 @@ it('starts every M1 review anchor above the conservative flight safety envelope 
   expect(simulation.time).toBeGreaterThan(4.9)
  }
 })
+it('frames the M1 beach review along a coast with water and land both in front',()=>{
+ const anchor=CAPTURE_ANCHORS.find(a=>a.id==='m1-beach')!
+ const world=createWorldSampler()
+ const aheadZ=anchor.position.z-Math.cos(anchor.heading)*80
+ const aheadX=anchor.position.x+Math.sin(anchor.heading)*80
+ expect(Math.abs(aheadX-world.shorelineAt(aheadZ))).toBeLessThan(90)
+ expect(world.terrainAt(aheadX-80,aheadZ).height).toBeLessThan(0)
+ expect(world.terrainAt(aheadX+80,aheadZ).height).toBeGreaterThan(0)
+})

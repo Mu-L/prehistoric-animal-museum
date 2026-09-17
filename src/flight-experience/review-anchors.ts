@@ -14,7 +14,7 @@ export const CAPTURE_ANCHORS: readonly CaptureAnchor[] = [
   { id: 'ridge-seam-check', world: WORLD, position: {x:745.23,y:540,z:-1032.93}, heading:-.09, view:'near',pitch:-.12,presentationSeconds:65,preset:'afternoon' },
   { id: 'river-mouth', world: WORLD, position: {x:240,y:85,z:490}, heading:0, view:'wide',pitch:-.18,presentationSeconds:0,preset:'afternoon' },
   { id: 'river-valley', world: WORLD, position: {x:145,y:90,z:-350}, heading:0, view:'wide',pitch:-.15,presentationSeconds:0,preset:'afternoon' },
-  { id: 'm1-beach', world: WORLD, position: {x:281,y:85,z:600}, heading:-Math.PI/2,view:'near',pitch:-.45,presentationSeconds:0,preset:'afternoon' },
+  { id: 'm1-beach', world: WORLD, position: {x:315,y:100,z:600}, heading:0,view:'near',pitch:-.45,presentationSeconds:0,preset:'afternoon' },
   { id: 'm1-high-riverbank', world: WORLD, position: {x:-10,y:135,z:-2400}, heading:.4,view:'near',pitch:-.45,presentationSeconds:0,preset:'afternoon' },
   { id: 'm1-dry-slope', world: WORLD, position: {x:400,y:295,z:-900}, heading:.4,view:'near',pitch:-.45,presentationSeconds:0,preset:'afternoon' },
   { id: 'm1-woodland', world: WORLD, position: {x:700,y:440,z:-900}, heading:.4,view:'near',pitch:-.45,presentationSeconds:0,preset:'afternoon' },
