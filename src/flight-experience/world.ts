@@ -1,7 +1,7 @@
 import { createWorldRiver } from './hydrology/world-river'
 /** Pure, order-independent world. Metres; Y up; supported logical domain ±10,000 km. */
 export interface WorldConfig { readonly id: string; readonly seed: number; readonly generator: string; readonly preset: string }
-export const WORLD: WorldConfig = Object.freeze({ id: 'coastal-valley', seed: 193706, generator: '2', preset: '1' })
+export const WORLD: WorldConfig = Object.freeze({ id: 'coastal-valley', seed: 193706, generator: '4', preset: '1' })
 export const SEA_LEVEL = -.7
 export const CHUNK_SIZE = 512
 export const SEGMENTS = [64, 32, 16, 8] as const
@@ -10,7 +10,14 @@ export interface Position extends Address { y: number }
 export type Lod = 0 | 1 | 2 | 3
 export const clamp = (v: number, low: number, high: number) => Math.min(high, Math.max(low, v))
 const smooth = (t: number) => { const v = clamp(t, 0, 1); return v * v * (3 - 2 * v) }
-export function createWorldSampler(config: WorldConfig = WORLD) {
+const samplerCache = new Map<string, WorldSampler>()
+export function createWorldSampler(config: WorldConfig = WORLD): ReturnType<typeof buildWorldSampler> {
+ const key=JSON.stringify(config),cached=samplerCache.get(key);if(cached)return cached
+ const sampler=buildWorldSampler(config);samplerCache.set(key,sampler)
+ if(samplerCache.size>8)samplerCache.delete(samplerCache.keys().next().value!)
+ return sampler
+}
+function buildWorldSampler(config: WorldConfig) {
 const world = Object.freeze({ ...config })
 function hash(x: number, z: number, namespace = 0, seed = world.seed): number {
   let h = Math.imul(x, 374761393) ^ Math.imul(z, 668265263) ^ seed ^ Math.imul(namespace, 1274126177)
@@ -112,7 +119,7 @@ for(let i=0;i<24;i++){const mid=(outletLo+outletHi)/2;if(baseTerrainAt(mid,420).
 const river=createWorldRiver(world.seed,{x:(outletLo+outletHi)/2-16,z:420},valleyAt,(x,z)=>baseTerrainAt(x,z).height)
 return { river, config: world, hash, noise, coastAt, valleyAt, terrainAt, normalAt, meshHeight, safeSurface, regionAt, scatter, shorelineAt, bathymetry }
 }
-export type WorldSampler = ReturnType<typeof createWorldSampler>
+export type WorldSampler = ReturnType<typeof buildWorldSampler>
 const defaultSampler = createWorldSampler()
 export const { hash, noise, coastAt, valleyAt, terrainAt, normalAt, meshHeight, safeSurface, regionAt, scatter, shorelineAt, bathymetry } = defaultSampler
 export function chunkAt(x: number, z: number): Address {

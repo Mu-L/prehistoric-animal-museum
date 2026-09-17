@@ -18,9 +18,10 @@ export async function realPropFixture(): Promise<GLTF> {
       for (const [semantic, attribute] of [['POSITION', 'position'], ['NORMAL', 'normal'], ['TEXCOORD_0', 'uv']] as const) {
         const accessor = primitive.getAttribute(semantic)
         if (accessor) {
-          const values = new Float32Array(accessor.getCount() * accessor.getElementSize()), element: number[] = []
-          for (let i = 0; i < accessor.getCount(); i++) { accessor.getElement(i, element); values.set(element, i * accessor.getElementSize()) }
-          geometry.setAttribute(attribute, new BufferAttribute(values, accessor.getElementSize()))
+          // Preserve the same normalized integer buffers used by GLTFLoader.
+          // Pre-decoding to floats here would hide transform overflow in production.
+          const values=accessor.getArray()!.slice()
+          geometry.setAttribute(attribute,new BufferAttribute(values as ConstructorParameters<typeof BufferAttribute>[0],accessor.getElementSize(),accessor.getNormalized()))
         }
       }
       const indices = primitive.getIndices(); if (indices) geometry.setIndex(new BufferAttribute(Uint32Array.from(indices.getArray()!), 1))

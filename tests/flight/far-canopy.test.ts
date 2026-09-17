@@ -42,6 +42,16 @@ describe('bounded same-source distant canopy',()=>{
     mesh.getMatrixAt(0,matrix);expect(matrix.elements[12]+mesh.position.x+f.layer.root.position.x+8192).toBeCloseTo(before,6)
     expect(f.layer.metrics.submitted).toBe(submitted);f.layer.dispose()
   })
+  it('does not rebuild settled stationary canopy and restores released near ownership',()=>{
+    const f=fixture();for(let i=0;i<400;i++)f.layer.update(f.camera,{x:0,z:0},'low')
+    const count=f.layer.metrics.compactionFrames,live=f.layer.metrics.live
+    for(let i=0;i<30;i++)f.layer.update(f.camera,{x:0,z:0},'low')
+    expect(f.layer.metrics.compactionFrames).toBe(count)
+    for(let x=-8;x<8;x++)for(let z=-8;z<8;z++)f.near.add(`${x}:${z}`)
+    f.layer.update(f.camera,{x:0,z:0},'low');expect(f.layer.metrics.live).toBeLessThan(live)
+    f.near.clear();for(let i=0;i<30;i++)f.layer.update(f.camera,{x:0,z:0},'low')
+    expect(f.layer.metrics.live).toBe(live);f.layer.dispose()
+  })
   it('splits pool allocation and uploads under the shared byte/object budget',()=>{
     const f=fixture();let ticks=0;const budget=new FrameWorkBudget(()=>ticks+=.001)
     for(let frame=0;frame<120;frame++){

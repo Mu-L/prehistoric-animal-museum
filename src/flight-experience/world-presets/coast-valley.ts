@@ -13,10 +13,10 @@ export function scenicRouteAnchors(world: WorldSampler) {
 }
 /** Small spatial cache for exact asset envelopes; quality never changes collision.
  * The existing conservative terrain envelope is retained, with local landmark additions. */
-export function createLandscapeSurface(world: WorldSampler, landmarks: readonly PropLandmark[]) {
+export function createLandscapeSurface(world: WorldSampler, landmarks: readonly PropLandmark[], visibleHeight?:(x:number,z:number)=>number) {
   const tiles=new Map<string,Map<string,{x:number;z:number;y:number;radius:number}[]>>()
   return (x:number,z:number)=>{
-    let top=world.safeSurface(x,z)
+    let top=visibleHeight?Math.max(0,visibleHeight(x,z))+16:world.safeSurface(x,z)
     const cx=Math.floor(x/32),cz=Math.floor(z/32)
     for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
       const gx=cx+dx,gz=cz+dz,address=chunkAt(gx*32,gz*32),tileKey=`${address.x},${address.z}`

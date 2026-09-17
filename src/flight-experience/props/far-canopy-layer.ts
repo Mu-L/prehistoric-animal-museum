@@ -24,6 +24,10 @@ export class FarCanopyLayer {
   private cursor=0
   private candidates:Prop[]=[]
   private building=false
+  private dirty=true
+  private readonly suppressed=new Set<string>()
+  private readonly ground=new Map<string,number>()
+  markGroundDirty(keys:readonly string[]){for(const key of keys){const tile=this.cache.get(key);if(!tile)continue;for(const p of tile.props)this.ground.delete(p.id);if(tile.props.some(p=>!this.ownership.hasRepresentation(p.id)))this.dirty=true}}
   private readonly transform=new Object3D()
   private readonly zero=new Matrix4().makeScale(0,0,0)
   private readonly submission=new Map<string,{pool:Pool;index:number}>()
@@ -48,10 +52,10 @@ export class FarCanopyLayer {
   private plan(camera:PerspectiveCamera,origin:Address,quality:'low'|'balanced'){
     const profile=VISIBILITY_PROFILES[quality],a=chunkAt(camera.position.x+origin.x,camera.position.z+origin.z),key=`${a.x},${a.z}:${quality}`
     if(key===this.wantedKey)return
-    this.wantedKey=key;const radius=Math.ceil(profile.canopyCache/512),wanted=[]
+    this.wantedKey=key;this.dirty=true;const radius=Math.ceil(profile.canopyCache/512),wanted=[]
     for(let z=a.z-radius;z<=a.z+radius;z++)for(let x=a.x-radius;x<=a.x+radius;x++)wanted.push({key:`${x},${z}`,address:{x,z},distance:(x-a.x)**2+(z-a.z)**2})
     wanted.sort((a,b)=>a.distance-b.distance);this.wanted=wanted.slice(0,profile.maxCanopyTiles)
-    const keys=new Set(this.wanted.map(t=>t.key));for(const key of this.cache.keys())if(!keys.has(key))this.cache.delete(key)
+    const keys=new Set(this.wanted.map(t=>t.key));for(const key of this.cache.keys())if(!keys.has(key)){for(const p of this.cache.get(key)!.props){this.ground.delete(p.id);this.suppressed.delete(p.id)}this.cache.delete(key)}
   }
   update(camera:PerspectiveCamera,origin:Address,quality:'low'|'balanced',budget?:BathymetryBudget){
     if(this.disposed)return
@@ -63,9 +67,11 @@ export class FarCanopyLayer {
     }
     const ownership=()=>{
     this.plan(camera,origin,quality)
+    if(Math.hypot(camera.position.x+origin.x-this.buildCamera.x,camera.position.z+origin.z-this.buildCamera.z)>32)this.dirty=true
+    for(const id of this.suppressed)if(!this.ownership.hasRepresentation(id)){this.suppressed.delete(id);this.dirty=true}
     // Suppress an old far representation as soon as the near pool owns its stable ID.
     for(const [id,slot] of this.submission)if(this.ownership.hasRepresentation(id)){
-      this.zero.toArray(slot.pool.matrix.array,slot.index*16);slot.pool.matrix.addUpdateRange(slot.index*16,16);slot.pool.matrix.needsUpdate=true;this.submission.delete(id)
+      this.zero.toArray(slot.pool.matrix.array,slot.index*16);slot.pool.matrix.addUpdateRange(slot.index*16,16);slot.pool.matrix.needsUpdate=true;this.submission.delete(id);this.suppressed.add(id)
     }
     }
     if(budget)budget.measure('canopy.ownership',ownership);else ownership()
@@ -75,7 +81,7 @@ export class FarCanopyLayer {
       const run=()=>{
         const remaining=VISIBILITY_PROFILES[quality].maxCanopyCandidates-[...this.cache.values()].reduce((n,t)=>n+t.props.length,0)
         const props=this.source.scatter(target.address).filter(p=>p.kind==='plant').slice(0,Math.max(0,remaining))
-        this.cache.set(target.key,{address:target.address,props})
+        this.cache.set(target.key,{address:target.address,props});this.dirty=true
       }
       if(budget)budget.measure('canopy.scatter',run,0,1);else run()
     }
@@ -83,6 +89,7 @@ export class FarCanopyLayer {
       if(!canStart())return
       const run=()=>{
         if(!this.building){
+          if(!this.dirty)return;this.dirty=false
           this.candidates=[...this.cache.values()].flatMap(t=>t.props);this.cursor=0;this.commitIndex=0;this.building=true;this.buildOrigin={...origin};this.buildQuality=quality
           this.buildCamera={x:camera.position.x+origin.x,y:camera.position.y,z:camera.position.z+origin.z};this.buildRange=VISIBILITY_PROFILES[quality].canopyVisible
           for(const p of this.pools.values()){p.nextIds=[];p.count=0}
@@ -91,12 +98,14 @@ export class FarCanopyLayer {
         while(this.cursor<this.candidates.length&&this.cursor-start<1024){
           if((this.cursor-start)%32===0&&!canStart())break
           const prop=this.candidates[this.cursor++]!
-          if(prop.priority>=(this.buildQuality==='low'?.55:.85)||this.ownership.hasRepresentation(prop.id))continue
+          if(prop.priority>=(this.buildQuality==='low'?.55:.85))continue
+          if(this.ownership.hasRepresentation(prop.id)){this.suppressed.add(prop.id);continue}
           const dx=prop.x-this.buildCamera.x,dz=prop.z-this.buildCamera.z;if(dx*dx+dz*dz>this.buildRange*this.buildRange)continue
           const d=dimensions(prop),pool=this.pools.get(d.asset);if(!pool)continue
           // Retain a complete 360-degree canopy. Turning never waits for a CPU rebuild.
           if(pool.count>=CAPACITY){this.metrics.overflow++;continue}
-          this.transform.position.set(prop.x-this.buildOrigin.x,this.ownership.surface(prop.x,prop.z),prop.z-this.buildOrigin.z);this.transform.rotation.set(0,prop.yaw,0);this.transform.scale.setScalar(d.scale);this.transform.updateMatrix()
+          let ground=this.ground.get(prop.id);if(ground===undefined){ground=this.ownership.surface(prop.x,prop.z);this.ground.set(prop.id,ground)}
+          this.transform.position.set(prop.x-this.buildOrigin.x,ground,prop.z-this.buildOrigin.z);this.transform.rotation.set(0,prop.yaw,0);this.transform.scale.setScalar(d.scale);this.transform.updateMatrix()
           this.transform.matrix.toArray(pool.staging,pool.count*16);pool.nextIds.push(prop.id);pool.count++
         }
         this.metrics.compactionFrames++
@@ -109,7 +118,7 @@ export class FarCanopyLayer {
               for(const id of pool.ids)this.submission.delete(id)
               // Near ownership can change while preparation spans frames.
               let retained=0
-              for(let index=0;index<pool.nextIds.length;index++){const id=pool.nextIds[index]!;if(this.ownership.hasRepresentation(id))continue
+              for(let index=0;index<pool.nextIds.length;index++){const id=pool.nextIds[index]!;if(this.ownership.hasRepresentation(id)){this.suppressed.add(id);continue}
                 if(retained!==index)pool.staging.copyWithin(retained*16,index*16,index*16+16)
                 pool.nextIds[retained++]=id
               }
@@ -132,5 +141,5 @@ export class FarCanopyLayer {
     this.metrics.tiles=this.cache.size;this.metrics.candidates=[...this.cache.values()].reduce((n,t)=>n+t.props.length,0);this.metrics.live=this.submission.size
     this.metrics.pendingTiles=this.wanted.filter(t=>!this.cache.has(t.key)).length;this.metrics.prepareMs=performance.now()-started
   }
-  dispose(){if(this.disposed)return;this.disposed=true;this.root.removeFromParent();for(const pool of this.pools.values())for(const mesh of pool.meshes)mesh.dispose();this.root.clear();this.pools.clear();this.cache.clear();this.submission.clear();this.candidates=[];this.wanted=[]}
+  dispose(){if(this.disposed)return;this.disposed=true;this.root.removeFromParent();for(const pool of this.pools.values())for(const mesh of pool.meshes)mesh.dispose();this.root.clear();this.pools.clear();this.cache.clear();this.submission.clear();this.ground.clear();this.suppressed.clear();this.candidates=[];this.wanted=[]}
 }

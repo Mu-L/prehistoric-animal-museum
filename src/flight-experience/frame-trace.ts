@@ -1,5 +1,6 @@
 /** Review-only bounded raw evidence. No network, wall-clock simulation, or frame sorting. */
 export interface FlightFrameTrace {
+  camera?:Record<string,unknown>;surface?:Record<string,unknown>
   frameId: number; time: number; phase: string; pauseReason: string | null
   position: [number, number, number]; quality: string; deltaMs: number
   cpu: Record<string, number>; budget: Record<string, number>

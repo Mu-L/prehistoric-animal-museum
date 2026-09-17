@@ -1,3 +1,4 @@
+import { bakePropGeometry } from './bake-prop-geometry'
 import { decorateShadowFade } from '../environment/shadow-fade'
 import { DynamicDrawUsage, Frustum, Group, InstancedMesh, Matrix4, Mesh, Object3D, Sphere, Texture, MeshStandardMaterial, type BufferGeometry, type Material, type PerspectiveCamera } from 'three'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
@@ -11,7 +12,7 @@ import { cellKey, dimensions, propLod, PROP_CELL_SIZE, PROP_CELL_RADII, PROP_INS
 type Quality = 'low' | 'balanced'
 interface ScatterSource { scatter(address: Address): Prop[] }
 export interface PropWorkBudget { canStart(estimatedMs?: number, bytes?: number, objects?: number): boolean; measure<T>(label: string, fn: () => T, bytes?: number, objects?: number): T }
-export interface PropFrameContext { camera?: PerspectiveCamera; frameId?: number; groundEpoch?: number; budget?: PropWorkBudget; fixedLod?: 0 | 1 | 2 }
+export interface PropFrameContext { framebufferHeight?:number; camera?: PerspectiveCamera; frameId?: number; groundEpoch?: number; budget?: PropWorkBudget; fixedLod?: 0 | 1 | 2 }
 interface Pool { name: string; meshes: InstancedMesh[]; free: number[]; next: number; live: number; instances: Map<number, Instance>; submission: string }
 interface Instance { prop: Prop; lod: number; pool: Pool; slot: number; matrix: Matrix4; revision: number; groundEpoch: number; submittedSlot: number; lastVisibleFrame: number; fixedScale?: number; fixedY?: number }
 interface Cell { key: string; x: number; z: number; quality: Quality; instances: Instance[]; signature: string; lastWantedFrame: number }
@@ -57,6 +58,7 @@ export class PropStream {
   private landmarks: PropLandmark[] = []
   private landmarkCell: Cell | undefined
   private landmarksDirty = false
+  private canopyTemplates: {asset:string;parts:Awaited<ReturnType<typeof loadPropImpostors>> extends Map<string,infer P>?P:never}[]=[]
   constructor(parent: Group, private readonly wake: () => void, private readonly surface: (x: number, z: number) => number, private readonly sampler: ScatterSource = { scatter }, private readonly decorateMaterial: (material: Material) => void = () => {}, options: { poolCapacity?: number } = {}) {
     this.capacity = Math.max(1, Math.min(PROP_INSTANCE_CAPACITY, options.poolCapacity ?? PROP_INSTANCE_CAPACITY))
     this.root.name = 'flight-props-128m'; parent.add(this.root)
@@ -70,22 +72,17 @@ export class PropStream {
         geometrySet.forEach(g => g.dispose()); disposeMaterials(materialSet); throw error
       }
       if (this.released || this.metrics.failed) { for (const parts of impostors.values()) for (const part of parts) { part.geometry.dispose(); part.material.map?.dispose(); part.material.dispose() }; geometrySet.forEach(g => g.dispose()); disposeMaterials(materialSet); return }
+      for(const [asset,parts] of impostors){this.canopyTemplates.push({asset,parts});for(const p of parts){this.geometries.add(p.geometry);this.materials.add(p.material)}}
       gltf.scene.updateMatrixWorld(true)
       for (const object of gltf.scene.children) {
         if(object.name.startsWith('cliff-group-0-'))object.name=object.name.replace('cliff-group-0-','cliff-0-')
         if (!/^(tree|rock|cliff|understory)-.*-lod[012]$/.test(object.name)) continue
         const pool: Pool = { name: object.name, meshes: [], free: [], next: 0, live: 0, instances: new Map(), submission: '' }
-        const silhouette = object.name.startsWith('tree-') && object.name.endsWith('-lod2') ? impostors.get(object.name.replace('-lod2', '')) : undefined
-        if (silhouette) for (const part of silhouette) {
-          this.geometries.add(part.geometry); this.materials.add(part.material)
-          const mesh = new InstancedMesh(part.geometry, part.material, this.capacity)
-          mesh.name = object.name; mesh.count = 0; mesh.instanceMatrix.setUsage(DynamicDrawUsage); mesh.frustumCulled = false; mesh.receiveShadow = true; pool.meshes.push(mesh); this.root.add(mesh)
-        }
-        if (!silhouette) object.traverse(part => {
+        object.traverse(part => {
           if (!(part instanceof Mesh)) return
           const typed = part as Mesh<BufferGeometry, Material | Material[]>
           if(object.name.startsWith('tree-1-'))for(const m of Array.isArray(typed.material)?typed.material:[typed.material])if(m instanceof MeshStandardMaterial){m.aoMapIntensity=.28;m.normalScale.setScalar(.45)}
-          const geometry = typed.geometry.clone(); geometry.applyMatrix4(part.matrixWorld)
+          const geometry = bakePropGeometry(typed.geometry,part.matrixWorld)
           this.geometries.add(geometry)
           for (const material of Array.isArray(typed.material) ? typed.material : [typed.material]) this.materials.add(material)
           const mesh = new InstancedMesh(geometry, typed.material, this.capacity)
@@ -123,7 +120,7 @@ export class PropStream {
   set visible(value: boolean) { this.root.visible = value }
   setTracing(enabled: boolean, id?: string) { this.traceEnabled = enabled; this.tracedId = id; this.lifecycle.length = 0 }
   getLifecycleTrace() { return this.lifecycle.map(event => ({ ...event, matrix: [...event.matrix] })) }
-  getCanopyTemplates() { return [...this.pools].filter(([name]) => name.startsWith('tree-') && name.endsWith('-lod2')).map(([name, pool]) => ({ asset: name.replace('-lod2', ''), parts: pool.meshes.map(mesh => ({ geometry: mesh.geometry, material: mesh.material })) })) }
+  getCanopyTemplates() { return this.canopyTemplates }
   hasRepresentation(id: string) { return this.representedIds.has(id) }
   hasSubmittedRepresentation(id: string) { return this.submittedIds.has(id) }
   private readonly submittedIds = new Set<string>()
@@ -158,7 +155,7 @@ export class PropStream {
     for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) nearby.push(...this.candidates(cx + dx, cz + dz))
     const distance = (p: Prop) => Math.hypot(p.x - viewX, p.y - viewY, p.z - viewZ)
     const nearIds = new Set(nearby.filter(p => p.priority < (quality === 'low' ? .55 : .85)).sort((a, b) => distance(a) - distance(b) || a.id.localeCompare(b.id)).slice(0, quality === 'low' ? 12 : 24).map(p => p.id))
-    const chooseLod = (p: Prop, previous?: number) => { const lod = context.fixedLod ?? propLod(distance(p), previous); return context.fixedLod === undefined && lod === 0 && !nearIds.has(p.id) ? 1 : lod }
+    const chooseLod = (p: Prop, previous?: number) => { const lod = context.fixedLod ?? propLod(distance(p), previous,dimensions(p).physicalHeight,context.framebufferHeight??720,camera?.fov??55); return context.fixedLod === undefined && lod === 0 && !nearIds.has(p.id) ? 1 : lod }
     const wanted = new Set<string>(), pending: { key: string; x: number; z: number; desired: Desired[]; signature: string; distance: number }[] = []
     for (let dz = -radius; dz <= radius; dz++) for (let dx = -radius; dx <= radius; dx++) {
       const ax = cx + dx, az = cz + dz, key = `${ax},${az}`; wanted.add(key)
@@ -295,11 +292,6 @@ export class PropStream {
         const shadowNeighbour = instance.lod === 0 && Math.hypot(instance.prop.x - x, instance.matrix.elements[13] - y, instance.prop.z - z) < 180
         // Trees stay submitted around the whole camera so a turn cannot expose a handoff hole.
         if (seen || shadowNeighbour || instance.prop.kind === 'plant') {
-          if(instance.groundEpoch!==this.epoch){
-            const ground = instance.fixedY ?? this.groundFor(instance.prop)
-            if (Math.abs(instance.matrix.elements[13] - ground) > .001) { instance.matrix.elements[13] = ground; instance.revision = ++this.matrixRevision }
-            instance.groundEpoch=this.epoch
-          }
           entries.push(instance); this.submittedIds.add(instance.prop.id)
         } else instance.submittedSlot = -1
       }

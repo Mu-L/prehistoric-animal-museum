@@ -18,7 +18,7 @@ it('keeps stable ownership and physical dimensions for positive/negative cells a
     for (let lod = 0; lod < 3; lod++) expect(asset.lods[lod]?.name).toBe(`${asset.id}-lod${lod}`)
   }
   expect(propLod(140, 0)).toBe(0); expect(propLod(151, 0)).toBe(1)
-  expect(propLod(300, 2)).toBe(2); expect(propLod(284, 2)).toBe(1)
+  expect(propLod(300, 2)).toBe(1); expect(propLod(500,2)).toBe(2); expect(propLod(284, 2)).toBe(1)
 })
 it('bounds cells, pooled allocations and one-cell installation through route, quality and origins', async () => {
   vi.spyOn(GLTFLoader.prototype, 'loadAsync').mockResolvedValue(await realPropFixture())

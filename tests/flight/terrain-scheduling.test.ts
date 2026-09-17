@@ -10,7 +10,8 @@ class WorkerStub{
 }
 beforeEach(()=>{WorkerStub.instances=[];vi.stubGlobal('Worker',WorkerStub);vi.spyOn(TextureLoader.prototype,'loadAsync').mockResolvedValue(new Texture())})
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals()})
-const budget=new FrameWorkBudget();let frame=0
+// Scheduling contracts use virtual preparation time; real CPU cost is measured separately.
+const budget=new FrameWorkBudget(()=>0);let frame=0
 function step(stream:TerrainStream,dt=1/60){WorkerStub.instances.forEach(w=>w.finish());budget.begin(++frame);stream.update(dt,true,budget)}
 function coverage(stream:TerrainStream){for(let i=0;i<400&&!stream.ready;i++)step(stream);expect(stream.ready).toBe(true)}
 function bounded(stream:TerrainStream){

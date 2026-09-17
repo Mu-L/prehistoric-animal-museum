@@ -1,3 +1,5 @@
+import type { MaterialTrial } from './lookdev/material-terrain'
+import { recordFlightReview } from './review-recording'
 import { installPropPicker } from './review-prop-picker'
 import { captureBrowserMetadata, reviewContextRecovery } from './review-browser'
 import { useEffect, useState } from 'react'
@@ -8,6 +10,7 @@ export function FlightReviewControls({ runtime }: { runtime: FlightRuntime }) {
   const [, render] = useState(0)
   const [capture, setCapture] = useState('')
   const [savedTrace,setSavedTrace]=useState('')
+  const [recording,setRecording]=useState(false)
   const [lookdev,setLookdev]=useState(()=>new URLSearchParams(location.search).get('flightLookdev')==='1')
   useEffect(()=>{if(new URLSearchParams(location.search).get('flightLookdev')==='1')void runtime.toggleLookdev(true)},[runtime])
   useEffect(()=>{
@@ -29,10 +32,17 @@ export function FlightReviewControls({ runtime }: { runtime: FlightRuntime }) {
     {lookdev&&<>
       <p>{asset.startsWith('material-scene')?'局部地形试验：岩坡、干土、湿沙与林下地表混合。可选择各材质近景，并旋转查看。':'左侧：前版资产 · 右侧：本轮资产。所有样板使用同一运行时光照。'}</p>
       <label>Sample asset<select aria-label="Sample asset" value={asset} onChange={e=>{setAsset(e.target.value);runtime.lookdev?.select(e.target.value,assetLod,angle,elevation)}}>{['material-scene','material-scene-rock','material-scene-soil','material-scene-sand','material-scene-floor','tree-0-0','tree-0-1','tree-1-0','tree-1-1','understory-0','understory-1','rock-group-0','rock-group-1','cliff-group-0','material-rock','material-soil','material-sand','material-floor'].map(id=><option key={id}>{id}</option>)}</select></label>
+      {asset.startsWith('material-scene')&&<>
+       <label>Material method<select aria-label="Material method" defaultValue="histogram" onChange={e=>runtime.lookdev?.setTrial({method:e.target.value as MaterialTrial['method']})}>{['tiled','four','triangle','histogram'].map(v=><option key={v}>{v}</option>)}</select></label>
+       <label>Material channel<select aria-label="Material channel" defaultValue="pbr" onChange={e=>runtime.lookdev?.setTrial({channel:e.target.value as MaterialTrial['channel']})}>{['pbr','albedo','normal','roughness','weights'].map(v=><option key={v}>{v}</option>)}</select></label>
+       <label>Material scale<select aria-label="Material scale" defaultValue="1" onChange={e=>runtime.lookdev?.setTrial({scale:Number(e.target.value)})}>{[.5,1,2].map(v=><option key={v}>{v}</option>)}</select></label>
+       <label>Material layers<select aria-label="Material layers" defaultValue="2" onChange={e=>runtime.lookdev?.setTrial({layers:Number(e.target.value) as 2|4})}>{[2,4].map(v=><option key={v}>{v}</option>)}</select></label>
+      </>}
       <label>Sample LOD<select aria-label="Sample LOD" value={assetLod} onChange={e=>{const n=Number(e.target.value);setAssetLod(n);runtime.lookdev?.select(asset,n,angle,elevation)}}>{[0,1,2].map(n=><option key={n}>{n}</option>)}</select></label>
       <label>Sample elevation<select aria-label="Sample elevation" value={elevation} onChange={e=>{const n=Number(e.target.value);setElevation(n);runtime.lookdev?.select(asset,assetLod,angle,n)}}><option value="-5">Below crown</option><option value="0">Level crown</option><option value="12">Above crown</option><option value="4">Overview</option></select></label>
       <button type="button" onClick={()=>{const n=(angle+15)%360;setAngle(n);runtime.lookdev?.select(asset,assetLod,n,elevation)}}>Rotate sample 15° ({angle}°)</button>
     </>}
+    {(['freezeCamera','freezeWorld','animateWater','hideRiver'] as const).map(key=><label key={key}><input type="checkbox" checked={runtime.reviewIsolation[key]} onChange={e=>{runtime.reviewIsolation[key]=e.target.checked;runtime.refreshReview();render(n=>n+1)}}/>{key}</label>)}
     <label><input type="checkbox" checked={runtime.reviewHideFarTerrain} onChange={e=>{runtime.setReviewVisibility('reviewHideFarTerrain',e.target.checked);render(n=>n+1)}}/>hideFarTerrain</label>
     <label><input type="checkbox" checked={runtime.reviewHideWater} onChange={e=>{runtime.setReviewVisibility('reviewHideWater',e.target.checked);render(n=>n+1)}}/>hideWater</label>
     <label><input type="checkbox" checked={picking} onChange={e=>{if(runtime.getSnapshot().phase==='flying')runtime.pause('user');setPicking(e.target.checked)}}/>Pick prop in paused scene</label>
@@ -42,6 +52,9 @@ export function FlightReviewControls({ runtime }: { runtime: FlightRuntime }) {
     <button type="button" onClick={()=>setCapture(JSON.stringify({object:runtime.scenery.props.inspectObject(trackedId),events:runtime.scenery.props.getLifecycleTrace()},null,2))}>Export prop trace</button>
     <label>Capture anchor<select aria-label="Capture anchor" defaultValue="" onChange={e=>{const anchor=CAPTURE_ANCHORS.find(a=>a.id===e.target.value);if(anchor)runtime.applyCaptureAnchor(anchor)}}><option value="" disabled>Select view</option>{CAPTURE_ANCHORS.map(a=><option key={a.id}>{a.id}</option>)}</select></label>
     <label>Trace route<select aria-label="Trace route" defaultValue="" onChange={e=>runtime.runReviewRoute(e.target.value)}><option value="" disabled>Select 65s route</option>{REVIEW_ROUTES.map(r=><option key={r.id}>{r.id}</option>)}</select></label>
+    <button type="button" disabled={recording} onClick={()=>{setRecording(true);void recordFlightReview().then(name=>setSavedTrace(`Video saved locally: ${name}`)).catch(e=>setSavedTrace(String(e))).finally(()=>setRecording(false))}}>{recording?'Recording 12s…':'Record 12s locally'}</button>
+    <label>Animation comparison<select aria-label="Animation comparison" defaultValue="auto" onChange={e=>{runtime.setReviewAnimation(e.target.value as typeof runtime.reviewAnimation)}}>{['auto','source','powered','glide'].map(mode=><option key={mode}>{mode}</option>)}</select></label>
+    <button type="button" onClick={()=>{runtime.start();runtime.input.point(0,1,-98);setTimeout(()=>runtime.input.release(-98),10000)}}>Test 10s climb</button>
     <button type="button" onClick={()=>{runtime.trace.start();render(n=>n+1)}}>Start raw trace</button>
     <button type="button" onClick={()=>{runtime.trace.stop();setCapture(JSON.stringify({...runtime.traceEvidence(),...captureBrowserMetadata()}))}}>Export raw trace</button>
     <button type="button" onClick={()=>{runtime.trace.stop();const data={...runtime.traceEvidence(),...captureBrowserMetadata()};const url=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download=`flight-${data.route}-trace.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}}>Download raw trace</button>
@@ -52,7 +65,7 @@ export function FlightReviewControls({ runtime }: { runtime: FlightRuntime }) {
     <label>World seed<select aria-label="World seed" value={runtime.world.config.seed} onChange={e=>{const url=new URL(location.href);url.searchParams.set('flightSeed',e.target.value);location.assign(url.href)}}>{[193706,193707,193708].map(seed=><option key={seed}>{seed}</option>)}</select></label>
     <label>Fixed daylight<select aria-label="Fixed daylight" value={runtime.scenery.preset} onChange={e=>{runtime.setReviewPreset(e.target.value as SolarPreset);render(n=>n+1)}}>{['morning','noon','afternoon','evening'].map(p=><option key={p}>{p}</option>)}</select></label>
     {(['legacy', 'detail', 'bands', 'gray', 'freezeLod', 'normals', 'patchGrid', 'wireframe'] as const).map(key => <label key={key}><input type="checkbox" checked={runtime.terrain.review[key]} onChange={e => { runtime.terrain.review[key] = e.target.checked; runtime.refreshReview(); render(n => n + 1) }}/>{key}</label>)}
-    {(['hideProps', 'flatWater', 'freezeWater', 'oceanEdges', 'skyColors', 'shadows', 'freezeBathymetry'] as const).map(key => <label key={key}><input type="checkbox" checked={runtime.scenery.review[key]} onChange={e => { runtime.scenery.review[key] = e.target.checked; runtime.refreshReview(); render(n => n + 1) }}/>{key}</label>)}
+    {(['hideProps', 'flatWater', 'freezeWater', 'oceanEdges', 'skyColors', 'shadows', 'freezeBathymetry', 'ownerColors', 'depthColors'] as const).map(key => <label key={key}><input type="checkbox" checked={runtime.scenery.review[key]} onChange={e => { runtime.scenery.review[key] = e.target.checked; runtime.refreshReview(); render(n => n + 1) }}/>{key}</label>)}
     <button type="button" onClick={()=>setCapture(JSON.stringify({...runtime.diagnostics(),...captureBrowserMetadata()},null,2))}>Capture metadata</button>
     <button type="button" onClick={()=>{runtime.pause('user');reviewContextRecovery()}}>Test graphics recovery</button>
     {capture && <textarea aria-label="Capture metadata JSON" readOnly value={capture}/>}

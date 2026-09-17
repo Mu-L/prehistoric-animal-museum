@@ -24,8 +24,11 @@ export function dimensions(prop: Prop): PropDimensions {
 }
 /** Three-dimensional distance matters when flying high above a nearby horizontal cell.
  * Hysteresis avoids rebuild churn; every representation keeps the exact same matrix. */
-export function propLod(distance: number, previous?: number): 0 | 1 | 2 {
+export function propLod(distance: number, previous?: number, height=12, framebufferHeight=720,fov=55): 0 | 1 | 2 {
+  const projected=height*framebufferHeight/(2*Math.tan(fov*Math.PI/360)*Math.max(1,distance))
+  if(projected>70)return 0
   if (previous === 0 && distance < 150) return 0
+  if(projected>26&&distance>=150)return 1
   if (previous === 1 && distance >= 115 && distance < 340) return 1
   if (previous === 2 && distance >= 285) return 2
   return distance < 130 ? 0 : distance < 310 ? 1 : 2

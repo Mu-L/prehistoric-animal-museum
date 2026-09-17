@@ -1,9 +1,9 @@
+import { farSurfaceHeight } from './far-surface'
 import type { FrameWorkBudget } from './frame-work-budget'
 import { decorateShadowFade } from './environment/shadow-fade'
-import { terrainDetailFunctions, terrainDetailColor, terrainDetailRoughness, terrainDetailNormal } from './terrain-material-detail'
 import { groupTerrainPatches, patchBlend } from './terrain-patches'
 import { sampleDisplayed, sampleDisplayedHeight, type DisplayedSurface } from './displayed-surface'
-import { MeshDepthMaterial, RGBADepthPacking, Box3, Sphere, Vector3, TextureLoader, RepeatWrapping, SRGBColorSpace, Vector2, Vector4, type Texture, BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial } from 'three'
+import { MeshDepthMaterial, RGBADepthPacking, Box3, Sphere, Vector3, Vector2, Vector4, BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial } from 'three'
 import { chunkWindow, localChunkPosition, type WantedChunk } from './chunk-window'
 import { generateTerrainSteps, resultBytes, validTerrainResult, type TerrainJob, type TerrainResult } from './terrain-protocol'
 import { CHUNK_SIZE, WORLD, chunkAt, chunkKey, createWorldSampler, type WorldConfig, type WorldSampler, type Position, type Address, type Lod } from './world'
@@ -46,11 +46,7 @@ export class TerrainStream {
   private rawResults:Array<{data:unknown;job:TerrainJob;slot:Slot;bytes:number}>=[]
   private slots: Slot[] = []
   private failures = 0
-  private surfaceTexture: Texture | null = null
-  private readonly textureUniform = { value: null as Texture | null }
-  private readonly textureReady = { value: 0 }
   private readonly surfaceOrigin = { value: new Vector2() }
-  private readonly strataPhase = { value: 0 }
   private lastPlan = ''
   private fixedCenter: Address | null = null
   origin: Address = { x: 0, z: 0 }
@@ -64,30 +60,21 @@ export class TerrainStream {
     this.material.onBeforeCompile = shader => {
       shader.uniforms.flightReview = this.reviewUniform
       shader.uniforms.flightInspect = this.inspectUniform
-      shader.uniforms.flightSurface = this.textureUniform
-      shader.uniforms.flightSurfaceReady = this.textureReady
       shader.uniforms.flightSurfaceOrigin = this.surfaceOrigin
-      shader.uniforms.flightStrataPhase = this.strataPhase
       shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute float coarseHeight; attribute float terrainBlend; attribute vec3 startNormal; attribute vec3 startColor; varying vec3 flightWorld; varying vec3 flightObjectNormal;')
         .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = normalize(mix(startNormal, normal, terrainBlend));')
         .replace('#include <color_vertex>', '#include <color_vertex>\nvColor.rgb = mix(startColor, color.rgb, terrainBlend);')
         .replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.y = mix(coarseHeight, position.y, terrainBlend);')
         .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nflightWorld = (modelMatrix * vec4(transformed, 1.)).xyz; flightObjectNormal = objectNormal;')
-      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec2 flightInspect; uniform vec4 flightReview; uniform sampler2D flightSurface; uniform float flightSurfaceReady; uniform vec2 flightSurfaceOrigin; uniform float flightStrataPhase; varying vec3 flightWorld; varying vec3 flightObjectNormal;')
-        .replace('#include <color_fragment>', '#include <color_fragment>\n' + terrainDetailColor)
-        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n' + terrainDetailRoughness)
-        .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + terrainDetailNormal)
+      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec2 flightInspect; uniform vec4 flightReview; uniform vec2 flightSurfaceOrigin; varying vec3 flightWorld; varying vec3 flightObjectNormal;')
+
       shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `if(flightInspect.x>.5)outgoingLight=normal*.5+.5; if(flightInspect.y>.5){vec2 edge=abs(fract((flightWorld.xz+flightSurfaceOrigin)/128.)-.5);float line=smoothstep(.485,.498,max(edge.x,edge.y));outgoingLight=mix(outgoingLight,vec3(1.,.18,.03),line);}\n#include <opaque_fragment>`)
-      shader.fragmentShader = shader.fragmentShader.replace('void main() {', terrainDetailFunctions + '\nvoid main() {')
+      shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nif(flightReview.w>.5)diffuseColor.rgb=vec3(.45);')
     }
     this.material.customProgramCacheKey = () => 'flight-terrain-patch-material-v3'
     decorateShadowFade(this.material)
     this.createWorker()
-    void new TextureLoader().loadAsync(new URL('../scale-encounter/assets/environments/surface-land-albedo-1024.webp', import.meta.url).href).then(texture => {
-      if (this.disposed) { texture.dispose(); return }
-      texture.colorSpace = SRGBColorSpace; texture.wrapS = RepeatWrapping; texture.wrapT = RepeatWrapping; texture.anisotropy = 4
-      this.surfaceTexture = texture; this.textureUniform.value = texture; this.textureReady.value = 1; this.wake()
-    }).catch(() => { /* Vertex colours remain a complete fallback. */ })
+
   }
   private createWorker() {
     try {
@@ -130,13 +117,17 @@ export class TerrainStream {
   }
   // A paused first view must already contain a usable slope, rather than a128m
   // radial fan whose12m ridge error only disappears after simulation resumes.
-  private coastalChunk(a:Address) {
-    const b=this.sampler.river.bounds
-    if(a.x*512<=b.maxX&&(a.x+1)*512>=b.minX&&a.z*512<=b.maxZ&&(a.z+1)*512>=b.minZ)return true
-    const shores=[0,256,512].map(d=>this.sampler.coastAt(a.z*512+d))
-    return (a.x+1)*512 >= Math.min(...shores)-128 && a.x*512 <= Math.max(...shores)+384
+  private riverChunk(a:Address){return this.sampler.river.points.some(p=>p.x+64>=a.x*512&&p.x-64<=(a.x+1)*512&&p.z+64>=a.z*512&&p.z-64<=(a.z+1)*512)}
+  private criticalPatch(tile:Resident,index:number){
+    const p=this.projection.position;if(!p)return false
+    const x=tile.result.chunk.x*512+index%4*128+64,z=tile.result.chunk.z*512+Math.floor(index/4)*128+64
+    if(Math.hypot(x-p.x,z-p.z)>300)return false
+    const q=this.sampler.river.query(x,z)
+    const h=[this.sampler.terrainAt(x-64,z).height,this.sampler.terrainAt(x+64,z).height]
+    return Boolean(q&&Math.abs(q.signedBankDistance)<32)||Math.min(...h)<2&&Math.max(...h)>-.7
   }
-  private coverageLod(key:string):Lod { const item=this.wanted.get(key); return item&&this.coastalChunk(item.chunk)||!this.simplified&&this.patchKeys.has(key)?2:3 }
+  get previewReady(){return this.ready&&[...this.resident.entries()].every(([key,tile])=>!this.patchKeys.has(key)||Array.from({length:16},(_,i)=>i).every(i=>!this.criticalPatch(tile,i)||(tile.patches.get(i)?.result.lod===0&&tile.patches.get(i)?.morph===1)))}
+  private coverageLod(key:string):Lod { const item=this.wanted.get(key);if(item&&this.riverChunk(item.chunk))return 2; return !this.simplified&&this.patchKeys.has(key)?2:3 }
   private workerFailed(slot: Slot) {
     slot.worker.terminate(); this.slots = this.slots.filter(s => s !== slot)
     if (this.disposed) return
@@ -159,8 +150,6 @@ export class TerrainStream {
     const planStart=performance.now()
     this.lastPlan = signature
     this.wanted = chunkWindow(x, z, this.radius, heading, this.wanted, this.world, altitude)
-    // A coastline uses one fixed surface from first coverage to closest approach.
-    for(const item of this.wanted.values())if(this.coastalChunk(item.chunk))item.lod=2
     this.patchKeys = new Set([...this.wanted.entries()].filter(([,item])=>item.lod===0)
       .sort(([,a],[,b])=>Math.hypot((a.chunk.x+.5)*CHUNK_SIZE-x,(a.chunk.z+.5)*CHUNK_SIZE-z)-Math.hypot((b.chunk.x+.5)*CHUNK_SIZE-x,(b.chunk.z+.5)*CHUNK_SIZE-z))
       .slice(0,4).map(([key])=>key))
@@ -174,7 +163,7 @@ export class TerrainStream {
       resident.mesh.material=this.material
       if(!this.patchKeys.has(key)){resident.patchTargets.clear();if(resident.patches.size>0)resident.patchTarget=resident.result}
     }
-    for(const [key,item] of this.wanted)if(!this.patchKeys.has(key)&&item.lod<2)item.lod=2
+    for(const [key,item] of this.wanted)if(!this.patchKeys.has(key)&&(item.lod<2||this.riverChunk(item.chunk)))item.lod=2
     this.prepared = this.prepared.filter(r => this.wanted.get(this.key(r.chunk))?.lod === r.lod || (r.lod===this.coverageLod(this.key(r.chunk))&&this.wanted.has(this.key(r.chunk))&&!this.resident.has(this.key(r.chunk))))
     this.metrics.readyBytes = this.prepared.reduce((sum, r) => sum + resultBytes(r), 0)+this.rawResults.reduce((sum,r)=>sum+r.bytes,0)
     this.metrics.planMs=performance.now()-planStart
@@ -272,10 +261,10 @@ export class TerrainStream {
       const tile=this.resident.get(key)
       if(!tile){if(!pending.has(`${key}:tile`))candidates.push({item:{...item,lod:this.coverageLod(key)}});continue}
       if(this.patchKeys.has(key)){
-        for(let index=0;index<16;index++)if(this.projectedPatchError(tile,index)>2&&!tile.patchTargets.has(index)&&!pending.has(`${key}:${index}`))candidates.push({item:{...item,lod:0},patchIndex:index})
+        for(let index=0;index<16;index++)if((this.projectedPatchError(tile,index)>2||this.criticalPatch(tile,index))&&!tile.patchTargets.has(index)&&!pending.has(`${key}:${index}`))candidates.push({item:{...item,lod:0},patchIndex:index})
       }else if(tile.patches.size===0&&(tile.patchTarget?.lod??tile.replacement?.lod??tile.result.lod)!==item.lod&&!pending.has(`${key}:tile`))candidates.push({item})
     }
-    candidates.sort((a,b)=>Number(this.resident.has(this.key(a.item.chunk)))-Number(this.resident.has(this.key(b.item.chunk)))||(a.patchIndex!==undefined&&b.patchIndex!==undefined?this.projectedPatchError(this.resident.get(this.key(b.item.chunk))!,b.patchIndex)-this.projectedPatchError(this.resident.get(this.key(a.item.chunk))!,a.patchIndex):0))
+    candidates.sort((a,b)=>Number(this.resident.has(this.key(a.item.chunk)))-Number(this.resident.has(this.key(b.item.chunk)))||(a.patchIndex!==undefined&&b.patchIndex!==undefined?Number(this.criticalPatch(this.resident.get(this.key(b.item.chunk))!,b.patchIndex))-Number(this.criticalPatch(this.resident.get(this.key(a.item.chunk))!,a.patchIndex))||this.projectedPatchError(this.resident.get(this.key(b.item.chunk))!,b.patchIndex)-this.projectedPatchError(this.resident.get(this.key(a.item.chunk))!,a.patchIndex):0))
     candidates.length=Math.min(candidates.length,this.radius===4?24:48)
     this.metrics.peakQueue=Math.max(this.metrics.peakQueue,candidates.length)
     for(const slot of [...this.slots]){
@@ -416,8 +405,8 @@ export class TerrainStream {
     }
     if(!this.patchBuild){
       if(active>=2)return
-      for(const tile of this.resident.values()){
-        for(let index=0;index<16;index++){
+      for(const tile of [...this.resident.values()].sort((a,b)=>Number([...b.patchTargets.keys()].some(i=>this.criticalPatch(b,i)))-Number([...a.patchTargets.keys()].some(i=>this.criticalPatch(a,i))))){
+        for(const index of Array.from({length:16},(_,i)=>i).sort((a,b)=>Number(this.criticalPatch(tile,b))-Number(this.criticalPatch(tile,a)))){
           const target=this.patchKeys.has(this.key(tile.result.chunk))?tile.patchTargets.get(index):tile.patchTarget
           if(!target)continue
           const old=tile.patches.get(index)
@@ -466,8 +455,8 @@ export class TerrainStream {
     for(const [key,tile] of this.resident){const x=tile.result.chunk.x*512,z=tile.result.chunk.z*512;if(x>rect.maxX||x+512<rect.minX||z>rect.maxZ||z+512<rect.minZ)continue;frozen.set(key,{base:copy(tile),patches:new Map([...tile.patches].map(([index,p])=>[index,copy(p)]))})}
     const worldKey=JSON.stringify(this.world),sampler=this.sampler,key=(a:Address)=>chunkKey(a,this.world)
     this.metrics.snapshotCount++
-    return {worldKey,epoch:revision,topologyLayoutId:'nested-bisection-128-v1',coverageRect:{...rect},worldOrigin:{...this.origin},
-      sampleHeight(x:number,z:number){const address=chunkAt(x,z),tile=frozen.get(key(address));if(!tile)return sampler.terrainAt(x,z).height;const lx=x-address.x*512,lz=z-address.z*512,index=Math.min(3,Math.floor(lz/128))*4+Math.min(3,Math.floor(lx/128));return sampleDisplayedHeight(tile.patches.get(index)??tile.base,lx,lz)},
+    return {worldKey,epoch:revision,topologyLayoutId:'nested-bisection-128-v2',coverageRect:{...rect},worldOrigin:{...this.origin},
+      sampleHeight(x:number,z:number){const address=chunkAt(x,z),tile=frozen.get(key(address));if(!tile)return farSurfaceHeight(sampler,x,z);const lx=x-address.x*512,lz=z-address.z*512,index=Math.min(3,Math.floor(lz/128))*4+Math.min(3,Math.floor(lx/128));return sampleDisplayedHeight(tile.patches.get(index)??tile.base,lx,lz)},
       contentKey(area:{minX:number;minZ:number;maxX:number;maxZ:number}){let result=worldKey;for(const [tileKey,tile] of frozen)for(let index=0;index<16;index++){const x=tile.base.result.chunk.x*512+index%4*128,z=tile.base.result.chunk.z*512+Math.floor(index/4)*128;if(x>=area.maxX||x+128<=area.minX||z>=area.maxZ||z+128<=area.minZ)continue;const s=tile.patches.get(index)??tile.base;result+=`|${tileKey}/${index}:${s.result.requestId}:${s.result.lod}:${s.morph}`;}return result},
       release(){frozen.clear()}}
   }
@@ -475,7 +464,6 @@ export class TerrainStream {
   relocate(origin: Address) {
     this.origin = { ...origin }
     this.surfaceOrigin.value.set(origin.x, origin.z)
-    this.strataPhase.value = (origin.x * .013) % (Math.PI * 2)
     for (const resident of this.resident.values()) {
       const local = localChunkPosition(resident.result.chunk, origin)
       resident.mesh.position.set(local.x, 0, local.z)
@@ -484,9 +472,14 @@ export class TerrainStream {
   }
   displayedHeight(x: number, z: number) {
     const address = chunkAt(x, z), resident = this.resident.get(this.key(address))
-    if(!resident)return this.sampler.terrainAt(x,z).height
+    if(!resident)return farSurfaceHeight(this.sampler,x,z)
     const lx=x-address.x*512,lz=z-address.z*512,index=Math.min(3,Math.floor(lz/128))*4+Math.min(3,Math.floor(lx/128))
     return sampleDisplayedHeight(resident.patches.get(index)??resident,lx,lz)
+  }
+  surfaceIdentity(x:number,z:number){
+    const a=chunkAt(x,z),tile=this.resident.get(this.key(a));if(!tile)return `${this.key(a)}:far64`
+    const index=Math.min(3,Math.floor((z-a.z*512)/128))*4+Math.min(3,Math.floor((x-a.x*512)/128)),s=tile.patches.get(index)??tile
+    return `${this.key(a)}:${index}:${s.result.requestId}:${s.result.lod}:${s.morph}`
   }
   /** Returns and clears tile keys whose actual displayed surface changed. */
   consumeGroundDirty() { const keys=[...this.dirtyGround];this.dirtyGround.clear();return keys }
@@ -519,6 +512,6 @@ export class TerrainStream {
     this.disposed = true; this.slots.forEach(s => s.worker.terminate()); this.slots = []
     this.prepared = [];this.rawResults=[]; this.wanted.clear(); this.patchKeys.clear(); this.dirtyGround.clear(); this.metrics.readyBytes = 0
     this.patchBuild=null; this.fallbackTask=null;this.topologyTables.clear(); this.retired.forEach(g=>g.dispose());this.retired=[]; this.resident.forEach(r => {r.mesh.geometry.dispose();r.patches.forEach(p=>p.mesh.geometry.dispose())}); this.resident.clear()
-    this.root.clear(); this.root.removeFromParent(); this.material.dispose(); this.depthMaterial.dispose(); this.surfaceTexture?.dispose()
+    this.root.clear(); this.root.removeFromParent(); this.material.dispose(); this.depthMaterial.dispose()
   }
 }

@@ -4,6 +4,7 @@ export function captureBrowserMetadata() {
   const gl=canvas?.getContext('webgl2'),extension=gl?.getExtension('WEBGL_debug_renderer_info')
   return {viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},browser:navigator.userAgent,
     gpu:extension?String(gl?.getParameter(extension.UNMASKED_RENDERER_WEBGL) as unknown):'unavailable',
+    depthBits:gl?.getParameter(gl.DEPTH_BITS) as number|undefined,textureUnits:gl?.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS) as number|undefined,
     gpuTimerAvailable:Boolean(gl?.getExtension('EXT_disjoint_timer_query_webgl2')),
     originalScreenshotParameters:'unknown; anchors approximate compositions'}
 }

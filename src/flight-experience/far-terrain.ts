@@ -1,12 +1,13 @@
+import { farCellTopology } from './far-surface'
 import { BufferAttribute, BufferGeometry, DataTexture, RedFormat, UnsignedByteType, Vector2, Group, Mesh, MeshStandardMaterial, type Material } from 'three'
 import type { Address, WorldSampler } from './world'
 import type { FrameWorkBudget } from './frame-work-budget'
 interface Strip { key:string;x:number;z:number;half:number;inner:number;cx:number;cz:number;geometry:BufferGeometry;mesh:Mesh }
-interface Build { key:string;x:number;z:number;half:number;inner:number;cx:number;cz:number;row:number;cols:number;positions:Float32Array;normals:Float32Array;colors:Float32Array;indices:number[] }
+interface Build { key:string;x:number;z:number;half:number;inner:number;cx:number;cz:number;row:number;cols:number;positions:number[];normals:number[];colors:number[];indices:number[] }
 /** Far-only 64m strips. World-aligned, bounded and incrementally prepared; never collision data. */
 export class FarTerrain {
  readonly root=new Group()
- readonly material=new MeshStandardMaterial({vertexColors:true,roughness:1,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1})
+ readonly material=new MeshStandardMaterial({vertexColors:true,roughness:1})
  readonly metrics={strips:0,vertices:0,triangles:0,bytes:0,pending:0,preparedRows:0,uploadBytes:0}
  private readonly coverage=new DataTexture(new Uint8Array(17*17),17,17,RedFormat,UnsignedByteType)
  private readonly coverageOrigin={value:new Vector2()}
@@ -38,28 +39,32 @@ export class FarTerrain {
   for(let row=cz-half;row<cz+half;row+=512)wanted.set(`${cx-half}:${row}:${half}:${inner}`,{x:cx-half,z:row})
   if(this.build&&!wanted.has(this.build.key))this.build=null
   if(!this.build){const next=[...wanted].filter(([key])=>!this.strips.has(key)).sort((a,b)=>Math.abs(a[1].z-z)-Math.abs(b[1].z-z))[0]
-   if(next){const cols=half*2/64+1,count=cols*9;this.build={key:next[0],...next[1],half,inner,cx,cz,row:0,cols,positions:new Float32Array(count*3),normals:new Float32Array(count*3),colors:new Float32Array(count*3),indices:[]}}
+   if(next){const cols=half*2/64+1,count=cols*9;void count;this.build={key:next[0],...next[1],half,inner,cx,cz,row:0,cols,positions:[],normals:[],colors:[],indices:[]}}
   }
   const build=this.build
-  if(build&&build.row<9&&budget.canStart(.1))budget.measure('farTerrain.prepare',()=>{
+  if(build&&build.row<8&&budget.canStart(.1))budget.measure('farTerrain.prepare',()=>{
    const r=build.row,wz=build.z+r*64
-   for(let c=0;c<build.cols;c++){
-    const wx=build.x+c*64,id=r*build.cols+c,t=this.world.terrainAt(wx,wz),n=this.world.normalAt(wx,wz)
-    build.positions.set([c*64,t.height,r*64],id*3);build.normals.set(n,id*3)
-    const rock=Math.min(1,Math.max(0,(1-n[1])*3.8+t.canyonWeight*.35)),sand=Math.max(0,1-Math.abs(t.height-3)/22)
-    const green=[.16+t.moisture*.035,.24+t.moisture*.065,.12+t.moisture*.015],stone=[.42,.37,.29],beach=[.58,.51,.36]
-    for(let k=0;k<3;k++)build.colors[id*3+k]=(green[k]!*(1-rock)+stone[k]!*rock)*(1-sand)+beach[k]!*sand
-    if(r<8&&c<build.cols-1&&Math.max(Math.abs(wx+32-build.cx),Math.abs(wz+32-build.cz))>=build.inner){const a=id,b=id+1,d=id+build.cols,e=d+1;build.indices.push(a,d,b,b,d,e)}
+   for(let c=0;c<build.cols-1;c++){
+    const wx=build.x+c*64
+    if(Math.max(Math.abs(wx+32-build.cx),Math.abs(wz+32-build.cz))<build.inner)continue
+    const topology=farCellTopology(this.world,wx,wz),xz=topology.xz,offset=build.positions.length/3,count=xz.length/2
+    for(let v=0;v<count;v++){
+      const x=wx+xz[v*2]!,z=wz+xz[v*2+1]!,t=this.world.terrainAt(x,z),n=this.world.normalAt(x,z)
+      build.positions.push(x-build.x,t.height,z-build.z);build.normals.push(...n)
+      const rock=Math.min(1,Math.max(0,(1-n[1])*3.8+t.canyonWeight*.35)),sand=Math.max(0,1-Math.abs(t.height-3)/22),green=[.16+t.moisture*.035,.24+t.moisture*.065,.12+t.moisture*.015],stone=[.42,.37,.29],beach=[.58,.51,.36]
+      for(let k=0;k<3;k++)build.colors.push((green[k]!*(1-rock)+stone[k]!*rock)*(1-sand)+beach[k]!*sand)
+    }
+    for(const index of topology.indices)build.indices.push(offset+index)
    }
    build.row++;this.metrics.preparedRows=1
   })
-  if(build&&build.row===9&&budget.canStart(.1,build.positions.byteLength*3+build.indices.length*2,1))budget.measure('farTerrain.install',()=>{
-   const geometry=new BufferGeometry();geometry.setAttribute('position',new BufferAttribute(build.positions,3));geometry.setAttribute('normal',new BufferAttribute(build.normals,3));geometry.setAttribute('color',new BufferAttribute(build.colors,3));geometry.setIndex(build.indices);geometry.computeBoundingBox();geometry.computeBoundingSphere()
+  if(build&&build.row===8&&budget.canStart(.1,build.positions.length*4*3+build.indices.length*2,1))budget.measure('farTerrain.install',()=>{
+   const geometry=new BufferGeometry();geometry.setAttribute('position',new BufferAttribute(new Float32Array(build.positions),3));geometry.setAttribute('normal',new BufferAttribute(new Float32Array(build.normals),3));geometry.setAttribute('color',new BufferAttribute(new Float32Array(build.colors),3));geometry.setIndex(build.indices);geometry.computeBoundingBox();geometry.computeBoundingSphere()
    const mesh=new Mesh(geometry,this.material);mesh.position.set(build.x-this.origin.x,0,build.z-this.origin.z);this.root.add(mesh)
    // A completed strip replaces the same world row; never remove its only fallback first.
    for(const [key,old] of this.strips)if(old.z===build.z){old.mesh.removeFromParent();old.geometry.dispose();this.strips.delete(key)}
-   this.strips.set(build.key,{...build,geometry,mesh});this.build=null;this.metrics.uploadBytes=build.positions.byteLength*3+build.indices.length*2
-  },build.positions.byteLength*3+build.indices.length*2,1)
+   this.strips.set(build.key,{...build,geometry,mesh});this.build=null;this.metrics.uploadBytes=build.positions.length*4*3+build.indices.length*2
+  },build.positions.length*4*3+build.indices.length*2,1)
   // One bounded retirement per update, after leaving the far coverage plus one guard strip.
   for(const [key,strip] of this.strips)if(strip.z<cz-half-512||strip.z>=cz+half+512){strip.mesh.removeFromParent();strip.geometry.dispose();this.strips.delete(key);break}
   this.metrics.strips=this.strips.size;this.metrics.pending=[...wanted.keys()].filter(key=>!this.strips.has(key)).length

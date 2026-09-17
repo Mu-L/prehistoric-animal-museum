@@ -36,7 +36,7 @@
     "capture:readme-screenshots": "playwright test --config playwright.readme-screenshots.config.ts",
     "deploy:github-stars-badge": "npx --yes wrangler@4.128.0 deploy --config workers/github-stars-badge/wrangler.jsonc",
     "test:e2e": "playwright test",
-    "validate:flight": "node scripts/flight/validate-assets.mjs && node scripts/flight/assets/validate-landscape.mjs && node scripts/flight/assets/validate-ecology.mjs",
+    "validate:flight": "node scripts/flight/validate-assets.mjs && node scripts/flight/assets/validate-landscape.mjs && node scripts/flight/assets/validate-ecology.mjs && node scripts/flight/assets/validate-static-review.mjs && node scripts/flight/validate-powered-flap.mjs",
     "test:flight": "vitest run tests/flight",
     "build:flight": "npm run validate:flight && MUSEUM_FLIGHT=1 npm run build && node scripts/flight/validate-build.mjs dist --enabled"
   },

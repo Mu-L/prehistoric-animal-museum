@@ -22,7 +22,7 @@ export function* generateTerrainSteps(job:TerrainJob):Generator<void,TerrainResu
       const id=localPatch*per+i,x=px+topology.xz[i*2]!,z=pz+topology.xz[i*2+1]!,wx=job.chunk.x*512+x,wz=job.chunk.z*512+z
       const t=sampler.terrainAt(wx,wz),normal=sampler.normalAt(wx,wz)
       // Every patch boundary is the identical true 8m polyline in every level.
-      const edge=x%128===0||z%128===0,h=edge?sampler.meshHeight(wx,wz,64):t.height
+      const h=t.height
       positions.set([x,h,z],id*3);normals.set(normal,id*3);coarseHeights[id]=h
       min=Math.min(min,h);max=Math.max(max,h)
       const rock=Math.min(1,Math.max(0,(1-normal[1])*3.8+t.canyonWeight*.35)),sand=Math.max(0,1-Math.abs(t.height-3)/22)

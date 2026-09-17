@@ -1,0 +1,46 @@
+[
+  {
+    "id": "rock_01",
+    "gaussianPath": "rock_01-gaussian.webp",
+    "lutPath": "rock_01-inverse.png",
+    "gaussianSha256": "e2bb95685f531fb7c25d80b7e3aae7799cb323156271928911b4aba9897689bb",
+    "lutSha256": "ce2451eee0678e942a9681827a9189071a966c5b16219d1ea512892446d564ff",
+    "metresPerRepeat": 1.5,
+    "levels": 10,
+    "method": "per-channel Gaussian rank transform; inverse CDF prefiltered per mip; no RGB eigenspace decorrelation",
+    "reviewStatus": "needs_review"
+  },
+  {
+    "id": "sandy_gravel_02",
+    "gaussianPath": "sandy_gravel_02-gaussian.webp",
+    "lutPath": "sandy_gravel_02-inverse.png",
+    "gaussianSha256": "99accb6f7f4dceeb64537e17bba5fde563508e88f3e749425c084bedbe674a74",
+    "lutSha256": "ad6619682298785ae25bf9830b2f70c0ca8930e0c01fc98f1b2295319289b2ff",
+    "metresPerRepeat": 2.5,
+    "levels": 10,
+    "method": "per-channel Gaussian rank transform; inverse CDF prefiltered per mip; no RGB eigenspace decorrelation",
+    "reviewStatus": "needs_review"
+  },
+  {
+    "id": "coast_sand_01",
+    "gaussianPath": "coast_sand_01-gaussian.webp",
+    "lutPath": "coast_sand_01-inverse.png",
+    "gaussianSha256": "830a0ef0ee3cba258824d348f806442ccc1da04d9f3fb4b21ae421e140ea5843",
+    "lutSha256": "e186f7db7b487541f61d9e1ee14b69bad5c094d63bb98ffc419121487249b406",
+    "metresPerRepeat": 2,
+    "levels": 10,
+    "method": "per-channel Gaussian rank transform; inverse CDF prefiltered per mip; no RGB eigenspace decorrelation",
+    "reviewStatus": "needs_review"
+  },
+  {
+    "id": "forest_ground_04",
+    "gaussianPath": "forest_ground_04-gaussian.webp",
+    "lutPath": "forest_ground_04-inverse.png",
+    "gaussianSha256": "511d8c096f3ee7f0a26a615b7453221a84f4ba20e2891cdffe0988054bbe4994",
+    "lutSha256": "3c1e6a762f7dbc32b41613c44f40a07cb39fc8630f166b5e6810f9b8d00e2e7e",
+    "metresPerRepeat": 2,
+    "levels": 10,
+    "method": "per-channel Gaussian rank transform; inverse CDF prefiltered per mip; no RGB eigenspace decorrelation",
+    "reviewStatus": "needs_review"
+  }
+]

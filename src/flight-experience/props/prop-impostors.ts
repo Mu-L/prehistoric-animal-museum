@@ -1,32 +1,36 @@
-import { DoubleSide, MeshStandardMaterial, PlaneGeometry, SRGBColorSpace, TextureLoader, type Mesh, type Texture } from 'three'
+import { DoubleSide, LinearMipmapLinearFilter, MeshStandardMaterial, PlaneGeometry, SRGBColorSpace, TextureLoader, type Mesh, type Texture } from 'three'
 import manifest from '../assets/ecology-r5/manifest.json'
-const urls = import.meta.glob<string>('../assets/ecology-r5/tree-*.png', { query: '?url', import: 'default', eager: true })
-export interface ImpostorPart { geometry: PlaneGeometry; material: MeshStandardMaterial }
-/** Unlit colour captured from the same source: runtime light remains dynamic. Three
- * alpha-tested planes give front/side/top silhouettes with real-world dimensions. */
-export async function loadPropImpostors(): Promise<Map<string, ImpostorPart[]>> {
-  const textures = new Set<Texture>(), parts = new Map<string, ImpostorPart[]>()
-  try {
-    for (const asset of manifest.assets.filter(a => a.kind === 'plant')) {
-      const size = Math.max(asset.physicalHeight, asset.footprint.radius * 2) * 1.15, list: ImpostorPart[] = []
-      parts.set(asset.id, list)
-      for (const view of [0, 1, 4]) {
-        const url = urls[`../assets/ecology-r5/${asset.id}-${view}.png`]
-        if (!url) throw new Error(`Missing same-source tree silhouette ${asset.id}`)
-        const texture = await new TextureLoader().loadAsync(url); textures.add(texture); texture.colorSpace = SRGBColorSpace
-        const geometry = new PlaneGeometry(size, size)
-        if (view === 0) geometry.rotateY(Math.PI / 2)
-        if (view === 4) geometry.rotateX(-Math.PI / 2)
-        geometry.translate(0, asset.physicalHeight / 2, 0)
-        const material = new MeshStandardMaterial({ map: texture, alphaTest: .42, side: DoubleSide, roughness: .9, metalness: 0 })
-        list.push({ geometry, material })
-      }
-    }
-    return parts
-  } catch (error) {
-    textures.forEach(t => t.dispose()); for (const list of parts.values()) for (const part of list) { part.geometry.dispose(); part.material.dispose() }
-    throw error
+import views from '../assets/tree-views/manifest.json'
+const urls=import.meta.glob<string>('../assets/tree-views/*.png',{query:'?url',import:'default',eager:true})
+export interface ImpostorPart {geometry:PlaneGeometry;material:MeshStandardMaterial}
+/** Full camera-facing silhouette selected in source-local azimuth/elevation.
+ * Explicit mip images are uploaded unchanged; browser mip generation is disabled. */
+export async function loadPropImpostors():Promise<Map<string,ImpostorPart[]>>{
+ const textures=new Set<Texture>(),parts=new Map<string,ImpostorPart[]>()
+ try{
+  for(const entry of views){
+   const asset=manifest.assets.find(a=>a.id===entry.id)!,images=await Promise.all(entry.levels.map(async level=>{const t=await new TextureLoader().loadAsync(urls[`../assets/tree-views/${level.file}`]!);textures.add(t);return t}))
+   const texture=images[0]!;texture.mipmaps=images.map(t=>t.image) as unknown as Texture['mipmaps'];texture.generateMipmaps=false;texture.minFilter=LinearMipmapLinearFilter;texture.colorSpace=SRGBColorSpace;texture.needsUpdate=true
+   for(const t of images.slice(1)){t.dispose();textures.delete(t)}
+   const size=Math.max(asset.physicalHeight,asset.footprint.radius*2)*1.15,geometry=new PlaneGeometry(size,size),material=new MeshStandardMaterial({map:texture,alphaTest:.42,side:DoubleSide,roughness:.9,metalness:0})
+   material.onBeforeCompile=shader=>{
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 canopyUV;')
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+vec3 treeCenter=vec3(0.,${(asset.physicalHeight/2).toFixed(8)},0.);
+vec3 eyeWorld=cameraPosition-(modelMatrix*instanceMatrix*vec4(treeCenter,1.)).xyz;
+vec3 eyeLocal=normalize(vec3(dot(eyeWorld,normalize(instanceMatrix[0].xyz)),dot(eyeWorld,normalize(instanceMatrix[1].xyz)),dot(eyeWorld,normalize(instanceMatrix[2].xyz))));
+vec3 right=normalize(cross(vec3(0.,1.,0.),eyeLocal));vec3 up=normalize(cross(eyeLocal,right));
+transformed=treeCenter+right*position.x+up*position.y;
+float az=mod(floor(atan(-eyeLocal.z,eyeLocal.x)/.785398163+0.5)+8.,8.);
+float elevation=clamp(floor(asin(clamp(eyeLocal.y,-1.,1.))/.785398163+1.5),0.,2.);
+canopyUV=(vec2(az,2.-elevation)+clamp(uv,vec2(.002),vec2(.998)))/vec2(8.,3.);`)
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 canopyUV;').replace('#include <map_fragment>','diffuseColor *= texture2D(map,canopyUV);')
+   }
+   material.customProgramCacheKey=()=>`tree-angle-atlas-${asset.id}-v1`
+   parts.set(asset.id,[{geometry,material}])
   }
+  return parts
+ }catch(error){textures.forEach(t=>t.dispose());for(const list of parts.values())for(const p of list){p.geometry.dispose();p.material.dispose()}throw error}
 }
 export function disposeMeshResources(meshes: Mesh[]) {
   const textures = new Set<Texture>()

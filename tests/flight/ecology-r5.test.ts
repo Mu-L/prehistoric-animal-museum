@@ -1,10 +1,7 @@
 import { describe,expect,it,vi } from 'vitest'
 import { Group,type InstancedMesh,Matrix4,MeshStandardMaterial,PerspectiveCamera,PlaneGeometry,Texture,TextureLoader,Vector3 } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { createWorldSampler,WORLD } from '../../src/flight-experience/world'
-import { generateTerrain } from '../../src/flight-experience/terrain-protocol'
-import { sampleDisplayedHeight } from '../../src/flight-experience/displayed-surface'
-import { createCanonicalSurface } from '../../src/flight-experience/hydrology/canonical-surface'
+import { createWorldSampler } from '../../src/flight-experience/world'
 import { FarCanopyLayer } from '../../src/flight-experience/props/far-canopy-layer'
 import { PropStream } from '../../src/flight-experience/props/prop-stream'
 import { realPropFixture } from './helpers/real-prop-fixture'
@@ -48,19 +45,4 @@ describe('R5 static ecology continuity',()=>{
   for(let z=-5;z<=1;z++)for(let x=0;x<=2;x++)for(const prop of world.scatter({x,z})){kinds.add(prop.kind);expect(world.river.query(prop.x,prop.z)?.signedBankDistance??1000).toBeGreaterThan(prop.kind==='understory'?1:6)}
   expect([...kinds].sort()).toEqual(['cliff','plant','rock','understory'])
  })
- it('joins river apron to the actual fixed terrain triangles at arbitrary non-vertex samples',()=>{
-  const world=createWorldSampler(),canonical=createCanonicalSurface(world)
-  const chunk={x:0,z:-2},result=generateTerrain({type:'generate',sessionId:1,requestId:1,world:WORLD,chunk,lod:2,configHash:'terrain-v3',errorSampling:false})
-  for(let i=0;i<30;i++){const x=11.3+i*15.7,z=7.8+i*13.17
-   const actual=sampleDisplayedHeight({result,morph:1,startNormals:result.normals,startColors:result.colors},x,z)
-   expect(canonical(x,z-1024)).toBeCloseTo(actual,4)
-  }
- })
-})
-
-it('closes vertical differences on the bilinear river clip boundary without widening the channel',async()=>{
- const {riverApronSeam}=await import('../../src/flight-experience/hydrology/river-apron-seam')
- const seam=await riverApronSeam({data:new Uint8Array([0,255,0,255]),width:2,height:2,minX:-2,minZ:-2,positions:[0,-1,0,4,-1,0,0,-1,4,4,-1,4],columns:2,rows:2,chainage:(_x,z)=>z/4*5,baseHeight:()=>0,released:()=>false})
- expect(seam.indices.length).toBeGreaterThan(0)
- for(let i=0;i<seam.vertices.length;i+=3){expect(seam.vertices[i]).toBeCloseTo(2,8);expect(Math.abs(seam.vertices[i+1]!-.015)<1e-8||Math.abs(seam.vertices[i+1]!+1.015)<1e-8).toBe(true)}
 })

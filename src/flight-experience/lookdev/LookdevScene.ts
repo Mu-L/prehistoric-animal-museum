@@ -1,4 +1,4 @@
-import { makeMaterialTerrain, sampleHeight } from './material-terrain'
+import { makeMaterialTerrain, sampleHeight, type MaterialTrial } from './material-terrain'
 import { Box3, BoxGeometry, Group, Mesh, MeshStandardMaterial, PlaneGeometry, Vector3, type BufferGeometry, type Material, type Object3D, type PerspectiveCamera, type Texture } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
@@ -15,6 +15,9 @@ export class LookdevScene {
  candidateAvailable=false
  readonly origin={x:0,y:620,z:0}
  private selected=new URLSearchParams(location.search).get('flightMaterialScene')==='1'?'material-scene':'tree-0-0'
+ readonly trial:MaterialTrial={method:'histogram',channel:'pbr',scale:1,layers:2}
+ private trialMaterial:Material|null=null
+ setTrial(patch:Partial<MaterialTrial>){Object.assign(this.trial,patch);if(this.trialMaterial)this.trialMaterial.needsUpdate=true;this.wake()}
  private readonly materialStage=new Group()
  private readonly sampleObjects:Object3D[]=[]
  private lod=0
@@ -46,7 +49,7 @@ export class LookdevScene {
    }
    // A 1m neutral reference block gives an explicit scale cue without baked lighting.
    const ruler=new Mesh(new BoxGeometry(1,1,1),floorMat);ruler.position.set(0,.5,0);this.root.add(ruler);this.owned.push(ruler)
-   const terrain=makeMaterialTerrain(this.library.materials,this.decorate);this.materialStage.add(terrain)
+   const terrain=makeMaterialTerrain(this.library.materials,this.decorate,this.trial);this.trialMaterial=terrain.material;this.materialStage.add(terrain)
    const candidateSource=this.sources.find(source=>source.side==='candidate')
    const placements:[string,number,number,number][]=[['cliff-group-0',-28,-7,.7],['cliff-group-0',-37,-14,.5],['rock-group-0',-15,12,.7],['rock-group-1',-8,24,.8],['rock-group-0',28,16,.5],['tree-0-0',14,-10,.8],['tree-0-1',28,-19,.9],['tree-1-0',35,0,.8],['tree-1-1',22,-32,1]]
    for(let i=0;i<20;i++)placements.push([`understory-${i%2}`,8+(i%5)*7,Math.floor(i/5)*9-28,.65+(i%3)*.15])
@@ -84,7 +87,7 @@ export class LookdevScene {
   const distance=Math.max(minimum,1.2*Math.max(this.extent.height/(2*tangent),this.extent.width/(2*tangent*camera.aspect))+this.extent.depth*.5)
   camera.position.copy(center).add(new Vector3(0,surface>=0?Math.max(2,12+this.elevation):this.elevation*this.extent.height/12,surface>=0?15:distance));camera.lookAt(center);camera.updateMatrixWorld(true)
  }
- metadata(){return {selected:this.selected,lod:this.lod,sampleRotationDegrees:this.angle,elevation:this.elevation,distance:this.distance,candidateAvailable:this.candidateAvailable,error:this.error,reviewStatus:'needs_review',bounds:this.root.children.length?new Box3().setFromObject(this.root).getSize(new Vector3()).toArray():null}}
+ metadata(){return {materialTrial:{...this.trial},selected:this.selected,lod:this.lod,sampleRotationDegrees:this.angle,elevation:this.elevation,distance:this.distance,candidateAvailable:this.candidateAvailable,error:this.error,reviewStatus:'needs_review',bounds:this.root.children.length?new Box3().setFromObject(this.root).getSize(new Vector3()).toArray():null}}
  private disposeObjects(objects:Object3D[]){
   const geometry=new Set<BufferGeometry>(),material=new Set<Material>(),texture=new Set<Texture>()
   for(const object of objects)object.traverse(o=>{if(o instanceof Mesh){const mesh=o as Mesh<BufferGeometry,Material|Material[]>;geometry.add(mesh.geometry);for(const m of Array.isArray(mesh.material)?mesh.material:[mesh.material]){if(this.library?.materials.includes(m as MeshStandardMaterial))continue;material.add(m);for(const v of Object.values(m))if(v&&typeof v==='object'&&'isTexture'in v)texture.add(v as Texture)}}})

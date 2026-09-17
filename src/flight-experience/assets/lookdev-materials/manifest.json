@@ -1,7 +1,7 @@
 {
   "reviewStatus": "needs_review",
   "approval": null,
-  "scope": "finite lookdev only; no global terrain application",
+  "scope": "Full flight terrain trial authorized by user on 2026-09-17; final combined-scene art review pending",
   "licenseSource": "https://polyhaven.com/license",
   "modifications": "512px WebP derivatives; no baked sun; OpenGL tangent normal; ARM data",
   "estimatedGpuBytesWithMips": 16777216,

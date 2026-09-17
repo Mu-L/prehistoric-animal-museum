@@ -12,8 +12,8 @@ THIRD_PARTY_NOTICES.md and the animal's provenance records.
 `pteranodon-glide.json` is a separate animation derivative created by
 `scripts/flight/inspect-model.mjs`. It selects a measured wide, nearly horizontal
 pose from the repaired Idle loop, fixes translations, and adds a seamless four
-second mirrored shoulder/forearm flex (±0.014 radians). The flight runtime blends
-this candidate with the unchanged Idle loop. It is artistic motion, not a claim
+second mirrored shoulder/forearm flex (±0.014 radians). The runtime uses the original
+Idle loop by default; this candidate and PoweredFlap remain developer comparisons. It is artistic motion, not a claim
 about reconstructed flight mechanics. `manifest.json` records input/output hashes,
 measured bounds, the exact recipe and its pending review status.
 
@@ -84,3 +84,30 @@ in an isolated development preview with stochastic sampling and terrain blending
 Asset hashes, triangle counts and map resolutions are in `ecology-r5/manifest.json`.
 Reproduction uses the create/bake/optimize lookdev scripts with the ecology output
 directory, followed by `capture-ecology-impostors.py` before optimization.
+
+## Static surface review derivatives (needs review)
+
+`tree-views/` replaces the runtime's fixed front/side/top cards with 24 same-source
+views per tree (eight azimuths, elevations −45/0/+45 degrees). Nearby LOD2 uses
+real simplified GLB geometry. Captures use the ecological Blender source and
+unlit albedo; source geometry and CC-BY-NC-SA-4.0 attribution above apply.
+`capture-tree-views.py` and `prepare-tree-mips.mjs` generate dilated RGB edges and
+explicit alpha-coverage mip PNGs for alphaTest 0.42. `manifest.json` records every
+hash, size and coverage measurement. Runtime uploads these mip images with
+ordinary mip generation disabled. Angular transitions and device cost need review.
+
+`pteranodon-powered-flap.json` is an authored 1.4-second continuous flap over the
+source-derived glide pose. `derive-powered-flap.mjs` fixes translations and adds
+bilateral shoulder/forearm motion respecting the mirrored source joint bases; it does not modify the original GLB. The source
+model's CC BY 4.0 attribution applies. `powered-flap-manifest.json` records hashes,
+recipe and pending approval. This is artistic animation, not a biomechanical claim.
+
+`lookdev-materials/*-gaussian.webp` and inverse-CDF PNGs derive from the existing
+Poly Haven CC0 albedos above. The finite trial compares tiling, four-cell averaging,
+triangular averaging, and per-channel Gaussian variance compensation with mip-level
+inverse CDFs. This is a limited implementation: it does not perform RGB eigenspace
+decorrelation. Albedo statistics use linear-data storage; inverse values decode to
+linear light in the shader. Normals and ARM retain data semantics and share sample
+transforms. Material scale, channels and two/four layers are review controls. No
+final art approval is implied by these derivatives. The four materials are now
+applied to near and far flight terrain for the user-authorized full-scene trial.
