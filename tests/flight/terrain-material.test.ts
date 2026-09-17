@@ -6,6 +6,9 @@ import {SURFACE_NAMES,classifySurface,surfaceContext} from '../../src/flight-exp
 import {attachSurfaceAttributes} from '../../src/flight-experience/materials/surface-attributes'
 import {BufferAttribute,BufferGeometry} from 'three'
 import {animationWeights} from '../../src/flight-experience/flight-animation-default'
+import {CAPTURE_ANCHORS} from '../../src/flight-experience/review-anchors'
+import {coastValleyLandmarks,createLandscapeSurface} from '../../src/flight-experience/world-presets/coast-valley'
+import {FlightSimulation,ZERO_INPUT} from '../../src/flight-experience/simulation'
 it('keeps distinct morph and far-coverage programs when sharing the terrain material library',()=>{
  const library=Array.from({length:4},()=>{const m=new MeshStandardMaterial({map:new Texture(),normalMap:new Texture()});m.userData.stochastic={gaussian:new Texture(),inverse:new Texture(),metresPerRepeat:2};return m})
  const near=new MeshStandardMaterial(),far=new MeshStandardMaterial()
@@ -71,4 +74,19 @@ it('keeps all six semantic regions on an eight-metre continuous coast-to-upland 
   }
  }
  expect(seen).toEqual(new Set(SURFACE_NAMES))
+})
+it('starts every M1 review anchor above the conservative flight safety envelope and remains flyable',()=>{
+ const world=createWorldSampler(),surface=createLandscapeSurface(world,coastValleyLandmarks(world))
+ for(const anchor of CAPTURE_ANCHORS.filter(a=>a.id.startsWith('m1-'))){
+  const {x,y,z}=anchor.position,heading=anchor.heading
+  for(let metres=0;metres<=220;metres+=10)for(const lateral of [-12,0,12]){
+   const sx=x+Math.sin(heading)*metres+Math.cos(heading)*lateral,sz=z-Math.cos(heading)*metres+Math.sin(heading)*lateral
+   expect(y-surface(sx,sz),`${anchor.id} at ${metres}m`).toBeGreaterThan(40)
+  }
+  const simulation=new FlightSimulation(surface)
+  Object.assign(simulation.position,anchor.position);simulation.heading=heading;simulation.clearAccumulator()
+  for(let frame=0;frame<300;frame++)simulation.advance(1/60,ZERO_INPUT)
+  expect(simulation.safetyStop,anchor.id).toBe(false)
+  expect(simulation.time).toBeGreaterThan(4.9)
+ }
 })
