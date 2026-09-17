@@ -1,6 +1,7 @@
 import {loadLookdevMaterials} from './lookdev/material-library'
 import {decorateMaterialTerrain} from './lookdev/material-terrain'
 import { FlightAnimationController } from './flight-animation'
+import { animationWeights } from './flight-animation-default'
 import poweredFlapData from './assets/pteranodon-powered-flap.json'
 import { VisibleSurfaceSnapshot } from './visible-surface'
 import { FarTerrain } from './far-terrain'
@@ -72,6 +73,8 @@ export class FlightRuntime implements ExternalExperience {
   private poweredAction:AnimationAction|null=null
   private groundLibrary:Awaited<ReturnType<typeof loadLookdevMaterials>>|null=null
   private readonly groundOrigin={value:new Vector2()}
+  readonly surfaceReview={value:new Vector2(0,0)}
+  setSurfaceReview(mode:number,layer=0){if(!import.meta.env.DEV)return;this.surfaceReview.value.set(mode,layer);this.lease?.invalidate()}
   private disposed = false
   private origin: Address = { x: 0, z: 0 }
   private cameraInitialized = false
@@ -89,6 +92,7 @@ export class FlightRuntime implements ExternalExperience {
   private readonly followPosition = new Vector3()
   private readonly lookPosition = new Vector3()
   constructor(private readonly controller: ViewerController, gentle: boolean, settings: FlightSettings = DEFAULT_FLIGHT_SETTINGS, worldConfig: WorldConfig = WORLD) {
+    if(import.meta.env.DEV&&new URLSearchParams(location.search).get('flightSurfaceReview')==='semantic')this.surfaceReview.value.x=1
     this.world = createWorldSampler(worldConfig)
     const landmarks=coastValleyLandmarks(this.world)
     const landscapeSurface=createLandscapeSurface(this.world,landmarks,(x,z)=>this.terrain?this.terrain.displayedHeight(x,z):this.world.meshHeight(x,z,8))
@@ -123,7 +127,7 @@ export class FlightRuntime implements ExternalExperience {
       const ground=await loadLookdevMaterials()
       if(this.disposed){ground.dispose();return}
       this.groundLibrary=ground
-      for(const material of [this.terrain.material,this.farTerrain.material])decorateMaterialTerrain(material,ground.materials,{method:'histogram',channel:'pbr',scale:1,layers:4},this.groundOrigin)
+      for(const material of [this.terrain.material,this.farTerrain.material])decorateMaterialTerrain(material,ground.materials,{method:'histogram',channel:'pbr',scale:1,layers:4},this.groundOrigin,import.meta.env.DEV?this.surfaceReview:undefined)
       if (model.mixer && model.action) {
         this.glideAction = model.mixer.clipAction(AnimationClip.parse({ ...glideData, blendMode: NormalAnimationBlendMode }))
         this.glideAction.setEffectiveWeight(0).play()
@@ -251,9 +255,9 @@ export class FlightRuntime implements ExternalExperience {
         this.animationTime = render.time
         if (this.glideAction && this.poweredAction) {
           this.flightAnimation.update(advanced,this.input.read().climb,this.simulation.commands.targetClimb)
-          const mode=import.meta.env.DEV?this.reviewAnimation:'auto',weight=mode==='powered'?1:0,source=mode==='auto'||mode==='source'
-          this.model?.action?.setEffectiveWeight(source?1:0)
-          this.glideAction.setEffectiveWeight(source?0:1-weight);this.poweredAction.setEffectiveWeight(weight)
+          const weights=animationWeights(import.meta.env.DEV?this.reviewAnimation:'auto')
+          this.model?.action?.setEffectiveWeight(weights.source)
+          this.glideAction.setEffectiveWeight(weights.glide);this.poweredAction.setEffectiveWeight(weights.powered)
         }
         this.model?.mixer?.update(advanced)
         if (this.simulation.safetyStop) this.pause('safety')

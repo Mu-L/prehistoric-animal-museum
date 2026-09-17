@@ -16,7 +16,7 @@ export function makeMaterialTerrain(library:MeshStandardMaterial[],decorate:(m:M
 }
 
 /** Shared by the finite art trial and every streamed terrain LOD. */
-export function decorateMaterialTerrain(material:MeshStandardMaterial,library:MeshStandardMaterial[],trial:MaterialTrial,origin?:{value:Vector2}){
+export function decorateMaterialTerrain(material:MeshStandardMaterial,library:MeshStandardMaterial[],trial:MaterialTrial,origin?:{value:Vector2},review?:{value:Vector2}){
  material.map=library[0]!.map;material.normalMap=library[0]!.normalMap
  const baseKey=material.customProgramCacheKey()
  const compile=material.onBeforeCompile.bind(material)
@@ -26,6 +26,7 @@ export function decorateMaterialTerrain(material:MeshStandardMaterial,library:Me
   if(origin)s.uniforms.trialOrigin=origin
   s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 trialPosition; varying vec3 trialNormal;').replace('#include <worldpos_vertex>',`#include <worldpos_vertex>\ntrialPosition=${origin?'(modelMatrix*vec4(transformed,1.)).xyz+vec3(trialOrigin.x,0.,trialOrigin.y)':'position'};trialNormal=objectNormal;`)
   if(origin)s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform vec2 trialOrigin;')
+  if(review){s.uniforms.surfaceReview=review;s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nattribute vec3 surfaceWeightsA; attribute vec3 surfaceWeightsB; varying vec3 vSurfaceA; varying vec3 vSurfaceB;').replace('#include <worldpos_vertex>','#include <worldpos_vertex>\nvSurfaceA=surfaceWeightsA;vSurfaceB=surfaceWeightsB;')}
   const declaration=library.map((_,i)=>`uniform sampler2D trialAlbedo${i};  uniform float trialScale${i}; uniform sampler2D trialNormal${i}; uniform sampler2D trialARM${i};`).join('\n')
   s.fragmentShader=s.fragmentShader.replace('#include <common>',`#include <common>
 ${declaration}
@@ -61,16 +62,20 @@ vec3 trialColor(sampler2D tex,sampler2D inverse,vec2 p,vec2 dx,vec2 dy,bool dire
 }
 vec4 trialWeights(){float slope=1.0-normalize(trialNormal).y;float rock=max(smoothstep(.035,.22,slope),smoothstep(6.0,11.0,trialPosition.y)*(1.0-smoothstep(-10.0,2.0,trialPosition.x)));float sand=1.0-smoothstep(.15,2.1,trialPosition.y);float floorWeight=smoothstep(-7.0,18.0,trialPosition.x)*smoothstep(1.2,3.0,trialPosition.y);vec4 w=vec4(rock,(1.0-floorWeight)*(1.0-sand),sand,floorWeight*(1.0-sand));w.yzw*=1.0-rock;return w/max(.001,dot(w,vec4(1.0)));}
 `)
+  if(review)s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nuniform vec2 surfaceReview; varying vec3 vSurfaceA; varying vec3 vSurfaceB;')
   if(origin)s.fragmentShader=s.fragmentShader.replace(/vec4 trialWeights\(\)\{[^}]+\}/,`vec4 trialWeights(){float slope=1.-clamp(normalize(trialNormal).y,0.,1.);float rock=smoothstep(.09,.38,slope);float sand=1.-smoothstep(2.,14.,trialPosition.y);float forest=smoothstep(8.,32.,trialPosition.y)*(.65+.15*sin(trialPosition.x/173.)*cos(trialPosition.z/211.));vec4 w=vec4(rock,(1.-sand)*(1.-forest),sand,(1.-sand)*forest);w.yzw*=1.-rock;return w/max(.001,dot(w,vec4(1.)));}`)
   const layers=library.map((_,i)=>`if(tw.${'xyzw'[i]}>.001){vec2 p=trialUV/trialScale${i},dx=trialDx/trialScale${i},dy=trialDy/trialScale${i};float weight=tw.${'xyzw'[i]};trialC+=trialColor(trialAlbedo${i},trialInverse,p,dx,dy,${i===0||i===2?'true':'false'},${i}.0)*weight;trialA+=trialSample(trialARM${i},p,dx,dy,false,false,${i===0||i===2?'true':'false'}).rgb*weight;trialN+=trialSample(trialNormal${i},p,dx,dy,true,false,${i===0||i===2?'true':'false'}).xyz*weight;}`).join('\n')
-  s.fragmentShader=s.fragmentShader.replace('#include <map_fragment>',`vec3 tn=normalize(trialNormal);vec2 trialUV=abs(tn.y)>=max(abs(tn.x),abs(tn.z))?trialPosition.xz:(abs(tn.x)>abs(tn.z)?trialPosition.zy:trialPosition.xy);vec2 trialDx=dFdx(trialUV),trialDy=dFdy(trialUV);vec4 tw=trialWeights();${trial.layers===2?'tw=vec4(tw.x,1.-tw.x,0.,0.);':''}vec3 trialC=vec3(0),trialA=vec3(0),trialN=vec3(0);${layers}diffuseColor.rgb*=trialC;`)
+  s.fragmentShader=s.fragmentShader.replace('#include <map_fragment>',`vec3 tn=normalize(trialNormal);vec2 trialUV=abs(tn.y)>=max(abs(tn.x),abs(tn.z))?trialPosition.xz:(abs(tn.x)>abs(tn.z)?trialPosition.zy:trialPosition.xy);vec2 trialDx=dFdx(trialUV),trialDy=dFdy(trialUV);vec4 tw=trialWeights();${trial.layers===2?'tw=vec4(tw.x,1.-tw.x,0.,0.);':''}${review?'if(surfaceReview.x==2.){int layer=int(surfaceReview.y);tw=vec4(float(layer==0),float(layer==1),float(layer==2),float(layer==3));}':''}vec3 trialC=vec3(0),trialA=vec3(0),trialN=vec3(0);${layers}diffuseColor.rgb*=trialC;`)
   if(origin)s.fragmentShader=s.fragmentShader.replace('#include <color_fragment>','')
   s.fragmentShader=s.fragmentShader.replace('#include <roughnessmap_fragment>','float roughnessFactor=roughness*trialA.g;')
   s.fragmentShader=s.fragmentShader.replace('#include <normal_fragment_maps>','trialN=normalize(trialN);trialN.xy*=.65;normal=normalize(getTangentFrame(-vViewPosition,normal,trialUV)*trialN);')
   const diagnostic=trial.channel==='albedo'?'pow(max(trialC,vec3(0)),vec3(1./2.2))':trial.channel==='normal'?'trialN*.5+.5':trial.channel==='roughness'?'vec3(trialA.g)':trial.channel==='weights'?'tw.xyz+tw.w*vec3(.6,.2,.7)':null
   if(diagnostic)s.fragmentShader=s.fragmentShader.replace('#include <dithering_fragment>',`#include <dithering_fragment>\ngl_FragColor=vec4(${diagnostic},1.);`)
+  if(review)s.fragmentShader=s.fragmentShader.replace('#include <dithering_fragment>',`#include <dithering_fragment>
+if(surfaceReview.x==1.){vec3 a=max(vSurfaceA,vec3(0.)),b=max(vSurfaceB,vec3(0.));float w[6];w[0]=a.x;w[1]=a.y;w[2]=a.z;w[3]=b.x;w[4]=b.y;w[5]=b.z;int best=0;for(int i=1;i<6;i++)if(w[i]>w[best])best=i;vec3 colors[6];colors[0]=vec3(.43,.46,.52);colors[1]=vec3(.75,.48,.28);colors[2]=vec3(.96,.78,.40);colors[3]=vec3(.32,.25,.38);colors[4]=vec3(.36,.22,.12);colors[5]=vec3(.18,.62,.30);gl_FragColor=vec4(colors[best],1.);}
+if(surfaceReview.x==3.){vec4 base=trialWeights();float value=surfaceReview.y<4.?base[int(surfaceReview.y)]:surfaceReview.y<7.?(surfaceReview.y==4.?vSurfaceA.x:surfaceReview.y==5.?vSurfaceA.y:vSurfaceA.z):(surfaceReview.y==7.?vSurfaceB.x:surfaceReview.y==8.?vSurfaceB.y:vSurfaceB.z);gl_FragColor=vec4(vec3(value),1.);}`)
   s.fragmentShader=s.fragmentShader.replace('#include <aomap_fragment>','reflectedLight.indirectDiffuse*=mix(.45,1.0,trialA.r);')
  }
- material.customProgramCacheKey=()=> `${baseKey}-terrain-material-v4-${Boolean(origin)}-${JSON.stringify(trial)}`
+ material.customProgramCacheKey=()=> `${baseKey}-terrain-material-v5-${Boolean(origin)}-${Boolean(review)}-${JSON.stringify(trial)}`
  material.needsUpdate=true
 }

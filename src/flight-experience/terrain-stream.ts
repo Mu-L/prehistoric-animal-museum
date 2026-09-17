@@ -1,4 +1,5 @@
 import { farSurfaceHeight } from './far-surface'
+import { attachSurfaceAttributes } from './materials/surface-attributes'
 import type { FrameWorkBudget } from './frame-work-budget'
 import { decorateShadowFade } from './environment/shadow-fade'
 import { groupTerrainPatches, patchBlend } from './terrain-patches'
@@ -320,6 +321,7 @@ export class TerrainStream {
     geometry.setAttribute('position', new BufferAttribute(result.positions, 3))
     geometry.setAttribute('normal', new BufferAttribute(result.normals, 3))
     geometry.setAttribute('color', new BufferAttribute(result.colors, 3))
+    if(import.meta.env.DEV)attachSurfaceAttributes(geometry,createWorldSampler(this.world),result.chunk.x*CHUNK_SIZE,result.chunk.z*CHUNK_SIZE)
     const morph = new Float32Array(result.coarseHeights.length)
     const startNormals = result.normals.slice(), startColors = result.colors.slice()
     if (previous && !settled) {
@@ -379,6 +381,7 @@ export class TerrainStream {
   private patchGeometry(surface:DisplayedSurface){
     const r=surface.result,g=new BufferGeometry(),blend=new Float32Array(r.coarseHeights.length);blend.fill(surface.morph)
     g.setAttribute('position',new BufferAttribute(r.positions,3));g.setAttribute('normal',new BufferAttribute(r.normals,3));g.setAttribute('color',new BufferAttribute(r.colors,3))
+    if(import.meta.env.DEV)attachSurfaceAttributes(g,createWorldSampler(this.world),r.chunk.x*CHUNK_SIZE,r.chunk.z*CHUNK_SIZE)
     g.setAttribute('startNormal',new BufferAttribute(surface.startNormals,3));g.setAttribute('startColor',new BufferAttribute(surface.startColors,3));g.setAttribute('coarseHeight',new BufferAttribute(r.coarseHeights,1));g.setAttribute('terrainBlend',new BufferAttribute(blend,1))
     g.setIndex(new BufferAttribute(r.indices,1));g.computeBoundingBox()
     if(g.boundingBox){for(const height of r.coarseHeights){g.boundingBox.min.y=Math.min(g.boundingBox.min.y,height);g.boundingBox.max.y=Math.max(g.boundingBox.max.y,height)}g.boundingSphere=g.boundingBox.getBoundingSphere(new Sphere())}

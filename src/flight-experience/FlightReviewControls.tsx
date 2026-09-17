@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import type { FlightRuntime } from './FlightRuntime'
 import { CAPTURE_ANCHORS, REVIEW_ROUTES } from './review-anchors'
 import type { SolarPreset } from './environment/environment-state'
+import {classifySurface,surfaceContext} from './materials/surface-context'
 export function FlightReviewControls({ runtime }: { runtime: FlightRuntime }) {
   const [, render] = useState(0)
   const [capture, setCapture] = useState('')
@@ -28,6 +29,9 @@ export function FlightReviewControls({ runtime }: { runtime: FlightRuntime }) {
   const [picking,setPicking]=useState(false)
   useEffect(()=>picking?installPropPicker(runtime,setTrackedId):undefined,[runtime,picking])
   return <details className="flight-review" data-lookdev-active={lookdev}><summary>{lookdev?'材质与植被预览':'Visual diagnostics'}</summary>
+    <label>Main terrain diagnosis<select aria-label="Main terrain diagnosis" defaultValue={String(runtime.surfaceReview.value.x)} onChange={e=>{runtime.setSurfaceReview(Number(e.target.value),runtime.surfaceReview.value.y);render(n=>n+1)}}><option value="0">PBR</option><option value="1">Six surface IDs</option><option value="2">One-hot source layer</option><option value="3">Weight grayscale</option></select></label>
+    <label>Diagnostic layer<select aria-label="Diagnostic layer" defaultValue="0" onChange={e=>{runtime.setSurfaceReview(runtime.surfaceReview.value.x,Number(e.target.value));render(n=>n+1)}}>{['rock PBR','soil PBR','sand PBR','floor PBR','rock semantic','soil semantic','beach semantic','mud semantic','organic semantic','groundcover semantic'].map((name,i)=><option key={name} value={i}>{name}</option>)}</select></label>
+    <button type="button" onClick={()=>{const p=runtime.simulation.position,context=surfaceContext(runtime.world,p.x,p.z);setCapture(JSON.stringify({position:{x:p.x,z:p.z},context,classification:classifySurface(context)},null,2))}}>Inspect surface under flight position</button>
     <label><input type="checkbox" checked={lookdev} onChange={e=>{setLookdev(e.target.checked);void runtime.toggleLookdev(e.target.checked)}}/>Finite material and asset sample</label>
     {lookdev&&<>
       <p>{asset.startsWith('material-scene')?'局部地形试验：岩坡、干土、湿沙与林下地表混合。可选择各材质近景，并旋转查看。':'左侧：前版资产 · 右侧：本轮资产。所有样板使用同一运行时光照。'}</p>
