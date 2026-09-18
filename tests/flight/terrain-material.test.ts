@@ -2,13 +2,14 @@ import {expect,it} from 'vitest'
 import {MeshStandardMaterial,Texture,Vector2} from 'three'
 import {decorateMaterialTerrain} from '../../src/flight-experience/lookdev/material-terrain'
 import {createWorldSampler} from '../../src/flight-experience/world'
-import {SURFACE_NAMES,classifySurface,surfaceContext} from '../../src/flight-experience/materials/surface-context'
+import {SURFACE_NAMES,classifySurface,pbrSourceWeights,surfaceContext} from '../../src/flight-experience/materials/surface-context'
 import {attachSurfaceAttributes} from '../../src/flight-experience/materials/surface-attributes'
 import {BufferAttribute,BufferGeometry} from 'three'
 import {animationWeights} from '../../src/flight-experience/flight-animation-default'
 import {CAPTURE_ANCHORS} from '../../src/flight-experience/review-anchors'
 import {coastValleyLandmarks,createLandscapeSurface} from '../../src/flight-experience/world-presets/coast-valley'
 import {FlightSimulation,ZERO_INPUT} from '../../src/flight-experience/simulation'
+import manifest from '../../src/flight-experience/assets/lookdev-materials/manifest.json'
 it('keeps distinct morph and far-coverage programs when sharing the terrain material library',()=>{
  const library=Array.from({length:4},()=>{const m=new MeshStandardMaterial({map:new Texture(),normalMap:new Texture()});m.userData.stochastic={gaussian:new Texture(),inverse:new Texture(),metresPerRepeat:2};return m})
  const near=new MeshStandardMaterial(),far=new MeshStandardMaterial()
@@ -29,10 +30,15 @@ it('binds the same review uniform and six-weight vertex contract on near and far
   expect(shader.uniforms.surfaceReview).toBe(review)
   expect(shader.vertexShader).toContain('surfaceWeightsB')
   expect(shader.fragmentShader).toContain('colors[best]')
-  expect(shader.fragmentShader).toContain('trialAlbedo3')
+  expect(shader.fragmentShader).toContain('trialAlbedoAtlas')
+  expect(shader.fragmentShader).toContain('return vec4(a.x,a.y,a.z,b.x)')
+  expect(shader.fragmentShader).toContain('trialExtraWeights')
   material.dispose()
  }
  for(const m of library)m.dispose()
+})
+it('uses verified physical widths for six independent PBR sources',()=>{
+ expect(Object.fromEntries(manifest.entries.map(entry=>[entry.id,entry.metresPerRepeat]))).toEqual({aerial_ground_rock:20,sandy_gravel_02:2.5,coast_sand_01:15,mud_forest:2.3,forest_ground_04:3.2,leafy_grass:2})
 })
 it('locks automatic and source flight to the original clip only',()=>{
  expect(animationWeights('auto')).toEqual({source:1,powered:0,glide:0})
@@ -44,6 +50,9 @@ it('classifies real coast, raised riverbank, dry slope, woodland, exposed rock a
   const context=surfaceContext(world,x,z),sample=classifySurface(context)
   expect(sample.dominant).toBe(name);expect(sample.weights.every(w=>Number.isFinite(w)&&w>=0&&w<=1)).toBe(true)
   expect(sample.weights.reduce((a,b)=>a+b,0)).toBeCloseTo(1,8)
+  const sources=pbrSourceWeights(sample.weights)
+  expect(sources.reduce((a,b)=>a+b,0)).toBeCloseTo(1,8)
+  expect(sources.every(weight=>weight>=0&&weight<=1)).toBe(true)
   expect(classifySurface(surfaceContext(world,x,z))).toEqual(sample)
  }
  expect(surfaceContext(world,-10,-2400).height).toBeGreaterThan(14)

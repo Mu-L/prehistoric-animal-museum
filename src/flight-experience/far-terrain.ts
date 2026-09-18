@@ -61,7 +61,7 @@ export class FarTerrain {
   })
   if(build&&build.row===8&&budget.canStart(.1,build.positions.length*4*3+build.indices.length*2,1))budget.measure('farTerrain.install',()=>{
    const geometry=new BufferGeometry();geometry.setAttribute('position',new BufferAttribute(new Float32Array(build.positions),3));geometry.setAttribute('normal',new BufferAttribute(new Float32Array(build.normals),3));geometry.setAttribute('color',new BufferAttribute(new Float32Array(build.colors),3));geometry.setIndex(build.indices);geometry.computeBoundingBox();geometry.computeBoundingSphere()
-   if(import.meta.env.DEV)attachSurfaceAttributes(geometry,this.world,build.x,build.z)
+   attachSurfaceAttributes(geometry,this.world,build.x,build.z)
    const mesh=new Mesh(geometry,this.material);mesh.position.set(build.x-this.origin.x,0,build.z-this.origin.z);this.root.add(mesh)
    // A completed strip replaces the same world row; never remove its only fallback first.
    for(const [key,old] of this.strips)if(old.z===build.z){old.mesh.removeFromParent();old.geometry.dispose();this.strips.delete(key)}

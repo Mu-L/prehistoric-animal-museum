@@ -24,4 +24,22 @@ for(const e of manifest.entries){
 }
 await fs.writeFile(`${base}/stochastic.json`,JSON.stringify(reports,null,2)+'\n')
 
-await sharp({create:{width:256,height:40,channels:3,background:'#000'}}).composite(reports.map((r,i)=>({input:`${base}/${r.lutPath}`,left:0,top:i*10}))).png().toFile(`${base}/inverse-all.png`)
+await sharp({create:{width:256,height:reports.length*10,channels:3,background:'#000'}}).composite(reports.map((r,i)=>({input:`${base}/${r.lutPath}`,left:0,top:i*10}))).png().toFile(`${base}/inverse-all.png`)
+
+// Six source materials exceed the 16 fragment texture units of common WebGL2
+// devices when bound independently. Pack each channel into one periodic atlas.
+const tile=512,pad=16,cell=tile+pad*2,columns=3,rows=Math.ceil(manifest.entries.length/columns)
+for(const channel of ['albedo','normal','arm','gaussian']){
+ const atlas=Buffer.alloc(columns*cell*rows*cell*3)
+ for(let index=0;index<manifest.entries.length;index++){
+  const entry=manifest.entries[index],path=channel==='gaussian'?reports[index].gaussianPath:entry.maps[channel].path
+  const pixels=await sharp(`${base}/${path}`).removeAlpha().raw().toBuffer()
+  const cellX=index%columns*cell,cellY=Math.floor(index/columns)*cell
+  for(let y=0;y<cell;y++)for(let x=0;x<cell;x++){
+   const sx=(x-pad+tile)%tile,sy=(y-pad+tile)%tile
+   const from=(sy*tile+sx)*3,to=((cellY+y)*columns*cell+cellX+x)*3
+   atlas[to]=pixels[from];atlas[to+1]=pixels[from+1];atlas[to+2]=pixels[from+2]
+  }
+ }
+ await sharp(atlas,{raw:{width:columns*cell,height:rows*cell,channels:3}}).webp({quality:channel==='normal'?95:88,lossless:channel==='gaussian'}).toFile(`${base}/${channel}-atlas.webp`)
+}
