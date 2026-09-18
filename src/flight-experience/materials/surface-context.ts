@@ -45,9 +45,11 @@ export function classifySurface(c:SurfaceContext):SurfaceClassification {
   const coastRelative=c.coast?.relativeLevel??(valid&&c.water.kind==='sea'?relative:Infinity)
   const beach=(1-riverMix)*(1-smooth(12,75,Math.max(0,coastDistance)))*(1-smooth(3,18,coastRelative))
   const canopy=smooth(.43,.70,woodland)*(1-bank*.75)
-  const cover=smooth(.34,.66,moisture)*(1-smooth(.62,.84,woodland))*(1-bank)*.94
+  // Sparse cover exposes a mineral-soil matrix from a flight view; a near-solid
+  // grass weight paints kilometre-wide olive slabs over the terrain.
+  const cover=smooth(.34,.66,moisture)*(1-smooth(.62,.84,woodland))*(1-bank)*.68
   const available=1-rock, sediment=available*beach, mud=(available-sediment)*bank*.9
-  const organic=(available-sediment-mud)*canopy*.82, groundcover=(available-sediment-mud-organic)*cover
+  const organic=(available-sediment-mud)*canopy*.68, groundcover=(available-sediment-mud-organic)*cover
   const soil=Math.max(0,1-rock-sediment-mud-organic-groundcover)
   const weights=[rock,soil,sediment,mud,organic,groundcover] as const
   const index=weights.indexOf(Math.max(...weights))

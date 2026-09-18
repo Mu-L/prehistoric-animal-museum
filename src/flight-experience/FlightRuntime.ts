@@ -92,7 +92,11 @@ export class FlightRuntime implements ExternalExperience {
   private readonly followPosition = new Vector3()
   private readonly lookPosition = new Vector3()
   constructor(private readonly controller: ViewerController, gentle: boolean, settings: FlightSettings = DEFAULT_FLIGHT_SETTINGS, worldConfig: WorldConfig = WORLD) {
-    if(import.meta.env.DEV&&new URLSearchParams(location.search).get('flightSurfaceReview')==='semantic')this.surfaceReview.value.x=1
+    if(import.meta.env.DEV){
+      const params=new URLSearchParams(location.search),a0=params.get('flightA0')
+      if(a0==='layered'||a0==='standalone')this.surfaceReview.value.set(a0==='layered'?2:10,5)
+      else if(params.get('flightSurfaceReview')==='semantic')this.surfaceReview.value.x=1
+    }
     this.world = createWorldSampler(worldConfig)
     const landmarks=coastValleyLandmarks(this.world)
     const landscapeSurface=createLandscapeSurface(this.world,landmarks,(x,z)=>this.terrain?this.terrain.displayedHeight(x,z):this.world.meshHeight(x,z,8))

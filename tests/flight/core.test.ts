@@ -22,6 +22,25 @@ describe('flight world contracts', () => {
     }
     expect(values.every(v => Number.isFinite(v.height))).toBe(true)
   })
+  it('does not carve repeated narrow runoff lanes across the inland flight view', () => {
+    // Compare each sample with its 160 m neighbourhood. The rejected lane
+    // generator created 7-8 deep, narrow troughs across this same 2 km span.
+    for (const x of [1100, 1500]) {
+      let narrowTroughs = 0
+      let troughStart: number | null = null
+      for (let z = -1100; z <= 900; z += 8) {
+        const localHeight = terrainAt(x, z).height
+        const shoulderHeight = (terrainAt(x, z - 80).height + terrainAt(x, z + 80).height) / 2
+        if (localHeight < shoulderHeight - 3.5) {
+          troughStart ??= z
+        } else if (troughStart !== null) {
+          if (z - troughStart <= 80) narrowTroughs++
+          troughStart = null
+        }
+      }
+      expect(narrowTroughs).toBeLessThanOrEqual(2)
+    }
+  })
   it('has matching heights/normals at same-LOD edges and exact cross-LOD edge polylines', () => {
     for (const lod of [0, 1, 2, 3] as const) {
       const a = generateTerrain(job(-1, 0, lod)), b = generateTerrain(job(0, 0, lod))
@@ -40,6 +59,20 @@ describe('flight world contracts', () => {
     expect(new Set(props.map(p => p.id)).size).toBe(props.length)
     tiles.forEach(a => scatter(a).forEach(p => expect(chunkAt(p.x, p.z)).toEqual(a)))
     expect(scatter(tiles[1]!).filter(p => p.priority < .4).every(p => scatter(tiles[1]!).some(q => q.id === p.id))).toBe(true)
+  })
+  it('clusters woodland crowns around stable parent trees without crossing tile ownership', () => {
+    const address = { x: 2, z: -1 }, props = scatter(address)
+    const byId = new Map(props.map(prop => [prop.id, prop]))
+    const crowns = props.filter(prop => prop.id.startsWith('crown:'))
+    expect(crowns.length).toBeGreaterThan(0)
+    for (const crown of crowns) {
+      const [, x, z] = crown.id.split(':')
+      const parent = byId.get(`${x}:${z}`)
+      expect(parent?.kind).toBe('plant')
+      expect(Math.hypot(crown.x - parent!.x, crown.z - parent!.z)).toBeLessThan(16)
+      expect(chunkAt(crown.x, crown.z)).toEqual(address)
+      expect(crown.y).toBeCloseTo(terrainAt(crown.x, crown.z).height, 6)
+    }
   })
   it('bounds windows, adjacent LOD differences and late placement after two origin changes', () => {
     const window = chunkWindow(-100, 2170, 4)

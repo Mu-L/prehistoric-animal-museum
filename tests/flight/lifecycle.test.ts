@@ -21,6 +21,10 @@ class TestWorker {
 beforeEach(() => {
   TestWorker.instances = []; vi.stubGlobal('Worker', TestWorker)
   vi.spyOn(TextureLoader.prototype, 'loadAsync').mockResolvedValue(new Texture())
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((() => ({
+    drawImage: () => {},
+    getImageData: (_x: number, _y: number, width: number, height: number) => ({ data: new Uint8ClampedArray(width * height * 4) }),
+  })) as unknown as typeof HTMLCanvasElement.prototype.getContext)
 })
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
 describe('bounded terrain lifecycle', () => {

@@ -21,7 +21,7 @@ it('keeps distinct morph and far-coverage programs when sharing the terrain mate
  near.dispose();far.dispose();for(const m of library){m.map?.dispose();m.normalMap?.dispose();const data=m.userData.stochastic as {gaussian:Texture;inverse:Texture};data.gaussian.dispose();data.inverse.dispose();m.dispose()}
 })
 it('binds the same review uniform and six-weight vertex contract on near and far programs',()=>{
- const library=Array.from({length:4},()=>{const m=new MeshStandardMaterial({map:new Texture(),normalMap:new Texture()});m.userData.stochastic={gaussian:new Texture(),inverse:new Texture(),metresPerRepeat:2};return m})
+ const library=Array.from({length:6},()=>{const m=new MeshStandardMaterial({map:new Texture(),normalMap:new Texture()});m.userData.stochastic={gaussian:new Texture(),inverse:new Texture(),metresPerRepeat:2};return m})
  const review={value:new Vector2(1,0)},origin={value:new Vector2()},trial={method:'histogram',channel:'pbr',scale:1,layers:4} as const
  for(const material of [new MeshStandardMaterial(),new MeshStandardMaterial()]){
   decorateMaterialTerrain(material,library,trial,origin,review)
@@ -31,6 +31,13 @@ it('binds the same review uniform and six-weight vertex contract on near and far
   expect(shader.vertexShader).toContain('surfaceWeightsB')
   expect(shader.fragmentShader).toContain('colors[best]')
   expect(shader.fragmentShader).toContain('trialAlbedoAtlas')
+  expect(shader.fragmentShader).toContain('sampler2DArray trialAlbedoAtlas')
+  expect(shader.fragmentShader).toContain('float fade=smoothstep(0.005,0.02,footprint)')
+  expect(shader.fragmentShader).toContain('textureLod(trialRawAlbedo,vec3(.5,.5,1.0),9.)')
+  expect(shader.fragmentShader).toContain('if(surfaceReview.x==11.)color=textureGrad(trialRawAlbedo')
+  expect(shader.fragmentShader).toContain('if(surfaceReview.x==12.)color=trialSample(trialRawAlbedo')
+  expect(shader.fragmentShader).toContain('if(surfaceReview.x==11.||surfaceReview.x==12.)gl_FragColor=')
+  expect(shader.fragmentShader).not.toContain('reviewZone')
   expect(shader.fragmentShader).toContain('return vec4(a.x,a.y,a.z,b.x)')
   expect(shader.fragmentShader).toContain('trialExtraWeights')
   material.dispose()

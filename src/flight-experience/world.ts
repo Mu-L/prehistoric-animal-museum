@@ -1,7 +1,7 @@
 import { createWorldRiver } from './hydrology/world-river'
 /** Pure, order-independent world. Metres; Y up; supported logical domain ±10,000 km. */
 export interface WorldConfig { readonly id: string; readonly seed: number; readonly generator: string; readonly preset: string }
-export const WORLD: WorldConfig = Object.freeze({ id: 'coastal-valley', seed: 193706, generator: '4', preset: '1' })
+export const WORLD: WorldConfig = Object.freeze({ id: 'coastal-valley', seed: 193706, generator: '5', preset: '1' })
 export const SEA_LEVEL = -.7
 export const CHUNK_SIZE = 512
 export const SEGMENTS = [64, 32, 16, 8] as const
@@ -95,10 +95,22 @@ function scatter(address: Address): Prop[] {
     result.push({ id: `${x}:${z}`, x: wx, y: sample.height, z: wz,
       scale: 2 + hash(x, z, 33) * 4, yaw: hash(x, z, 34) * Math.PI * 2,
       kind: kind === 'rock' && slope < .85 && hash(x,z,86)<.2 ? 'cliff' : kind, priority: hash(x, z, 36) })
-    if(kind === 'plant')for(let cluster=0;cluster<2;cluster++){
-      const angle=hash(x,z,90+cluster)*Math.PI*2,r=4+hash(x,z,94+cluster)*5
-      const sx=wx+Math.cos(angle)*r,sz=wz+Math.sin(angle)*r,ground=terrainAt(sx,sz)
-      if(ground.height>4 && normalAt(sx,sz)[1]>.8 && (river.query(sx,sz)?.signedBankDistance ?? Infinity)>1)result.push({id:`understory:${x}:${z}:${cluster}`,x:sx,y:ground.height,z:sz,scale:2+hash(x,z,98+cluster)*4,yaw:angle,kind:'understory',priority:hash(x,z,102+cluster)})
+    if(kind === 'plant'){
+      // Woodland is a crown cluster, not an evenly spaced scatter of isolated
+      // trees. The gradual density gate keeps the forest edge porous.
+      const crownDensity = smooth((woodland - .5) / .25)
+      for(let cluster=0;cluster<2;cluster++){
+        const angle=hash(x,z,90+cluster)*Math.PI*2,r=4+hash(x,z,94+cluster)*5
+        const sx=wx+Math.cos(angle)*r,sz=wz+Math.sin(angle)*r,ground=terrainAt(sx,sz)
+        if(ground.height>4 && normalAt(sx,sz)[1]>.8 && (river.query(sx,sz)?.signedBankDistance ?? Infinity)>1)result.push({id:`understory:${x}:${z}:${cluster}`,x:sx,y:ground.height,z:sz,scale:2+hash(x,z,98+cluster)*4,yaw:angle,kind:'understory',priority:hash(x,z,102+cluster)})
+        if(cluster!==0||hash(x,z,140)>crownDensity*.9)continue
+        const treeAngle=angle+1.1,treeRadius=8+hash(x,z,145+cluster)*5
+        const tx=clamp(wx+Math.cos(treeAngle)*treeRadius,x*spacing+2,(x+1)*spacing-2)
+        const tz=clamp(wz+Math.sin(treeAngle)*treeRadius,z*spacing+2,(z+1)*spacing-2)
+        const treeGround=terrainAt(tx,tz)
+        if(treeGround.height>7&&normalAt(tx,tz)[1]>.82&&(river.query(tx,tz)?.signedBankDistance??Infinity)>6)
+          result.push({id:`crown:${x}:${z}:${cluster}`,x:tx,y:treeGround.height,z:tz,scale:1.5+hash(x,z,148+cluster)*3.5,yaw:hash(x,z,152+cluster)*Math.PI*2,kind:'plant',priority:hash(x,z,156+cluster)})
+      }
     }
   }
   return result
