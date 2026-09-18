@@ -12,7 +12,7 @@ export class FlightScenery {
   readonly river: RiverScene
   readonly props: PropStream
   readonly farCanopy: FarCanopyLayer
-  readonly review = { hideProps: false, flatWater: false, freezeWater: false, oceanEdges: false, skyColors: false, shadows: true, freezeBathymetry:false,ownerColors:false,depthColors:false }
+  readonly review = { hideProps: false, flatWater: false, freezeWater: false, oceanEdges: false, skyColors: false, shadows: true, highlight: true, freezeBathymetry:false,ownerColors:false,depthColors:false }
   preset: SolarPreset = 'noon'
   private origin: Address = {x:0,z:0}
   private disposed = false
@@ -29,7 +29,7 @@ export class FlightScenery {
   get busy() { return this.river.busy || this.props.busy || this.environment.busy || this.farCanopy.busy }
   update(x:number,y:number,z:number,time:number,quality:'low'|'balanced',camera?:PerspectiveCamera, options:EnvironmentUpdateOptions & PropFrameContext & {propsFirst?:boolean;canopyFirst?:boolean;freezeObjects?:boolean} = {}) {
     this.fallbackCamera.position.set(x-this.origin.x,y,z-this.origin.z)
-    Object.assign(this.environment.review,{flatWater:this.review.flatWater,freezeWater:this.review.freezeWater,oceanEdges:this.review.oceanEdges,skyColors:this.review.skyColors,shadows:this.review.shadows,freezeBathymetry:this.review.freezeBathymetry,ownerColors:this.review.ownerColors,depthColors:this.review.depthColors})
+    Object.assign(this.environment.review,{flatWater:this.review.flatWater,freezeWater:this.review.freezeWater,oceanEdges:this.review.oceanEdges,skyColors:this.review.skyColors,shadows:this.review.shadows,highlight:this.review.highlight,freezeBathymetry:this.review.freezeBathymetry,ownerColors:this.review.ownerColors,depthColors:this.review.depthColors})
     this.environment.sun.castShadow=this.review.shadows
     this.props.visible=!this.review.hideProps
     this.farCanopy.root.visible=!this.review.hideProps

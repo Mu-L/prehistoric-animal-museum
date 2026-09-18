@@ -87,12 +87,15 @@ describe('flight owned resources and recovery', () => {
     for (let i = 0; i < 180; i++) { runtime.update(1 / 60); TestWorker.instances.forEach(w => w.finish()) }
     expect(runtime.getSnapshot().phase).toBe('ready')
     runtime.start(); runtime.update(1 / 60); runtime.pause('hidden')
-    const time = runtime.simulation.time, pos = { ...runtime.simulation.position }
-    runtime.update(10)
+    const time = runtime.simulation.time, pos = { ...runtime.simulation.position }, motion = runtime.environmentClock.motionSeconds
+    runtime.update(60)
+    expect(runtime.environmentClock.motionSeconds).toBe(motion)
     expect(runtime.simulation.time).toBe(time); expect(runtime.simulation.position).toEqual(pos)
     expect(runtime.running).toBe(false)
     runtime.contextLost(); expect(runtime.getSnapshot().phase).toBe('recovering')
+    runtime.reviewIsolation.animateWater = true
     runtime.contextRestored(); expect(runtime.getSnapshot().phase).toBe('paused')
+    runtime.update(60); expect(runtime.environmentClock.motionSeconds).toBe(motion)
     runtime.close(); runtime.close(); expect(spy).toHaveBeenCalledTimes(1)
   })
   it('installs delayed terrain while buffering without moving, and never bypasses a safety guard', async () => {
@@ -113,6 +116,23 @@ describe('flight owned resources and recovery', () => {
     runtime.simulation.safetyStop = true; runtime.start()
     expect(runtime.getSnapshot().phase).toBe('paused'); expect(runtime.simulation.safetyStop).toBe(true)
     runtime.close()
+  })
+  it('keeps real travel state frozen through a viewpoint request and cancellation', async () => {
+    const h=host(),runtime=new FlightRuntime(h.controller,false),owned=model()
+    const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(owned);await pending
+    for(let i=0;i<180;i++){runtime.update(1/60);TestWorker.instances.forEach(w=>w.finish())}
+    runtime.start();runtime.update(1/60);runtime.pause('user')
+    const position={...runtime.simulation.position},time=runtime.simulation.time,heading=runtime.simulation.heading
+    runtime.enterViewpoint('seaward');runtime.enterViewpoint('cliff');runtime.enterViewpoint('seaward')
+    runtime.setSolarDayProgress(.94)
+    for(let i=0;i<25;i++){runtime.update(1/60);TestWorker.instances.forEach(w=>w.finish())}
+    expect(runtime.simulation.position).toEqual(position);expect(runtime.simulation.time).toBe(time);expect(runtime.simulation.heading).toBe(heading)
+    expect(runtime.root.visible).toBe(false);expect(runtime.canResume).toBe(false)
+    runtime.start();expect(runtime.getSnapshot().phase).toBe('paused')
+    runtime.returnFromViewpoint()
+    expect(runtime.observation.phase).toBe('returning');expect(runtime.observation.target).toBeNull()
+    expect(runtime.environmentClock.solarDayProgress).toBe(.94)
+    runtime.close();expect(runtime.observation.bookmark).toBeNull()
   })
   it('has a seamless non-static authored glide and no animated root translation', () => {
     const clip = AnimationClip.parse({ ...glide, blendMode: NormalAnimationBlendMode })

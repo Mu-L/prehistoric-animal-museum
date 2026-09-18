@@ -1,8 +1,8 @@
 import {oceanCoverage,type WaterRect} from '../hydrology/ocean-coverage'
-import { BackSide, BufferGeometry, DataTexture, DirectionalLight, Group, HemisphereLight, Mesh, NearestFilter, RGBAFormat, ShaderMaterial, SphereGeometry, Vector2, Vector3, Vector4, type PerspectiveCamera, type Scene } from 'three'
+import { BackSide, BufferGeometry, DataTexture, DirectionalLight, Group, HemisphereLight, Mesh, NearestFilter, RGBAFormat, ShaderMaterial, SphereGeometry, Vector2, Vector3, Vector4, type PerspectiveCamera, type Scene, UniformsLib, UniformsUtils } from 'three'
 import { terrainAt, type Address } from '../world'
 import { BathymetryField, DEPTH_SIZE, DEPTH_STEP, type BathymetryOptions } from './bathymetry'
-import { sampleEnvironment, type SolarPreset, type EnvironmentFrame } from './environment-state'
+import { sampleEnvironment, type SolarPreset, type SolarLayout, type EnvironmentFrame } from './environment-state'
 import { envelopeOrigin, waveComponents } from './ocean-waves'
 import { ENVIRONMENT_ATMOSPHERE_GLSL as atmosphere } from './atmosphere'
 import { createEnvironmentFog } from './environment-fog'
@@ -13,9 +13,20 @@ void main(){gl_FragColor=vec4(distantColor(normalize(direction)),1.);
 #include <tonemapping_fragment>
 #include <colorspace_fragment>
 }`
-const waterVertex=`attribute vec3 waterFlow; varying vec3 flowData; varying vec3 worldPosition;void main(){flowData=waterFlow;worldPosition=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(worldPosition,1.);}`
+const waterVertex=`
+#include <common>
+#include <shadowmap_pars_vertex>
+attribute vec3 waterFlow; varying vec3 flowData; varying vec3 worldPosition;void main(){flowData=waterFlow;worldPosition=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(worldPosition,1.);
+#if defined(USE_SHADOWMAP) && NUM_DIR_LIGHT_SHADOWS > 0
+vDirectionalShadowCoord[0]=directionalShadowMatrix[0]*vec4(worldPosition+vec3(0.,.8,0.),1.);
+#endif
+}`
 export interface EnvironmentUpdateOptions extends BathymetryOptions { immutableSurface?:(x:number,z:number)=>number }
-const waterFragment=`varying vec3 flowData;varying vec3 worldPosition;uniform vec4 waterOwnerRect;uniform vec2 waterWorldOrigin;uniform float riverReady;uniform float riverPass;uniform float waterTime;uniform vec4 waves[6];uniform vec2 envelopeOrigin;uniform sampler2D depthField;uniform sampler2D previousDepthField;uniform sampler2D coarseDepthField;uniform vec2 depthOrigin;uniform vec2 previousDepthOrigin;uniform vec2 coarseDepthOrigin;uniform float depthBlend;uniform float hasPreviousDepth;uniform float hasCoarseDepth;uniform float hasDepth;uniform float flatWater;uniform float edges;uniform float ownerColors;uniform float depthColors;
+const waterFragment=`
+#include <common>
+#include <packing>
+#include <shadowmap_pars_fragment>
+varying vec3 flowData;varying vec3 worldPosition;uniform vec4 waterOwnerRect;uniform vec2 waterWorldOrigin;uniform float riverReady;uniform float riverPass;uniform float waterTime;uniform vec4 waves[6];uniform vec2 envelopeOrigin;uniform sampler2D depthField;uniform sampler2D previousDepthField;uniform sampler2D coarseDepthField;uniform vec2 depthOrigin;uniform vec2 previousDepthOrigin;uniform vec2 coarseDepthOrigin;uniform float depthBlend;uniform float hasPreviousDepth;uniform float hasCoarseDepth;uniform float hasDepth;uniform float flatWater;uniform float edges;uniform float ownerColors;uniform float depthColors;
 ${atmosphere}
 // Periodic 8192m value noise with analytic derivatives; bounded origin coordinates.
 float oceanHash(vec2 p){p=mod(p,64.);return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -42,10 +53,17 @@ float amplitude=.25+.55*envelope.x;
 float footprint=length(vec2(dFdx(phase),dFdy(phase)));
 float aa=1.-smoothstep(.45,1.8,footprint);
 // Short waves contribute only close to the eye; the offshore field is broad swell.
-float reach=i<2?1300.:(i<4?650.:240.);
+float reach=i<2?2200.:(i<4?1500.:800.);
 float fade=1.-smoothstep(reach*.2,reach,distanceToEye);
-gradient+=(cos(phase)*phaseGradient*amplitude+sin(phase)*envelope.yz*(.55/128.))*waves[i].z*aa*fade*.42;
+gradient+=(cos(phase)*phaseGradient*amplitude+sin(phase)*envelope.yz*(.55/128.))*waves[i].z*aa*fade*.8;
 }
+// Advected, continuous fine slopes break broad swells into irregular highlights.
+// Subpixel structure fades out; its slope variance stays in the BRDF roughness.
+vec2 finePosition=(worldPosition.xz+envelopeOrigin)*.42+vec2(waterTime*.18,waterTime*.11);
+float fineFootprint=max(length(dFdx(finePosition)),length(dFdy(finePosition)));
+float fineResolved=(1.-smoothstep(.45,1.5,fineFootprint))*(1.-smoothstep(900.,1600.,distanceToEye));
+vec3 fineA=oceanNoise(finePosition),fineB=oceanNoise(finePosition*.61+vec2(19.,31.));
+gradient+=(fineA.yz+fineB.yz*.6)*.055*fineResolved;
 // Two phases crossfade only the moving normal signal; surface opacity stays one.
 float phase0=fract(waterTime*.09),phase1=fract(waterTime*.09+.5);
 vec2 flowUV=(worldPosition.xz+envelopeOrigin)*.12;
@@ -61,7 +79,14 @@ vec2 previous=readField(previousDepthField,previousDepthOrigin,${DEPTH_STEP}.);
 float oldShallow=mix(fallback,shallowAt(previous.x),previous.y*hasPreviousDepth);
 float newShallow=mix(fallback,shallowAt(current.x),current.y*hasDepth);
 float shallow=mix(oldShallow,newShallow,depthBlend);
-vec3 c=oceanColor(ray,n,shallow);float farMix=smoothstep(1600.,2600.,distanceToEye);c=mix(c,distantColor(ray),farMix);
+float visibility=1.;
+#if defined(USE_SHADOWMAP) && NUM_DIR_LIGHT_SHADOWS > 0
+vec3 sp=vDirectionalShadowCoord[0].xyz/vDirectionalShadowCoord[0].w;
+float edge=min(min(sp.x,sp.y),min(1.-sp.x,1.-sp.y));
+float weight=smoothstep(0.,.18,edge)*smoothstep(0.,.04,sp.z)*(1.-smoothstep(.94,1.,sp.z));
+visibility=mix(1.,getShadow(directionalShadowMap[0],directionalLightShadows[0].shadowMapSize,directionalLightShadows[0].shadowIntensity,directionalLightShadows[0].shadowBias,directionalLightShadows[0].shadowRadius,vDirectionalShadowCoord[0]),weight);
+#endif
+vec3 base=oceanBase(ray,n,shallow);vec3 c=base+(oceanColor(ray,n,shallow)-base)*visibility;float farMix=smoothstep(1600.,2600.,distanceToEye);c=mix(c,distantColor(ray),farMix);
 if(edges>.5){float border=step(4750.,max(abs(worldPosition.x-cameraPosition.x),abs(worldPosition.z-cameraPosition.z)));c=mix(c,vec3(1.,0.,0.),border);}
 if(ownerColors>.5)c=riverPass>.5?vec3(.8,.25,.1):vec3(.1,.2,.8);if(depthColors>.5)c=vec3(shallow);
 gl_FragColor=vec4(c,1.);
@@ -71,8 +96,11 @@ gl_FragColor=vec4(c,1.);
 /** Owns only environment resources. Renderer/shadow state is leased by the runtime. */
 export class EnvironmentScene {
   readonly root=new Group()
-  readonly review={flatWater:false,freezeWater:false,oceanEdges:false,skyColors:false,shadows:true,freezeBathymetry:false,ownerColors:false,depthColors:false}
+  readonly review={flatWater:false,freezeWater:false,oceanEdges:false,skyColors:false,shadows:true,highlight:true,freezeBathymetry:false,ownerColors:false,depthColors:false}
   readonly metrics={bathymetrySamples:0,textureBytes:DEPTH_SIZE*DEPTH_SIZE*4*3,shadowMapSize:0,shadowExtent:384,bathymetryRevision:0,bathymetryMs:0,peakBathymetryMs:0,bathymetryEpoch:0,bathymetryDirtyPages:0,bathymetryBlend:1,bathymetryUploadBytes:0,bathymetryPendingAgeFrames:0,bathymetryStarvedFrames:0}
+  solarLayout: SolarLayout = 'legacy'
+  solarDayProgress: number | undefined
+  private frameRevision = 0
   private currentFrame=sampleEnvironment()
   get frame():EnvironmentFrame{return this.currentFrame}
   readonly sun=new DirectionalLight(0xffffff,2.6)
@@ -88,24 +116,24 @@ export class EnvironmentScene {
   readonly sky=new Mesh(new SphereGeometry(1,24,12),new ShaderMaterial({vertexShader:skyVertex,fragmentShader:skyFragment,uniforms:this.uniforms,side:BackSide,depthWrite:false,depthTest:false}))
   private waterHole:WaterRect|undefined
   private waterLayout=''
-  readonly water=new Mesh(new BufferGeometry(),new ShaderMaterial({vertexShader:waterVertex,fragmentShader:waterFragment,uniforms:this.waterUniforms}))
+  readonly water=new Mesh(new BufferGeometry(),new ShaderMaterial({vertexShader:waterVertex,fragmentShader:waterFragment,lights:true,uniforms:{...UniformsUtils.clone(UniformsLib.lights),...this.waterUniforms}}))
   setWaterOwner(bounds:{minX:number;minZ:number;maxX:number;maxZ:number},ready:boolean){this.waterUniforms.waterOwnerRect.value.set(bounds.minX,bounds.minZ,bounds.maxX,bounds.maxZ);this.waterUniforms.riverReady.value=Number(ready);this.waterHole=ready?bounds:undefined}
-  createRiverMaterial(){return new ShaderMaterial({vertexShader:waterVertex,fragmentShader:waterFragment,uniforms:{...this.waterUniforms,riverPass:{value:1}}})}
+  createRiverMaterial(){return new ShaderMaterial({vertexShader:waterVertex,fragmentShader:waterFragment,lights:true,uniforms:{...UniformsUtils.clone(UniformsLib.lights),...this.waterUniforms,riverPass:{value:1}}})}
   private lastWaterTime=0
   private preparationFrame=0
   get busy(){return this.field.busy||this.coarseField.busy}
   constructor(scene:Scene,private readonly surface:(x:number,z:number)=>number){
     for(const texture of [this.texture,this.previousTexture,this.coarseTexture]){texture.minFilter=NearestFilter;texture.magFilter=NearestFilter;texture.generateMipmaps=false}
     this.sky.frustumCulled=false;this.sky.renderOrder=-10
-    this.water.frustumCulled=false
+    this.water.frustumCulled=false;this.water.receiveShadow=true
     this.sun.castShadow=true;this.sun.shadow.camera.left=-192;this.sun.shadow.camera.right=192;this.sun.shadow.camera.top=192;this.sun.shadow.camera.bottom=-192
     this.sun.shadow.camera.near=1;this.sun.shadow.camera.far=1400;this.sun.shadow.bias=-.0003;this.sun.shadow.normalBias=.8
     this.root.add(this.sky,this.water,this.sun,this.sun.target,this.fill);scene.add(this.root)
   }
   update(camera:PerspectiveCamera,origin:Address,time:number,quality:'low'|'balanced',preset:SolarPreset='afternoon',options:EnvironmentUpdateOptions={}){
-    const f=this.currentFrame=sampleEnvironment(preset,time)
+    const f=this.currentFrame=sampleEnvironment(this.solarDayProgress ?? preset,time,this.solarLayout,++this.frameRevision)
     this.fog.update(f)
-    this.uniforms.skyColors.value=Number(this.review.skyColors);this.sun.castShadow=this.review.shadows
+    this.uniforms.waterHighlight.value=Number(this.review.highlight);this.uniforms.skyColors.value=Number(this.review.skyColors);this.sun.castShadow=this.review.shadows
     this.sun.color.setRGB(...f.sunColor);this.sun.intensity=f.sunIntensity
     this.fill.color.setRGB(...f.skyZenith);this.fill.groundColor.setRGB(...f.groundFill);this.fill.intensity=f.fillIntensity
     this.sky.position.copy(camera.position)
@@ -115,7 +143,7 @@ export class EnvironmentScene {
     if(this.sun.shadow.mapSize.x!==size){this.sun.shadow.map?.dispose();this.sun.shadow.map=null;this.sun.shadow.mapSize.set(size,size)}
     this.metrics.shadowMapSize=size
     // Snap in the sun's tangent plane in logical coordinates; origin shifts never rotate the light.
-    const dir=new Vector3(...f.sunDirectionWorld),right=new Vector3().crossVectors(dir,new Vector3(0,1,0)).normalize(),up=new Vector3().crossVectors(right,dir).normalize()
+    const dir=new Vector3(...f.sunDirectionWorld),right=new Vector3().crossVectors(dir,new Vector3(0,Math.abs(dir.y)>.999?0:1,Math.abs(dir.y)>.999?1:0)).normalize(),up=new Vector3().crossVectors(right,dir).normalize()
     const focus=new Vector3(camera.position.x+origin.x,camera.position.y-60,camera.position.z+origin.z),texel=384/size
     focus.addScaledVector(right,Math.round(focus.dot(right)/texel)*texel-focus.dot(right))
     focus.addScaledVector(up,Math.round(focus.dot(up)/texel)*texel-focus.dot(up))

@@ -1,3 +1,4 @@
+import { LightViewpointPanel } from './LightViewpointPanel'
 import { WORLD } from './world'
 import { DEFAULT_FLIGHT_SETTINGS, type FlightSettings } from './settings'
 import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } from 'react'
@@ -17,11 +18,19 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
   const { locale, setPreference } = useI18n(), copy = flightMessages[locale]
   const [runtime, setRuntime] = useState<FlightRuntime | null>(null)
   const [retry, setRetry] = useState(0), [settings, setSettings] = useState(false), [observe, setObserve] = useState(false)
+  const [lightPanel,setLightPanel] = useState(false)
+  const lightTrigger=useRef<HTMLButtonElement>(null)
+  const closeLight=()=>{setLightPanel(false);lightTrigger.current?.focus()}
   const root = useRef<HTMLElement>(null), nudgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const descriptorRef = useRef(descriptor)
   const chosenSettings = useRef<FlightSettings>({ ...DEFAULT_FLIGHT_SETTINGS })
   const [draft, setDraft] = useState<FlightSettings>({ ...DEFAULT_FLIGHT_SETTINGS })
   const snapshot = useSyncExternalStore(runtime?.subscribe ?? noSubscription, runtime?.getSnapshot ?? initialSnapshot, initialSnapshot)
+  const previousObservation = useRef(snapshot.observation)
+  useEffect(() => {
+    if (previousObservation.current && previousObservation.current !== 'inactive' && snapshot.observation === 'inactive') lightTrigger.current?.focus()
+    previousObservation.current = snapshot.observation
+  }, [snapshot.observation])
   useEffect(() => {
     const instance = new FlightRuntime(controller, window.matchMedia('(prefers-reduced-motion: reduce)').matches, chosenSettings.current, import.meta.env.DEV && [193706,193707,193708].includes(Number(new URLSearchParams(location.search).get('flightSeed'))) ? {...WORLD,seed:Number(new URLSearchParams(location.search).get('flightSeed'))} : WORLD)
     let active = true
@@ -37,7 +46,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     const keydown = (event: KeyboardEvent) => {
       if (event.code === 'Escape') {
         event.preventDefault(); event.stopPropagation()
-        if (settings) setSettings(false); else if (observe) setObserve(false); else onClose()
+        if (lightPanel) closeLight(); else if (snapshot.observation && snapshot.observation !== 'inactive') runtime.returnFromViewpoint(); else if (settings) setSettings(false); else if (observe) setObserve(false); else onClose()
         return
       }
       if (event.code === 'Tab') {
@@ -48,6 +57,8 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
         return
       }
       if (isFlightShortcutTarget(event.target)) return
+      if(snapshot.observation && snapshot.observation!=='inactive') {if(event.code==='Space'){event.preventDefault();if(!event.repeat)runtime.toggleScenery()}return}
+      if(lightPanel)return
       if (event.code === 'Space' && !event.repeat) {
         event.preventDefault(); if (snapshot.phase === 'flying') runtime.pause(); else runtime.start()
       }
@@ -66,7 +77,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
       window.removeEventListener('blur', clear); document.removeEventListener('visibilitychange', visibility)
       reduced.removeEventListener('change', changed); runtime.input.clear()
     }
-  }, [runtime, snapshot.phase, onClose, settings, observe])
+  }, [runtime, snapshot.phase, snapshot.observation, onClose, settings, observe, lightPanel])
   useEffect(() => {
     if (!runtime || !root.current) return
     const element = root.current
@@ -75,6 +86,8 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     report(); const timer = window.setInterval(report, 2000)
     return () => window.clearInterval(timer)
   }, [runtime])
+  const inViewpoint=Boolean(snapshot.observation && snapshot.observation!=='inactive')
+  const preparingView=snapshot.observation==='preparing'||snapshot.observation==='returning'||snapshot.observation==='failed'
   const flying = snapshot.phase === 'flying'
   const start = () => { setObserve(false); runtime?.start(); root.current?.focus() }
   const stopPointer = (event: PointerEvent<HTMLButtonElement>) => runtime?.input.release(event.pointerId)
@@ -88,11 +101,15 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     <header className="flight-toolbar">
       <button type="button" onClick={onClose}><ChevronLeft size={20}/><span>{copy.back}</span></button>
       <div className="flight-toolbar__right">
-        {['flying', 'paused'].includes(snapshot.phase) && <button type="button" disabled={!flying && !runtime?.canResume} onClick={() => flying ? runtime?.pause() : start()}>{flying ? <Pause size={19}/> : <Play size={19}/>}<span>{flying ? copy.pause : copy.resume}</span></button>}
-        <button type="button" aria-label={copy.settings} aria-expanded={settings} onClick={() => { runtime?.pause('settings'); setSettings(v => !v) }}><Settings2 size={20}/></button>
+        {!inViewpoint && ['flying', 'paused'].includes(snapshot.phase) && <button type="button" disabled={!flying && !runtime?.canResume} onClick={() => flying ? runtime?.pause() : start()}>{flying ? <Pause size={19}/> : <Play size={19}/>}<span>{flying ? copy.pause : copy.resume}</span></button>}
+        <button type="button" ref={lightTrigger} disabled={snapshot.phase==='preparing'||snapshot.phase==='recovering'} aria-expanded={lightPanel} onClick={()=>{if(!inViewpoint)runtime?.pause('settings');setSettings(false);setLightPanel(v=>!v)}}>{locale==='zh-CN'?'阳光与观景':'Light & viewpoints'}</button>
+        <button type="button" disabled={inViewpoint} aria-label={copy.settings} aria-expanded={settings} onClick={() => { runtime?.pause('settings'); setSettings(v => !v) }}><Settings2 size={20}/></button>
       </div>
     </header>
     <div className="flight-place" aria-live="polite"><span>{copy.title}</span><strong>{copy.regions[snapshot.region]}</strong>{snapshot.simplified && <small>{copy.simplified}</small>}</div>
+    {preparingView && <div className="flight-view-preparing" aria-hidden="true"/>}
+    {lightPanel && runtime && <LightViewpointPanel runtime={runtime} snapshot={snapshot} locale={locale} onClose={closeLight}/>}
+    {inViewpoint && !lightPanel && <button className="flight-view-return" type="button" onClick={()=>runtime?.returnFromViewpoint()}>{locale==='zh-CN'?'返回原飞行位置':'Return to flight position'}</button>}
     {settings ? <section className="flight-card flight-settings" aria-label={copy.settings}>
       <div className="flight-card__heading"><h2>{copy.settings}</h2><button type="button" aria-label={copy.close} onClick={() => setSettings(false)}><X size={20}/></button></div>
       <label className="flight-setting"><span>{copy.gentle}<small>{copy.gentleHelp}</small></span><input type="checkbox" checked={snapshot.gentle} onChange={e => configure({ ...draft, gentle: e.target.checked })}/></label>
@@ -107,7 +124,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
       <button type="button" onClick={() => restart({ ...DEFAULT_FLIGHT_SETTINGS })}>{copy.defaults}</button>
       <label className="flight-setting">{copy.language}<select value={locale} onChange={e => setPreference(e.target.value === 'en' ? 'en' : 'zh-CN')}><option value="zh-CN">简体中文</option><option value="en">English</option></select></label>
       <p>{copy.art}</p><button type="button" className="flight-primary" disabled={!runtime?.canResume} onClick={() => { setSettings(false); start() }}>{copy.resume}</button>
-    </section> : !flying && <section className="flight-card flight-intro" aria-live="polite">
+    </section> : !flying && !lightPanel && !inViewpoint && <section className="flight-card flight-intro" aria-live="polite">
       <span className="flight-eyebrow">{copy.title} · PTERANODON</span>
       <h1>{snapshot.phase === 'buffering' ? copy.terrain : snapshot.phase === 'preparing' ? copy.preparing : snapshot.phase === 'recovering' ? copy.error : observe ? copy.observation : snapshot.phase === 'ready' ? copy.ready : copy.paused}</h1>
       <p>{observe ? copy.observeText : snapshot.phase === 'ready' ? copy.subtitle : reason}</p>
@@ -119,7 +136,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
       </div>}
       <small>{copy.art}</small>
     </section>}
-    {import.meta.env.DEV && runtime && <FlightReviewControls runtime={runtime}/>}
+    {import.meta.env.DEV && runtime && !inViewpoint && !lightPanel && <FlightReviewControls runtime={runtime}/>}
     {flying && <>
       <div className="flight-direction-pad" role="group" aria-label={copy.directions}>
         {([{ label: copy.up, icon: ArrowUp, turn: 0, climb: 1, position: 'up' }, { label: copy.left, icon: ArrowLeft, turn: -1, climb: 0, position: 'left' }, { label: copy.down, icon: ArrowDown, turn: 0, climb: -1, position: 'down' }, { label: copy.right, icon: ArrowRight, turn: 1, climb: 0, position: 'right' }]).map(({ label, icon: Icon, turn, climb, position }) => <button type="button" key={position} className={`flight-direction flight-direction--${position}`} aria-label={label}

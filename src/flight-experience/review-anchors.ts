@@ -1,12 +1,18 @@
 import { WORLD, type Position, type WorldConfig } from './world'
 import type { FlightView } from './settings'
-import type { SolarPreset } from './environment/environment-state'
+import type { SolarLayout, SolarPreset } from './environment/environment-state'
 export interface CaptureAnchor {
   id: string; world: WorldConfig; position: Position; heading: number
+  camera?: { position: Position; target: Position }; solarLayout?: SolarLayout
   view: FlightView; pitch: number; presentationSeconds: number; preset: SolarPreset
 }
 /** Approximate compositions, not recovered metadata from the user's three screenshots. */
 export const CAPTURE_ANCHORS: readonly CaptureAnchor[] = [
+  // E1 G0 candidates only. Exact cameras, no change to normal flight framing.
+  { id: 'e1-seaward', world: WORLD, position: { x:160,y:119.3,z:500 }, heading:-.59, view:'standard', pitch:0, presentationSeconds:0, preset:'evening', solarLayout:'sunset-bay',
+    camera:{position:{x:160,y:119.3,z:500},target:{x:-397,y:50,z:-330}} },
+  { id: 'e1-cliff', world: WORLD, position: { x:-160,y:209.3,z:350 }, heading:.57, view:'standard', pitch:0, presentationSeconds:0, preset:'afternoon', solarLayout:'sunset-bay',
+    camera:{position:{x:-160,y:209.3,z:350},target:{x:420,y:120,z:-550}} },
   { id: 'coast-oblique', world: WORLD, position: {x:-160,y:100,z:350}, heading:.22, view:'standard',pitch:0,presentationSeconds:0,preset:'afternoon' },
   { id: 'shore-overlook', world: WORLD, position: {x:100,y:350,z:350}, heading:Math.PI/2, view:'wide',pitch:-.18,presentationSeconds:0,preset:'afternoon' },
   { id: 'ocean-high', world: WORLD, position: {x:-300,y:1400,z:350}, heading:-Math.PI/2, view:'wide',pitch:0,presentationSeconds:0,preset:'afternoon' },

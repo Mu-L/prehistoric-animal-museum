@@ -4,7 +4,7 @@ export type FlightHeight = 100 | 190 | 350
 export type FlightView = 'near' | 'standard' | 'wide'
 export type FlightStart = 'coast' | 'valley' | 'overview'
 export interface FlightSettings { speed: FlightSpeed; height: FlightHeight; view: FlightView; start: FlightStart; quality: 'low' | 'balanced'; gentle: boolean }
-export const DEFAULT_FLIGHT_SETTINGS: FlightSettings = { speed: 28, height: 100, view: 'standard', start: 'coast', quality: 'low', gentle: false }
+export const DEFAULT_FLIGHT_SETTINGS: FlightSettings = { speed: 28, height: 190, view: 'standard', start: 'coast', quality: 'low', gentle: false }
 export function spawnState(settings: FlightSettings, world: WorldSampler = createWorldSampler()) {
   const { safeSurface, terrainAt, valleyAt } = world
   const z = settings.start === 'coast' ? 350 : settings.start === 'valley' ? -1400 : -2600

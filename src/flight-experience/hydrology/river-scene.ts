@@ -29,7 +29,7 @@ export class RiverScene {
   }
   if(this.released)return
   const geometry=new BufferGeometry();geometry.setAttribute('position',new BufferAttribute(positions,3));geometry.setAttribute('waterFlow',new BufferAttribute(flow,3));geometry.setIndex(indices);geometry.computeBoundingSphere()
-  const material=this.createMaterial(),mesh=new Mesh(geometry,material)
+  const material=this.createMaterial(),mesh=new Mesh(geometry,material);mesh.receiveShadow=true
   // One synchronous ownership transfer after every required resource exists.
   this.geometry=geometry;this.material=material;this.root.add(mesh);this.ready=true;this.publish(true)
  }

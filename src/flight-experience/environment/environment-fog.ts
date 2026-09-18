@@ -8,7 +8,7 @@ import type { EnvironmentFrame } from './environment-state'
  */
 export const ENVIRONMENT_FOG_FRAGMENT = ShaderChunk.fog_fragment.replace(
   'gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );',
-  `vec3 flightFogRadiance=distantColor(inverseTransformDirection(flightFogView,viewMatrix));
+  `vec3 flightFogRadiance=fogRadiance(inverseTransformDirection(flightFogView,viewMatrix));
   #if defined(TONE_MAPPING)
     flightFogRadiance=toneMapping(flightFogRadiance);
   #endif
@@ -16,7 +16,7 @@ export const ENVIRONMENT_FOG_FRAGMENT = ShaderChunk.fog_fragment.replace(
   gl_FragColor.rgb=mix(gl_FragColor.rgb,flightFogOutput,fogFactor);`,
 )
 export function createEnvironmentFog(initialFrame:EnvironmentFrame){
-  const uniforms={skyColors:{value:0},skyZenith:{value:new Color()},horizon:{value:new Color()},sunDirection:{value:new Vector3()},sunColor:{value:new Color()}}
+  const uniforms={waterHighlight:{value:1},skyColors:{value:0},skyZenith:{value:new Color()},horizon:{value:new Color()},sunDirection:{value:new Vector3()},sunColor:{value:new Color()}}
   const decorated=new WeakSet<Material>()
   function update(frame:EnvironmentFrame){
     uniforms.skyZenith.value.setRGB(...frame.skyZenith);uniforms.horizon.value.setRGB(...frame.horizon)
