@@ -30,6 +30,7 @@ export const CAPTURE_ANCHORS: readonly CaptureAnchor[] = [
   // Altitude comparisons share the existing world and sunset; no recovered video coordinates.
   ...[ {id:'altitude-low',y:1.6,x:160,z:500,tx:-116,ty:-6,tz:-461},
     {id:'altitude-mid',y:210,x:-160,z:350,tx:420,ty:120,tz:-550},
+    {id:'altitude-flight',y:350,x:100,z:350,tx:-100,ty:220,tz:-1400},
     {id:'altitude-high',y:900,x:-450,z:950,tx:1000,ty:120,tz:-4000},
     {id:'altitude-top',y:1400,x:-600,z:1100,tx:1500,ty:100,tz:-4500},
   ].map(v=>({id:v.id,world:WORLD,position:{x:v.x,y:v.y,z:v.z},heading:0,view:'standard' as const,pitch:0,presentationSeconds:0,preset:'evening' as const,solarLayout:'sunset-bay' as const,camera:{position:{x:v.x,y:v.y,z:v.z},target:{x:v.tx,y:v.ty,z:v.tz}}})),
@@ -41,5 +42,6 @@ export const REVIEW_ROUTES = [
   { id:'B-cliff', anchor:{...CAPTURE_ANCHORS[3]!,id:'B-cliff',position:{x:290,y:185,z:-1250},heading:0},turnAt:40,turn:.18 },
   { id:'C-tree-return',anchor:{...CAPTURE_ANCHORS[3]!,id:'C-tree-return',position:{x:150,y:140,z:-1050},heading:Math.PI},turnAt:25,turn:.65 },
   { id:'E-river-mouth',anchor:{...CAPTURE_ANCHORS[5]!,id:'E-river-mouth'},turnAt:28,turn:.65 },
+  { id:'F-350-coast',anchor:{...CAPTURE_ANCHORS[2]!,id:'F-350-coast',preset:'evening',solarLayout:'sunset-bay',position:{x:100,y:350,z:350},heading:-.12},turnAt:45,turn:0 },
   { id:'D-ridge',anchor:{...CAPTURE_ANCHORS[3]!,id:'D-ridge',position:{x:1770,y:540,z:-760},heading:-Math.PI/2},turnAt:40,turn:.15 },
 ] as const

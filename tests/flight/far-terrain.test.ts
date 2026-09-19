@@ -11,3 +11,14 @@ it('prepares bounded far strips incrementally and preserves origin geometry',()=
  for(let i=0;i<200;i++){budget.begin(i);ring.update(3000,3000,3000,2048,budget);expect(ring.metrics.strips).toBeLessThanOrEqual(14)}
  ring.dispose();expect(ring.root.children).toHaveLength(0)
 })
+it('reports only installed cells and retains their ownership during a streaming shift',()=>{
+ const ring=new FarTerrain(createWorldSampler(),()=>{}),budget=new FrameWorkBudget(()=>0)
+ for(let i=0;i<160;i++){budget.begin(i);ring.update(0,0,3000,2048,budget)}
+ const before=ring.coveredChunks
+ expect(before.some(a=>a.x===4&&a.z===0)).toBe(true)
+ expect(before.some(a=>a.x===0&&a.z===0)).toBe(false)
+ budget.begin(161);ring.update(513,0,3000,2048,budget)
+ expect(ring.metrics.pending).toBeGreaterThan(0)
+ expect(ring.coveredChunks).toEqual(before)
+ ring.dispose();expect(ring.coveredChunks).toEqual([])
+})

@@ -377,7 +377,7 @@ export class FlightRuntime implements ExternalExperience {
     if(this.frameId%5!==0)terrainWork()
     if(this.frameId%5!==4)farWork()
     if(this.frameId%6!==5&&!this.reviewIsolation.freezeWorld&&!this.reviewDistanceBaseline)this.horizonTerrain.update(focus.x,focus.z,this.workBudget)
-    this.horizonTerrain.setCovered(focus.x,focus.z,profile.terrainVisible,this.farTerrain.metrics.pending===0)
+    this.horizonTerrain.setCoverage([...this.terrain.resident.values()].map(tile=>tile.result.chunk).concat(this.farTerrain.coveredChunks))
     this.scenery.environment.fog.uniforms.landDistanceReady.value=Number(this.horizonTerrain.ready&&!this.reviewDistanceBaseline)
     this.farTerrain.setNearCoverage([...this.terrain.resident.values()].map(tile=>tile.result.chunk))
     // Expand visibility only after both coarse layers can cover it; no empty-far-land reveal.

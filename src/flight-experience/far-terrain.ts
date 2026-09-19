@@ -73,6 +73,15 @@ export class FarTerrain {
   this.metrics.vertices=0;this.metrics.triangles=0;this.metrics.bytes=0
   for(const strip of this.strips.values()){this.metrics.vertices+=strip.geometry.getAttribute('position').count;this.metrics.triangles+=(strip.geometry.index?.count??0)/3;this.metrics.bytes+=Object.values(strip.geometry.attributes).reduce((s,a)=>s+a.array.byteLength,0)+(strip.geometry.index?.array.byteLength??0)}
  }
+ /** Published cells only, including retained strips while replacements are building. */
+ get coveredChunks(): Address[] {
+  const cells=new Map<string,Address>()
+  for(const strip of this.strips.values())for(let x=strip.x;x<strip.x+strip.half*2;x+=512){
+   if(Math.max(Math.abs(x+256-strip.cx),Math.abs(strip.z+256-strip.cz))<strip.inner)continue
+   const cell={x:x/512,z:strip.z/512};cells.set(`${cell.x},${cell.z}`,cell)
+  }
+  return [...cells.values()]
+ }
  relocate(origin:Address){this.origin={...origin};this.localOrigin.value.set(origin.x,origin.z);for(const strip of this.strips.values())strip.mesh.position.set(strip.x-origin.x,0,strip.z-origin.z)}
  dispose(){for(const strip of this.strips.values())strip.geometry.dispose();this.strips.clear();this.build=null;this.coverage.dispose();this.material.dispose();this.root.clear();this.root.removeFromParent()}
 }

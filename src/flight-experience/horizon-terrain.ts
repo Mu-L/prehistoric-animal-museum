@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial, Vector2, Vector4, type Material } from 'three'
+import { BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial, Vector2, DataTexture, RedFormat, UnsignedByteType, type Material } from 'three'
 import type { Address, WorldSampler } from './world'
 import type { FrameWorkBudget } from './frame-work-budget'
 
@@ -14,28 +14,40 @@ export class HorizonTerrain {
   readonly material = new MeshStandardMaterial({ vertexColors: true, roughness: 1 })
   readonly metrics = { pending: 1, vertices: 0, triangles: 0, bytes: 0, preparedRows: 0 }
   private readonly originUniform = { value: new Vector2() }
-  private readonly coveredRect = { value: new Vector4(0, 0, 0, 0) }
+  private readonly coverage = new DataTexture(new Uint8Array(33 * 33), 33, 33, RedFormat, UnsignedByteType)
+  private readonly coverageOrigin = { value: new Vector2() }
+  private coverageSignature = ''
   private origin: Address = { x: 0, z: 0 }
   private mesh: Mesh | null = null
   private published: Address | null = null
   private build: { x: number; z: number; row: number; positions: Float32Array; colors: Float32Array } | null = null
   constructor(private readonly world: WorldSampler, decorate: (material: Material) => void) {
+    this.coverage.generateMipmaps = false; this.coverage.needsUpdate = true
     decorate(this.material)
     const compile = this.material.onBeforeCompile.bind(this.material), key = this.material.customProgramCacheKey.bind(this.material)
     this.material.onBeforeCompile = (shader, renderer) => {
       compile(shader, renderer)
-      Object.assign(shader.uniforms, { horizonOrigin: this.originUniform, horizonCovered: this.coveredRect })
+      Object.assign(shader.uniforms, { horizonOrigin: this.originUniform, horizonCoverage: { value: this.coverage }, horizonCoverageOrigin: this.coverageOrigin })
       shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nuniform vec2 horizonOrigin; varying vec2 horizonXZ; varying float horizonHeight;')
         .replace('#include <project_vertex>', '#include <project_vertex>\nhorizonXZ=(modelMatrix*vec4(transformed,1.)).xz+horizonOrigin;horizonHeight=(modelMatrix*vec4(transformed,1.)).y;')
-      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec4 horizonCovered; varying vec2 horizonXZ; varying float horizonHeight;')
-        .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif(horizonHeight<-.7)discard; if(all(greaterThan(horizonXZ,horizonCovered.xy))&&all(lessThan(horizonXZ,horizonCovered.zw)))discard;')
+      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D horizonCoverage; uniform vec2 horizonCoverageOrigin; varying vec2 horizonXZ; varying float horizonHeight;')
+        .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif(horizonHeight<-.7)discard; vec2 uv=(floor((horizonXZ-horizonCoverageOrigin)/512.)+.5)/33.; if(all(greaterThanEqual(uv,vec2(0.)))&&all(lessThan(uv,vec2(1.)))&&texture2D(horizonCoverage,uv).r>.5)discard;')
     }
-    this.material.customProgramCacheKey = () => `${key()}:horizon-land-v1`
+    this.material.customProgramCacheKey = () => `${key()}:horizon-land-coverage-v2`
   }
   get ready() { return this.mesh !== null }
-  setCovered(x: number, z: number, range: number, ready: boolean) {
-    const cx = Math.floor(x / 512) * 512, cz = Math.floor(z / 512) * 512, half = ready ? Math.ceil(range / 512) * 512 - 256 : 1024
-    this.coveredRect.value.set(cx - half, cz - half, cx + half, cz + half)
+  /** Never infer ownership from pending work: moving streams retain real terrain. */
+  setCoverage(addresses: readonly Address[]) {
+    const signature=addresses.map(a=>`${a.x},${a.z}`).sort().join(';')
+    if(signature===this.coverageSignature)return
+    this.coverageSignature=signature
+    const data=this.coverage.image.data as Uint8Array;data.fill(0)
+    if(addresses.length){
+      const x=Math.min(...addresses.map(a=>a.x)),z=Math.min(...addresses.map(a=>a.z))
+      this.coverageOrigin.value.set(x*512,z*512)
+      for(const a of addresses){const dx=a.x-x,dz=a.z-z;if(dx>=0&&dz>=0&&dx<33&&dz<33)data[dz*33+dx]=255}
+    }
+    this.coverage.needsUpdate=true
   }
   update(x: number, z: number, budget: FrameWorkBudget) {
     const cx = Math.floor(x / 2048) * 2048, cz = Math.floor(z / 2048) * 2048
@@ -75,5 +87,5 @@ export class HorizonTerrain {
     this.origin = { ...origin }; this.originUniform.value.set(origin.x, origin.z)
     if (this.mesh && this.published) this.mesh.position.set(this.published.x - origin.x, 0, this.published.z - origin.z)
   }
-  dispose() { this.mesh?.geometry.dispose(); this.material.dispose(); this.root.clear(); this.root.removeFromParent(); this.build = null; this.mesh = null; this.published = null; this.metrics.pending = 0 }
+  dispose() { this.mesh?.geometry.dispose(); this.material.dispose(); this.coverage.dispose(); this.root.clear(); this.root.removeFromParent(); this.build = null; this.mesh = null; this.published = null; this.metrics.pending = 0 }
 }
