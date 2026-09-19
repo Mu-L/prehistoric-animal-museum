@@ -36,6 +36,8 @@ export const CAPTURE_ANCHORS: readonly CaptureAnchor[] = [
     {id:'altitude-high',y:900,x:-450,z:950,tx:1000,ty:120,tz:-4000},
     {id:'altitude-top',y:1400,x:-600,z:1100,tx:1500,ty:100,tz:-4500},
   ].map(v=>({id:v.id,world:WORLD,position:{x:v.x,y:v.y,z:v.z},heading:0,view:'standard' as const,pitch:0,presentationSeconds:0,preset:'evening' as const,solarLayout:'sunset-bay' as const,camera:{position:{x:v.x,y:v.y,z:v.z},target:{x:v.tx,y:v.ty,z:v.tz}}})),
+  // Coastal flight regression: same 205m camera for clear haze and sunset glitter.
+  ...(['afternoon','evening'] as const).map(preset=>({id:`coast-flight-${preset}`,world:WORLD,position:{x:-184.77525955,y:200.41138889,z:-323.23024902},heading:0,view:'standard' as const,pitch:0,presentationSeconds:24.1346,preset,solarLayout:'sunset-bay' as const,camera:{position:{x:-184.09599322,y:205.41138889,z:-311.92273206},target:{x:-241.22034060,y:-98.67663086,z:-1262.85242724}}})),
 ]
 
 /** Approximate feedback routes, never claimed to recover the user's screenshot coordinates. */

@@ -40,12 +40,12 @@ export function createEnvironmentFog(initialFrame:EnvironmentFrame){
         shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 flightFogView;')
           .replace('#include <project_vertex>','#include <project_vertex>\nflightFogView=mvPosition.xyz;')
         shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>\nvarying vec3 flightFogView;\n${ENVIRONMENT_ATMOSPHERE_GLSL}`)
-          .replace('#include <fog_fragment>',land?ENVIRONMENT_FOG_FRAGMENT.replace('vec3 flightFogRadiance=', `float altitudeBlend=smoothstep(120.,400.,cameraPosition.y)*landDistanceReady;
+          .replace('#include <fog_fragment>',land?ENVIRONMENT_FOG_FRAGMENT.replace('vec3 flightFogRadiance=', `// Once real distant coverage is published, clear-air visibility must not depend on camera altitude.
           float landDistance=length(flightFogView);
-          float landHaze=(1.-exp(-max(0.,landDistance-1000.)/6500.));
+          float landHaze=(1.-exp(-max(0.,landDistance-1200.)/8000.));
           landHaze=mix(landHaze,1.,smoothstep(9500.,11500.,landDistance));
-          fogFactor=mix(fogFactor,landHaze,altitudeBlend);
-          vec3 flightFogRadiance=`):ENVIRONMENT_FOG_FRAGMENT)
+          fogFactor=mix(fogFactor,landHaze,landDistanceReady);
+          vec3 flightFogRadiance=`).replace('fogRadiance(inverseTransformDirection(flightFogView,viewMatrix))','landFogRadiance(inverseTransformDirection(flightFogView,viewMatrix),landDistance)'):ENVIRONMENT_FOG_FRAGMENT)
         shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>', `#include <lights_fragment_end>\nfloat cloudT=cloudTransmission(flightWorldPoint(flightFogView),sunDirection);\nreflectedLight.directDiffuse*=cloudT;reflectedLight.directSpecular*=cloudT;`)
         if(land){
           const response=shader.fragmentShader.includes('vec3 trialC=')?'dot(tw,vec4(.55,.85,.95,.7))+dot(tx,vec2(.65,.35))':'.55'
@@ -63,7 +63,7 @@ export function createEnvironmentFog(initialFrame:EnvironmentFrame){
           #include <opaque_fragment>
         `)
       }
-      material.customProgramCacheKey=()=>`${cacheKey()}:flight-directional-fog-w1:${land}`
+      material.customProgramCacheKey=()=>`${cacheKey()}:flight-directional-fog-w1-clear-air:${land}`
       material.needsUpdate=true
     },
   }

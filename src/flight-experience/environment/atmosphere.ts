@@ -48,16 +48,23 @@ vec3 solarWaveNormal(vec3 surfacePosition,vec3 n){
   vec2 dir=normalize(vec2(.37+fi*.31,1.-fi*.27));
   // Integer wave vectors retain phase across the 8192m origin envelope.
   vec2 wave=floor(dir*k*8192./6.2831853+.5)*6.2831853/8192.;
-  float phase=dot(p,wave)-solarWaterTime*(.31+fi*.13);
+  // Crossed, slowly advected swell bends the crest lines instead of parallel bands.
+  // Integer wave vectors keep both phase and its analytic gradient origin-periodic.
+  vec2 warpA=vec2(5.+fi,3.-fi)*6.2831853/8192.;
+  vec2 warpB=vec2(-3.+fi,7.+fi)*6.2831853/8192.;
+  float a=dot(p,warpA)-solarWaterTime*.09+fi*1.7;
+  float b=dot(p,warpB)+solarWaterTime*.07-fi*.8;
+  float phase=dot(p,wave)-solarWaterTime*(.31+fi*.13)+1.8*sin(a)+1.2*sin(b);
+  vec2 phaseGradient=wave+1.8*cos(a)*warpA+1.2*cos(b)*warpB;
   float footprint=length(vec2(dFdx(phase),dFdy(phase)));
   float resolved=1.-smoothstep(.7,2.5,footprint);
-  slope+=normalize(wave)*cos(phase)*(.035+fi*.009)*resolved;
+  slope+=phaseGradient/length(wave)*cos(phase)*(.035+fi*.009)*resolved;
  }
  return normalize(vec3(n.x-slope.x*solarWaveStrength,n.y,n.z-slope.y*solarWaveStrength));
 }
 vec3 oceanColor(vec3 ray,vec3 n,float shallow,vec3 surfacePosition){
  vec3 specNormal=solarWaveNormal(surfacePosition,n);
- float variance=min(.025,.35*(dot(dFdx(specNormal),dFdx(specNormal))+dot(dFdy(specNormal),dFdy(specNormal))));
+ float variance=min(.025,.0006+.35*(dot(dFdx(specNormal),dFdx(specNormal))+dot(dFdy(specNormal),dFdy(specNormal))));
  float energy=waterHighlight*.018*waterSun(specNormal,-ray,sunDirection,variance);
  // Preserve gold through tone mapping; reserve near-white for the rare peak.
  float peak=energy/(1.+energy/2.8);
@@ -71,6 +78,8 @@ vec3 oceanColor(vec3 ray,vec3 n,float shallow,vec3 surfacePosition){
  return oceanBase(ray,n,shallow)+cloudReflection*.78*fresnel*(1.-shallow*.22)+highlight*cloudTransmission(surfacePosition,sunDirection);
 }
 vec3 fogRadiance(vec3 ray){if(ray.y>=0.)return skyGradient(ray);return mix(oceanBase(ray,vec3(0.,1.,0.),0.),skyGradient(vec3(ray.x,0.,ray.z)),1.-smoothstep(0.,mix(.012,.024,smoothstep(150.,600.,cameraPosition.y)*landDistanceReady),-ray.y));}
+// At the coverage boundary, meet the same distant sky/ocean background exactly.
+vec3 landFogRadiance(vec3 ray,float distance){return mix(skyGradient(normalize(vec3(ray.x,max(ray.y,.025),ray.z))),fogRadiance(ray),smoothstep(6500.,9500.,distance));}
 vec3 distantColor(vec3 ray){if(ray.y>=0.)return skyColor(ray);
  vec3 ocean=oceanColor(ray,vec3(0.,1.,0.),0.,cameraPosition+ray*(max(cameraPosition.y+.7,1.)/max(-ray.y,.0001)));return mix(ocean,skyGradient(vec3(ray.x,0.,ray.z)),1.-smoothstep(0.,mix(.012,.024,smoothstep(150.,600.,cameraPosition.y)*landDistanceReady),-ray.y));}
 `

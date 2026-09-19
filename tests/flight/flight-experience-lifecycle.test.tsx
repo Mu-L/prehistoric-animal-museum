@@ -140,7 +140,7 @@ it('changes weather live, isolates the two automatic modes and preserves pending
  fireEvent.click(screen.getByRole('button',{name:'Overcast'}))
  act(()=>runtime.update(60))
  expect(runtime.weather.snapshot().resolved).toEqual(resolved)
- expect(screen.getByText('Paused; transitions resume with the scenery')).toBeVisible()
+ expect(screen.getByText('Target: Overcast; transition incomplete. Paused; transitions resume with the scenery')).toBeVisible()
  const key=vi.spyOn(runtime.input,'key');fireEvent.keyDown(screen.getByRole('button',{name:'Overcast'}),{code:'ArrowRight',key:'ArrowRight'});expect(key).not.toHaveBeenCalled()
  view.unmount()
 })
