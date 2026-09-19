@@ -43,8 +43,9 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
   }, [controller, retry])
   useEffect(() => {
     if (!runtime) return
-    const clear = () => { runtime.input.clear(); runtime.pause('hidden') }
-    const visibility = () => { if (document.hidden) clear() }
+    const clear = () => runtime.setFocusState(false)
+    const focus = () => runtime.setFocusState(true)
+    const visibility = () => runtime.setVisibilityState(!document.hidden)
     const keydown = (event: KeyboardEvent) => {
       if (event.code === 'Escape') {
         event.preventDefault(); event.stopPropagation()
@@ -71,11 +72,11 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
     const changed = () => { if (reduced.matches) runtime.setGentle(true) }
     window.addEventListener('keydown', keydown); window.addEventListener('keyup', keyup)
-    window.addEventListener('blur', clear); document.addEventListener('visibilitychange', visibility)
+    window.addEventListener('blur', clear); window.addEventListener('focus', focus); document.addEventListener('visibilitychange', visibility)
     reduced.addEventListener('change', changed)
     return () => {
       window.removeEventListener('keydown', keydown); window.removeEventListener('keyup', keyup)
-      window.removeEventListener('blur', clear); document.removeEventListener('visibilitychange', visibility)
+      window.removeEventListener('blur', clear); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility)
       reduced.removeEventListener('change', changed); runtime.input.clear()
     }
   }, [runtime, snapshot.phase, snapshot.observation, onClose, settings, observe])
@@ -87,7 +88,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     report(); const timer = window.setInterval(report, 2000)
     return () => window.clearInterval(timer)
   }, [runtime])
-  const inViewpoint=Boolean(snapshot.observation && snapshot.observation!=='inactive')
+  const inViewpoint=snapshot.reason !== 'error' && Boolean(snapshot.observation && snapshot.observation!=='inactive')
   const preparingView=snapshot.observation==='preparing'||snapshot.observation==='returning'||snapshot.observation==='failed'
   const flying = snapshot.phase === 'flying'
   const start = () => { setObserve(false); runtime?.start(); root.current?.focus() }
@@ -109,7 +110,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     <div className="flight-place" aria-live="polite"><span>{copy.title}</span><strong>{copy.regions[snapshot.region]}</strong>{snapshot.simplified && <small>{copy.simplified}</small>}</div>
     {preparingView && <div className="flight-view-preparing" aria-hidden="true"/>}
     {inViewpoint && !settings && <button className="flight-view-return" type="button" onClick={()=>runtime?.returnFromViewpoint()}>{locale==='zh-CN'?'返回原飞行位置':'Return to flight position'}</button>}
-    {settings ? <section id="flight-settings-panel" className="flight-card flight-settings" aria-label={locale==='zh-CN'?'飞行与风景':'Flight & scenery'}>
+    {snapshot.reason === 'error' ? <section className="flight-card" role="alert"><h1>{copy.error}</h1><button type="button" onClick={()=>restart()}>{copy.retry}</button><button type="button" onClick={onClose}>{copy.back}</button></section> : settings ? <section id="flight-settings-panel" className="flight-card flight-settings" aria-label={locale==='zh-CN'?'飞行与风景':'Flight & scenery'}>
       <div className="flight-card__heading"><h2>{locale==='zh-CN'?'飞行与风景':'Flight & scenery'}</h2><button type="button" aria-label={copy.close} onClick={closeSettings}><X size={20}/></button></div>
       <p className="flight-panel-status">{inViewpoint ? (locale==='zh-CN'?'已停下观景':'Stopped at a viewpoint') : flying ? (locale==='zh-CN'?'飞翔继续中 · 可以边飞边调':'Still flying · adjust as you go') : (locale==='zh-CN'?'飞翔已停下 · 可以安心调整':'Flight stopped · take your time')}</p>
       <div className="flight-panel-sections" role="group" aria-label={locale==='zh-CN'?'设置分类':'Settings sections'}>{(['sunlight','flight','viewpoints'] as const).map((value,i)=><button key={value} type="button" aria-pressed={section===value} onClick={()=>setSection(value)}>{(locale==='zh-CN'?['阳光','飞行','观景']:['Sunlight','Flying','Viewpoints'])[i]}</button>)}</div>

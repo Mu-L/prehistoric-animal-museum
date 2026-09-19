@@ -152,6 +152,43 @@ describe('flight owned resources and recovery', () => {
     expect(runtime.environmentClock.solarDayProgress).toBe(.94)
     runtime.close();expect(runtime.observation.bookmark).toBeNull()
   })
+  it('recovers entry and return preparation after hidden/context overlap without reviving scenery', async () => {
+    const h = host(), runtime = new FlightRuntime(h.controller, false)
+    const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
+    for (const direction of ['entry', 'return']) {
+      runtime.enterViewpoint('seaward')
+      if (direction === 'return') runtime.returnFromViewpoint()
+      runtime.setVisibilityState(false); runtime.setFocusState(false)
+      const frame = runtime.frameId, motion = runtime.environmentClock.motionSeconds
+      runtime.contextLost(); runtime.contextRestored(); runtime.update(60)
+      expect(runtime.running).toBe(false); expect(runtime.frameId).toBe(frame)
+      runtime.setVisibilityState(true); expect(runtime.running).toBe(false)
+      runtime.setFocusState(true); expect(runtime.running).toBe(true)
+      runtime.update(0)
+      expect(runtime.frameId).toBe(frame + 1)
+      expect(runtime.environmentClock.motionSeconds).toBe(motion)
+      expect(runtime.observation.sceneryPaused).toBe(true)
+      expect(runtime.getSnapshot().phase).not.toBe('flying')
+    }
+    runtime.close(); runtime.setFocusState(true); expect(runtime.running).toBe(false)
+  })
+  it('stops an active observation after fatal failure and rejects late recovery callbacks', async () => {
+    const h = host(), runtime = new FlightRuntime(h.controller, false)
+    const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
+    runtime.enterViewpoint('seaward'); runtime.observation.complete(runtime.observation.generation)
+    expect(runtime.running).toBe(true)
+    const motion = runtime.environmentClock.motionSeconds, token = runtime.observation.generation
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    runtime.fail(new Error('injected render failure'))
+    runtime.contextLost(); runtime.contextRestored(); runtime.setVisibilityState(true); runtime.setFocusState(true)
+    runtime.update(60); runtime.fail(new Error('late repeated failure'))
+    expect(runtime.running).toBe(false); expect(error).toHaveBeenCalledTimes(1)
+    expect(runtime.environmentClock.motionSeconds).toBe(motion)
+    expect(runtime.observation.complete(token)).toBe(false)
+    expect(runtime.observation.bookmark).not.toBeNull()
+    expect(runtime.getSnapshot().reason).toBe('error')
+    runtime.close(); expect(h.dispose).toHaveBeenCalledTimes(1)
+  })
   it('has a seamless non-static authored glide and no animated root translation', () => {
     const clip = AnimationClip.parse({ ...glide, blendMode: NormalAnimationBlendMode })
     expect(clip.duration).toBe(4)

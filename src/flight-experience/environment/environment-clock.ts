@@ -7,11 +7,11 @@ export interface ClockPolicy {
   readonly allowExplicitSolarPreview: boolean
   readonly allowBudgetedPreparation: boolean
 }
-export function clockPolicy(activity: EnvironmentActivity, sceneryPaused = false, scrubbing = false): ClockPolicy {
+export function clockPolicy(activity: EnvironmentActivity, sceneryPaused = false, _scrubbing = false): ClockPolicy {
   const active = activity === 'flying' || activity === 'viewpoint'
   const suspended = activity === 'hidden' || activity === 'context-lost' || activity === 'closed'
   return {
-    advanceMovement: activity === 'flying' && !scrubbing,
+    advanceMovement: activity === 'flying',
     advanceEnvironmentMotion: active && !sceneryPaused,
     advanceAutomaticSun: false,
     allowExplicitSolarPreview: active || activity === 'paused',
