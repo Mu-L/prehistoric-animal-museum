@@ -15,7 +15,7 @@ describe('E1 independent environment clock', () => {
     ['closed', false, false, false, false],
   ] as const)('%s admits only its permitted work', (activity, movement, motion, preview, preparation) => {
     expect(clockPolicy(activity)).toEqual({ advanceMovement: movement, advanceEnvironmentMotion: motion,
-      advanceAutomaticSun: false, allowExplicitSolarPreview: preview, allowBudgetedPreparation: preparation })
+      advanceAutomaticSun: motion, allowExplicitSolarPreview: preview, allowBudgetedPreparation: preparation })
   })
   it('scrubbing changes sunlight without driving travel or rewinding wave time', () => {
     const clock = new EnvironmentClock(), simulation = new FlightSimulation(() => 0)
@@ -63,7 +63,49 @@ describe('E1 independent environment clock', () => {
     expect(clock.motionSeconds).toBe(MAX_ENVIRONMENT_DELTA)
     for (const value of [NaN, Infinity, -Infinity]) clock.setSolarDayProgress(value)
     expect(clock.solarDayProgress).toBe(.68)
-    clock.setSolarDayProgress(-1); expect(clock.solarDayProgress).toBe(0)
-    clock.setSolarDayProgress(2); expect(clock.solarDayProgress).toBe(1)
+    clock.setSolarDayProgress(-1); expect(clock.solarDayProgress).toBe(.08)
+    clock.setSolarDayProgress(2); expect(clock.solarDayProgress).toBe(.94)
   })
+})
+
+describe('automatic daylight', () => {
+ it.each([15, 30, 60, 120])('completes exactly one full daylight in 1500 admitted seconds at %i Hz', hz => {
+  const clock = new EnvironmentClock(), policy = clockPolicy('viewpoint')
+  clock.restartDaylightFromMorning()
+  for (let frame = 0; frame < 1500 * hz; frame++) clock.tick(1 / hz, policy)
+  expect(clock.solarDayProgress).toBe(.94)
+  expect(clock.snapshot(policy).status).toBe('ended')
+  clock.tick(1 / hz, policy)
+  expect(clock.solarDayProgress).toBe(.94)
+  expect(clock.motionSeconds).toBeGreaterThan(1500)
+ })
+ it('continues from afternoon, suspends without catch-up, and manual override only stops the sun', () => {
+  const clock = new EnvironmentClock(), policy = clockPolicy('flying')
+  clock.setSolarMode('auto')
+  expect(clock.solarDayProgress).toBe(.68)
+  expect(clock.snapshot(policy).remainingActiveSeconds).toBeCloseTo(453.488372)
+  clock.tick(60, clockPolicy('hidden'))
+  expect(clock.snapshot(clockPolicy('hidden')).status).toBe('suspended')
+  expect(clock.solarDayProgress).toBe(.68)
+  clock.tick(1/60, policy)
+  expect(clock.solarDayProgress).toBeGreaterThan(.68)
+  const motion = clock.motionSeconds
+  clock.setSolarDayProgress(.42)
+  expect(clock.solarMode).toBe('fixed'); expect(clock.motionSeconds).toBe(motion)
+  clock.tick(1/60, policy)
+  expect(clock.motionSeconds).toBeGreaterThan(motion); expect(clock.solarDayProgress).toBe(.42)
+ })
+ it('bounds long frames, rejects invalid deltas and replays without resetting motion', () => {
+  const clock = new EnvironmentClock(), policy = clockPolicy('viewpoint')
+  clock.setSolarMode('auto')
+  for (const dt of [NaN, Infinity, -Infinity, -1]) clock.tick(dt, policy)
+  expect(clock.solarDayProgress).toBe(.68)
+  clock.tick(60, policy)
+  expect(clock.solarDayProgress).toBeCloseTo(.68 + MAX_ENVIRONMENT_DELTA * .86 / 1500, 12)
+  const motion = clock.motionSeconds
+  clock.restartDaylightFromMorning()
+  expect(clock.motionSeconds).toBe(motion)
+  expect(clock.solarDayProgress).toBe(.08)
+  expect(clock.snapshot(clockPolicy('paused')).status).toBe('suspended')
+ })
 })
