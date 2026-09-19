@@ -8,6 +8,7 @@ export interface ExternalExperience {
   readonly pixelRatio: number
   readonly shadowsEnabled?: boolean
   readonly frameId?: number
+  completedFrame?(canvas: HTMLCanvasElement): void
   recordGpu?(milliseconds: number, frameId?: number): void
   recordRender?(data: { cpuMs: number; calls: number; triangles: number; geometries: number; textures: number }): void
   setFramebufferHeight?(height: number): void

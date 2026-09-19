@@ -1,3 +1,5 @@
+import { PhotoService } from './living/photo-service'
+import { DEFAULT_LIVING_INTENT, LivingScope, livingContext, type LivingContext, type LivingIntent } from './living/living-context'
 import { WeatherController, type WeatherPreset, type WeatherMode } from './environment/weather-controller'
 import { ObservationSession, type ObservationPhase } from './viewpoints/observation-session'
 import { VIEWPOINTS, viewpointTarget, type Viewpoint } from './viewpoints/viewpoint-catalog'
@@ -33,6 +35,7 @@ import glideData from './assets/pteranodon-glide.json'
 export type FlightPhase = 'preparing' | 'buffering' | 'ready' | 'flying' | 'paused' | 'recovering' | 'closed'
 export type PauseReason = 'user' | 'hidden' | 'settings' | 'terrain' | 'safety' | 'camera' | 'context' | 'error'
 export interface FlightSnapshot {
+  photos?: ReturnType<PhotoService['getSnapshot']>
   weather?: ReturnType<WeatherController['snapshot']>
   daylight?: DaylightSnapshot
   observation?: ObservationPhase; viewpoint?: Viewpoint['id']; sceneryPaused?: boolean; solarDayProgress?: number
@@ -40,6 +43,18 @@ export interface FlightSnapshot {
   region: ReturnType<WorldSampler['regionAt']>; gentle: boolean; assisted: boolean; quality: 'low' | 'balanced'; settings: FlightSettings
 }
 export class FlightRuntime implements ExternalExperience {
+  readonly photos = new PhotoService(() => this.publish({}))
+  requestPhoto() {
+    if(!this.available || !this.modelAttached || this.preparationPending || this.observationPreparing || !this.terrain.previewReady)return false
+    const requested=this.photos.request();if(requested)this.invalidate();return requested
+  }
+  completedFrame(canvas:HTMLCanvasElement) {
+    if(!this.available)return
+    this.photos.completedFrame(canvas,{frame:this.frameId,sun:this.environmentClock.solarDayProgress,weather:this.weather.snapshot().target ?? 'clear'})
+  }
+  readonly livingScope = new LivingScope()
+  readonly livingIntent: LivingIntent = { ...DEFAULT_LIVING_INTENT }
+  livingFrame: LivingContext | null = null
   frameId = 0
   readonly workBudget = new FrameWorkBudget()
   readonly trace = new FrameTrace()
@@ -150,10 +165,13 @@ export class FlightRuntime implements ExternalExperience {
   private contextAvailable = true
   private visible = true
   private focused = true
+  // Resource preparation survives presentation suspension; it never grants travel.
+  private preparationPending = false
   private fatalError = false
   private get available() { return !this.disposed && !this.fatalError && this.contextAvailable && this.visible && this.focused }
   private invalidate() { if (this.available) this.lease?.invalidate() }
   private syncAvailability() {
+    if(!this.available)this.photos.cancel()
     this.observation.setPreparationAvailable(this.available, performance.now())
     this.publishObservation()
     if (this.available) this.invalidate()
@@ -248,12 +266,14 @@ export class FlightRuntime implements ExternalExperience {
   }
   get pixelRatio() { return this.snapshot.quality === 'low' ? 1 : 1.5 }
   private get reviewMotionActive() { return import.meta.env.DEV && this.reviewIsolation.animateWater && this.contextAvailable && ['ready', 'paused'].includes(this.snapshot.phase) && (this.snapshot.reason === null || this.snapshot.reason === 'user') }
-  get running() { return this.available && (this.snapshot.phase === 'flying' || (this.contextAvailable && (this.observationPreparing || (this.observationActive && !this.observation.sceneryPaused))) || this.reviewMotionActive || this.snapshot.phase === 'preparing' || this.snapshot.phase === 'buffering' || (['ready','paused'].includes(this.snapshot.phase) && this.contextAvailable && (this.scenery.busy || this.farTerrain.metrics.pending>0 || (this.horizonTerrain.metrics.pending>0&&!this.reviewDistanceBaseline) || Boolean(this.lookdev?.busy)))) }
+  get running() { return this.available && (this.preparationPending || this.snapshot.phase === 'flying' || (this.contextAvailable && (this.observationPreparing || (this.observationActive && !this.observation.sceneryPaused))) || this.reviewMotionActive || this.snapshot.phase === 'preparing' || this.snapshot.phase === 'buffering' || (['ready','paused'].includes(this.snapshot.phase) && this.contextAvailable && (this.scenery.busy || this.farTerrain.metrics.pending>0 || (this.horizonTerrain.metrics.pending>0&&!this.reviewDistanceBaseline) || Boolean(this.lookdev?.busy)))) }
   getSnapshot = () => this.snapshot
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => this.listeners.delete(listener) }
   private publish(patch: Partial<FlightSnapshot>) {
     if (this.disposed) return
+    if (patch.phase === 'buffering') this.preparationPending = true
     const next = { ...this.snapshot, ...patch }
+    next.photos = this.photos.getSnapshot()
     next.weather = this.weather.snapshot(this.environmentPolicy(next).advanceEnvironmentMotion)
     next.daylight = this.environmentClock.snapshot(this.environmentPolicy(next))
     if (JSON.stringify(next) === JSON.stringify(this.snapshot)) return
@@ -340,7 +360,7 @@ export class FlightRuntime implements ExternalExperience {
     const observer = this.observation.target
     const p = observer?.position ?? this.simulation.position
     const observerWork = this.contextAvailable && (this.observationPreparing || this.observationActive)
-    const worldWork = preparing || flying || buffering || observerWork
+    const worldWork = preparing || flying || buffering || this.preparationPending || observerWork
     this.terrain.setViewProjection(this.framebufferHeight,this.camera.fov,{x:this.camera.position.x+this.origin.x,y:this.camera.position.y,z:this.camera.position.z+this.origin.z})
     if (!this.reviewIsolation.freezeWorld && worldWork) {
       const planStart=performance.now()
@@ -348,7 +368,11 @@ export class FlightRuntime implements ExternalExperience {
       this.frameCpu.terrainPlan=performance.now()-planStart
 
     }
-    if (buffering && this.terrain.previewReady) this.publish({ phase: 'paused', reason: null })
+    if (this.preparationPending && this.terrain.ready) {
+      this.preparationPending = false
+      if (buffering || (this.snapshot.phase === 'paused' && !['camera', 'safety', 'error'].includes(this.snapshot.reason ?? '')))
+        this.publish({ phase: 'paused', reason: null })
+    }
     if (preparing && this.modelAttached && this.terrain.previewReady) this.publish({ phase: 'ready' })
     if(import.meta.env.DEV && this.reviewRoute?.waiting && this.canResume){this.reviewRoute.waiting=false;this.start()}
     if (flying) {
@@ -452,6 +476,9 @@ export class FlightRuntime implements ExternalExperience {
       if(this.camera.far!==cameraFar){this.camera.far=cameraFar;this.camera.updateProjectionMatrix()}
     }
     if (this.scenery.metrics.failed) this.publish({simplified:true})
+    this.livingFrame = livingContext({generation:this.livingScope.generation,motionSeconds:this.environmentClock.motionSeconds,
+      camera:{x:this.camera.position.x+this.origin.x,y:this.camera.position.y,z:this.camera.position.z+this.origin.z},
+      player:{...rp},heading:render.heading,quality:this.snapshot.quality,gentle:this.snapshot.gentle,weather:this.weather.serialize(),intent:{...this.livingIntent}},weatherPolicy,deltaSeconds)
     const environment = this.scenery.environment.frame
     ;(this.scene.fog as Fog).color.setRGB(...environment.horizon)
     this.terrain.forEachRenderable(mesh=>{
@@ -572,6 +599,8 @@ export class FlightRuntime implements ExternalExperience {
   }
   close() { if (this.lease) this.lease.release(); else this.dispose(); this.lease = null }
   dispose() {
+    this.photos.dispose()
+    this.livingScope.dispose()
     if (this.disposed) return
     this.observation.close();this.disposed = true; this.abort.abort(); this.input.clear(); this.groundLibrary?.dispose(); this.terrain.dispose(); this.farTerrain.dispose(); this.horizonTerrain.dispose(); this.scenery.dispose(); this.lookdev?.dispose()
     if (this.model) this.controller.disposeStagedModel(this.model)

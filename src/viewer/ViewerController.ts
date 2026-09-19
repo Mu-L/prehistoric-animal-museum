@@ -5598,6 +5598,7 @@ export class ViewerController {
           if (gpuMs !== undefined && gpuMs !== null) experience.recordGpu?.(gpuMs.milliseconds, gpuMs.frameId)
           this.externalGpuTimer?.begin(experience.frameId)
           try { this.renderer.render(experience.scene, experience.camera) } finally { this.externalGpuTimer?.end() }
+          experience.completedFrame?.(this.renderer.domElement)
           experience.recordRender?.({ cpuMs: performance.now() - flightFrameStart, calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, geometries: this.renderer.info.memory.geometries, textures: this.renderer.info.memory.textures })
           this.renderer.domElement.dataset.flightResources = JSON.stringify({
             calls: this.renderer.info.render.calls,

@@ -1,3 +1,4 @@
+import { CloudAppearance } from './cloud-appearance'
 import { RainField, RainCurtains } from './rain-field'
 import { WeatherController, type WeatherState, wrapCloud } from './weather-controller'
 import cloudUrl from '../assets/weather/cloud-density.png'
@@ -118,6 +119,7 @@ export class EnvironmentScene {
   weatherEnabled=true
   private readonly clearWeather=new WeatherController().serialize()
   private disposed=false
+  readonly cloudAppearance=new CloudAppearance()
   private cloudTexture:Texture=new DataTexture(new Uint8Array([128,128,0,255]),1,1,RGBAFormat)
   private frameRevision = 0
   private currentFrame=sampleEnvironment()
@@ -148,7 +150,7 @@ export class EnvironmentScene {
   get busy(){return this.field.busy||this.coarseField.busy}
   constructor(scene:Scene,private readonly surface:(x:number,z:number)=>number,wake:()=>void=()=>{}){
     this.uniforms.cloudDensityMap.value=this.cloudTexture
-    void new TextureLoader().loadAsync(cloudUrl).then(texture=>{if(this.disposed){texture.dispose();return}this.cloudTexture.dispose();this.cloudTexture=texture;texture.colorSpace=NoColorSpace;texture.wrapS=texture.wrapT=RepeatWrapping;this.uniforms.cloudDensityMap.value=texture;this.uniforms.cloudReady.value=1;wake()}).catch(()=>{if(!this.disposed){this.weatherDegraded=true;wake()}})
+    void new TextureLoader().loadAsync(cloudUrl).then(texture=>{if(this.disposed){texture.dispose();return}this.cloudTexture.dispose();this.cloudTexture=texture;texture.colorSpace=NoColorSpace;texture.wrapS=texture.wrapT=RepeatWrapping;this.uniforms.cloudDensityMap.value=texture;this.cloudAppearance.markDataReady();this.uniforms.cloudDataReady.value=1;wake()}).catch(()=>{if(!this.disposed){this.weatherDegraded=true;wake()}})
     for(const texture of [this.texture,this.previousTexture,this.coarseTexture]){texture.minFilter=NearestFilter;texture.magFilter=NearestFilter;texture.generateMipmaps=false}
     this.sky.frustumCulled=false;this.sky.renderOrder=-10
     this.water.frustumCulled=false;this.water.receiveShadow=true
@@ -158,6 +160,7 @@ export class EnvironmentScene {
   }
   update(camera:PerspectiveCamera,origin:Address,time:number,quality:'low'|'balanced',preset:SolarPreset='afternoon',options:EnvironmentUpdateOptions={}){
     const f=this.currentFrame=composeWeather(sampleEnvironment(this.solarDayProgress ?? preset,time,this.solarLayout,++this.frameRevision),this.weatherEnabled?this.weatherState:this.clearWeather)
+    this.uniforms.cloudAppearanceWeight.value=this.cloudAppearance.update(time,this.weatherEnabled)
     this.fog.update(f)
     this.rain.update(camera,origin,this.weatherState.rainSeconds,f.rainRate,quality);this.curtains.update(origin,this.weatherEnabled?this.weatherState.resolved.curtain:0)
     this.metrics.weatherDrawCalls=Number(this.rain.mesh.visible)+Number(this.curtains.mesh.visible)

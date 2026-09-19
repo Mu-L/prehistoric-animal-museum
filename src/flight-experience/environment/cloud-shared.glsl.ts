@@ -2,10 +2,10 @@
 export const CLOUD_GLSL=`
 uniform sampler2D cloudDensityMap;
 uniform vec2 cloudOrigin;uniform vec2 cloudPhase;
-uniform float cloudCoverage;uniform float cloudThickness;uniform float cloudReady;
+uniform float cloudCoverage;uniform float cloudThickness;uniform float cloudDataReady;uniform float cloudAppearanceWeight;
 uniform float weatherHaze;uniform float rainWetness;
 vec3 flightWorldPoint(vec3 viewPoint){return cameraPosition+transpose(mat3(viewMatrix))*viewPoint;}
-float cloudOvercast(){return smoothstep(.55,.9,cloudCoverage)*cloudReady;}
+float cloudOvercast(){return smoothstep(.55,.9,cloudCoverage)*cloudDataReady*cloudAppearanceWeight;}
 float cloudHash(vec2 cell){return fract(sin(dot(mod(cell,8.),vec2(127.1,311.7)))*43758.5453);}
 // Integrate a soft ellipsoid analytically: no stacked horizontal sampling planes.
 vec3 cloudPuff(vec3 p,vec3 d,vec3 center,vec3 radius,vec3 sun){
@@ -27,7 +27,7 @@ vec3 cloudPuff(vec3 p,vec3 d,vec3 center,vec3 radius,vec3 sun){
  return vec3(optical,optical*light,optical*t);
 }
 vec3 cloudMass(vec3 p,vec3 d,vec3 sun){
- if(d.y<=.00001||cloudCoverage<=0.||cloudReady<.5)return vec3(0.);
+ if(d.y<=.00001||cloudCoverage<=0.||cloudDataReady<.5)return vec3(0.);
  p.xz=mod(p.xz+cloudOrigin-cloudPhase,65536.);
  vec2 tile=floor((p.xz+d.xz*((3100.-p.y)/d.y))/8192.);
  vec3 mass=vec3(0.);
@@ -65,7 +65,7 @@ vec3 cloudMass(vec3 p,vec3 d,vec3 sun){
 }
 // Dense weather grows a continuous deck using the existing density asset.
 float cloudDeck(vec3 p,vec3 d){
- if(d.y<=.00001||cloudCoverage<=.55||cloudReady<.5)return 0.;
+ if(d.y<=.00001||cloudCoverage<=.55||cloudDataReady<.5)return 0.;
  vec2 q=p.xz+d.xz*max(0.,(3200.-p.y)/d.y);
  vec2 uv=(q+cloudOrigin-cloudPhase)/65536.;
  float density=texture2D(cloudDensityMap,uv*4.).r;
@@ -73,17 +73,17 @@ float cloudDeck(vec3 p,vec3 d){
 }
 float cloudOptical(vec3 p,vec3 d){return (cloudMass(p,d,vec3(0.,1.,0.)).x+cloudDeck(p,d))*cloudThickness;}
 // Rain curtains sample the same cloud column as the sky and receiver lighting.
-float cloudDensity(vec2 p){return 1.-exp(-cloudOptical(vec3(p.x,0.,p.y),vec3(0.,1.,0.)));}
+float cloudDensity(vec2 p){return (1.-exp(-cloudOptical(vec3(p.x,0.,p.y),vec3(0.,1.,0.))))*cloudAppearanceWeight;}
 float cloudTransmission(vec3 p,vec3 d){
- if(d.y<=.00001||cloudCoverage<=0.||cloudReady<.5)return 1.;
+ if(d.y<=.00001||cloudCoverage<=0.||cloudDataReady<.5)return 1.;
  // A column approximation for receivers avoids marching low-angle sun rays per pixel.
  vec2 column=p.xz+d.xz*max(0.,(3100.-p.y)/d.y);
  float optical=cloudOptical(vec3(column.x,0.,column.y),vec3(0.,1.,0.));
- return exp(-optical*.65);
+ return mix(1.,exp(-optical*.65),cloudAppearanceWeight);
 }
 vec3 cloudSky(vec3 p,vec3 d,vec3 base,vec3 ambient,vec3 solar,vec3 sun){
- if(d.y<=.00001||cloudCoverage<=0.||cloudReady<.5)return base;
- float overcast=cloudOvercast();
+ if(d.y<=.00001||cloudCoverage<=0.||cloudDataReady<.5)return base;
+ float overcast=smoothstep(.55,.9,cloudCoverage);
  vec3 mass=(3100.-p.y)/d.y<38000.?cloudMass(p,d,sun):vec3(0.);
  float deck=cloudDeck(p,d),optical=(mass.x+deck)*cloudThickness;
  float distanceToCloud=mass.z/max(.0001,mass.x);
@@ -107,6 +107,6 @@ vec3 cloudSky(vec3 p,vec3 d,vec3 base,vec3 ambient,vec3 solar,vec3 sun){
  float warmth=(1.-smoothstep(.04,.38,d.y))*lowSun;
  ceiling=mix(ceiling,base*.62+solar*.035,warmth*.7);
  float ceilingAlpha=overcast*smoothstep(.018,.24,d.y)*(.82+.14*relief);
- return mix(scattered,ceiling,ceilingAlpha);
+ return mix(base,mix(scattered,ceiling,ceilingAlpha),cloudAppearanceWeight);
 }
 `
