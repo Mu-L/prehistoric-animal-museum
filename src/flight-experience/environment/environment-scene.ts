@@ -53,20 +53,27 @@ float amplitude=.25+.55*envelope.x;
 float footprint=length(vec2(dFdx(phase),dFdy(phase)));
 float aa=1.-smoothstep(.45,1.8,footprint);
 // Short waves contribute only close to the eye; the offshore field is broad swell.
-float reach=i<2?2200.:(i<4?1500.:800.);
+float reach=i<2?4500.:(i<4?2800.:1400.);
 float fade=1.-smoothstep(reach*.2,reach,distanceToEye);
 gradient+=(cos(phase)*phaseGradient*amplitude+sin(phase)*envelope.yz*(.55/128.))*waves[i].z*aa*fade*.8;
 }
 // Advected, continuous fine slopes break broad swells into irregular highlights.
 // Subpixel structure fades out; its slope variance stays in the BRDF roughness.
-vec2 finePosition=(worldPosition.xz+envelopeOrigin)*.42+vec2(waterTime*.18,waterTime*.11);
+vec2 finePosition=(worldPosition.xz+envelopeOrigin)*.4375+vec2(waterTime*.18,waterTime*.11);
 float fineFootprint=max(length(dFdx(finePosition)),length(dFdy(finePosition)));
-float fineResolved=(1.-smoothstep(.45,1.5,fineFootprint))*(1.-smoothstep(900.,1600.,distanceToEye));
-vec3 fineA=oceanNoise(finePosition),fineB=oceanNoise(finePosition*.61+vec2(19.,31.));
-gradient+=(fineA.yz+fineB.yz*.6)*.055*fineResolved;
+float fineResolved=(1.-smoothstep(.45,1.5,fineFootprint))*(1.-smoothstep(1800.,3000.,distanceToEye));
+vec3 fineA=oceanNoise(finePosition),fineB=oceanNoise(finePosition*.5+vec2(19.,31.));
+gradient+=(fineA.yz+fineB.yz*.6)*.11*fineResolved;
+// Centimetre-scale capillary ripples remain visible from the low comparison camera.
+// Frequencies are periodic over the same 8192m logical envelope as broad waves.
+vec2 ripplePosition=(worldPosition.xz+envelopeOrigin)*4.+vec2(waterTime*.31,-waterTime*.23);
+float rippleFootprint=max(length(dFdx(ripplePosition)),length(dFdy(ripplePosition)));
+float rippleResolved=1.-smoothstep(.35,1.25,rippleFootprint);
+vec3 ripple=oceanNoise(ripplePosition),rippleFine=oceanNoise(ripplePosition*2.+vec2(7.,23.)+waterTime*.17);
+gradient+=ripple.yz*.12*rippleResolved+rippleFine.yz*.065*(1.-smoothstep(.35,1.25,rippleFootprint*2.));
 // Two phases crossfade only the moving normal signal; surface opacity stays one.
 float phase0=fract(waterTime*.09),phase1=fract(waterTime*.09+.5);
-vec2 flowUV=(worldPosition.xz+envelopeOrigin)*.12;
+vec2 flowUV=(worldPosition.xz+envelopeOrigin)*.125;
 vec3 flowA=oceanNoise(flowUV-flowData.xy*flowData.z*phase0*5.);
 vec3 flowB=oceanNoise(flowUV-flowData.xy*flowData.z*phase1*5.);
 gradient+=mix(flowA.yz,flowB.yz,abs(phase0*2.-1.))*flowData.z*.055;
@@ -86,7 +93,7 @@ float edge=min(min(sp.x,sp.y),min(1.-sp.x,1.-sp.y));
 float weight=smoothstep(0.,.18,edge)*smoothstep(0.,.04,sp.z)*(1.-smoothstep(.94,1.,sp.z));
 visibility=mix(1.,getShadow(directionalShadowMap[0],directionalLightShadows[0].shadowMapSize,directionalLightShadows[0].shadowIntensity,directionalLightShadows[0].shadowBias,directionalLightShadows[0].shadowRadius,vDirectionalShadowCoord[0]),weight);
 #endif
-vec3 base=oceanBase(ray,n,shallow);vec3 c=base+(oceanColor(ray,n,shallow)-base)*visibility;float farMix=smoothstep(1600.,2600.,distanceToEye);c=mix(c,distantColor(ray),farMix);
+vec3 base=oceanBase(ray,n,shallow);vec3 c=base+(oceanColor(ray,n,shallow)-base)*visibility;float farMix=smoothstep(3200.,4200.,distanceToEye);c=mix(c,distantColor(ray),farMix);
 if(edges>.5){float border=step(4750.,max(abs(worldPosition.x-cameraPosition.x),abs(worldPosition.z-cameraPosition.z)));c=mix(c,vec3(1.,0.,0.),border);}
 if(ownerColors>.5)c=riverPass>.5?vec3(.8,.25,.1):vec3(.1,.2,.8);if(depthColors>.5)c=vec3(shallow);
 gl_FragColor=vec4(c,1.);

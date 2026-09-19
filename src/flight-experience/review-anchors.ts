@@ -10,7 +10,7 @@ export interface CaptureAnchor {
 export const CAPTURE_ANCHORS: readonly CaptureAnchor[] = [
   // E1 G0 candidates only. Exact cameras, no change to normal flight framing.
   { id: 'e1-seaward', world: WORLD, position: { x:160,y:119.3,z:500 }, heading:-.59, view:'standard', pitch:0, presentationSeconds:0, preset:'evening', solarLayout:'sunset-bay',
-    camera:{position:{x:160,y:119.3,z:500},target:{x:-397,y:50,z:-330}} },
+    camera:{position:{x:160,y:119.3,z:500},target:{x:-116,y:112,z:-461}} },
   { id: 'e1-cliff', world: WORLD, position: { x:-160,y:209.3,z:350 }, heading:.57, view:'standard', pitch:0, presentationSeconds:0, preset:'afternoon', solarLayout:'sunset-bay',
     camera:{position:{x:-160,y:209.3,z:350},target:{x:420,y:120,z:-550}} },
   { id: 'coast-oblique', world: WORLD, position: {x:-160,y:100,z:350}, heading:.22, view:'standard',pitch:0,presentationSeconds:0,preset:'afternoon' },

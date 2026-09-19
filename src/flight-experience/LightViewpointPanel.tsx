@@ -2,8 +2,8 @@ import { useState } from 'react'
 import type { FlightRuntime, FlightSnapshot } from './FlightRuntime'
 import { solarProgress, type SolarPreset } from './environment/environment-state'
 const copy = {
- 'zh-CN': {title:'阳光与观景',close:'收起面板',sea:'向海 · 120 米',cliff:'海崖 · 210 米',morning:'晨光',afternoon:'午后',evening:'夕照',time:'白昼进度',pause:'暂停景色',resume:'继续景色',back:'返回原飞行位置',preparing:'正在准备观景点…',returning:'正在准备原飞行位置…',failed:'风景未能及时准备好。可换一个机位，或返回原位置。',active:'观景中 · 飞行已暂停',help:'太阳时间独立于飞行和水波。返回后需主动继续飞翔。'},
- en:{title:'Light & viewpoints',close:'Hide panel',sea:'Seaward · 120 m',cliff:'Cliffs · 210 m',morning:'Morning',afternoon:'Afternoon',evening:'Sunset',time:'Daylight progress',pause:'Pause scenery',resume:'Resume scenery',back:'Return to flight position',preparing:'Preparing viewpoint…',returning:'Preparing your flight position…',failed:'The scenery could not be prepared in time. Choose another view or return.',active:'Observing · flight paused',help:'Sunlight, waves and flight have separate clocks. Resume flying explicitly after returning.'},
+ 'zh-CN': {title:'阳光与观景',close:'收起面板',sea:'向海 · 120 米',cliff:'海崖 · 210 米',waterline:'海面 · 1.6 米',morning:'晨光',afternoon:'午后',evening:'夕照',time:'白昼进度',pause:'暂停景色',resume:'继续景色',back:'返回原飞行位置',preparing:'正在准备观景点…',returning:'正在准备原飞行位置…',failed:'风景未能及时准备好。可换一个机位，或返回原位置。',active:'观景中 · 飞行已暂停',help:'太阳时间独立于飞行和水波。返回后需主动继续飞翔。'},
+ en:{title:'Light & viewpoints',close:'Hide panel',sea:'Seaward · 120 m',cliff:'Cliffs · 210 m',waterline:'Waterline · 1.6 m',morning:'Morning',afternoon:'Afternoon',evening:'Sunset',time:'Daylight progress',pause:'Pause scenery',resume:'Resume scenery',back:'Return to flight position',preparing:'Preparing viewpoint…',returning:'Preparing your flight position…',failed:'The scenery could not be prepared in time. Choose another view or return.',active:'Observing · flight paused',help:'Sunlight, waves and flight have separate clocks. Resume flying explicitly after returning.'},
 } as const
 export function LightViewpointPanel({runtime,snapshot,locale,onClose}:{runtime:FlightRuntime;snapshot:FlightSnapshot;locale:'en'|'zh-CN';onClose:()=>void}) {
  const [recording,setRecording]=useState(false),[evidenceStatus,setEvidenceStatus]=useState('')
@@ -13,6 +13,7 @@ export function LightViewpointPanel({runtime,snapshot,locale,onClose}:{runtime:F
   <div className="flight-light-options" role="group" aria-label={t.title}>
    <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='seaward'} onClick={()=>runtime.enterViewpoint('seaward')}>{t.sea}</button>
    <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='cliff'} onClick={()=>runtime.enterViewpoint('cliff')}>{t.cliff}</button>
+   <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='waterline'} onClick={()=>runtime.enterViewpoint('waterline')}>{t.waterline}</button>
   </div>
   <div className="flight-light-options" role="group" aria-label={t.time}>{(['morning','afternoon','evening'] as SolarPreset[]).map(p=><button type="button" key={p} disabled={preparing} aria-pressed={Math.abs((snapshot.solarDayProgress??.42)-solarProgress(p))<.001} onClick={()=>runtime.setSolarDayProgress(solarProgress(p))}>{t[p as 'morning'|'afternoon'|'evening']}</button>)}</div>
   <label className="flight-light-range">{t.time}<input type="range" min="0.08" max="0.94" step="0.005" disabled={preparing} value={snapshot.solarDayProgress??.42} onChange={e=>runtime.setSolarDayProgress(Number(e.target.value))}/></label>

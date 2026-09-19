@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sampleEnvironment } from '../../src/flight-experience/environment/environment-state'
+import { sampleEnvironment, sampleSky } from '../../src/flight-experience/environment/environment-state'
 describe('continuous E1 sunlight in a single frame',()=>{
  it('is deterministic, finite, normalized and continuous across all daylight values',()=>{
   let previous=sampleEnvironment(.08,12,'sunset-bay')
@@ -10,6 +10,12 @@ describe('continuous E1 sunlight in a single frame',()=>{
    for(const values of [f.sunColor,f.skyZenith,f.horizon]) for(const v of values){expect(Number.isFinite(v)).toBe(true);expect(v).toBeGreaterThanOrEqual(0)}
    expect(f.motionSeconds).toBe(12);expect(f.revision).toBe(2);previous=f
   }
+ })
+ it('uses a warm horizon and a cool zenith without discontinuous colour bands',()=>{
+  const f=sampleEnvironment('evening',0,'sunset-bay'),h=sampleSky(f,[0,0,-1]),z=sampleSky(f,[0,1,0])
+  expect(h[0]).toBeGreaterThan(h[2]);expect(z[2]).toBeGreaterThan(z[0])
+  let previous=sampleSky(f,[0,0,-1])
+  for(let y=.001;y<1;y+=.001){const c=sampleSky(f,[0,y,-Math.sqrt(1-y*y)]);expect(Math.hypot(...c.map((v,i)=>v-previous[i]!))).toBeLessThan(.018);previous=c}
  })
  it('bounds invalid solar and motion input without nighttime wrapping',()=>{
   for(const p of [-Infinity,Infinity,NaN,-20,20]){

@@ -7,7 +7,7 @@ float waterSun(vec3 n,vec3 v,vec3 l,float variance){
  float nl=dot(n,l),nv=dot(n,v);if(nl<=0.||nv<=0.||l.y<=0.)return 0.;
  vec3 sum=v+l;if(dot(sum,sum)<.000001)return 0.;vec3 h=normalize(sum);
  float nh=max(0.,dot(n,h)),vh=max(0.,dot(v,h));
- float a2=clamp(.0036+variance,.0036,.25);
+ float a2=clamp(.001+variance,.001,.25);
  float d=nh*nh*(a2-1.)+1.;float D=a2/(3.14159265*max(d*d,.000001));
  float gv=2.*nv/(nv+sqrt(a2+(1.-a2)*nv*nv));
  float gl=2.*nl/(nl+sqrt(a2+(1.-a2)*nl*nl));

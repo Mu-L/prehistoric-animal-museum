@@ -1,5 +1,5 @@
 import { ObservationSession, type ObservationPhase } from './viewpoints/observation-session'
-import { VIEWPOINTS, type Viewpoint } from './viewpoints/viewpoint-catalog'
+import { VIEWPOINTS, viewpointTarget, type Viewpoint } from './viewpoints/viewpoint-catalog'
 import { EnvironmentClock, clockPolicy } from './environment/environment-clock'
 import {loadLookdevMaterials} from './lookdev/material-library'
 import {decorateMaterialTerrain} from './lookdev/material-terrain'
@@ -330,8 +330,10 @@ export class FlightRuntime implements ExternalExperience {
     this.pose.rotation.x = render.climbRate * .025
     if(this.lookdevActive&&this.lookdev)this.lookdev.update(this.camera,this.origin)
     else if(observer) {
-      this.camera.position.set(observer.position.x-this.origin.x,observer.position.y,observer.position.z-this.origin.z)
-      this.camera.up.set(0,1,0);this.camera.lookAt(observer.target.x-this.origin.x,observer.target.y,observer.target.z-this.origin.z)
+      const breath=observer.id==='waterline'&&!this.snapshot.gentle?Math.sin(this.environmentClock.motionSeconds*.3)*.005:0
+      this.camera.position.set(observer.position.x-this.origin.x,observer.position.y+breath,observer.position.z-this.origin.z)
+      const target=viewpointTarget(observer,this.camera.aspect,this.camera.fov)
+      this.camera.up.set(0,1,0);this.camera.lookAt(target.x-this.origin.x,target.y+breath,target.z-this.origin.z)
     }
     else if(this.observation.phase === 'returning' && this.observation.bookmark) {
       this.camera.position.copy(this.observation.bookmark.camera).sub(new Vector3(this.origin.x,0,this.origin.z))

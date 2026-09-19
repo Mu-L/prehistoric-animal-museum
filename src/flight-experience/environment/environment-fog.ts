@@ -16,9 +16,10 @@ export const ENVIRONMENT_FOG_FRAGMENT = ShaderChunk.fog_fragment.replace(
   gl_FragColor.rgb=mix(gl_FragColor.rgb,flightFogOutput,fogFactor);`,
 )
 export function createEnvironmentFog(initialFrame:EnvironmentFrame){
-  const uniforms={waterHighlight:{value:1},skyColors:{value:0},skyZenith:{value:new Color()},horizon:{value:new Color()},sunDirection:{value:new Vector3()},sunColor:{value:new Color()}}
+  const uniforms={photographicSky:{value:0},skyLow:{value:new Color()},skyMid:{value:new Color()},skyUpper:{value:new Color()},waterHighlight:{value:1},skyColors:{value:0},skyZenith:{value:new Color()},horizon:{value:new Color()},sunDirection:{value:new Vector3()},sunColor:{value:new Color()}}
   const decorated=new WeakSet<Material>()
   function update(frame:EnvironmentFrame){
+    uniforms.photographicSky.value=frame.photographicSky;uniforms.skyLow.value.setRGB(...frame.skyLow);uniforms.skyMid.value.setRGB(...frame.skyMid);uniforms.skyUpper.value.setRGB(...frame.skyUpper)
     uniforms.skyZenith.value.setRGB(...frame.skyZenith);uniforms.horizon.value.setRGB(...frame.horizon)
     uniforms.sunDirection.value.set(...frame.sunDirectionWorld);uniforms.sunColor.value.setRGB(...frame.sunColor).multiplyScalar(frame.sunIntensity)
   }
