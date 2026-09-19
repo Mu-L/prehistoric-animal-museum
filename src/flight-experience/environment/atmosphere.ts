@@ -60,7 +60,8 @@ vec3 oceanColor(vec3 ray,vec3 n,float shallow,vec3 surfacePosition){
  // Preserve gold through tone mapping; reserve near-white for the rare peak.
  float peak=energy/(1.+energy/2.8);
  float golden=1.-smoothstep(.10,.36,sunDirection.y);
- vec3 gold=mix(vec3(1.,.34,.055),vec3(1.,.72,.30),smoothstep(.08,1.8,peak));
+ vec3 gold=mix(vec3(1.,.24,.025),vec3(1.,.52,.10),smoothstep(.08,1.8,peak));
+ gold=mix(gold,vec3(1.,.86,.60),smoothstep(2.65,2.8,peak));
  vec3 highlight=mix(sunColor, gold, golden*.85)*peak;
  return oceanBase(ray,n,shallow)+highlight;
 }
