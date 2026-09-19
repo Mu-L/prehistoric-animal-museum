@@ -64,7 +64,6 @@ export class FlightRuntime implements ExternalExperience {
   private publishObservation() { this.publish({observation:this.observation.phase,sceneryPaused:this.observation.sceneryPaused,...(this.observation.target?{viewpoint:this.observation.target.id}:{}),solarDayProgress:this.environmentClock.solarDayProgress}) }
   setSolarDayProgress(progress: number) {
     if (!Number.isFinite(progress)) return
-    if (this.snapshot.phase === 'flying') this.pause('settings')
     this.environmentClock.setSolarDayProgress(Math.max(.08,Math.min(.94,progress)))
     this.scenery.environment.solarLayout = 'sunset-bay'; this.solarDirty = true
     this.publishObservation(); this.lease?.invalidate()
@@ -151,6 +150,7 @@ export class FlightRuntime implements ExternalExperience {
     this.root.add(this.pose); this.scene.add(this.root)
     this.scenery = new FlightScenery(this.scene, () => this.lease?.invalidate(), (x, z) => this.scenerySurface(x, z), this.world, (x,z)=>this.scenerySurface(x,z))
     this.environmentClock.setSolarDayProgress(solarProgress(this.scenery.preset))
+    this.snapshot.solarDayProgress=this.environmentClock.solarDayProgress
     this.scenery.props.setLandmarks(landmarks)
     this.terrain = new TerrainStream(() => this.lease?.invalidate(), () => this.publish({ simplified: true }), worldConfig)
     this.surface=new VisibleSurfaceSnapshot(this.terrain,this.world)
@@ -257,7 +257,7 @@ export class FlightRuntime implements ExternalExperience {
   }
   traceEvidence(){return {schema:'flight-frame-trace-v1',world:this.world.config,route:this.reviewRoute?.id??this.lastReviewRouteId,gpuScope:'whole-render; per-water/per-shadow not isolated',frames:this.trace.export()}}
   pitchReview(pitch: number) { this.reviewPitch=pitch;this.refreshReview() }
-  setReviewPreset(preset: SolarPreset) { this.environmentClock.setSolarDayProgress(solarProgress(preset)); this.scenery.preset = preset; this.scenery.environment.solarDayProgress = undefined; this.refreshReview() }
+  setReviewPreset(preset: SolarPreset) { this.environmentClock.setSolarDayProgress(solarProgress(preset)); this.scenery.preset = preset; this.scenery.environment.solarDayProgress = undefined; this.publishObservation(); this.refreshReview() }
   setAnimalRimReview(value:boolean) { this.scenery.environment.fog.uniforms.animalRim.value=Number(value);this.refreshReview() }
   setWaterReview(key:'highlight'|'flatWater',value:boolean) { this.scenery.review[key]=value;this.refreshReview() }
   setReviewVisibility(key:'reviewHideWater'|'reviewHideFarTerrain',value:boolean){this[key]=value;this.refreshReview()}
@@ -482,7 +482,7 @@ export class FlightRuntime implements ExternalExperience {
     this.root.visible = !anchor.camera
     this.scenery.environment.solarLayout = anchor.solarLayout ?? 'legacy'
     this.reviewPitch=anchor.pitch;this.scenery.preset=anchor.preset;this.cameraInitialized=false
-    this.publish({settings:{...this.snapshot.settings,view:anchor.view},phase:'buffering',reason:'terrain'})
+    this.publish({solarDayProgress:this.environmentClock.solarDayProgress,settings:{...this.snapshot.settings,view:anchor.view},phase:'buffering',reason:'terrain'})
     this.terrain.plan(anchor.position.x,anchor.position.z,anchor.heading,anchor.position.y);this.terrain.prepareStaticView();this.lease?.invalidate()
   }
   close() { if (this.lease) this.lease.release(); else this.dispose(); this.lease = null }

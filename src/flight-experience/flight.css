@@ -66,6 +66,32 @@
 .flight-experience:has(.flight-review[data-lookdev-active="true"]) .flight-intro,
 .flight-experience:has(.flight-review[data-lookdev-active="true"]) .flight-controls { display:none; }
 
-.flight-light-panel{position:absolute;z-index:22;right:24px;bottom:24px;width:min(390px,calc(100% - 32px));padding:18px;border-radius:20px;background:rgba(250,251,243,.96);color:#244449;box-shadow:0 8px 32px #17383b22;pointer-events:auto;max-height:65vh;overflow:auto}
-.flight-light-panel .flight-card__heading{gap:12px;margin-bottom:12px}.flight-light-panel button{padding:9px 12px;border:1px solid #42636633;border-radius:12px;background:#fff9;color:inherit;min-height:44px;font:inherit;cursor:pointer}.flight-light-panel button[aria-pressed=true]{background:#315d60;color:white}.flight-light-panel button:disabled{opacity:.5;cursor:wait}.flight-light-options{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}.flight-light-options button{flex:1}.flight-light-range{display:flex;gap:10px;align-items:center;font-size:13px}.flight-light-range input{min-width:0;flex:1;accent-color:#315d60;min-height:44px}.flight-light-panel small{font-size:12px;line-height:1.6;display:block}.flight-light-panel p{font-size:13px;margin:10px 0}.flight-light-panel :focus-visible{outline:3px solid #96732d;outline-offset:2px}.flight-view-preparing{position:absolute;inset:0;z-index:16;background:#e0e5e3;pointer-events:none}.flight-view-return{position:absolute;bottom:22px;right:22px;z-index:22;pointer-events:auto;border:0;border-radius:14px;padding:14px;background:#f6f8ee;color:#315d60}.flight-toolbar{z-index:25}.flight-light-panel .flight-card__heading button{font-size:12px;padding:6px 10px}
-@media(max-width:600px){.flight-light-panel{bottom:12px;right:16px;padding:12px;max-height:44vh}.flight-toolbar__right{gap:5px}.flight-toolbar__right>button{font-size:12px;padding:10px 8px}.flight-light-panel small{display:none}}
+.flight-settings{z-index:22;padding:20px;width:min(380px,calc(100% - 32px));max-height:calc(100dvh - 180px);scrollbar-width:thin}
+.flight-settings .flight-card__heading button{min-height:40px;padding:7px;box-shadow:none}
+.flight-settings .flight-panel-status{font-size:12px;color:#52716d;margin:8px 0 12px}
+.flight-panel-sections{display:flex;gap:4px;padding:4px;background:#e5ece4;border-radius:14px;margin-bottom:16px}
+.flight-panel-sections button{flex:1;min-height:42px;padding:8px;background:transparent;border-color:transparent;box-shadow:none;font-size:14px}
+.flight-panel-sections button[aria-pressed=true]{background:#315d60;color:white}
+.flight-settings .flight-setting{padding:12px 0;font-size:14px}
+.flight-settings .flight-setting small{max-width:160px}
+.flight-light-options{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}
+.flight-light-options button{flex:1;min-height:46px;padding:10px 8px;border:1px solid #42636633;border-radius:12px;background:#fff9;font-size:14px}
+.flight-light-options button[aria-pressed=true]{background:#315d60;color:white}
+.flight-light-range{display:flex;gap:10px;align-items:center;font-size:13px;margin:14px 0}
+.flight-light-range input{min-width:0;flex:1;accent-color:#315d60;min-height:44px}
+.flight-light-content small{font-size:12px;line-height:1.6;display:block}
+.flight-settings details{margin-top:18px}.flight-settings summary{cursor:pointer;padding:10px 0;font-size:14px}
+.flight-light-content details label{display:flex;gap:8px;align-items:center;padding:8px 0}
+.flight-light-content details button{font-size:12px;min-height:40px;padding:8px}
+.flight-panel-return{margin-top:16px;width:100%}
+.flight-view-preparing{position:absolute;inset:0;z-index:16;background:#e0e5e3;pointer-events:none}
+.flight-view-return{position:absolute;bottom:22px;right:22px;z-index:22;pointer-events:auto;border:0;border-radius:14px;padding:14px;background:#f6f8ee;color:#315d60}
+.flight-toolbar{z-index:25}
+@media(max-width:600px){
+ .flight-settings{top:82px;right:12px;width:min(360px,calc(100% - 24px));max-height:min(54dvh,calc(100dvh - 240px));padding:16px}
+ .flight-toolbar__right{gap:6px}.flight-toolbar__right>button{font-size:12px;padding:10px 8px}
+ .flight-toolbar__right>button[aria-controls] span{display:none}
+ .flight-card .flight-panel-status{font-size:12px}
+ .flight-experience:has(.flight-settings) .flight-place{visibility:hidden}
+}
+@media(max-height:520px){.flight-settings{top:80px;max-height:calc(100dvh - 94px);width:min(380px,50vw);right:12px}.flight-experience:has(.flight-settings) .flight-assist{display:none}}

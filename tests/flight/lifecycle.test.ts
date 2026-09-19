@@ -117,6 +117,24 @@ describe('flight owned resources and recovery', () => {
     expect(runtime.getSnapshot().phase).toBe('paused'); expect(runtime.simulation.safetyStop).toBe(true)
     runtime.close()
   })
+  it('keeps live sunlight and flight adjustments moving without relocating or resetting clocks', async () => {
+    const h=host(),runtime=new FlightRuntime(h.controller,false)
+    const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(model());await pending
+    for(let i=0;i<180;i++){runtime.update(1/60);TestWorker.instances.forEach(w=>w.finish())}
+    runtime.start();runtime.update(1/60)
+    const position={...runtime.simulation.position},time=runtime.simulation.time,motion=runtime.environmentClock.motionSeconds
+    runtime.setSolarDayProgress(.94)
+    runtime.configure({...runtime.getSnapshot().settings,speed:18,view:'wide',gentle:true})
+    expect(runtime.getSnapshot().phase).toBe('flying')
+    expect(runtime.simulation.position).toEqual(position);expect(runtime.simulation.time).toBe(time)
+    expect(runtime.environmentClock.motionSeconds).toBe(motion)
+    expect(runtime.getSnapshot().solarDayProgress).toBe(.94)
+    runtime.update(1/60)
+    expect(runtime.simulation.time).toBeGreaterThan(time);expect(runtime.environmentClock.motionSeconds).toBeGreaterThan(motion)
+    runtime.pause('user');runtime.setSolarDayProgress(.3)
+    expect(runtime.getSnapshot().phase).toBe('paused')
+    runtime.close()
+  })
   it('keeps real travel state frozen through a viewpoint request and cancellation', async () => {
     const h=host(),runtime=new FlightRuntime(h.controller,false),owned=model()
     const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(owned);await pending
