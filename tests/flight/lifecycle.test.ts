@@ -1,3 +1,6 @@
+import { readFile } from 'node:fs/promises'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AnimationClip, BoxGeometry, Group, Mesh, MeshBasicMaterial, NormalAnimationBlendMode, Texture, TextureLoader } from 'three'
 import { TerrainStream } from '../../src/flight-experience/terrain-stream'
@@ -155,10 +158,14 @@ describe('flight owned resources and recovery', () => {
   it('recovers entry and return preparation after hidden/context overlap without reviving scenery', async () => {
     const h = host(), runtime = new FlightRuntime(h.controller, false)
     const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
+    let now = performance.now()
+    vi.spyOn(performance, 'now').mockImplementation(() => now)
     for (const direction of ['entry', 'return']) {
       runtime.enterViewpoint('seaward')
       if (direction === 'return') runtime.returnFromViewpoint()
+      now += 5000
       runtime.setVisibilityState(false); runtime.setFocusState(false)
+      now += 60000
       const frame = runtime.frameId, motion = runtime.environmentClock.motionSeconds
       runtime.contextLost(); runtime.contextRestored(); runtime.update(60)
       expect(runtime.running).toBe(false); expect(runtime.frameId).toBe(frame)
@@ -169,6 +176,8 @@ describe('flight owned resources and recovery', () => {
       expect(runtime.environmentClock.motionSeconds).toBe(motion)
       expect(runtime.observation.sceneryPaused).toBe(true)
       expect(runtime.getSnapshot().phase).not.toBe('flying')
+      expect(runtime.observation.checkTimeout(now + 14999)).toBe(false)
+      expect(runtime.observation.checkTimeout(now + 15000)).toBe(true)
     }
     runtime.close(); runtime.setFocusState(true); expect(runtime.running).toBe(false)
   })
@@ -189,6 +198,79 @@ describe('flight owned resources and recovery', () => {
     expect(runtime.getSnapshot().reason).toBe('error')
     runtime.close(); expect(h.dispose).toHaveBeenCalledTimes(1)
   })
+  it('ticks one authoritative solar frame and limits progress notifications without resetting layout', async () => {
+    const h = host(), runtime = new FlightRuntime(h.controller, false)
+    const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
+    runtime.enterViewpoint('seaward'); runtime.observation.complete(runtime.observation.generation)
+    runtime.reviewIsolation.freezeWorld = true
+    const layout = runtime.scenery.environment.solarLayout
+    const position = {...runtime.simulation.position}, motion = runtime.environmentClock.motionSeconds, progress = runtime.environmentClock.solarDayProgress
+    runtime.setSolarMode('auto')
+    expect(runtime.environmentClock.solarDayProgress).toBe(progress)
+    expect(runtime.environmentClock.motionSeconds).toBe(motion)
+    const published = vi.fn(); runtime.subscribe(published)
+    for (let frame = 0; frame < 60; frame++) runtime.update(1/60)
+    expect(published.mock.calls.length).toBeLessThanOrEqual(4)
+    expect(runtime.scenery.environment.solarDayProgress).toBe(runtime.environmentClock.solarDayProgress)
+    expect(runtime.scenery.environment.frame.solarDayProgress).toBe(runtime.environmentClock.solarDayProgress)
+    expect(runtime.scenery.environment.frame.motionSeconds).toBe(runtime.environmentClock.motionSeconds)
+    expect(runtime.scenery.environment.solarLayout).toBe(layout)
+    expect(runtime.simulation.position).toEqual(position)
+    runtime.toggleScenery(); const frozen = runtime.environmentClock.solarDayProgress
+    runtime.update(60); expect(runtime.environmentClock.solarDayProgress).toBe(frozen)
+    expect(runtime.getSnapshot().daylight?.status).toBe('suspended')
+    runtime.setSolarDayProgress(.94); runtime.setSolarMode('auto'); runtime.toggleScenery()
+    const beforeEnd = runtime.environmentClock.motionSeconds; runtime.update(1/60)
+    expect(runtime.getSnapshot().daylight?.status).toBe('ended')
+    expect(runtime.environmentClock.motionSeconds).toBeGreaterThan(beforeEnd)
+    runtime.restartDaylightFromMorning()
+    expect(runtime.environmentClock.solarDayProgress).toBe(.08)
+    expect(runtime.simulation.position).toEqual(position)
+    runtime.returnFromViewpoint(); expect(runtime.getSnapshot().daylight?.status).toBe('suspended')
+    expect(runtime.environmentClock.solarMode).toBe('auto')
+    runtime.close()
+  })
+  it('completes twenty actual Runtime observation roundtrips with bounded resources and unchanged travel', async () => {
+    // Parse the shipping ecology geometry; only browser image decoding is stubbed.
+    const bytes = await readFile('src/flight-experience/assets/ecology-r5/ecology-r5.glb')
+    vi.spyOn(GLTFLoader.prototype, 'loadAsync').mockImplementation(() => {
+      const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
+      loader.register(parser => { parser.loadTextureImage = () => Promise.resolve(new Texture()); return {name:'test-image-decoder'} })
+      const buffer = new ArrayBuffer(bytes.byteLength); new Uint8Array(buffer).set(bytes)
+      return loader.parseAsync(buffer, '')
+    })
+    const h = host(), runtime = new FlightRuntime(h.controller, false)
+    const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
+    const prepareUntil = async (phase: string) => {
+      for (let frame = 0; frame < 1200 && runtime.observation.phase !== phase; frame++) {
+        TestWorker.instances.forEach(worker => worker.finish()); runtime.update(1/60)
+        await new Promise(resolve => setTimeout(resolve, 0))
+      }
+      expect(runtime.observation.phase, JSON.stringify({props:runtime.scenery.metrics,far:runtime.farTerrain.metrics,horizon:runtime.horizonTerrain.metrics,river:runtime.scenery.river.busy,environment:runtime.scenery.environment.busy})).toBe(phase)
+    }
+    const position = {...runtime.simulation.position}, time = runtime.simulation.time
+    runtime.setSolarMode('auto')
+    for (let trip = 0; trip < 20; trip++) {
+      runtime.enterViewpoint((['seaward','cliff','waterline'] as const)[trip%3]!)
+      await prepareUntil('active')
+      runtime.update(1/60)
+      const progress = runtime.environmentClock.solarDayProgress
+      runtime.returnFromViewpoint(); await prepareUntil('inactive')
+      expect(runtime.environmentClock.solarDayProgress).toBe(progress)
+      expect(runtime.environmentClock.solarMode).toBe('auto')
+      expect(runtime.getSnapshot().phase).toBe('paused')
+      expect(runtime.simulation.position).toEqual(position); expect(runtime.simulation.time).toBe(time)
+      expect(runtime.root.visible).toBe(true); expect(runtime.observation.bookmark).toBeNull()
+      expect(runtime.scenery.metrics.failed, runtime.scenery.metrics.failureReason).toBe(false); expect(runtime.scenery.metrics.ready).toBe(true)
+      expect(runtime.scenery.metrics.cells).toBeLessThanOrEqual(169)
+      expect(runtime.scenery.metrics.bytes).toBeLessThan(120*1024*1024)
+      expect(runtime.terrain.resident.size).toBeLessThanOrEqual(81)
+      expect(runtime.terrain.diagnostics().readyBytes).toBeLessThanOrEqual(8*1024*1024)
+      expect(runtime.scenery.environment.metrics.textureBytes).toBe(202800)
+      expect(runtime.farTerrain.metrics.strips).toBeLessThanOrEqual(14)
+    }
+    runtime.close(); expect(h.dispose).toHaveBeenCalledOnce()
+  }, 120_000)
   it('has a seamless non-static authored glide and no animated root translation', () => {
     const clip = AnimationClip.parse({ ...glide, blendMode: NormalAnimationBlendMode })
     expect(clip.duration).toBe(4)
