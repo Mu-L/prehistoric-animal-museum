@@ -7,6 +7,7 @@ import { FlightAnimationController } from './flight-animation'
 import { animationWeights } from './flight-animation-default'
 import poweredFlapData from './assets/pteranodon-powered-flap.json'
 import { VisibleSurfaceSnapshot } from './visible-surface'
+import { HorizonTerrain } from './horizon-terrain'
 import { FarTerrain } from './far-terrain'
 import { VISIBILITY_PROFILES } from './visibility-profile'
 import type { LookdevScene } from './lookdev/LookdevScene'
@@ -101,6 +102,7 @@ export class FlightRuntime implements ExternalExperience {
   readonly surface: VisibleSurfaceSnapshot
   readonly terrain: TerrainStream
   readonly scenery: FlightScenery
+  readonly horizonTerrain: HorizonTerrain
   readonly farTerrain: FarTerrain
   private readonly abort = new AbortController()
   private lease: ExperienceLease | null = null
@@ -115,6 +117,7 @@ export class FlightRuntime implements ExternalExperience {
   private disposed = false
   private origin: Address = { x: 0, z: 0 }
   private cameraInitialized = false
+  private reviewDistanceBaseline = false
   private contextAvailable = true
   private snapshot: FlightSnapshot = { phase: 'preparing', reason: null, simplified: false, region: 'coast', gentle: false, assisted: false, quality: 'low', settings: { ...DEFAULT_FLIGHT_SETTINGS } }
   private readonly listeners = new Set<() => void>()
@@ -131,6 +134,7 @@ export class FlightRuntime implements ExternalExperience {
   constructor(private readonly controller: ViewerController, gentle: boolean, settings: FlightSettings = DEFAULT_FLIGHT_SETTINGS, worldConfig: WorldConfig = WORLD) {
     if(import.meta.env.DEV){
       const params=new URLSearchParams(location.search),a0=params.get('flightA0')
+      this.reviewDistanceBaseline=params.get('flightDistanceReview')==='baseline'
       if(a0==='layered'||a0==='standalone')this.surfaceReview.value.set(a0==='layered'?2:10,5)
       else if(params.get('flightSurfaceReview')==='semantic')this.surfaceReview.value.x=1
     }
@@ -150,9 +154,11 @@ export class FlightRuntime implements ExternalExperience {
     this.scenery.props.setLandmarks(landmarks)
     this.terrain = new TerrainStream(() => this.lease?.invalidate(), () => this.publish({ simplified: true }), worldConfig)
     this.surface=new VisibleSurfaceSnapshot(this.terrain,this.world)
-    this.scenery.environment.fog.decorate(this.terrain.material)
+    this.scenery.farCanopy.clustered=!this.reviewDistanceBaseline
+    this.scenery.environment.fog.decorate(this.terrain.material,true)
     this.scene.add(this.terrain.root)
-    this.farTerrain=new FarTerrain(this.world,material=>this.scenery.environment.fog.decorate(material));this.scene.add(this.farTerrain.root)
+    this.farTerrain=new FarTerrain(this.world,material=>this.scenery.environment.fog.decorate(material,true));this.scene.add(this.farTerrain.root)
+    this.horizonTerrain=new HorizonTerrain(this.world,material=>this.scenery.environment.fog.decorate(material,true));this.scene.add(this.horizonTerrain.root)
     this.setQuality(settings.quality, false)
   }
   private scenerySurface(x:number,z:number){
@@ -189,7 +195,7 @@ export class FlightRuntime implements ExternalExperience {
   }
   get pixelRatio() { return this.snapshot.quality === 'low' ? 1 : 1.5 }
   private get reviewMotionActive() { return import.meta.env.DEV && this.reviewIsolation.animateWater && this.contextAvailable && ['ready', 'paused'].includes(this.snapshot.phase) && (this.snapshot.reason === null || this.snapshot.reason === 'user') }
-  get running() { return !this.disposed && (this.snapshot.phase === 'flying' || (this.contextAvailable && this.snapshot.reason !== 'hidden' && (this.observationPreparing || (this.observationActive && !this.observation.sceneryPaused))) || this.reviewMotionActive || this.snapshot.phase === 'preparing' || this.snapshot.phase === 'buffering' || (['ready','paused'].includes(this.snapshot.phase) && this.snapshot.reason !== 'hidden' && this.contextAvailable && (this.scenery.busy || this.farTerrain.metrics.pending>0 || Boolean(this.lookdev?.busy)))) }
+  get running() { return !this.disposed && (this.snapshot.phase === 'flying' || (this.contextAvailable && this.snapshot.reason !== 'hidden' && (this.observationPreparing || (this.observationActive && !this.observation.sceneryPaused))) || this.reviewMotionActive || this.snapshot.phase === 'preparing' || this.snapshot.phase === 'buffering' || (['ready','paused'].includes(this.snapshot.phase) && this.snapshot.reason !== 'hidden' && this.contextAvailable && (this.scenery.busy || this.farTerrain.metrics.pending>0 || (this.horizonTerrain.metrics.pending>0&&!this.reviewDistanceBaseline) || Boolean(this.lookdev?.busy)))) }
   getSnapshot = () => this.snapshot
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => this.listeners.delete(listener) }
   private publish(patch: Partial<FlightSnapshot>) {
@@ -322,7 +328,7 @@ export class FlightRuntime implements ExternalExperience {
     if (Math.max(Math.abs(p.x - this.origin.x), Math.abs(p.z - this.origin.z)) > 2048) {
       const next = { x: Math.floor(p.x / CHUNK_SIZE) * CHUNK_SIZE, z: Math.floor(p.z / CHUNK_SIZE) * CHUNK_SIZE }
       this.camera.position.x -= next.x - this.origin.x; this.camera.position.z -= next.z - this.origin.z
-      this.origin = next; this.groundOrigin.value.set(next.x,next.z); this.originShifts++; this.terrain.relocate(next); this.farTerrain.relocate(next); this.scenery.relocate(next)
+      this.origin = next; this.groundOrigin.value.set(next.x,next.z); this.originShifts++; this.terrain.relocate(next); this.farTerrain.relocate(next); this.horizonTerrain.relocate(next); this.scenery.relocate(next)
     }
     const render = this.simulation.renderState(), rp = render.position
     const focus = observer?.position ?? rp
@@ -342,8 +348,10 @@ export class FlightRuntime implements ExternalExperience {
       this.camera.quaternion.fromArray(this.observation.bookmark.quaternion)
     }
     else if(!this.reviewIsolation.freezeCamera) this.updateCamera(render, flying ? Math.min(deltaSeconds, 1 / 15) : 0)
+    this.horizonTerrain.root.visible=!this.lookdevActive&&!this.reviewHideFarTerrain&&!this.reviewDistanceBaseline
     this.farTerrain.root.visible=!this.lookdevActive&&!this.reviewHideFarTerrain
     this.scenery.environment.water.visible=!this.lookdevActive&&!this.reviewHideWater
+    if(this.frameId%6===5&&!this.reviewIsolation.freezeWorld&&!this.reviewDistanceBaseline)this.horizonTerrain.update(focus.x,focus.z,this.workBudget)
     const terrainWork=()=>{
       if(!this.reviewIsolation.freezeWorld&&worldWork){const t=performance.now();this.terrain.update(deltaSeconds,true,this.workBudget);this.frameCpu.terrainUpdate=performance.now()-t}
     }
@@ -368,11 +376,15 @@ export class FlightRuntime implements ExternalExperience {
     this.frameCpu.scenery=performance.now()-sceneryStart
     if(this.frameId%5!==0)terrainWork()
     if(this.frameId%5!==4)farWork()
+    if(this.frameId%6!==5&&!this.reviewIsolation.freezeWorld&&!this.reviewDistanceBaseline)this.horizonTerrain.update(focus.x,focus.z,this.workBudget)
+    this.horizonTerrain.setCovered(focus.x,focus.z,profile.terrainVisible,this.farTerrain.metrics.pending===0)
+    this.scenery.environment.fog.uniforms.landDistanceReady.value=Number(this.horizonTerrain.ready&&!this.reviewDistanceBaseline)
     this.farTerrain.setNearCoverage([...this.terrain.resident.values()].map(tile=>tile.result.chunk))
     // Expand visibility only after both coarse layers can cover it; no empty-far-land reveal.
     if(this.farTerrain.metrics.pending===0 && this.scenery.farCanopy.metrics.pendingTiles===0 && this.scenery.farCanopy.metrics.submitted>0){
       const fog=this.scene.fog as Fog;fog.near=profile.fogStart;fog.far=profile.fogEnd
-      if(this.camera.far!==profile.cameraFar){this.camera.far=profile.cameraFar;this.camera.updateProjectionMatrix()}
+      const cameraFar=this.horizonTerrain.ready&&!this.reviewDistanceBaseline?24000:profile.cameraFar
+      if(this.camera.far!==cameraFar){this.camera.far=cameraFar;this.camera.updateProjectionMatrix()}
     }
     if (this.scenery.metrics.failed) this.publish({simplified:true})
     const environment = this.scenery.environment.frame
@@ -385,7 +397,7 @@ export class FlightRuntime implements ExternalExperience {
     if(this.observationPreparing && observerWork) {
       const token=this.observation.generation
       if(this.observation.checkTimeout(performance.now())) this.publishObservation()
-      else if(this.terrain.previewReady && this.modelAttached && !this.scenery.environment.busy && !this.scenery.river.busy && (this.scenery.metrics.failed || (!this.scenery.props.busy && !this.scenery.farCanopy.busy)) && this.farTerrain.metrics.pending===0) {
+      else if(this.terrain.previewReady && this.modelAttached && !this.scenery.environment.busy && !this.scenery.river.busy && (this.scenery.metrics.failed || (!this.scenery.props.busy && !this.scenery.farCanopy.busy)) && this.farTerrain.metrics.pending===0 && (this.horizonTerrain.ready||this.reviewDistanceBaseline)) {
         const bookmark=this.observation.bookmark, returning=this.observation.phase==='returning'
         if(this.observation.complete(token)) {
           if(returning && bookmark) {this.root.visible=bookmark.visible;this.cameraInitialized=true;this.input.clear();this.simulation.clearAccumulator();this.publish({phase:'paused',reason:'user'})}
@@ -395,7 +407,7 @@ export class FlightRuntime implements ExternalExperience {
     }
     if(import.meta.env.DEV)this.reviewOverlayUpdate?.()
     if(import.meta.env.DEV&&this.trace.active) this.trace.append({frameId:this.frameId,time:render.time,phase:this.snapshot.phase,pauseReason:this.snapshot.reason,position:[rp.x,rp.y,rp.z],camera:{position:this.camera.position.toArray(),quaternion:this.camera.quaternion.toArray(),fov:this.camera.fov,near:this.camera.near,far:this.camera.far},surface:{waterTime:this.reviewWaterTime,waveFrozen:this.scenery.review.freezeWater,shadowEnabled:this.scenery.review.shadows,depthFrozen:this.scenery.review.freezeBathymetry,identity:this.terrain.surfaceIdentity(rp.x,rp.z),riverReady:this.scenery.river.ready,waterOwner:this.scenery.river.ready&&!this.reviewIsolation.hideRiver&&rp.x>=this.world.river.bounds.minX&&rp.x<this.world.river.bounds.maxX&&rp.z>=this.world.river.bounds.minZ&&rp.z<this.world.river.bounds.maxZ?'finite-water':'ocean',isolation:{...this.reviewIsolation}},quality:this.snapshot.quality,deltaMs:deltaSeconds*1000,cpu:{...this.frameCpu},budget:{...this.workBudget.metrics},terrain:{...this.terrain.diagnostics(),far:{...this.farTerrain.metrics}},props:{...this.scenery.metrics,farCanopy:{...this.scenery.farCanopy.metrics}},bathymetry:{...this.scenery.environment.metrics},gpuMs:null})
-    if(this.observationActive && !this.observation.sceneryPaused && Number.isFinite(deltaSeconds)) {
+    if(((this.observationActive && !this.observation.sceneryPaused) || this.reviewMotionActive) && Number.isFinite(deltaSeconds)) {
       this.frameTimes.push(deltaSeconds*1000);if(this.frameTimes.length>3600)this.frameTimes.shift()
     }
     this.reportingSeconds += deltaSeconds
@@ -445,15 +457,15 @@ export class FlightRuntime implements ExternalExperience {
       origin: this.origin, originShifts: this.originShifts, droppedSeconds: this.simulation.droppedSeconds,
       frameTimeMs: { samples: sorted.length, p50: percentile(.5), p95: percentile(.95), p99: percentile(.99), spikes100: sorted.filter(n => n > 100).length },
       camera: { position: this.camera.position.toArray(), quaternion: this.camera.quaternion.toArray(), aspect:this.camera.aspect, view:this.snapshot.settings.view, pitch:this.reviewPitch, fov:this.camera.fov, near:this.camera.near, far:this.camera.far }, environment: this.scenery.environment.frame, environmentResources: {...this.scenery.environment.metrics}, render: {...this.renderMetrics}, cpuTimeMs: this.percentiles(this.cpuTimes), gpuTimeMs:this.percentiles(this.gpuTimes),
-      farTerrain:{...this.farTerrain.metrics},farCanopy:{...this.scenery.farCanopy.metrics}, props: { ...this.scenery.metrics }, terrain: this.terrain.diagnostics() }
+      horizonTerrain:{...this.horizonTerrain.metrics},farTerrain:{...this.farTerrain.metrics},farCanopy:{...this.scenery.farCanopy.metrics}, props: { ...this.scenery.metrics }, terrain: this.terrain.diagnostics() }
   }
   resetReviewMetrics() { if(!import.meta.env.DEV)return;this.frameTimes.length=0;this.cpuTimes.length=0;this.gpuTimes.length=0 }
   recordRender(data: typeof this.renderMetrics) {
     this.renderMetrics = data
     this.trace.render(this.frameId,data)
-    if (this.snapshot.phase === 'flying' || this.observationActive) { this.cpuTimes.push(data.cpuMs); if (this.cpuTimes.length > 3600) this.cpuTimes.shift() }
+    if (this.snapshot.phase === 'flying' || this.observationActive || this.reviewMotionActive) { this.cpuTimes.push(data.cpuMs); if (this.cpuTimes.length > 3600) this.cpuTimes.shift() }
   }
-  recordGpu(milliseconds: number, frameId = this.frameId) { this.trace.gpu(frameId,milliseconds); if(this.snapshot.phase === 'flying' || this.observationActive) { this.gpuTimes.push(milliseconds);if(this.gpuTimes.length>240)this.gpuTimes.shift() } }
+  recordGpu(milliseconds: number, frameId = this.frameId) { this.trace.gpu(frameId,milliseconds); if(this.snapshot.phase === 'flying' || this.observationActive || this.reviewMotionActive) { this.gpuTimes.push(milliseconds);if(this.gpuTimes.length>240)this.gpuTimes.shift() } }
   private percentiles(values: number[]) {
     const sorted = [...values].sort((a,b)=>a-b)
     return { samples:sorted.length,p50:sorted[Math.floor(sorted.length*.5)]??null,p95:sorted[Math.floor(sorted.length*.95)]??null,p99:sorted[Math.floor(sorted.length*.99)]??null }
@@ -476,7 +488,7 @@ export class FlightRuntime implements ExternalExperience {
   close() { if (this.lease) this.lease.release(); else this.dispose(); this.lease = null }
   dispose() {
     if (this.disposed) return
-    this.observation.close();this.disposed = true; this.abort.abort(); this.input.clear(); this.groundLibrary?.dispose(); this.terrain.dispose(); this.farTerrain.dispose(); this.scenery.dispose(); this.lookdev?.dispose()
+    this.observation.close();this.disposed = true; this.abort.abort(); this.input.clear(); this.groundLibrary?.dispose(); this.terrain.dispose(); this.farTerrain.dispose(); this.horizonTerrain.dispose(); this.scenery.dispose(); this.lookdev?.dispose()
     if (this.model) this.controller.disposeStagedModel(this.model)
     this.model = null; this.scene.clear(); this.listeners.clear(); this.frameTimes.length = 0; this.cpuTimes.length = 0; this.gpuTimes.length = 0
   }

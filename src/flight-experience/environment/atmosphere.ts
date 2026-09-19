@@ -2,7 +2,7 @@ import { WATER_LIGHTING_GLSL } from './water-lighting'
 /** Linear radiance shared by sky, sea and atmospheric land fog. */
 export const ENVIRONMENT_ATMOSPHERE_GLSL = `
 ${WATER_LIGHTING_GLSL}
-uniform float solarWaveStrength;uniform float solarWaterTime;uniform vec2 solarWaterOrigin;
+uniform float landDistanceReady;uniform float solarWaveStrength;uniform float solarWaterTime;uniform vec2 solarWaterOrigin;
 uniform float photographicSky;uniform vec3 skyLow;uniform vec3 skyMid;uniform vec3 skyUpper;
 uniform float waterHighlight; uniform float skyColors; uniform vec3 skyZenith; uniform vec3 horizon; uniform vec3 sunDirection; uniform vec3 sunColor;
 vec3 skyGradient(vec3 d){
@@ -65,7 +65,7 @@ vec3 oceanColor(vec3 ray,vec3 n,float shallow,vec3 surfacePosition){
  vec3 highlight=mix(sunColor, gold, golden*.85)*peak;
  return oceanBase(ray,n,shallow)+highlight;
 }
-vec3 fogRadiance(vec3 ray){if(ray.y>=0.)return skyGradient(ray);return mix(oceanBase(ray,vec3(0.,1.,0.),0.),skyGradient(vec3(ray.x,0.,ray.z)),1.-smoothstep(0.,.012,-ray.y));}
+vec3 fogRadiance(vec3 ray){if(ray.y>=0.)return skyGradient(ray);return mix(oceanBase(ray,vec3(0.,1.,0.),0.),skyGradient(vec3(ray.x,0.,ray.z)),1.-smoothstep(0.,mix(.012,.024,smoothstep(150.,600.,cameraPosition.y)*landDistanceReady),-ray.y));}
 vec3 distantColor(vec3 ray){if(ray.y>=0.)return skyColor(ray);
- vec3 ocean=oceanColor(ray,vec3(0.,1.,0.),0.,cameraPosition+ray*(max(cameraPosition.y+.7,1.)/max(-ray.y,.0001)));return mix(ocean,skyGradient(vec3(ray.x,0.,ray.z)),1.-smoothstep(0.,.012,-ray.y));}
+ vec3 ocean=oceanColor(ray,vec3(0.,1.,0.),0.,cameraPosition+ray*(max(cameraPosition.y+.7,1.)/max(-ray.y,.0001)));return mix(ocean,skyGradient(vec3(ray.x,0.,ray.z)),1.-smoothstep(0.,mix(.012,.024,smoothstep(150.,600.,cameraPosition.y)*landDistanceReady),-ray.y));}
 `

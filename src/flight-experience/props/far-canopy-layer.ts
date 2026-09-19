@@ -4,7 +4,7 @@ import { dimensions } from './prop-lod'
 import { VISIBILITY_PROFILES } from '../visibility-profile'
 import type { BathymetryBudget } from '../environment/bathymetry'
 export interface CanopyTemplate { asset:string;parts:readonly {geometry:BufferGeometry;material:Material|Material[]}[] }
-interface Source {scatter(address:Address):Prop[]}
+interface Source {scatter(address:Address):Prop[];noise?:(x:number,z:number,namespace:number)=>number}
 interface Ownership {templates:()=>readonly CanopyTemplate[];hasRepresentation:(id:string)=>boolean;surface:(x:number,z:number)=>number}
 interface CachedTile {address:Address;props:Prop[]}
 interface Pool {meshes:InstancedMesh[];matrix:InstancedBufferAttribute;staging:Float32Array;ids:string[];nextIds:string[];count:number;origin:Address}
@@ -13,6 +13,7 @@ const CAPACITY=4096
  * geometry/material/texture ownership remains with PropStream, disposed after us.
  */
 export class FarCanopyLayer {
+  clustered=true
   readonly root=new Group()
   readonly metrics={ready:false,tiles:0,candidates:0,pendingTiles:0,live:0,submitted:0,visible:0,bytes:0,drawCalls:0,overflow:0,prepareMs:0,compactionFrames:0}
   private readonly cache=new Map<string,CachedTile>()
@@ -98,7 +99,11 @@ export class FarCanopyLayer {
         while(this.cursor<this.candidates.length&&this.cursor-start<1024){
           if((this.cursor-start)%32===0&&!canStart())break
           const prop=this.candidates[this.cursor++]!
-          if(prop.priority>=(this.buildQuality==='low'?.55:.85))continue
+          // Thin the same source trees by coherent woodland patches, not new random positions.
+          const woodland=this.clustered?this.source.noise?.(prop.x/600,prop.z/600,71):undefined
+          const t=woodland===undefined?1:Math.max(0,Math.min(1,(woodland-.32)/.38))
+          const cluster=.3+.7*t*t*(3-2*t)
+          if(prop.priority>=(this.buildQuality==='low'?.55:.85)*cluster)continue
           if(this.ownership.hasRepresentation(prop.id)){this.suppressed.add(prop.id);continue}
           const dx=prop.x-this.buildCamera.x,dz=prop.z-this.buildCamera.z;if(dx*dx+dz*dz>this.buildRange*this.buildRange)continue
           const d=dimensions(prop),pool=this.pools.get(d.asset);if(!pool)continue

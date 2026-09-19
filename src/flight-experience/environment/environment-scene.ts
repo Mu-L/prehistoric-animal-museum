@@ -38,7 +38,7 @@ vec2 readField(sampler2D field,vec2 origin,float spacing){vec2 p=(worldPosition.
 float height=mix(mix(ground(field,cell),ground(field,cell+vec2(1.,0.)),f.x),mix(ground(field,cell+vec2(0.,1.)),ground(field,cell+1.),f.x),f.y);
 float edge=min(min(p.x,p.y),min(129.-p.x,129.-p.y));
 return vec2(height,smoothstep(0.,8.,edge));}
-float shallowAt(float height){return 1.-smoothstep(1.,24.,worldPosition.y-height);}
+float shallowAt(float height){float depth=max(0.,worldPosition.y-height);return mix(1.-smoothstep(1.,24.,depth),exp(-depth/4.5),smoothstep(120.,400.,cameraPosition.y)*landDistanceReady);}
 void main(){
 
 // Ocean/finite water ownership is disjoint in geometry, not a fragment epsilon.

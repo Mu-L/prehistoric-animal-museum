@@ -27,6 +27,12 @@ export const CAPTURE_ANCHORS: readonly CaptureAnchor[] = [
   { id: 'm1-rock', world: WORLD, position: {x:300,y:350,z:-2200}, heading:.4,view:'wide',pitch:-.35,presentationSeconds:0,preset:'afternoon' },
   { id: 'm1-groundcover', world: WORLD, position: {x:1200,y:425,z:-700}, heading:.4,view:'near',pitch:-.45,presentationSeconds:0,preset:'afternoon' },
   { id: 'm1-forest-runoff', world: WORLD, position: {x:1100,y:475,z:-220}, heading:0,view:'near',pitch:-.35,presentationSeconds:0,preset:'afternoon' },
+  // Altitude comparisons share the existing world and sunset; no recovered video coordinates.
+  ...[ {id:'altitude-low',y:1.6,x:160,z:500,tx:-116,ty:-6,tz:-461},
+    {id:'altitude-mid',y:210,x:-160,z:350,tx:420,ty:120,tz:-550},
+    {id:'altitude-high',y:900,x:-450,z:950,tx:1000,ty:120,tz:-4000},
+    {id:'altitude-top',y:1400,x:-600,z:1100,tx:1500,ty:100,tz:-4500},
+  ].map(v=>({id:v.id,world:WORLD,position:{x:v.x,y:v.y,z:v.z},heading:0,view:'standard' as const,pitch:0,presentationSeconds:0,preset:'evening' as const,solarLayout:'sunset-bay' as const,camera:{position:{x:v.x,y:v.y,z:v.z},target:{x:v.tx,y:v.ty,z:v.tz}}})),
 ]
 
 /** Approximate feedback routes, never claimed to recover the user's screenshot coordinates. */
