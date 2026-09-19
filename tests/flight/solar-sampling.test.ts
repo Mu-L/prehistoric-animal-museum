@@ -28,3 +28,13 @@ describe('continuous E1 sunlight in a single frame',()=>{
   expect(f.sunDirectionWorld).toEqual([.63/length,.65/length,-.43/length])
  })
 })
+
+it('samples identical fixed and automatic states at the daylight joins in both layouts', async () => {
+ const {EnvironmentClock,clockPolicy}=await import('../../src/flight-experience/environment/environment-clock')
+ for(const layout of ['legacy','sunset-bay'] as const)for(const progress of [.08,.419999,.42,.420001,.679999,.68,.680001,.94]){
+  const clock=new EnvironmentClock();clock.setSolarDayProgress(progress);clock.restoreCaptureMotion(17.25)
+  const fixed=sampleEnvironment(clock.solarDayProgress,clock.motionSeconds,layout,10)
+  clock.setSolarMode('auto');clock.tick(0,clockPolicy('viewpoint'))
+  expect(sampleEnvironment(clock.solarDayProgress,clock.motionSeconds,layout,10)).toEqual(fixed)
+ }
+})
