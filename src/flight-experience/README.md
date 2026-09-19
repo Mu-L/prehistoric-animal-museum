@@ -102,7 +102,7 @@ sampling. This introduces a bounded refresh delay during terrain morphs.
 
 The daylight control defaults to a fixed time. Explicit automatic daylight continues
 from the current progress at a constant rate over 0.08–0.94: a complete day takes
-1500 admitted environment seconds. Frames admit at most 4/60 seconds; very low frame
+600 admitted environment seconds. Frames admit at most 4/60 seconds; very low frame
 rates take longer in wall time. Sunset holds until an explicit replay from morning.
 Manual sunlight controls switch back to fixed without resetting waves or travel.
 

@@ -69,21 +69,21 @@ describe('E1 independent environment clock', () => {
 })
 
 describe('automatic daylight', () => {
- it.each([15, 30, 60, 120])('completes exactly one full daylight in 1500 admitted seconds at %i Hz', hz => {
+ it.each([15, 30, 60, 120])('completes exactly one full daylight in 600 admitted seconds at %i Hz', hz => {
   const clock = new EnvironmentClock(), policy = clockPolicy('viewpoint')
   clock.restartDaylightFromMorning()
-  for (let frame = 0; frame < 1500 * hz; frame++) clock.tick(1 / hz, policy)
+  for (let frame = 0; frame < 600 * hz; frame++) clock.tick(1 / hz, policy)
   expect(clock.solarDayProgress).toBe(.94)
   expect(clock.snapshot(policy).status).toBe('ended')
   clock.tick(1 / hz, policy)
   expect(clock.solarDayProgress).toBe(.94)
-  expect(clock.motionSeconds).toBeGreaterThan(1500)
+  expect(clock.motionSeconds).toBeGreaterThan(600)
  })
  it('continues from afternoon, suspends without catch-up, and manual override only stops the sun', () => {
   const clock = new EnvironmentClock(), policy = clockPolicy('flying')
   clock.setSolarMode('auto')
   expect(clock.solarDayProgress).toBe(.68)
-  expect(clock.snapshot(policy).remainingActiveSeconds).toBeCloseTo(453.488372)
+  expect(clock.snapshot(policy).remainingActiveSeconds).toBeCloseTo(181.395349)
   clock.tick(60, clockPolicy('hidden'))
   expect(clock.snapshot(clockPolicy('hidden')).status).toBe('suspended')
   expect(clock.solarDayProgress).toBe(.68)
@@ -101,7 +101,7 @@ describe('automatic daylight', () => {
   for (const dt of [NaN, Infinity, -Infinity, -1]) clock.tick(dt, policy)
   expect(clock.solarDayProgress).toBe(.68)
   clock.tick(60, policy)
-  expect(clock.solarDayProgress).toBeCloseTo(.68 + MAX_ENVIRONMENT_DELTA * .86 / 1500, 12)
+  expect(clock.solarDayProgress).toBeCloseTo(.68 + MAX_ENVIRONMENT_DELTA * .86 / 600, 12)
   const motion = clock.motionSeconds
   clock.restartDaylightFromMorning()
   expect(clock.motionSeconds).toBe(motion)

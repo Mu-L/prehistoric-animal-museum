@@ -20,7 +20,7 @@ export function clockPolicy(activity: EnvironmentActivity, sceneryPaused = false
 }
 export const DAYLIGHT_START = .08
 export const DAYLIGHT_END = .94
-export const FULL_DAYLIGHT_SECONDS = 1500
+export const FULL_DAYLIGHT_SECONDS = 600
 export const DAYLIGHT_RATE = (DAYLIGHT_END - DAYLIGHT_START) / FULL_DAYLIGHT_SECONDS
 /** Match the existing simulation's four fixed steps; never catch up after suspension. */
 export const MAX_ENVIRONMENT_DELTA = 4 / 60

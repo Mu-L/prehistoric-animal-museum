@@ -26,7 +26,7 @@ export function LightViewpointPanel({runtime,snapshot,locale,mode='sunlight'}:{r
    <button type="button" aria-pressed={!automatic} onClick={()=>runtime.setSolarMode('fixed')}>{locale==='zh-CN'?'固定时刻':'Fixed time'}</button>
    <button type="button" aria-pressed={automatic} onClick={()=>runtime.setSolarMode('auto')}>{locale==='zh-CN'?'自动白昼':'Automatic daylight'}</button>
   </div>
-  <small>{locale==='zh-CN'?'从当前时刻继续，完整白昼约25分钟。手动调节会切回固定时刻。':'Continues from here; a full daylight sequence takes about 25 minutes. Manual adjustments switch back to a fixed time.'}</small>
+  <small>{locale==='zh-CN'?'从当前时刻继续，完整白昼约10分钟。手动调节会切回固定时刻。':'Continues from here; a full daylight sequence takes about 10 minutes. Manual adjustments switch back to a fixed time.'}</small>
   <p role="status">{statusText}</p>
   {status==='ended'&&<button type="button" onClick={()=>runtime.restartDaylightFromMorning()}>{locale==='zh-CN'?'从晨光重新播放白昼':'Replay daylight from morning'}</button>}
   <div className="flight-light-options" role="group" aria-label={t.time}>{(['morning','afternoon','evening'] as SolarPreset[]).map(p=><button type="button" key={p} disabled={preparing} aria-pressed={Math.abs((snapshot.solarDayProgress??.42)-solarProgress(p))<.001} onClick={()=>runtime.setSolarDayProgress(solarProgress(p))}>{t[p as 'morning'|'afternoon'|'evening']}</button>)}</div>
