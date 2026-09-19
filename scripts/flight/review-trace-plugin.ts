@@ -29,7 +29,7 @@ export function flightReviewTracePlugin(): Plugin {
           void (async () => {
             const text = Buffer.concat(chunks).toString('utf8')
             const data = JSON.parse(text) as { schema?: unknown; route?: unknown; frames?: unknown }
-            if (data.schema !== 'flight-frame-trace-v1' || typeof data.route !== 'string' || !/^(manual|[A-E]-[a-z-]+)$/.test(data.route) || !Array.isArray(data.frames) || data.frames.length > 14400) {
+            if (data.schema !== 'flight-frame-trace-v1' || typeof data.route !== 'string' || !/^(manual|[A-F]-[a-z0-9-]+)$/.test(data.route) || !Array.isArray(data.frames) || data.frames.length > 14400) {
               response.writeHead(400).end(); return
             }
             const directory = path.join(server.config.root, '.flight-evidence/r6/traces')

@@ -56,7 +56,7 @@ describe('whole FlightExperience events with the actual Runtime (GPU/worker read
   view.unmount();expect(runtime.running).toBe(false)
  })
  it.each(['entry','return'])('restores only necessary %s preparation after DOM hidden/focus events and preserves error UI',async(direction)=>{
-  const {runtime,view}=await mount()
+  const {runtime,view,onClose}=await mount()
   act(()=>{runtime.enterViewpoint('seaward');if(direction==='return')runtime.returnFromViewpoint();runtime.setSolarMode('auto')})
   vi.spyOn(document,'hidden','get').mockReturnValue(true)
   fireEvent(document,new Event('visibilitychange'));fireEvent(window,new Event('blur'))
@@ -71,6 +71,8 @@ describe('whole FlightExperience events with the actual Runtime (GPU/worker read
   act(()=>runtime.fail(new Error('injected update fault')))
   expect(screen.getByRole('alert')).toBeVisible();expect(runtime.running).toBe(false)
   fireEvent(window,new Event('focus'));expect(runtime.running).toBe(false)
+  expect(screen.getByRole('button',{name:'Return to flight position'})).toBeVisible()
+  fireEvent.keyDown(window,{code:'Escape',key:'Escape'});expect(onClose).toHaveBeenCalledOnce()
   view.unmount()
  })
 })

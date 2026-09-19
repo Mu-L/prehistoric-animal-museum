@@ -98,8 +98,11 @@ export class FlightRuntime implements ExternalExperience {
     this.terrain.plan(target.position.x,target.position.z,target.heading,target.position.y);this.terrain.prepareStaticView()
     this.publishObservation();this.invalidate()
   }
+  get canReturnToTravel() { return !this.disposed && this.contextAvailable && this.visible && this.focused && this.observation.bookmark !== null }
   returnFromViewpoint() {
-    if (this.observation.phase === 'inactive' || !this.available) return
+    if (this.observation.phase === 'inactive' || !this.canReturnToTravel) return
+    // Only this explicit return command may retry a failed observation.
+    if (this.fatalError) { this.fatalError = false; this.observation.suspend(); this.syncAvailability() }
     this.publish({phase:'paused',reason:'user'});this.observation.returnToTravel(performance.now());this.input.clear();this.simulation.clearAccumulator()
     const p=this.simulation.position;this.terrain.plan(p.x,p.z,this.simulation.heading,p.y);this.terrain.prepareStaticView()
     this.publishObservation();this.invalidate()
