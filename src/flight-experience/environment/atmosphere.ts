@@ -28,9 +28,12 @@ vec3 skyColor(vec3 d){
  float inner=exp(-pow(angle/.012,2.))*.36;
  float outer=exp(-pow(angle/.045,2.))*.065;
  float legacy=pow(max(mu,0.),64.)*.08+smoothstep(.99988,.99997,mu)*3.;
- float solar= mix(legacy,core*12.+inner+outer,photographicSky);
+ float overcast=cloudOvercast();
+ float filtered=core*12.*mix(1.,.008,overcast)+inner*(1.-overcast*.7)+outer;
+ filtered+=overcast*(exp(-pow(angle/.042,2.))*.55+exp(-pow(angle/.12,2.))*.13);
+ float solar=mix(legacy,filtered,photographicSky);
  float transmission=solar>.0001?cloudTransmission(cameraPosition,d):1.;
- return cloudSky(cameraPosition,d,skyGradient(d),skyZenith,sunColor,sunDirection)+sunColor*solar*transmission;
+ return cloudSky(cameraPosition,d,skyGradient(d),skyZenith,sunColor,sunDirection)+sunColor*solar*mix(transmission,.65,overcast);
 }
 vec3 oceanBase(vec3 ray,vec3 n,float shallow){
  vec3 reflected=reflect(ray,n);float fresnel=.02+.98*pow(1.-max(0.,dot(-ray,n)),5.);
@@ -67,19 +70,21 @@ vec3 solarWaveNormal(vec3 surfacePosition,vec3 n){
 vec3 oceanColor(vec3 ray,vec3 n,float shallow,vec3 surfacePosition){
  vec3 specNormal=solarWaveNormal(surfacePosition,n);
  float variance=min(.025,.0006+.35*(dot(dFdx(specNormal),dFdx(specNormal))+dot(dFdy(specNormal),dFdy(specNormal))));
- float energy=waterHighlight*.018*waterSun(specNormal,-ray,sunDirection,variance);
+ float overcast=cloudOvercast();
+ variance+=overcast*.012;
+ float energy=waterHighlight*.018*mix(1.,.65,overcast)*waterSun(specNormal,-ray,sunDirection,variance);
  // Preserve gold through tone mapping; reserve near-white for the rare peak.
  float peak=energy/(1.+energy/2.8);
  float golden=1.-smoothstep(.10,.36,sunDirection.y);
  vec3 gold=mix(vec3(1.,.24,.025),vec3(1.,.52,.10),smoothstep(.08,1.8,peak));
  gold=mix(gold,vec3(1.,.86,.60),smoothstep(2.65,2.8,peak));
- vec3 highlight=mix(sunColor, gold, golden*.85)*peak;
+ vec3 highlight=mix(sunColor, gold, golden*.85*(1.-overcast*.65))*peak;
  float seaDistance=length(surfacePosition-cameraPosition);
  float reflectionDetail=1.-smoothstep(450.,2600.,seaDistance);
  vec3 reflected=reflect(ray,normalize(mix(vec3(0.,1.,0.),n,.18+.82*reflectionDetail)));
  vec3 cloudReflection=cloudSky(surfacePosition,reflected,skyGradient(reflected),skyZenith,sunColor,sunDirection)-skyGradient(reflected);
  float fresnel=.02+.98*pow(1.-max(0.,dot(-ray,n)),5.);
- return oceanBase(ray,n,shallow)+cloudReflection*mix(.16,.48,reflectionDetail)*fresnel*(1.-shallow*.22)+highlight*cloudTransmission(surfacePosition,sunDirection);
+ return oceanBase(ray,n,shallow)+cloudReflection*mix(.16,.48,reflectionDetail)*fresnel*(1.-shallow*.22)+highlight*mix(cloudTransmission(surfacePosition,sunDirection),.55,overcast);
 }
 vec3 fogRadiance(vec3 ray){if(ray.y>=0.)return skyGradient(ray);return mix(oceanBase(ray,vec3(0.,1.,0.),0.),skyGradient(vec3(ray.x,0.,ray.z)),1.-smoothstep(0.,mix(.012,.024,smoothstep(150.,600.,cameraPosition.y)*landDistanceReady),-ray.y));}
 // At the coverage boundary, meet the same distant sky/ocean background exactly.

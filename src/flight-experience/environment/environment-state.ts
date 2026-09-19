@@ -82,11 +82,14 @@ export function sampleSky(frame: EnvironmentFrame, direction: readonly [number,n
   return c.map((v,i)=>v+[1,.68,.32][i]!*haze) as [number,number,number]
 }
 
-/** Clear/dry is exactly the accepted solar frame. Cloud absorption is applied locally only. */
+/** Clear/dry is exactly the accepted solar frame. Dense weather shares a softer direct / diffuse balance across all scene receivers. */
 export function composeWeather(frame:EnvironmentFrame,weather:WeatherState):EnvironmentFrame {
  const w=weather.resolved
  if(w.coverage===0&&weather.wetness===0)return frame
+ const dense=Math.max(0,Math.min(1,(w.coverage-.55)/.35)),overcast=dense*dense*(3-2*dense)
+ const blend=(a:LinearRGB,b:LinearRGB,t:number):LinearRGB=>a.map((v,i)=>v+(b[i]!-v)*t) as [number,number,number]
  const tint=(v:LinearRGB):LinearRGB=>v.map((n,i)=>n*(1-w.haze*.25)+[.20,.23,.27][i]!*w.haze*.25) as [number,number,number]
  return Object.freeze({...frame,cloudCoverage:w.coverage,cloudBase:2400,cloudThickness:w.thickness,rainRate:w.rain,wetness:weather.wetness,
- skyZenith:tint(frame.skyZenith),skyLow:tint(frame.skyLow),skyMid:tint(frame.skyMid),skyUpper:tint(frame.skyUpper),horizon:tint(frame.horizon),fillIntensity:frame.fillIntensity*(1+w.haze*.12),visibility:frame.visibility/(1+w.haze)})
+ sunIntensity:frame.sunIntensity*(1-overcast*.32),groundFill:blend(frame.groundFill,[.18,.19,.22],overcast*.7),
+ skyZenith:blend(tint(frame.skyZenith),[.12,.15,.20],overcast*.65),skyLow:tint(frame.skyLow),skyMid:tint(frame.skyMid),skyUpper:tint(frame.skyUpper),horizon:tint(frame.horizon),fillIntensity:frame.fillIntensity*(1+w.haze*.12+overcast*.5),visibility:frame.visibility/(1+w.haze)})
 }

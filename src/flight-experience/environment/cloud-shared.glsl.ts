@@ -5,6 +5,7 @@ uniform vec2 cloudOrigin;uniform vec2 cloudPhase;
 uniform float cloudCoverage;uniform float cloudThickness;uniform float cloudReady;
 uniform float weatherHaze;uniform float rainWetness;
 vec3 flightWorldPoint(vec3 viewPoint){return cameraPosition+transpose(mat3(viewMatrix))*viewPoint;}
+float cloudOvercast(){return smoothstep(.55,.9,cloudCoverage)*cloudReady;}
 float cloudHash(vec2 cell){return fract(sin(dot(mod(cell,8.),vec2(127.1,311.7)))*43758.5453);}
 // Integrate a soft ellipsoid analytically: no stacked horizontal sampling planes.
 vec3 cloudPuff(vec3 p,vec3 d,vec3 center,vec3 radius,vec3 sun){
@@ -81,8 +82,9 @@ float cloudTransmission(vec3 p,vec3 d){
  return exp(-optical*.65);
 }
 vec3 cloudSky(vec3 p,vec3 d,vec3 base,vec3 ambient,vec3 solar,vec3 sun){
- if(d.y<=.00001||cloudCoverage<=0.||cloudReady<.5||(3100.-p.y)/d.y>=38000.)return base;
- vec3 mass=cloudMass(p,d,sun);
+ if(d.y<=.00001||cloudCoverage<=0.||cloudReady<.5)return base;
+ float overcast=cloudOvercast();
+ vec3 mass=(3100.-p.y)/d.y<38000.?cloudMass(p,d,sun):vec3(0.);
  float deck=cloudDeck(p,d),optical=(mass.x+deck)*cloudThickness;
  float distanceToCloud=mass.z/max(.0001,mass.x);
  float distanceFade=max(distanceToCloud,(3100.-p.y)/max(.001,d.y));
@@ -95,6 +97,16 @@ vec3 cloudSky(vec3 p,vec3 d,vec3 base,vec3 ambient,vec3 solar,vec3 sun){
  vec3 lit=mix(vec3(1.6,1.64,1.7),vec3(1.6,1.05,.60),lowSun*.7);
  vec3 c=mix(shade,lit,clamp(light+.16*exp(-optical),0.,1.));
  c+=solar*.04*exp(-optical*.5);
- return mix(base,c,alpha);
+ vec3 scattered=mix(base,c,alpha*(1.-overcast*.85));
+ // The overhead deck is a continuous ceiling, not distant puffs faded by their range.
+ vec2 ceilingUV=(p.xz+cloudOrigin-cloudPhase+d.xz*(2400.-p.y)/sqrt(.04+d.y*d.y))/12000.;
+ float broad=texture2D(cloudDensityMap,ceilingUV).r;
+ float rolling=texture2D(cloudDensityMap,ceilingUV*2.13+vec2(.17,.41)).r;
+ float relief=smoothstep(.28,.72,broad*.75+rolling*.25);
+ vec3 ceiling=mix(vec3(.045,.06,.095),vec3(.28,.30,.34),relief);
+ float warmth=(1.-smoothstep(.04,.38,d.y))*lowSun;
+ ceiling=mix(ceiling,base*.62+solar*.035,warmth*.7);
+ float ceilingAlpha=overcast*smoothstep(.018,.24,d.y)*(.82+.14*relief);
+ return mix(scattered,ceiling,ceilingAlpha);
 }
 `

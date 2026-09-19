@@ -22,3 +22,14 @@ it('reports only installed cells and retains their ownership during a streaming 
  expect(ring.coveredChunks).toEqual(before)
  ring.dispose();expect(ring.coveredChunks).toEqual([])
 })
+
+it('rebuilds every retained row when the north-south ownership hole moves',()=>{
+ const ring=new FarTerrain(createWorldSampler(),()=>{}),budget=new FrameWorkBudget(()=>0)
+ for(let i=0;i<160;i++){budget.begin(i);ring.update(0,0,3000,2048,budget)}
+ expect(ring.coveredChunks.some(a=>a.x===0&&a.z===-3)).toBe(false)
+ for(let i=160;i<320;i++){budget.begin(i);ring.update(0,513,3000,2048,budget)}
+ expect(ring.metrics.pending).toBe(0)
+ expect(ring.coveredChunks.some(a=>a.x===0&&a.z===-3)).toBe(true)
+ expect(ring.coveredChunks.some(a=>a.x===0&&a.z===3)).toBe(false)
+ ring.dispose()
+})

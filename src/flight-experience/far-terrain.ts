@@ -37,7 +37,8 @@ export class FarTerrain {
   this.metrics.preparedRows=0;this.metrics.uploadBytes=0
   const half=Math.ceil(range/512)*512,cx=Math.floor(x/512)*512,cz=Math.floor(z/512)*512,inner=Math.max(512,nearRange-512)
   const wanted=new Map<string,{x:number;z:number}>()
-  for(let row=cz-half;row<cz+half;row+=512)wanted.set(`${cx-half}:${row}:${half}:${inner}`,{x:cx-half,z:row})
+  // The baked inner hole depends on cz as well as row: retained rows must rebuild after north/south movement.
+  for(let row=cz-half;row<cz+half;row+=512)wanted.set(`${cx-half}:${row}:${half}:${inner}:${cz}`,{x:cx-half,z:row})
   if(this.build&&!wanted.has(this.build.key))this.build=null
   if(!this.build){const next=[...wanted].filter(([key])=>!this.strips.has(key)).sort((a,b)=>Math.abs(a[1].z-z)-Math.abs(b[1].z-z))[0]
    if(next){const cols=half*2/64+1,count=cols*9;void count;this.build={key:next[0],...next[1],half,inner,cx,cz,row:0,cols,positions:[],normals:[],colors:[],indices:[]}}

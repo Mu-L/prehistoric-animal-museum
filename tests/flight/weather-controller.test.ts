@@ -33,3 +33,13 @@ describe('weather admitted-time contract',()=>{
   const w=new WeatherController();for(const dt of [NaN,Infinity,-3])w.tick(dt,active);expect(w.snapshot().phase).toEqual([0,0]);expect(w.restore({...w.serialize(),wetness:NaN})).toBe(false);w.tick(3600,active);expect(w.snapshot().phase[0]).toBeCloseTo(.8)
  })
 })
+
+it('balances overcast direct and ambient illumination without changing fair sunlight',()=>{
+ const clear=sampleEnvironment('evening',0,'sunset-bay'),weather=new WeatherController()
+ weather.capture('fair');expect(composeWeather(clear,weather.serialize()).sunIntensity).toBe(clear.sunIntensity)
+ weather.capture('overcast');const cloudy=composeWeather(clear,weather.serialize())
+ expect(cloudy.sunIntensity).toBeLessThan(clear.sunIntensity*.75)
+ expect(cloudy.fillIntensity).toBeGreaterThan(clear.fillIntensity)
+ expect(cloudy.groundFill[2]/cloudy.groundFill[0]).toBeGreaterThan(clear.groundFill[2]/clear.groundFill[0])
+ expect(cloudy.horizon[0]).toBeGreaterThan(cloudy.horizon[2]*3)
+})

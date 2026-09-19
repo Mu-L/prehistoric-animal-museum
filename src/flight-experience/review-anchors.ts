@@ -10,6 +10,8 @@ export interface CaptureAnchor {
 }
 const fairCapture=new WeatherController()
 fairCapture.capture('fair')
+const overcastCapture=new WeatherController()
+overcastCapture.capture('overcast')
 /** Approximate compositions, not recovered metadata from the user's three screenshots. */
 export const CAPTURE_ANCHORS: readonly CaptureAnchor[] = [
   // E1 G0 candidates only. Exact cameras, no change to normal flight framing.
@@ -41,6 +43,9 @@ export const CAPTURE_ANCHORS: readonly CaptureAnchor[] = [
   // Coastal flight regression: same 205m camera for clear haze and sunset glitter.
   ...(['afternoon','evening'] as const).map(preset=>({id:`coast-flight-${preset}`,world:WORLD,position:{x:-184.77525955,y:200.41138889,z:-323.23024902},heading:0,view:'standard' as const,pitch:0,presentationSeconds:24.1346,preset,solarLayout:'sunset-bay' as const,camera:{position:{x:-184.09599322,y:205.41138889,z:-311.92273206},target:{x:-241.22034060,y:-98.67663086,z:-1262.85242724}}})),
   ...(['afternoon','evening'] as const).map(preset=>({id:`fair-seaward-${preset}`,world:WORLD,position:{x:160,y:119.3,z:500},heading:-.59,view:'standard' as const,pitch:0,presentationSeconds:0,preset,solarLayout:'sunset-bay' as const,weather:fairCapture.serialize(),camera:{position:{x:160,y:119.3,z:500},target:{x:-116,y:112,z:-461}}})),
+  {id:'overcast-high-evening',world:WORLD,position:{x:-450,y:900,z:950},heading:0,view:'standard',pitch:0,presentationSeconds:0,preset:'evening',solarLayout:'sunset-bay',weather:overcastCapture.serialize(),camera:{position:{x:-450,y:900,z:950},target:{x:1000,y:120,z:-4000}}},
+  {id:'overcast-seaward-evening',world:WORLD,position:{x:160,y:119.3,z:500},heading:-.59,view:'standard',pitch:0,presentationSeconds:0,preset:'evening',solarLayout:'sunset-bay',weather:overcastCapture.serialize(),camera:{position:{x:160,y:119.3,z:500},target:{x:-116,y:112,z:-461}}},
+  {id:'coast-stream-crossing',world:WORLD,position:{x:100,y:900,z:64},heading:0,view:'standard',pitch:0,presentationSeconds:0,preset:'evening',solarLayout:'sunset-bay',weather:overcastCapture.serialize()},
 ]
 
 /** Approximate feedback routes, never claimed to recover the user's screenshot coordinates. */
