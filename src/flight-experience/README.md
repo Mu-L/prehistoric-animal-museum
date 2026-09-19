@@ -118,3 +118,29 @@ selected time in a new fixed-mode session, while Defaults restores the original 
 
 Cloud shadows, rain and wildlife are later stages. Default production still excludes
 flight and all landscape candidates.
+
+### W1 cloud and weather candidate
+
+Weather defaults to clear and fixed. The existing 600-active-second daylight and
+an independent 480-active-second weather schedule share the EnvironmentClock
+admission and availability policy. Manual targets transition from the displayed
+state; paused requests wait for active scenery. Restart keeps resolved weather,
+phase and wetness while cancelling automatic weather and pending targets. Defaults
+returns to clear/dry. Nothing persists across a new visit.
+
+One linear 512² periodic density map supplies sky clouds, receiver-to-sun absorption
+and water reflection. The cloud layer is at 2400 m, above the unchanged 1400 m flight
+ceiling. Oblique sun queries use a world-space ray intersection without a local
+shadow-cache clamp. Only direct PBR terms and solar rim/specular contributions are
+attenuated; environment fill and haze have separate weather parameters. Rain uses
+512/1536 stable GPU instances at low/balanced quality and three fixed world curtains
+in a second draw. Zero-opacity first renders warm their programs. Wetness is a
+history value (45-second wetting / 180-second drying reference rates), applied to
+existing material weights and exposure; water geometry and collision do not change.
+
+Review-only controls provide independent water/cloud/weather/sun freezes, explicit
+static weather capture, a W1-off comparison, same-frame PBR PNG plus metadata, and
+segmented real-time cycle recording. These controls and local evidence endpoints
+are excluded from production. A missing cloud image marks simplified weather and
+cannot block terrain preparation. The package remains a Draft candidate; real-device
+performance and human G3 acceptance are separate from local tests and builds.

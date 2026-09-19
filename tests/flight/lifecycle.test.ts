@@ -1,3 +1,4 @@
+import { CAPTURE_ANCHORS } from '../../src/flight-experience/review-anchors'
 import { readFile } from 'node:fs/promises'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
@@ -119,7 +120,7 @@ describe('flight owned resources and recovery', () => {
     runtime.simulation.safetyStop = true; runtime.start()
     expect(runtime.getSnapshot().phase).toBe('paused'); expect(runtime.simulation.safetyStop).toBe(true)
     runtime.close()
-  })
+  }, 12_000) // Real generator recovery: CI measured 6.47s; retain every safety assertion.
   it('keeps live sunlight and flight adjustments moving without relocating or resetting clocks', async () => {
     const h=host(),runtime=new FlightRuntime(h.controller,false)
     const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(model());await pending
@@ -158,7 +159,8 @@ describe('flight owned resources and recovery', () => {
   it('recovers entry and return preparation after hidden/context overlap without reviving scenery', async () => {
     const h = host(), runtime = new FlightRuntime(h.controller, false)
     const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
-    let now = performance.now()
+    // Integer fixture clock keeps the exact 15,000 ms boundary independent of floating subtraction.
+    let now = 1000
     vi.spyOn(performance, 'now').mockImplementation(() => now)
     for (const direction of ['entry', 'return']) {
       runtime.enterViewpoint('seaward')
@@ -236,6 +238,27 @@ describe('flight owned resources and recovery', () => {
     expect(runtime.simulation.position).toEqual(position)
     runtime.returnFromViewpoint(); expect(runtime.getSnapshot().daylight?.status).toBe('suspended')
     expect(runtime.environmentClock.solarMode).toBe('auto')
+    runtime.close()
+  })
+  it('publishes capture sunlight to the actual frame and freezes water independently', async () => {
+    const h=host(),runtime=new FlightRuntime(h.controller,false)
+    const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(model());await pending
+    runtime.reviewIsolation.freezeWorld=true
+    for(const preset of ['evening','morning','afternoon'] as const){
+      runtime.setSolarMode('auto')
+      runtime.applyCaptureAnchor({...CAPTURE_ANCHORS[0]!,preset})
+      runtime.update(0)
+      expect(runtime.scenery.environment.frame.solarDayProgress).toBe(runtime.environmentClock.solarDayProgress)
+      expect(runtime.environmentClock.solarMode).toBe('fixed')
+    }
+    runtime.enterViewpoint('seaward');runtime.observation.complete(runtime.observation.generation)
+    runtime.scenery.review.freezeWater=true;runtime.setSolarMode('auto');runtime.setWeather('fair')
+    const water=runtime.scenery.environment.waterMotionSeconds,solar=runtime.environmentClock.solarDayProgress
+    runtime.update(1/60)
+    expect(runtime.scenery.environment.waterMotionSeconds).toBe(water)
+    expect(runtime.environmentClock.solarDayProgress).toBeGreaterThan(solar)
+    expect(runtime.weather.snapshot().phase[0]).toBeGreaterThan(0)
+    runtime.toggleScenery();const state=runtime.weather.serialize();runtime.update(60);expect(runtime.weather.serialize()).toEqual(state)
     runtime.close()
   })
   it('completes twenty actual Runtime observation roundtrips with bounded resources and unchanged travel', async () => {

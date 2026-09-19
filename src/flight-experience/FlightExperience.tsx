@@ -1,3 +1,5 @@
+import { WeatherPanel } from './WeatherPanel'
+import type { WeatherState } from './environment/weather-controller'
 import { LightViewpointPanel } from './LightViewpointPanel'
 import { WORLD } from './world'
 import { DEFAULT_FLIGHT_SETTINGS, type FlightSettings } from './settings'
@@ -18,11 +20,12 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
   const { locale, setPreference } = useI18n(), copy = flightMessages[locale]
   const [runtime, setRuntime] = useState<FlightRuntime | null>(null)
   const [retry, setRetry] = useState(0), [settings, setSettings] = useState(false), [observe, setObserve] = useState(false)
-  const [section,setSection] = useState<'sunlight'|'flight'|'viewpoints'>('sunlight')
+  const [section,setSection] = useState<'sunlight'|'flight'|'viewpoints'|'weather'>('sunlight')
   const settingsTrigger=useRef<HTMLButtonElement>(null)
   const closeSettings=()=>{setSettings(false);settingsTrigger.current?.focus()}
   const root = useRef<HTMLElement>(null), nudgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const descriptorRef = useRef(descriptor)
+  const chosenWeather = useRef<WeatherState | null>(null)
   const chosenSunlight = useRef<number | null>(null)
   const chosenSettings = useRef<FlightSettings>({ ...DEFAULT_FLIGHT_SETTINGS })
   const [draft, setDraft] = useState<FlightSettings>({ ...DEFAULT_FLIGHT_SETTINGS })
@@ -34,6 +37,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
   }, [snapshot.observation])
   useEffect(() => {
     const instance = new FlightRuntime(controller, window.matchMedia('(prefers-reduced-motion: reduce)').matches, chosenSettings.current, import.meta.env.DEV && [193706,193707,193708].includes(Number(new URLSearchParams(location.search).get('flightSeed'))) ? {...WORLD,seed:Number(new URLSearchParams(location.search).get('flightSeed'))} : WORLD)
+    if(chosenWeather.current)instance.weather.restore(chosenWeather.current)
     if(chosenSunlight.current!==null)instance.setSolarDayProgress(chosenSunlight.current)
     let active = true
     queueMicrotask(() => { if (active) setRuntime(instance) })
@@ -99,7 +103,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); runtime?.input.point(turn, climb, event.pointerId)
   }
   const configure = (next: FlightSettings) => { setDraft(next); chosenSettings.current = next; runtime?.configure(next) }
-  const restart = (next = draft, resetSunlight = false) => { chosenSunlight.current=resetSunlight?null:runtime?.environmentClock.solarDayProgress??null; chosenSettings.current = next; setDraft(next); setSettings(false); setObserve(false); setRetry(n => n + 1) }
+  const restart = (next = draft, resetSunlight = false) => { if(!resetSunlight&&runtime){runtime.weather.restart();chosenWeather.current=runtime.weather.serialize()}else chosenWeather.current=null; chosenSunlight.current=resetSunlight?null:runtime?.environmentClock.solarDayProgress??null; chosenSettings.current = next; setDraft(next); setSettings(false); setObserve(false); setRetry(n => n + 1) }
   const reason = snapshot.reason === 'terrain' ? copy.terrain : ['safety', 'camera'].includes(snapshot.reason ?? '') ? copy.safety : snapshot.reason === 'context' ? copy.context : snapshot.reason === 'hidden' ? copy.hidden : copy.quiet
   return <section ref={root} className="flight-experience" role="dialog" aria-modal="true" aria-label={copy.title} tabIndex={-1} data-flight-phase={snapshot.phase}>
     <header className="flight-toolbar">
@@ -115,8 +119,9 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     {snapshot.reason === 'error' ? <section className="flight-card" role="alert"><h1>{copy.error}</h1>{runtime?.canReturnToTravel&&<button type="button" onClick={()=>runtime.returnFromViewpoint()}>{locale==='zh-CN'?'返回原飞行位置':'Return to flight position'}</button>}<button type="button" onClick={()=>restart()}>{copy.retry}</button><button type="button" onClick={onClose}>{copy.back}</button></section> : settings ? <section id="flight-settings-panel" className="flight-card flight-settings" aria-label={locale==='zh-CN'?'飞行与风景':'Flight & scenery'}>
       <div className="flight-card__heading"><h2>{locale==='zh-CN'?'飞行与风景':'Flight & scenery'}</h2><button type="button" aria-label={copy.close} onClick={closeSettings}><X size={20}/></button></div>
       <p className="flight-panel-status">{inViewpoint ? (locale==='zh-CN'?'已停下观景':'Stopped at a viewpoint') : flying ? (locale==='zh-CN'?'飞翔继续中 · 可以边飞边调':'Still flying · adjust as you go') : (locale==='zh-CN'?'飞翔已停下 · 可以安心调整':'Flight stopped · take your time')}</p>
-      <div className="flight-panel-sections" role="group" aria-label={locale==='zh-CN'?'设置分类':'Settings sections'}>{(['sunlight','flight','viewpoints'] as const).map((value,i)=><button key={value} type="button" aria-pressed={section===value} onClick={()=>setSection(value)}>{(locale==='zh-CN'?['阳光','飞行','观景']:['Sunlight','Flying','Viewpoints'])[i]}</button>)}</div>
-      {section!=='flight'&&runtime&&<LightViewpointPanel runtime={runtime} snapshot={snapshot} locale={locale} mode={section}/>}
+      <div className="flight-panel-sections" role="group" aria-label={locale==='zh-CN'?'设置分类':'Settings sections'}>{(['sunlight','weather','flight','viewpoints'] as const).map((value,i)=><button key={value} type="button" aria-pressed={section===value} onClick={()=>setSection(value)}>{(locale==='zh-CN'?['阳光','天气','飞行','观景']:['Sunlight','Weather','Flying','Viewpoints'])[i]}</button>)}</div>
+      {section==='weather'&&runtime&&<WeatherPanel runtime={runtime} snapshot={snapshot} locale={locale}/>}
+      {(section==='sunlight'||section==='viewpoints')&&runtime&&<LightViewpointPanel runtime={runtime} snapshot={snapshot} locale={locale} mode={section}/>}
       {section==='flight'&&<>
       <label className="flight-setting"><span>{copy.gentle}<small>{copy.gentleHelp}</small></span><input type="checkbox" checked={snapshot.gentle} onChange={e => configure({ ...draft, quality:snapshot.quality, gentle: e.target.checked })}/></label>
       <label className="flight-setting"><span>{copy.quality}<small>{locale==='zh-CN'?'切换画质会短暂停留':'Changing quality briefly stops flight'}</small></span><select disabled={inViewpoint} value={snapshot.quality} onChange={e => configure({ ...draft, gentle:snapshot.gentle, quality: e.target.value === 'balanced' ? 'balanced' : 'low' })}><option value="low">{copy.low}</option><option value="balanced">{copy.balanced}</option></select></label>

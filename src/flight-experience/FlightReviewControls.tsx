@@ -1,3 +1,6 @@
+import { recordWeatherCycle } from './weather-review-cycle'
+import { WEATHER_PRESETS, type WeatherPreset } from './environment/weather-controller'
+import { saveWeatherCapture } from './weather-review-capture'
 import type { MaterialTrial } from './lookdev/material-terrain'
 import { recordFlightReview } from './review-recording'
 import { installPropPicker } from './review-prop-picker'
@@ -54,6 +57,11 @@ export function FlightReviewControls({ runtime }: { runtime: FlightRuntime }) {
     <label>Tracked prop ID<input aria-label="Tracked prop ID" value={trackedId} onChange={e=>setTrackedId(e.target.value)}/></label>
     <button type="button" onClick={()=>runtime.scenery.props.setTracing(true,trackedId||undefined)}>Trace prop lifecycle</button>
     <button type="button" onClick={()=>setCapture(JSON.stringify({object:runtime.scenery.props.inspectObject(trackedId),events:runtime.scenery.props.getLifecycleTrace()},null,2))}>Export prop trace</button>
+    <label><input type="checkbox" defaultChecked onChange={e=>{runtime.setWeatherReviewEnabled(e.target.checked)}}/>W1 enabled</label>
+    <label>Static weather capture<select aria-label="Static weather capture" defaultValue="clear" onChange={e=>{runtime.weather.capture(e.target.value as WeatherPreset);runtime.refreshReview();render(n=>n+1)}}>{WEATHER_PRESETS.map(p=><option key={p}>{p}</option>)}</select></label>
+    <button type="button" disabled={recording} onClick={()=>{setRecording(true);void recordWeatherCycle(runtime).then(setSavedTrace).catch(e=>setSavedTrace(String(e))).finally(()=>setRecording(false))}}>Record 10.5m W1 cycle</button>
+    <button type="button" onClick={()=>{void saveWeatherCapture(runtime).then(setSavedTrace).catch(e=>setSavedTrace(String(e)))}}>Save W1 PBR locally</button>
+    {(['clouds','weather','sun'] as const).map(key=><label key={key}><input type="checkbox" checked={runtime.weatherFreeze[key]} onChange={e=>{runtime.weatherFreeze[key]=e.target.checked;runtime.refreshReview();render(n=>n+1)}}/>freeze {key}</label>)}
     <label>Capture anchor<select aria-label="Capture anchor" defaultValue="" onChange={e=>{const anchor=CAPTURE_ANCHORS.find(a=>a.id===e.target.value);if(anchor)runtime.applyCaptureAnchor(anchor)}}><option value="" disabled>Select view</option>{CAPTURE_ANCHORS.map(a=><option key={a.id}>{a.id}</option>)}</select></label>
     <label>Trace route<select aria-label="Trace route" defaultValue="" onChange={e=>runtime.runReviewRoute(e.target.value)}><option value="" disabled>Select 65s route</option>{REVIEW_ROUTES.map(r=><option key={r.id}>{r.id}</option>)}</select></label>
     <button type="button" disabled={recording} onClick={()=>{setRecording(true);void recordFlightReview().then(name=>setSavedTrace(`Video saved locally: ${name}`)).catch(e=>setSavedTrace(String(e))).finally(()=>setRecording(false))}}>{recording?'Recording 12s…':'Record 12s locally'}</button>

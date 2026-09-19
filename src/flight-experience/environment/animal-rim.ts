@@ -23,7 +23,7 @@ export function decorateAnimalRim(material: Material, uniforms: {
       float rimEdge=pow(1.-abs(dot(normal,rimView)),3.5);
       float rimFacing=smoothstep(-.08,.55,dot(normal,rimSun));
       float rimSunset=1.-smoothstep(.10,.36,sunDirection.y);
-      outgoingLight+=vec3(1.,.48,.12)*rimEdge*rimFacing*rimSunset*.65*animalRim;
+      outgoingLight+=vec3(1.,.48,.12)*rimEdge*rimFacing*rimSunset*.65*animalRim*cloudTransmission(flightWorldPoint(flightFogView),sunDirection);
       #include <opaque_fragment>
     `)
   }

@@ -45,6 +45,8 @@ export function LightViewpointPanel({runtime,snapshot,locale,mode='sunlight'}:{r
    <button type="button" onClick={()=>{runtime.trace.stop();void fetch('/__flight-review/trace',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(runtime.traceEvidence())}).then(async response=>{setEvidenceStatus(response.ok?`Saved locally: ${await response.text()}`:`Save failed: ${response.status}`)}).catch(()=>setEvidenceStatus('Local save unavailable'))}}>Save trace locally</button>
    <button type="button" onClick={()=>runtime.resetReviewMetrics()}>Reset performance sample</button>
    <button type="button" disabled={recording} onClick={()=>{setRecording(true);void import('./review-recording').then(m=>m.recordFlightReview()).then(setEvidenceStatus).catch(e=>setEvidenceStatus(String(e))).finally(()=>setRecording(false))}}>{recording?'Recording 12s…':'Record 12s locally'}</button>
+   <button type="button" disabled={recording} onClick={()=>{setRecording(true);void import('./weather-review-cycle').then(m=>m.recordWeatherCycle(runtime)).then(setEvidenceStatus).catch(e=>setEvidenceStatus(String(e))).finally(()=>setRecording(false))}}>Record 10.5m W1 cycle</button>
+   <button type="button" onClick={()=>{void import('./weather-review-capture').then(m=>m.saveWeatherCapture(runtime)).then(setEvidenceStatus).catch(e=>setEvidenceStatus(String(e)))}}>Save W1 PBR locally</button>
    {evidenceStatus&&<output>{evidenceStatus}</output>}
   </details>}
  </section>

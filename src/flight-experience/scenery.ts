@@ -19,7 +19,7 @@ export class FlightScenery {
   private readonly fallbackCamera = new PerspectiveCamera(55,1,.5,6000)
   constructor(scene: Scene, wake: () => void, surface: (x: number,z: number)=>number = (x,z)=>createWorldSampler().terrainAt(x,z).height, world = createWorldSampler(), farSurface: (x:number,z:number)=>number = surface) {
     scene.add(this.root)
-    this.environment = new EnvironmentScene(scene, surface)
+    this.environment = new EnvironmentScene(scene, surface, wake)
     this.river = new RiverScene(world, ()=>this.environment.createRiverMaterial(),ready=>this.environment.setWaterOwner(world.river.bounds,ready), wake);this.root.add(this.river.root)
     this.props = new PropStream(this.root, wake, surface, world, material => this.environment.fog.decorate(material))
     this.farCanopy=new FarCanopyLayer(this.root,world,{templates:()=>this.props.getCanopyTemplates(),hasRepresentation:id=>this.props.hasSubmittedRepresentation(id),surface:farSurface})

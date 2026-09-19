@@ -1,4 +1,4 @@
-import { Color, ShaderChunk, Vector2, Vector3, type Material } from 'three'
+import { Color, ShaderChunk, Vector2, Vector3, Texture, type Material } from 'three'
 import { ENVIRONMENT_ATMOSPHERE_GLSL } from './atmosphere'
 import type { EnvironmentFrame } from './environment-state'
 
@@ -12,13 +12,15 @@ export const ENVIRONMENT_FOG_FRAGMENT = ShaderChunk.fog_fragment.replace(
   #if defined(TONE_MAPPING)
     flightFogRadiance=toneMapping(flightFogRadiance);
   #endif
+  fogFactor=1.-(1.-fogFactor)*exp(-length(flightFogView)*weatherHaze/16000.);
   vec3 flightFogOutput=linearToOutputTexel(vec4(flightFogRadiance,1.)).rgb;
   gl_FragColor.rgb=mix(gl_FragColor.rgb,flightFogOutput,fogFactor);`,
 )
 export function createEnvironmentFog(initialFrame:EnvironmentFrame){
-  const uniforms={landDistanceReady:{value:0},animalRim:{value:1},solarWaveStrength:{value:1},solarWaterTime:{value:0},solarWaterOrigin:{value:new Vector2()},photographicSky:{value:0},skyLow:{value:new Color()},skyMid:{value:new Color()},skyUpper:{value:new Color()},waterHighlight:{value:1},skyColors:{value:0},skyZenith:{value:new Color()},horizon:{value:new Color()},sunDirection:{value:new Vector3()},sunColor:{value:new Color()}}
+  const uniforms={cloudDensityMap:{value:new Texture()},cloudReady:{value:0},cloudOrigin:{value:new Vector2()},cloudPhase:{value:new Vector2()},cloudCoverage:{value:0},cloudThickness:{value:0},weatherHaze:{value:0},rainWetness:{value:0},landDistanceReady:{value:0},animalRim:{value:1},solarWaveStrength:{value:1},solarWaterTime:{value:0},solarWaterOrigin:{value:new Vector2()},photographicSky:{value:0},skyLow:{value:new Color()},skyMid:{value:new Color()},skyUpper:{value:new Color()},waterHighlight:{value:1},skyColors:{value:0},skyZenith:{value:new Color()},horizon:{value:new Color()},sunDirection:{value:new Vector3()},sunColor:{value:new Color()}}
   const decorated=new WeakSet<Material>()
   function update(frame:EnvironmentFrame){
+    uniforms.cloudCoverage.value=frame.cloudCoverage;uniforms.cloudThickness.value=frame.cloudThickness;uniforms.rainWetness.value=frame.wetness
     uniforms.photographicSky.value=frame.photographicSky;uniforms.skyLow.value.setRGB(...frame.skyLow);uniforms.skyMid.value.setRGB(...frame.skyMid);uniforms.skyUpper.value.setRGB(...frame.skyUpper)
     uniforms.skyZenith.value.setRGB(...frame.skyZenith);uniforms.horizon.value.setRGB(...frame.horizon)
     uniforms.sunDirection.value.set(...frame.sunDirectionWorld);uniforms.sunColor.value.setRGB(...frame.sunColor).multiplyScalar(frame.sunIntensity)
@@ -44,13 +46,24 @@ export function createEnvironmentFog(initialFrame:EnvironmentFrame){
           landHaze=mix(landHaze,1.,smoothstep(9500.,11500.,landDistance));
           fogFactor=mix(fogFactor,landHaze,altitudeBlend);
           vec3 flightFogRadiance=`):ENVIRONMENT_FOG_FRAGMENT)
+        shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>', `#include <lights_fragment_end>\nfloat cloudT=cloudTransmission(flightWorldPoint(flightFogView),sunDirection);\nreflectedLight.directDiffuse*=cloudT;reflectedLight.directSpecular*=cloudT;`)
+        if(land){
+          const response=shader.fragmentShader.includes('vec3 trialC=')?'dot(tw,vec4(.55,.85,.95,.7))+dot(tx,vec2(.65,.35))':'.55'
+          shader.fragmentShader=shader.fragmentShader.replace('#include <metalnessmap_fragment>', `
+            float rainResponse=${response};
+            float rainExposure=.3+.7*clamp(inverseTransformDirection(normalize(vNormal),viewMatrix).y,0.,1.);
+            float rainSurface=rainWetness*rainResponse*rainExposure;
+            roughnessFactor=mix(roughnessFactor,max(.42,roughnessFactor*.72),rainSurface);diffuseColor.rgb*=1.-rainSurface*.18;
+            #include <metalnessmap_fragment>
+          `)
+        }
         if(land)shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>', `
           float landAltitude=smoothstep(120.,400.,cameraPosition.y)*landDistanceReady;
           outgoingLight+=diffuseColor.rgb*vec3(.10,.14,.19)*landAltitude;
           #include <opaque_fragment>
         `)
       }
-      material.customProgramCacheKey=()=>`${cacheKey()}:flight-directional-fog-v2:${land}`
+      material.customProgramCacheKey=()=>`${cacheKey()}:flight-directional-fog-w1:${land}`
       material.needsUpdate=true
     },
   }

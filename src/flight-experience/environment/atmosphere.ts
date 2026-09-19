@@ -1,7 +1,9 @@
+import { CLOUD_GLSL } from './cloud-shared.glsl'
 import { WATER_LIGHTING_GLSL } from './water-lighting'
 /** Linear radiance shared by sky, sea and atmospheric land fog. */
 export const ENVIRONMENT_ATMOSPHERE_GLSL = `
 ${WATER_LIGHTING_GLSL}
+${CLOUD_GLSL}
 uniform float landDistanceReady;uniform float solarWaveStrength;uniform float solarWaterTime;uniform vec2 solarWaterOrigin;
 uniform float photographicSky;uniform vec3 skyLow;uniform vec3 skyMid;uniform vec3 skyUpper;
 uniform float waterHighlight; uniform float skyColors; uniform vec3 skyZenith; uniform vec3 horizon; uniform vec3 sunDirection; uniform vec3 sunColor;
@@ -26,7 +28,7 @@ vec3 skyColor(vec3 d){
  float inner=exp(-pow(angle/.012,2.))*.36;
  float outer=exp(-pow(angle/.045,2.))*.065;
  float legacy=pow(max(mu,0.),64.)*.08+smoothstep(.99988,.99997,mu)*3.;
- return skyGradient(d)+sunColor*mix(legacy,core*12.+inner+outer,photographicSky);
+ return cloudSky(cameraPosition,d,skyGradient(d),skyZenith,sunColor,sunDirection)+sunColor*mix(legacy,core*12.+inner+outer,photographicSky)*cloudTransmission(cameraPosition,d);
 }
 vec3 oceanBase(vec3 ray,vec3 n,float shallow){
  vec3 reflected=reflect(ray,n);float fresnel=.02+.98*pow(1.-max(0.,dot(-ray,n)),5.);
@@ -63,7 +65,10 @@ vec3 oceanColor(vec3 ray,vec3 n,float shallow,vec3 surfacePosition){
  vec3 gold=mix(vec3(1.,.24,.025),vec3(1.,.52,.10),smoothstep(.08,1.8,peak));
  gold=mix(gold,vec3(1.,.86,.60),smoothstep(2.65,2.8,peak));
  vec3 highlight=mix(sunColor, gold, golden*.85)*peak;
- return oceanBase(ray,n,shallow)+highlight;
+ vec3 reflected=reflect(ray,n);
+ vec3 cloudReflection=cloudSky(surfacePosition,reflected,skyGradient(reflected),skyZenith,sunColor,sunDirection)-skyGradient(reflected);
+ float fresnel=.02+.98*pow(1.-max(0.,dot(-ray,n)),5.);
+ return oceanBase(ray,n,shallow)+cloudReflection*.78*fresnel*(1.-shallow*.22)+highlight*cloudTransmission(surfacePosition,sunDirection);
 }
 vec3 fogRadiance(vec3 ray){if(ray.y>=0.)return skyGradient(ray);return mix(oceanBase(ray,vec3(0.,1.,0.),0.),skyGradient(vec3(ray.x,0.,ray.z)),1.-smoothstep(0.,mix(.012,.024,smoothstep(150.,600.,cameraPosition.y)*landDistanceReady),-ray.y));}
 vec3 distantColor(vec3 ray){if(ray.y>=0.)return skyColor(ray);

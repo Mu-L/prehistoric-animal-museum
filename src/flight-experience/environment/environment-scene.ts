@@ -1,8 +1,12 @@
+import { RainField, RainCurtains } from './rain-field'
+import { WeatherController, type WeatherState, wrapCloud } from './weather-controller'
+import cloudUrl from '../assets/weather/cloud-density.png'
+import { RepeatWrapping, TextureLoader, NoColorSpace, type Texture } from 'three'
 import {oceanCoverage,type WaterRect} from '../hydrology/ocean-coverage'
 import { BackSide, BufferGeometry, DataTexture, DirectionalLight, Group, HemisphereLight, Mesh, NearestFilter, RGBAFormat, ShaderMaterial, SphereGeometry, Vector2, Vector3, Vector4, type PerspectiveCamera, type Scene, UniformsLib, UniformsUtils } from 'three'
 import { terrainAt, type Address } from '../world'
 import { BathymetryField, DEPTH_SIZE, DEPTH_STEP, type BathymetryOptions } from './bathymetry'
-import { sampleEnvironment, type SolarPreset, type SolarLayout, type EnvironmentFrame } from './environment-state'
+import { sampleEnvironment, composeWeather, type SolarPreset, type SolarLayout, type EnvironmentFrame } from './environment-state'
 import { envelopeOrigin, waveComponents } from './ocean-waves'
 import { ENVIRONMENT_ATMOSPHERE_GLSL as atmosphere } from './atmosphere'
 import { createEnvironmentFog } from './environment-fog'
@@ -104,9 +108,15 @@ gl_FragColor=vec4(c,1.);
 export class EnvironmentScene {
   readonly root=new Group()
   readonly review={flatWater:false,freezeWater:false,oceanEdges:false,skyColors:false,shadows:true,highlight:true,freezeBathymetry:false,ownerColors:false,depthColors:false}
-  readonly metrics={bathymetrySamples:0,textureBytes:DEPTH_SIZE*DEPTH_SIZE*4*3,shadowMapSize:0,shadowExtent:384,bathymetryRevision:0,bathymetryMs:0,peakBathymetryMs:0,bathymetryEpoch:0,bathymetryDirtyPages:0,bathymetryBlend:1,bathymetryUploadBytes:0,bathymetryPendingAgeFrames:0,bathymetryStarvedFrames:0}
+  readonly metrics={weatherTextureBytes:1398102,weatherDrawCalls:0,bathymetrySamples:0,textureBytes:DEPTH_SIZE*DEPTH_SIZE*4*3,shadowMapSize:0,shadowExtent:384,bathymetryRevision:0,bathymetryMs:0,peakBathymetryMs:0,bathymetryEpoch:0,bathymetryDirtyPages:0,bathymetryBlend:1,bathymetryUploadBytes:0,bathymetryPendingAgeFrames:0,bathymetryStarvedFrames:0}
   solarLayout: SolarLayout = 'legacy'
   solarDayProgress: number | undefined
+  weatherState:WeatherState=new WeatherController().serialize()
+  weatherDegraded=false
+  weatherEnabled=true
+  private readonly clearWeather=new WeatherController().serialize()
+  private disposed=false
+  private cloudTexture:Texture=new DataTexture(new Uint8Array([128,128,0,255]),1,1,RGBAFormat)
   private frameRevision = 0
   private currentFrame=sampleEnvironment()
   get frame():EnvironmentFrame{return this.currentFrame}
@@ -119,6 +129,8 @@ export class EnvironmentScene {
   private readonly texture=new DataTexture(this.field.data,DEPTH_SIZE,DEPTH_SIZE,RGBAFormat)
   readonly fog=createEnvironmentFog(this.currentFrame)
   private readonly uniforms=this.fog.uniforms
+  readonly rain=new RainField()
+  readonly curtains=new RainCurtains(this.uniforms)
   private readonly waterUniforms={...this.uniforms,waterOwnerRect:{value:new Vector4()},waterWorldOrigin:{value:new Vector2()},riverReady:{value:0},riverPass:{value:0},waterTime:{value:0},envelopeOrigin:{value:new Vector2()},waves:{value:Array.from({length:6},()=>new Vector4())},depthField:{value:this.texture},previousDepthField:{value:this.previousTexture},coarseDepthField:{value:this.coarseTexture},previousDepthOrigin:{value:new Vector2()},coarseDepthOrigin:{value:new Vector2()},depthBlend:{value:1},hasPreviousDepth:{value:0},hasCoarseDepth:{value:0},depthOrigin:{value:new Vector2()},hasDepth:{value:0},flatWater:{value:0},edges:{value:0},ownerColors:{value:0},depthColors:{value:0}}
   readonly sky=new Mesh(new SphereGeometry(1,24,12),new ShaderMaterial({vertexShader:skyVertex,fragmentShader:skyFragment,uniforms:this.uniforms,side:BackSide,depthWrite:false,depthTest:false}))
   private waterHole:WaterRect|undefined
@@ -127,19 +139,28 @@ export class EnvironmentScene {
   setWaterOwner(bounds:{minX:number;minZ:number;maxX:number;maxZ:number},ready:boolean){this.waterUniforms.waterOwnerRect.value.set(bounds.minX,bounds.minZ,bounds.maxX,bounds.maxZ);this.waterUniforms.riverReady.value=Number(ready);this.waterHole=ready?bounds:undefined}
   createRiverMaterial(){return new ShaderMaterial({vertexShader:waterVertex,fragmentShader:waterFragment,lights:true,uniforms:{...UniformsUtils.clone(UniformsLib.lights),...this.waterUniforms,riverPass:{value:1}}})}
   private lastWaterTime=0
+  private previousMotion:number|null=null
+  restoreWaterMotion(value:number){this.lastWaterTime=value;this.previousMotion=value}
+  get waterMotionSeconds(){return this.lastWaterTime}
   private preparationFrame=0
   get busy(){return this.field.busy||this.coarseField.busy}
-  constructor(scene:Scene,private readonly surface:(x:number,z:number)=>number){
+  constructor(scene:Scene,private readonly surface:(x:number,z:number)=>number,wake:()=>void=()=>{}){
+    this.uniforms.cloudDensityMap.value=this.cloudTexture
+    void new TextureLoader().loadAsync(cloudUrl).then(texture=>{if(this.disposed){texture.dispose();return}this.cloudTexture.dispose();this.cloudTexture=texture;texture.colorSpace=NoColorSpace;texture.wrapS=texture.wrapT=RepeatWrapping;this.uniforms.cloudDensityMap.value=texture;this.uniforms.cloudReady.value=1;wake()}).catch(()=>{if(!this.disposed){this.weatherDegraded=true;wake()}})
     for(const texture of [this.texture,this.previousTexture,this.coarseTexture]){texture.minFilter=NearestFilter;texture.magFilter=NearestFilter;texture.generateMipmaps=false}
     this.sky.frustumCulled=false;this.sky.renderOrder=-10
     this.water.frustumCulled=false;this.water.receiveShadow=true
     this.sun.castShadow=true;this.sun.shadow.camera.left=-192;this.sun.shadow.camera.right=192;this.sun.shadow.camera.top=192;this.sun.shadow.camera.bottom=-192
     this.sun.shadow.camera.near=1;this.sun.shadow.camera.far=1400;this.sun.shadow.bias=-.0003;this.sun.shadow.normalBias=.8
-    this.root.add(this.sky,this.water,this.sun,this.sun.target,this.fill);scene.add(this.root)
+    this.root.add(this.rain.mesh,this.curtains.mesh,this.sky,this.water,this.sun,this.sun.target,this.fill);scene.add(this.root)
   }
   update(camera:PerspectiveCamera,origin:Address,time:number,quality:'low'|'balanced',preset:SolarPreset='afternoon',options:EnvironmentUpdateOptions={}){
-    const f=this.currentFrame=sampleEnvironment(this.solarDayProgress ?? preset,time,this.solarLayout,++this.frameRevision)
+    const f=this.currentFrame=composeWeather(sampleEnvironment(this.solarDayProgress ?? preset,time,this.solarLayout,++this.frameRevision),this.weatherEnabled?this.weatherState:this.clearWeather)
     this.fog.update(f)
+    this.rain.update(camera,origin,this.weatherState.rainSeconds,f.rainRate,quality);this.curtains.update(origin,this.weatherEnabled?this.weatherState.resolved.curtain:0)
+    this.metrics.weatherDrawCalls=Number(this.rain.mesh.visible)+Number(this.curtains.mesh.visible)
+    this.uniforms.cloudOrigin.value.set(wrapCloud(origin.x),wrapCloud(origin.z));this.uniforms.cloudPhase.value.set(...this.weatherState.phase)
+    this.uniforms.weatherHaze.value=this.weatherEnabled?this.weatherState.resolved.haze:0
     this.uniforms.waterHighlight.value=Number(this.review.highlight);this.uniforms.skyColors.value=Number(this.review.skyColors);this.sun.castShadow=this.review.shadows
     this.sun.color.setRGB(...f.sunColor);this.sun.intensity=f.sunIntensity
     this.fill.color.setRGB(...f.skyZenith);this.fill.groundColor.setRGB(...f.groundFill);this.fill.intensity=f.fillIntensity
@@ -155,7 +176,8 @@ export class EnvironmentScene {
     focus.addScaledVector(right,Math.round(focus.dot(right)/texel)*texel-focus.dot(right))
     focus.addScaledVector(up,Math.round(focus.dot(up)/texel)*texel-focus.dot(up))
     focus.x-=origin.x;focus.z-=origin.z;this.sun.target.position.copy(focus);this.sun.position.copy(focus).addScaledVector(dir,700)
-    if(!this.review.freezeWater)this.lastWaterTime=time
+    if(!this.review.freezeWater)this.lastWaterTime+=this.previousMotion===null?time:Math.max(0,time-this.previousMotion)
+    this.previousMotion=time
     this.waterUniforms.waterWorldOrigin.value.set(origin.x,origin.z);this.waterUniforms.waterTime.value=this.lastWaterTime
     this.waterUniforms.envelopeOrigin.value.set(...envelopeOrigin(origin))
     this.uniforms.solarWaterOrigin.value.set(...envelopeOrigin(origin));this.uniforms.solarWaterTime.value=this.lastWaterTime
@@ -195,5 +217,5 @@ export class EnvironmentScene {
     this.metrics.bathymetryEpoch=this.field.publication?.epoch??0;this.metrics.bathymetryDirtyPages=this.field.publication?.dirtyRects.length??0;this.metrics.bathymetryBlend=this.field.blend
     this.waterUniforms.hasDepth.value=Number(this.field.revision>0);this.waterUniforms.depthOrigin.value.set(Number.isFinite(this.field.startX)?this.field.startX-origin.x:0,Number.isFinite(this.field.startZ)?this.field.startZ-origin.z:0)
   }
-  dispose(){this.root.removeFromParent();this.sky.geometry.dispose();this.sky.material.dispose();this.water.geometry.dispose();this.water.material.dispose();this.texture.dispose();this.previousTexture.dispose();this.coarseTexture.dispose();this.field.dispose();this.coarseField.dispose();this.sun.dispose();this.fill.dispose();this.root.clear()}
+  dispose(){if(this.disposed)return;this.disposed=true;this.rain.dispose();this.curtains.dispose();this.cloudTexture.dispose();this.root.removeFromParent();this.sky.geometry.dispose();this.sky.material.dispose();this.water.geometry.dispose();this.water.material.dispose();this.texture.dispose();this.previousTexture.dispose();this.coarseTexture.dispose();this.field.dispose();this.coarseField.dispose();this.sun.dispose();this.fill.dispose();this.root.clear()}
 }

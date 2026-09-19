@@ -1,3 +1,4 @@
+import { clockPolicy } from '../../src/flight-experience/environment/environment-clock'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { BoxGeometry, Group, Mesh, MeshBasicMaterial, Texture, TextureLoader } from 'three'
@@ -80,6 +81,8 @@ describe('whole FlightExperience events with the actual Runtime (GPU/worker read
 it('preserves the selected progress but resets auto on Restart, and Defaults restores the original time',async()=>{
  const {runtime,instances,view}=await mount()
  const original=runtime.environmentClock.solarDayProgress
+ runtime.weather.capture('light-rain');for(let i=0;i<2700;i++)runtime.weather.tick(1/60,clockPolicy('viewpoint'))
+ const weatherBefore=runtime.weather.serialize()
  act(()=>{runtime.setSolarDayProgress(.7);runtime.setSolarMode('auto')})
  fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}))
  fireEvent.click(screen.getByRole('button',{name:'Flying'}))
@@ -89,6 +92,8 @@ it('preserves the selected progress but resets auto on Restart, and Defaults res
  const restarted=instances[1]!
  expect(restarted.environmentClock.solarDayProgress).toBe(.7)
  expect(restarted.environmentClock.solarMode).toBe('fixed')
+ expect(restarted.weather.snapshot().mode).toBe('fixed');expect(restarted.weather.snapshot().target).toBeNull()
+ expect(restarted.weather.snapshot().resolved).toEqual(weatherBefore.resolved);expect(restarted.weather.snapshot().wetness).toBe(weatherBefore.wetness);expect(restarted.weather.snapshot().phase).toEqual(weatherBefore.phase)
  expect(runtime.running).toBe(false)
  await waitFor(()=>expect(restarted.pose.children).toHaveLength(1))
  act(()=>restarted.update(0))
@@ -98,6 +103,7 @@ it('preserves the selected progress but resets auto on Restart, and Defaults res
  await waitFor(()=>expect(instances).toHaveLength(3))
  expect(instances[2]!.environmentClock.solarDayProgress).toBe(original)
  expect(instances[2]!.environmentClock.solarMode).toBe('fixed')
+ expect(instances[2]!.weather.snapshot().resolved.coverage).toBe(0);expect(instances[2]!.weather.snapshot().wetness).toBe(0)
  view.unmount()
 })
 
@@ -115,5 +121,26 @@ it('preserves automatic mode through a quality preparation but waits for explici
  expect(runtime.getSnapshot().phase).toBe('paused')
  expect(runtime.environmentClock.solarDayProgress).toBe(progress)
  act(()=>runtime.start());expect(runtime.getSnapshot().daylight?.status).toBe('running')
+ view.unmount()
+})
+
+it('changes weather live, isolates the two automatic modes and preserves pending weather while paused',async()=>{
+ const {runtime,instances,view}=await mount()
+ act(()=>runtime.start())
+ fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}))
+ fireEvent.click(screen.getByRole('button',{name:'Automatic daylight'}))
+ fireEvent.click(screen.getByRole('button',{name:'Weather'}))
+ fireEvent.click(screen.getByRole('button',{name:'Automatic weather (includes rain)'}))
+ expect(runtime.weather.snapshot().mode).toBe('auto')
+ fireEvent.click(screen.getByRole('button',{name:'Light rain'}))
+ expect(runtime.weather.snapshot().mode).toBe('fixed');expect(runtime.weather.snapshot().target).toBe('light-rain')
+ expect(runtime.environmentClock.solarMode).toBe('auto');expect(runtime.getSnapshot().phase).toBe('flying');expect(instances).toHaveLength(1)
+ act(()=>runtime.pause('user'))
+ const resolved=runtime.weather.snapshot().resolved
+ fireEvent.click(screen.getByRole('button',{name:'Overcast'}))
+ act(()=>runtime.update(60))
+ expect(runtime.weather.snapshot().resolved).toEqual(resolved)
+ expect(screen.getByText('Paused; transitions resume with the scenery')).toBeVisible()
+ const key=vi.spyOn(runtime.input,'key');fireEvent.keyDown(screen.getByRole('button',{name:'Overcast'}),{code:'ArrowRight',key:'ArrowRight'});expect(key).not.toHaveBeenCalled()
  view.unmount()
 })

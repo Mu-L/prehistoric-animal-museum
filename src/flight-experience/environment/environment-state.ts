@@ -1,3 +1,4 @@
+import type { WeatherState } from './weather-controller'
 import { Color } from 'three'
 export type SolarLayout = 'legacy' | 'sunset-bay'
 export type SolarPreset = 'morning' | 'noon' | 'afternoon' | 'evening'
@@ -79,4 +80,13 @@ export function sampleSky(frame: EnvironmentFrame, direction: readonly [number,n
   const alignment=Math.pow(Math.max(0,(d[0]!*sun[0]+.000001+d[2]!*sun[2])/denom),8)
   const haze=Math.exp(-y/.035)*(.035+.09*alignment)*(1-smooth(.10,.36,sun[1]))
   return c.map((v,i)=>v+[1,.68,.32][i]!*haze) as [number,number,number]
+}
+
+/** Clear/dry is exactly the accepted solar frame. Cloud absorption is applied locally only. */
+export function composeWeather(frame:EnvironmentFrame,weather:WeatherState):EnvironmentFrame {
+ const w=weather.resolved
+ if(w.coverage===0&&weather.wetness===0)return frame
+ const tint=(v:LinearRGB):LinearRGB=>v.map((n,i)=>n*(1-w.haze*.25)+[.20,.23,.27][i]!*w.haze*.25) as [number,number,number]
+ return Object.freeze({...frame,cloudCoverage:w.coverage,cloudBase:2400,cloudThickness:w.thickness,rainRate:w.rain,wetness:weather.wetness,
+ skyZenith:tint(frame.skyZenith),skyLow:tint(frame.skyLow),skyMid:tint(frame.skyMid),skyUpper:tint(frame.skyUpper),horizon:tint(frame.horizon),fillIntensity:frame.fillIntensity*(1+w.haze*.12),visibility:frame.visibility/(1+w.haze)})
 }

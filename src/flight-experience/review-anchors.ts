@@ -1,7 +1,9 @@
+import type { WeatherState } from './environment/weather-controller'
 import { WORLD, type Position, type WorldConfig } from './world'
 import type { FlightView } from './settings'
 import type { SolarLayout, SolarPreset } from './environment/environment-state'
 export interface CaptureAnchor {
+  weather?: WeatherState
   id: string; world: WorldConfig; position: Position; heading: number
   camera?: { position: Position; target: Position }; solarLayout?: SolarLayout
   view: FlightView; pitch: number; presentationSeconds: number; preset: SolarPreset
