@@ -55,7 +55,7 @@ float aa=1.-smoothstep(.45,1.8,footprint);
 // Short waves contribute only close to the eye; the offshore field is broad swell.
 float reach=i<2?4500.:(i<4?2800.:1400.);
 float fade=1.-smoothstep(reach*.2,reach,distanceToEye);
-gradient+=(cos(phase)*phaseGradient*amplitude+sin(phase)*envelope.yz*(.55/128.))*waves[i].z*aa*fade*.8;
+gradient+=(cos(phase)*phaseGradient*amplitude+sin(phase)*envelope.yz*(.55/128.))*waves[i].z*aa*fade*(i<2?1.12:.8);
 }
 // Advected, continuous fine slopes break broad swells into irregular highlights.
 // Subpixel structure fades out; its slope variance stays in the BRDF roughness.
@@ -93,7 +93,7 @@ float edge=min(min(sp.x,sp.y),min(1.-sp.x,1.-sp.y));
 float weight=smoothstep(0.,.18,edge)*smoothstep(0.,.04,sp.z)*(1.-smoothstep(.94,1.,sp.z));
 visibility=mix(1.,getShadow(directionalShadowMap[0],directionalLightShadows[0].shadowMapSize,directionalLightShadows[0].shadowIntensity,directionalLightShadows[0].shadowBias,directionalLightShadows[0].shadowRadius,vDirectionalShadowCoord[0]),weight);
 #endif
-vec3 base=oceanBase(ray,n,shallow);vec3 c=base+(oceanColor(ray,n,shallow)-base)*visibility;float farMix=smoothstep(3200.,4200.,distanceToEye);c=mix(c,distantColor(ray),farMix);
+vec3 base=oceanBase(ray,n,shallow)*mix(.72,1.,visibility);vec3 c=base+(oceanColor(ray,n,shallow,worldPosition)-oceanBase(ray,n,shallow))*visibility;float farMix=smoothstep(3200.,4200.,distanceToEye);c=mix(c,distantColor(ray),farMix);
 if(edges>.5){float border=step(4750.,max(abs(worldPosition.x-cameraPosition.x),abs(worldPosition.z-cameraPosition.z)));c=mix(c,vec3(1.,0.,0.),border);}
 if(ownerColors>.5)c=riverPass>.5?vec3(.8,.25,.1):vec3(.1,.2,.8);if(depthColors>.5)c=vec3(shallow);
 gl_FragColor=vec4(c,1.);
@@ -158,8 +158,9 @@ export class EnvironmentScene {
     if(!this.review.freezeWater)this.lastWaterTime=time
     this.waterUniforms.waterWorldOrigin.value.set(origin.x,origin.z);this.waterUniforms.waterTime.value=this.lastWaterTime
     this.waterUniforms.envelopeOrigin.value.set(...envelopeOrigin(origin))
+    this.uniforms.solarWaterOrigin.value.set(...envelopeOrigin(origin));this.uniforms.solarWaterTime.value=this.lastWaterTime
     waveComponents(f.windWorld,origin,this.lastWaterTime).forEach((w,i)=>this.waterUniforms.waves.value[i]!.set(w.x,w.z,w.amplitude*f.waveStrength,w.phase))
-    this.waterUniforms.flatWater.value=Number(this.review.flatWater);this.waterUniforms.edges.value=Number(this.review.oceanEdges);this.waterUniforms.ownerColors.value=Number(this.review.ownerColors);this.waterUniforms.depthColors.value=Number(this.review.depthColors)
+    this.uniforms.solarWaveStrength.value=Number(!this.review.flatWater);this.waterUniforms.flatWater.value=Number(this.review.flatWater);this.waterUniforms.edges.value=Number(this.review.oceanEdges);this.waterUniforms.ownerColors.value=Number(this.review.ownerColors);this.waterUniforms.depthColors.value=Number(this.review.depthColors)
     const revision=this.field.revision,started=performance.now()
     this.metrics.bathymetryUploadBytes=0
     const allowPublish=options.allowPublish!==false&&!this.review.freezeBathymetry

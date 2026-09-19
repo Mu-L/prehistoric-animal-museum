@@ -12,6 +12,7 @@ import { VISIBILITY_PROFILES } from './visibility-profile'
 import type { LookdevScene } from './lookdev/LookdevScene'
 import { FrameWorkBudget } from './frame-work-budget'
 import { FrameTrace } from './frame-trace'
+import { decorateAnimalRim } from './environment/animal-rim'
 import { decorateShadowFade } from './environment/shadow-fade'
 import { coastValleyLandmarks, createLandscapeSurface, scenicRouteAnchors } from './world-presets/coast-valley'
 import { DEFAULT_FLIGHT_SETTINGS, framingDistance, spawnState, type FlightSettings } from './settings'
@@ -181,7 +182,7 @@ export class FlightRuntime implements ExternalExperience {
       correction.rotation.y = Math.PI
       model.modelRoot.position.sub(bounds.getCenter(new Vector3()))
       correction.add(model.group); this.pose.add(correction)
-      model.group.traverse(object => { if (object instanceof Mesh) { object.castShadow = true; object.receiveShadow = true;const mesh=object as Mesh<BufferGeometry,Material|Material[]>; for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material]){ decorateShadowFade(material); this.scenery.environment.fog.decorate(material) } } })
+      model.group.traverse(object => { if (object instanceof Mesh) { object.castShadow = true; object.receiveShadow = true;const mesh=object as Mesh<BufferGeometry,Material|Material[]>; for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material]){ decorateShadowFade(material); this.scenery.environment.fog.decorate(material); decorateAnimalRim(material,this.scenery.environment.fog.uniforms) } } })
       this.modelAttached=true
       this.lease.invalidate()
     } catch (error) { if (!this.disposed) this.fail(error) } finally { window.clearTimeout(timeout) }
@@ -251,6 +252,7 @@ export class FlightRuntime implements ExternalExperience {
   traceEvidence(){return {schema:'flight-frame-trace-v1',world:this.world.config,route:this.reviewRoute?.id??this.lastReviewRouteId,gpuScope:'whole-render; per-water/per-shadow not isolated',frames:this.trace.export()}}
   pitchReview(pitch: number) { this.reviewPitch=pitch;this.refreshReview() }
   setReviewPreset(preset: SolarPreset) { this.environmentClock.setSolarDayProgress(solarProgress(preset)); this.scenery.preset = preset; this.scenery.environment.solarDayProgress = undefined; this.refreshReview() }
+  setAnimalRimReview(value:boolean) { this.scenery.environment.fog.uniforms.animalRim.value=Number(value);this.refreshReview() }
   setWaterReview(key:'highlight'|'flatWater',value:boolean) { this.scenery.review[key]=value;this.refreshReview() }
   setReviewVisibility(key:'reviewHideWater'|'reviewHideFarTerrain',value:boolean){this[key]=value;this.refreshReview()}
   setReviewPropLod(value:0|1|2|undefined){this.reviewPropLod=value;this.refreshReview()}

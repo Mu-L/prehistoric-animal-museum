@@ -1,4 +1,4 @@
-import { Color, ShaderChunk, Vector3, type Material } from 'three'
+import { Color, ShaderChunk, Vector2, Vector3, type Material } from 'three'
 import { ENVIRONMENT_ATMOSPHERE_GLSL } from './atmosphere'
 import type { EnvironmentFrame } from './environment-state'
 
@@ -16,7 +16,7 @@ export const ENVIRONMENT_FOG_FRAGMENT = ShaderChunk.fog_fragment.replace(
   gl_FragColor.rgb=mix(gl_FragColor.rgb,flightFogOutput,fogFactor);`,
 )
 export function createEnvironmentFog(initialFrame:EnvironmentFrame){
-  const uniforms={photographicSky:{value:0},skyLow:{value:new Color()},skyMid:{value:new Color()},skyUpper:{value:new Color()},waterHighlight:{value:1},skyColors:{value:0},skyZenith:{value:new Color()},horizon:{value:new Color()},sunDirection:{value:new Vector3()},sunColor:{value:new Color()}}
+  const uniforms={animalRim:{value:1},solarWaveStrength:{value:1},solarWaterTime:{value:0},solarWaterOrigin:{value:new Vector2()},photographicSky:{value:0},skyLow:{value:new Color()},skyMid:{value:new Color()},skyUpper:{value:new Color()},waterHighlight:{value:1},skyColors:{value:0},skyZenith:{value:new Color()},horizon:{value:new Color()},sunDirection:{value:new Vector3()},sunColor:{value:new Color()}}
   const decorated=new WeakSet<Material>()
   function update(frame:EnvironmentFrame){
     uniforms.photographicSky.value=frame.photographicSky;uniforms.skyLow.value.setRGB(...frame.skyLow);uniforms.skyMid.value.setRGB(...frame.skyMid);uniforms.skyUpper.value.setRGB(...frame.skyUpper)

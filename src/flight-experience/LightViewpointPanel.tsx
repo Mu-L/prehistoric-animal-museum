@@ -24,6 +24,7 @@ export function LightViewpointPanel({runtime,snapshot,locale,onClose}:{runtime:F
   <small>{t.help}</small>
   {import.meta.env.DEV&&<details><summary>{locale==='zh-CN'?'本地验收工具':'Local review tools'}</summary>
    <label><input type="checkbox" defaultChecked={runtime.scenery?.review.highlight??true} onChange={e=>{runtime.setWaterReview('highlight',e.target.checked)}}/>{locale==='zh-CN'?'太阳反射':'Sun reflection'}</label>
+   <label><input type="checkbox" defaultChecked={(runtime.scenery?.environment?.fog.uniforms.animalRim.value??1)>0} onChange={e=>runtime.setAnimalRimReview(e.target.checked)}/>{locale==='zh-CN'?'翼龙轮廓光':'Animal rim light'}</label>
    <label><input type="checkbox" defaultChecked={runtime.scenery?.review.flatWater??false} onChange={e=>{runtime.setWaterReview('flatWater',e.target.checked)}}/>{locale==='zh-CN'?'平水面对照':'Flat normals'}</label>
    <button type="button" onClick={()=>runtime.resetReviewMetrics()}>Reset performance sample</button>
    <button type="button" disabled={recording} onClick={()=>{setRecording(true);void import('./review-recording').then(m=>m.recordFlightReview()).then(setEvidenceStatus).catch(e=>setEvidenceStatus(String(e))).finally(()=>setRecording(false))}}>{recording?'Recording 12s…':'Record 12s locally'}</button>
