@@ -13,7 +13,7 @@ describe('weather admitted-time contract',()=>{
  })
  it('retargets from current values and freezes pending changes and wetness while hidden',()=>{
   const w=new WeatherController();w.setTarget('light-rain');run(w,20);const prior=w.serialize();w.setTarget('fair');expect(w.snapshot().resolved).toEqual(prior.resolved)
-  const pending=w.serialize();w.tick(60,paused);expect(w.serialize()).toEqual(pending);run(w,35);expect(w.snapshot().resolved.coverage).toBe(.38)
+  const pending=w.serialize();w.tick(60,paused);expect(w.serialize()).toEqual(pending);run(w,35);expect(w.snapshot().resolved.coverage).toBe(.30)
  })
  it('keeps fixed clouds moving and allows weather after sunlight ends',()=>{
   const w=new WeatherController(),c=new EnvironmentClock();c.setSolarDayProgress(.94);c.setSolarMode('auto');w.setTarget('light-rain')

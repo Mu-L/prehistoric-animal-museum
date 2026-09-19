@@ -65,7 +65,7 @@ gradient+=(cos(phase)*phaseGradient*amplitude+sin(phase)*envelope.yz*(.55/128.))
 // Subpixel structure fades out; its slope variance stays in the BRDF roughness.
 vec2 finePosition=(worldPosition.xz+envelopeOrigin)*.4375+vec2(waterTime*.18,waterTime*.11);
 float fineFootprint=max(length(dFdx(finePosition)),length(dFdy(finePosition)));
-float fineResolved=(1.-smoothstep(.45,1.5,fineFootprint))*(1.-smoothstep(1800.,3000.,distanceToEye));
+float fineResolved=(1.-smoothstep(.45,1.5,fineFootprint))*(1.-smoothstep(450.,1700.,distanceToEye));
 vec3 fineA=oceanNoise(finePosition),fineB=oceanNoise(finePosition*.5+vec2(19.,31.));
 gradient+=(fineA.yz+fineB.yz*.6)*.11*fineResolved;
 // Centimetre-scale capillary ripples remain visible from the low comparison camera.
@@ -81,6 +81,8 @@ vec2 flowUV=(worldPosition.xz+envelopeOrigin)*.125;
 vec3 flowA=oceanNoise(flowUV-flowData.xy*flowData.z*phase0*5.);
 vec3 flowB=oceanNoise(flowUV-flowData.xy*flowData.z*phase1*5.);
 gradient+=mix(flowA.yz,flowB.yz,abs(phase0*2.-1.))*flowData.z*.055;
+// Keep nearby water intact; unresolved offshore slopes relax toward the horizon.
+gradient*=mix(1.,.15,smoothstep(600.,2200.,distanceToEye));
 vec3 n=normalize(vec3(-gradient.x*(1.-flatWater),1.,-gradient.y*(1.-flatWater)));
 vec2 coarse=readField(coarseDepthField,coarseDepthOrigin,32.);
 float fallback=shallowAt(coarse.x)*coarse.y*hasCoarseDepth;

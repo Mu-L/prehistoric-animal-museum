@@ -10,7 +10,7 @@ export interface WeatherState {
 }
 export const WEATHER_TARGETS:Record<WeatherPreset,ResolvedWeather> = {
   clear:{coverage:0,thickness:0,haze:0,rain:0,curtain:0},
-  fair:{coverage:.38,thickness:1.5,haze:.08,rain:0,curtain:0},
+  fair:{coverage:.30,thickness:1.7,haze:.035,rain:0,curtain:0},
   overcast:{coverage:.9,thickness:3,haze:.55,rain:0,curtain:0},
   'light-rain':{coverage:.98,thickness:3.8,haze:.8,rain:.32,curtain:.45},
 }

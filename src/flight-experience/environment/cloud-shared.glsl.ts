@@ -1,30 +1,100 @@
-/** One density/phase contract for visible sky, receiver shadows and water reflection. */
+/** One world-space cloud volume for sky, receiver shadows and water reflection. */
 export const CLOUD_GLSL=`
 uniform sampler2D cloudDensityMap;
 uniform vec2 cloudOrigin;uniform vec2 cloudPhase;
 uniform float cloudCoverage;uniform float cloudThickness;uniform float cloudReady;
 uniform float weatherHaze;uniform float rainWetness;
 vec3 flightWorldPoint(vec3 viewPoint){return cameraPosition+transpose(mat3(viewMatrix))*viewPoint;}
-float cloudDensity(vec2 p){
- vec2 uv=(p+cloudOrigin-cloudPhase)/65536.;
- vec2 density=texture2D(cloudDensityMap,uv*4.).rg;
- float threshold=mix(.78,.22,cloudCoverage);
- float shape=density.r+.10*(density.g-.5);
- float thickness=.32+.95*clamp((shape-threshold+.07)/max(.18,.82-threshold),0.,1.);
- return smoothstep(threshold-.07,threshold+.09,shape)*thickness*smoothstep(0.,.12,cloudCoverage)*cloudReady;
+float cloudHash(vec2 cell){return fract(sin(dot(mod(cell,8.),vec2(127.1,311.7)))*43758.5453);}
+// Integrate a soft ellipsoid analytically: no stacked horizontal sampling planes.
+vec3 cloudPuff(vec3 p,vec3 d,vec3 center,vec3 radius,vec3 sun){
+ vec3 o=(p-center)/radius,v=d/radius;
+ float a=dot(v,v),b=dot(o,v),t=-b/a;
+ float core=1.-dot(o+v*t,o+v*t);
+ if(core<-.12||t<=0.)return vec3(0.);
+ vec3 q=p+d*t;
+ vec2 detail=texture2D(cloudDensityMap,(q.xz+q.y*vec2(.5,.25))/4096.).rg;
+ core+=(detail.r-.5)*.8+(detail.g-.5)*.12;
+ if(core<=0.||t<=0.)return vec3(0.);
+ float halfChord=sqrt(core/a);
+ float optical=core*core*halfChord/300.*(.65+detail.r*.8);
+ // Density erosion and optical-depth shading make the soft lobes read as cloud.
+ float rim=pow(1.-clamp(core,0.,1.),.65);
+
+ vec3 normal=normalize((o+v*(t-halfChord*.72))/radius);
+ float light=.48+.32*dot(normal,sun)+.1*rim+.1*(detail.r-.5);
+ return vec3(optical,optical*light,optical*t);
 }
-float cloudOptical(vec3 p,vec3 d){
- if(d.y<=.00001||p.y>=2400.||cloudCoverage<=0.)return 0.;
- vec2 q=p.xz+d.xz*((2400.-p.y)/d.y);
- return cloudDensity(q)*cloudThickness;
+vec3 cloudMass(vec3 p,vec3 d,vec3 sun){
+ if(d.y<=.00001||cloudCoverage<=0.||cloudReady<.5)return vec3(0.);
+ p.xz=mod(p.xz+cloudOrigin-cloudPhase,65536.);
+ vec2 tile=floor((p.xz+d.xz*((3100.-p.y)/d.y))/8192.);
+ vec3 mass=vec3(0.);
+ // Low-angle sun queries span more cells than a steep view ray.
+ int reach=d.y<.08?3:(d.y<.18?2:1);
+ for(int z=-3;z<=3;z++)for(int x=-3;x<=3;x++){
+  if(abs(x)>reach||abs(z)>reach)continue;
+  vec2 cell=tile+vec2(float(x),float(z));
+  // Reject whole cells before hashes, texture fetches, and six lobe intersections.
+  vec3 cellOffset=vec3((cell.x+.5)*8192.,3100.,(cell.y+.5)*8192.)-p;
+  float cellT=max(0.,dot(cellOffset,d));
+  vec3 cellMiss=cellOffset-d*cellT;
+  if(dot(cellMiss,cellMiss)>36000000.)continue;
+  float seed=cloudHash(cell),r=cloudHash(cell+vec2(3.,5.));
+  float occupied=smoothstep(1.-cloudCoverage-.08,1.-cloudCoverage+.08,seed);
+  if(occupied<=0.)continue;
+  vec3 center=vec3((cell.x+.22+.56*r)*8192.,3000.+r*260.,(cell.y+.2+.6*cloudHash(cell+vec2(5.,2.)))*8192.);
+  float angle=r*6.2831853;
+  vec2 axis=vec2(cos(angle),sin(angle));
+  float size=650.+1000.*cloudHash(cell+vec2(2.,1.));
+  vec3 offset=center-p;
+  vec3 miss=offset-d*max(0.,dot(offset,d));
+  float bound=size*1.9+700.;
+  if(dot(miss,miss)>bound*bound)continue;
+  for(int j=0;j<6;j++){
+   float f=float(j),k=cloudHash(cell+vec2(f+1.,f*2.+1.));
+   vec3 c=center+vec3(axis.x,0.,axis.y)*(f-2.5)*size*.34;
+   c.y+=(k-.5)*450.;
+   c.xz+=vec2(-axis.y,axis.x)*(k-.5)*size*.9;
+   vec3 radius=vec3(size*(.20+k*.52),180.+k*520.,size*(.2+(1.-k)*.45));
+   mass+=cloudPuff(p,d,c,radius,sun)*occupied;
+  }
+ }
+ return mass;
 }
-float cloudTransmission(vec3 p,vec3 d){return exp(-cloudOptical(p,d)*min(3.,.7/max(.08,d.y)));}
+// Dense weather grows a continuous deck using the existing density asset.
+float cloudDeck(vec3 p,vec3 d){
+ if(d.y<=.00001||cloudCoverage<=.55||cloudReady<.5)return 0.;
+ vec2 q=p.xz+d.xz*max(0.,(3200.-p.y)/d.y);
+ vec2 uv=(q+cloudOrigin-cloudPhase)/65536.;
+ float density=texture2D(cloudDensityMap,uv*4.).r;
+ return smoothstep(.55,.95,cloudCoverage)*(.5+density*.7);
+}
+float cloudOptical(vec3 p,vec3 d){return (cloudMass(p,d,vec3(0.,1.,0.)).x+cloudDeck(p,d))*cloudThickness;}
+// Rain curtains sample the same cloud column as the sky and receiver lighting.
+float cloudDensity(vec2 p){return 1.-exp(-cloudOptical(vec3(p.x,0.,p.y),vec3(0.,1.,0.)));}
+float cloudTransmission(vec3 p,vec3 d){
+ if(d.y<=.00001||cloudCoverage<=0.||cloudReady<.5)return 1.;
+ // A column approximation for receivers avoids marching low-angle sun rays per pixel.
+ vec2 column=p.xz+d.xz*max(0.,(3100.-p.y)/d.y);
+ float optical=cloudOptical(vec3(column.x,0.,column.y),vec3(0.,1.,0.));
+ return exp(-optical*.65);
+}
 vec3 cloudSky(vec3 p,vec3 d,vec3 base,vec3 ambient,vec3 solar,vec3 sun){
- float optical=cloudOptical(p,d),alpha=(1.-exp(-optical*1.7))*smoothstep(.005,.05,d.y);
- float body=exp(-optical*.95);
- vec3 c=mix(ambient*.65+vec3(.10,.12,.15),ambient*1.3+vec3(.28,.30,.32),body)*mix(1.,.82,weatherHaze);
- float edge=exp(-optical*1.8)*pow(max(0.,dot(d,sun)),5.);
- c+=solar*(.035+.16*edge+body*.055);
+ if(d.y<=.00001||cloudCoverage<=0.||cloudReady<.5||(3100.-p.y)/d.y>=38000.)return base;
+ vec3 mass=cloudMass(p,d,sun);
+ float deck=cloudDeck(p,d),optical=(mass.x+deck)*cloudThickness;
+ float distanceToCloud=mass.z/max(.0001,mass.x);
+ float distanceFade=max(distanceToCloud,(3100.-p.y)/max(.001,d.y));
+ float aerial=exp(-distanceFade/38000.)*(1.-smoothstep(16000.,38000.,distanceFade));
+ float alpha=(1.-exp(-optical))*aerial*smoothstep(.0,.025,d.y);
+ float light=(mass.y+deck*.18)/max(.0001,mass.x+deck);
+ float lowSun=1.-smoothstep(.1,.4,sun.y);
+ vec3 fill=mix(ambient,base,.55+.3*(1.-smoothstep(.05,.5,d.y)));
+ vec3 shade=fill*.72+vec3(.12,.13,.14);
+ vec3 lit=mix(vec3(1.6,1.64,1.7),vec3(1.6,1.05,.60),lowSun*.7);
+ vec3 c=mix(shade,lit,clamp(light+.16*exp(-optical),0.,1.));
+ c+=solar*.04*exp(-optical*.5);
  return mix(base,c,alpha);
 }
 `
