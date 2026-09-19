@@ -100,6 +100,21 @@ bounded world phases and derivative filtering. Packed terrain depth avoids float
 texture filtering requirements; full fields publish atomically after budgeted
 sampling. This introduces a bounded refresh delay during terrain morphs.
 
-The current delivery is the static A+B candidate. Automatic daylight, moving cloud
-shadows, rain and wildlife remain subsequent stages after the static sample is
-reviewed. Default production still excludes flight and all landscape candidates.
+The daylight control defaults to a fixed time. Explicit automatic daylight continues
+from the current progress at a constant rate over 0.08–0.94: a complete day takes
+1500 admitted environment seconds. Frames admit at most 4/60 seconds; very low frame
+rates take longer in wall time. Sunset holds until an explicit replay from morning.
+Manual sunlight controls switch back to fixed without resetting waves or travel.
+
+The existing host loop ticks environment time before sampling one environment frame.
+Uniforms use each frame's exact progress; automatic UI progress updates at most about
+four times per second. There is no separate sun timer or animation loop. Visibility,
+focus, graphics context and fatal errors gate preparation and presentation together.
+Observation preparation has a 20-second active budget that excludes unavailable time.
+Restoring availability resumes necessary preparation, with scenery and travel paused.
+A fatal error stops the loop, invalidates the observation generation and exposes retry
+and museum exit. Returning to travel requires explicit resume; Restart preserves the
+selected time in a new fixed-mode session, while Defaults restores the original time.
+
+Cloud shadows, rain and wildlife are later stages. Default production still excludes
+flight and all landscape candidates.

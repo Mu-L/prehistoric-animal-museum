@@ -5,7 +5,7 @@ import type { FlightRuntime, FlightSnapshot } from '../../src/flight-experience/
 import { DEFAULT_FLIGHT_SETTINGS } from '../../src/flight-experience/settings'
 const snapshot:FlightSnapshot={phase:'flying',reason:null,simplified:false,region:'coast',gentle:false,assisted:false,quality:'low',settings:DEFAULT_FLIGHT_SETTINGS,observation:'inactive',solarDayProgress:.68}
 function setup(mode:'sunlight'|'viewpoints',locale:'en'|'zh-CN'='en',state=snapshot){
- const runtime={enterViewpoint:vi.fn(),setSolarDayProgress:vi.fn(),toggleScenery:vi.fn(),returnFromViewpoint:vi.fn(),pause:vi.fn()}
+ const runtime={setSolarMode:vi.fn(),restartDaylightFromMorning:vi.fn(),enterViewpoint:vi.fn(),setSolarDayProgress:vi.fn(),toggleScenery:vi.fn(),returnFromViewpoint:vi.fn(),pause:vi.fn()}
  render(<LightViewpointPanel runtime={runtime as unknown as FlightRuntime} snapshot={state} locale={locale} mode={mode}/>);return runtime
 }
 describe('unified scenery sections',()=>{
@@ -28,4 +28,15 @@ describe('unified scenery sections',()=>{
   expect(screen.getByRole('status')).toHaveTextContent('正在准备观景点')
   fireEvent.click(screen.getByRole('button',{name:'返回原飞行位置'}));expect(runtime.returnFromViewpoint).toHaveBeenCalledOnce()
  })
+})
+
+it('offers automatic daylight and an explicit replay only at sunset', () => {
+ const runtime=setup('sunlight','en',{...snapshot,solarDayProgress:.94,daylight:{mode:'auto',status:'ended',progress:.94,remainingActiveSeconds:0}})
+ expect(screen.getByRole('slider')).toHaveAttribute('aria-valuetext','Daylight progress 100%')
+ expect(screen.getByRole('status')).toHaveTextContent('Holding at sunset')
+ fireEvent.click(screen.getByRole('button',{name:'Replay daylight from morning'}))
+ expect(runtime.restartDaylightFromMorning).toHaveBeenCalledOnce()
+ fireEvent.click(screen.getByRole('button',{name:'Fixed time'}))
+ expect(runtime.setSolarMode).toHaveBeenCalledWith('fixed')
+ expect(runtime.pause).not.toHaveBeenCalled()
 })

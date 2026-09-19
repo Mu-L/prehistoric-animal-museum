@@ -29,8 +29,8 @@ describe('E1 independent environment clock', () => {
       expect(simulation.renderState()).toEqual(before)
       expect(clock.solarMode).toBe('fixed')
     }
-    expect(clockPolicy('flying', false, true).advanceMovement).toBe(true)
-    clock.tick(1 / 60, clockPolicy('viewpoint', false, true))
+    expect(clockPolicy('flying').advanceMovement).toBe(true)
+    clock.tick(1 / 60, clockPolicy('viewpoint'))
     expect(clock.motionSeconds).toBeCloseTo(waveTime + 1 / 60)
     expect(animationWeights('auto')).toEqual({ source: 1, powered: 0, glide: 0 })
   })

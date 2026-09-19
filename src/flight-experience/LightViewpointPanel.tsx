@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DAYLIGHT_START, DAYLIGHT_END } from './environment/environment-clock'
 import type { FlightRuntime, FlightSnapshot } from './FlightRuntime'
 import { solarProgress, type SolarPreset } from './environment/environment-state'
 const copy = {
@@ -7,6 +8,10 @@ const copy = {
 } as const
 export function LightViewpointPanel({runtime,snapshot,locale,mode='sunlight'}:{runtime:FlightRuntime;snapshot:FlightSnapshot;mode?:'sunlight'|'viewpoints';locale:'en'|'zh-CN'}) {
  const [recording,setRecording]=useState(false),[evidenceStatus,setEvidenceStatus]=useState('')
+ const daylight=snapshot.daylight, automatic=daylight?.mode==='auto'
+ const percent=Math.round(((snapshot.solarDayProgress??.68)-DAYLIGHT_START)/(DAYLIGHT_END-DAYLIGHT_START)*100)
+ const status=daylight?.status??'idle'
+ const statusText=locale==='zh-CN'?{idle:'固定时刻',running:'白昼正在前进',suspended:'白昼已暂停，继续飞翔或景色后恢复',ended:'已停留在夕照'}[status]:{idle:'Fixed time',running:'Daylight is advancing',suspended:'Daylight paused; resume flight or scenery to continue',ended:'Holding at sunset'}[status]
  const t=copy[locale],phase=snapshot.observation??'inactive',preparing=phase==='preparing'||phase==='returning'
  return <section className="flight-light-content" aria-label={mode==='sunlight'?t.time:t.title}>
   {mode==='viewpoints'&&<><p>{t.help}</p>
@@ -17,8 +22,15 @@ export function LightViewpointPanel({runtime,snapshot,locale,mode='sunlight'}:{r
   </div>
   </>}
   {mode==='sunlight'&&<>
+  <div className="flight-light-options" role="group" aria-label={locale==='zh-CN'?'阳光模式':'Sunlight mode'}>
+   <button type="button" aria-pressed={!automatic} onClick={()=>runtime.setSolarMode('fixed')}>{locale==='zh-CN'?'固定时刻':'Fixed time'}</button>
+   <button type="button" aria-pressed={automatic} onClick={()=>runtime.setSolarMode('auto')}>{locale==='zh-CN'?'自动白昼':'Automatic daylight'}</button>
+  </div>
+  <small>{locale==='zh-CN'?'从当前时刻继续，完整白昼约25分钟。手动调节会切回固定时刻。':'Continues from here; a full daylight sequence takes about 25 minutes. Manual adjustments switch back to a fixed time.'}</small>
+  <p role="status">{statusText}</p>
+  {status==='ended'&&<button type="button" onClick={()=>runtime.restartDaylightFromMorning()}>{locale==='zh-CN'?'从晨光重新播放白昼':'Replay daylight from morning'}</button>}
   <div className="flight-light-options" role="group" aria-label={t.time}>{(['morning','afternoon','evening'] as SolarPreset[]).map(p=><button type="button" key={p} disabled={preparing} aria-pressed={Math.abs((snapshot.solarDayProgress??.42)-solarProgress(p))<.001} onClick={()=>runtime.setSolarDayProgress(solarProgress(p))}>{t[p as 'morning'|'afternoon'|'evening']}</button>)}</div>
-  <label className="flight-light-range">{t.time}<input type="range" min="0.08" max="0.94" step="0.005" disabled={preparing} value={snapshot.solarDayProgress??.42} onChange={e=>runtime.setSolarDayProgress(Number(e.target.value))}/></label>
+  <label className="flight-light-range">{t.time}<input type="range" min={DAYLIGHT_START} max={DAYLIGHT_END} aria-valuetext={`${t.time} ${percent}%`} step="0.005" disabled={preparing} value={snapshot.solarDayProgress??.42} onChange={e=>runtime.setSolarDayProgress(Number(e.target.value))}/></label>
   <small>{locale==='zh-CN'?'即时生效，不打断飞翔。':'Applies immediately without interrupting flight.'}</small></>}
   {mode==='viewpoints'&&phase!=='inactive'&&<><p role="status">{phase==='failed'?t.failed:preparing?phase==='returning'?t.returning:t.preparing:t.active}</p><div className="flight-light-options">
     {phase==='active'&&<button type="button" onClick={()=>runtime.toggleScenery()}>{snapshot.sceneryPaused?t.resume:t.pause}</button>}

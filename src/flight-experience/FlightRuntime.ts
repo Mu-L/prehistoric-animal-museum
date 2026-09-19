@@ -1,6 +1,6 @@
 import { ObservationSession, type ObservationPhase } from './viewpoints/observation-session'
 import { VIEWPOINTS, viewpointTarget, type Viewpoint } from './viewpoints/viewpoint-catalog'
-import { EnvironmentClock, clockPolicy } from './environment/environment-clock'
+import { EnvironmentClock, clockPolicy, admittedEnvironmentDelta, type DaylightSnapshot, type SolarMode } from './environment/environment-clock'
 import {loadLookdevMaterials} from './lookdev/material-library'
 import {decorateMaterialTerrain} from './lookdev/material-terrain'
 import { FlightAnimationController } from './flight-animation'
@@ -32,6 +32,7 @@ import glideData from './assets/pteranodon-glide.json'
 export type FlightPhase = 'preparing' | 'buffering' | 'ready' | 'flying' | 'paused' | 'recovering' | 'closed'
 export type PauseReason = 'user' | 'hidden' | 'settings' | 'terrain' | 'safety' | 'camera' | 'context' | 'error'
 export interface FlightSnapshot {
+  daylight?: DaylightSnapshot
   observation?: ObservationPhase; viewpoint?: Viewpoint['id']; sceneryPaused?: boolean; solarDayProgress?: number
   phase: FlightPhase; reason: PauseReason | null; simplified: boolean
   region: ReturnType<WorldSampler['regionAt']>; gentle: boolean; assisted: boolean; quality: 'low' | 'balanced'; settings: FlightSettings
@@ -62,9 +63,28 @@ export class FlightRuntime implements ExternalExperience {
   private get observationPreparing() { return this.observation.phase === 'preparing' || this.observation.phase === 'returning' }
   private get observationActive() { return this.observation.phase === 'active' }
   private publishObservation() { this.publish({observation:this.observation.phase,sceneryPaused:this.observation.sceneryPaused,...(this.observation.target?{viewpoint:this.observation.target.id}:{}),solarDayProgress:this.environmentClock.solarDayProgress}) }
+  private daylightPublishSeconds = 0
+  private environmentPolicy(snapshot = this.snapshot) {
+    const activity = this.disposed ? 'closed' : this.fatalError ? 'error' : !this.contextAvailable ? 'context-lost'
+      : !this.visible || !this.focused ? 'hidden' : this.observationPreparing ? 'viewpoint-preparing'
+      : snapshot.phase === 'preparing' || snapshot.phase === 'buffering' ? 'viewpoint-preparing'
+      : this.observationActive ? 'viewpoint' : snapshot.phase === 'flying' ? 'flying'
+      : this.reviewMotionActive ? 'viewpoint' : 'paused'
+    return clockPolicy(activity, this.scenery.review.freezeWater || (this.observation.phase !== 'inactive' && this.observation.sceneryPaused))
+  }
+  setSolarMode(mode: SolarMode) {
+    if (this.disposed || this.fatalError || !this.contextAvailable) return
+    this.environmentClock.setSolarMode(mode)
+    this.solarDirty = true; this.publishObservation(); this.invalidate()
+  }
+  restartDaylightFromMorning() {
+    if (this.disposed || this.fatalError || !this.contextAvailable) return
+    this.environmentClock.restartDaylightFromMorning()
+    this.solarDirty = true; this.publishObservation(); this.invalidate()
+  }
   setSolarDayProgress(progress: number) {
     if (!Number.isFinite(progress) || this.disposed || this.fatalError || !this.contextAvailable) return
-    this.environmentClock.setSolarDayProgress(Math.max(.08,Math.min(.94,progress)))
+    this.environmentClock.setSolarDayProgress(progress)
     this.scenery.environment.solarLayout = 'sunset-bay'; this.solarDirty = true
     this.publishObservation(); this.invalidate()
   }
@@ -125,6 +145,7 @@ export class FlightRuntime implements ExternalExperience {
   private invalidate() { if (this.available) this.lease?.invalidate() }
   private syncAvailability() {
     this.observation.setPreparationAvailable(this.available, performance.now())
+    this.publishObservation()
     if (this.available) this.invalidate()
   }
   setVisibilityState(visible: boolean) {
@@ -172,6 +193,7 @@ export class FlightRuntime implements ExternalExperience {
     this.scenery = new FlightScenery(this.scene, () => this.invalidate(), (x, z) => this.scenerySurface(x, z), this.world, (x,z)=>this.scenerySurface(x,z))
     this.environmentClock.setSolarDayProgress(solarProgress(this.scenery.preset))
     this.snapshot.solarDayProgress=this.environmentClock.solarDayProgress
+    this.snapshot.daylight=this.environmentClock.snapshot(clockPolicy('viewpoint-preparing'))
     this.scenery.props.setLandmarks(landmarks)
     this.terrain = new TerrainStream(() => this.invalidate(), () => this.publish({ simplified: true }), worldConfig)
     this.surface=new VisibleSurfaceSnapshot(this.terrain,this.world)
@@ -222,6 +244,7 @@ export class FlightRuntime implements ExternalExperience {
   private publish(patch: Partial<FlightSnapshot>) {
     if (this.disposed) return
     const next = { ...this.snapshot, ...patch }
+    next.daylight = this.environmentClock.snapshot(this.environmentPolicy(next))
     if (JSON.stringify(next) === JSON.stringify(this.snapshot)) return
     this.snapshot = next; this.listeners.forEach(l => l())
   }
@@ -386,12 +409,17 @@ export class FlightRuntime implements ExternalExperience {
     if(this.frameId%5===4)farWork()
     const dirtyGround=this.terrain.consumeGroundDirty();this.scenery.props.markGroundDirty(dirtyGround,this.terrain.surfaceRevision);this.scenery.farCanopy.markGroundDirty(dirtyGround)
     const sceneryStart=performance.now()
-    if(this.solarDirty && !this.observationPreparing) {this.scenery.environment.solarDayProgress=this.environmentClock.solarDayProgress;this.solarDirty=false}
-    const activity = !this.contextAvailable ? 'context-lost' : !this.visible || !this.focused ? 'hidden'
-      : this.observationPreparing ? 'viewpoint-preparing' : this.observationActive ? 'viewpoint' : this.snapshot.phase === 'flying' ? 'flying'
-      : this.snapshot.phase === 'preparing' || this.snapshot.phase === 'buffering' ? 'viewpoint-preparing'
-      : this.reviewMotionActive ? 'viewpoint' : 'paused'
-    this.environmentClock.tick(deltaSeconds, clockPolicy(activity, this.scenery.review.freezeWater || (this.observation.phase !== 'inactive' && this.observation.sceneryPaused)))
+    const beforeDaylight = this.environmentClock.snapshot(this.environmentPolicy())
+    this.environmentClock.tick(deltaSeconds, this.environmentPolicy())
+    if (this.solarDirty || this.environmentClock.solarMode === 'auto') {
+      this.scenery.environment.solarDayProgress = this.environmentClock.solarDayProgress
+      this.solarDirty = false
+    }
+    this.daylightPublishSeconds += admittedEnvironmentDelta(deltaSeconds)
+    const daylight = this.environmentClock.snapshot(this.environmentPolicy())
+    if (daylight.status !== beforeDaylight.status || (daylight.status === 'running' && this.daylightPublishSeconds >= .25)) {
+      this.daylightPublishSeconds = 0; this.publishObservation()
+    }
     this.reviewWaterTime = this.environmentClock.motionSeconds
     this.scenery.river.root.visible=!this.lookdevActive&&!this.reviewIsolation.hideRiver&&!this.reviewHideWater
     this.scenery.environment.setWaterOwner(this.world.river.bounds,this.scenery.river.ready&&!this.reviewIsolation.hideRiver)
@@ -429,7 +457,7 @@ export class FlightRuntime implements ExternalExperience {
       }
     }
     if(import.meta.env.DEV)this.reviewOverlayUpdate?.()
-    if(import.meta.env.DEV&&this.trace.active) this.trace.append({frameId:this.frameId,time:render.time,phase:this.snapshot.phase,pauseReason:this.snapshot.reason,position:[rp.x,rp.y,rp.z],camera:{position:this.camera.position.toArray(),quaternion:this.camera.quaternion.toArray(),fov:this.camera.fov,near:this.camera.near,far:this.camera.far},surface:{waterTime:this.reviewWaterTime,waveFrozen:this.scenery.review.freezeWater,shadowEnabled:this.scenery.review.shadows,depthFrozen:this.scenery.review.freezeBathymetry,identity:this.terrain.surfaceIdentity(rp.x,rp.z),riverReady:this.scenery.river.ready,waterOwner:this.scenery.river.ready&&!this.reviewIsolation.hideRiver&&rp.x>=this.world.river.bounds.minX&&rp.x<this.world.river.bounds.maxX&&rp.z>=this.world.river.bounds.minZ&&rp.z<this.world.river.bounds.maxZ?'finite-water':'ocean',isolation:{...this.reviewIsolation}},quality:this.snapshot.quality,deltaMs:deltaSeconds*1000,cpu:{...this.frameCpu},budget:{...this.workBudget.metrics},terrain:{...this.terrain.diagnostics(),far:{...this.farTerrain.metrics}},props:{...this.scenery.metrics,farCanopy:{...this.scenery.farCanopy.metrics}},bathymetry:{...this.scenery.environment.metrics},gpuMs:null})
+    if(import.meta.env.DEV&&this.trace.active) this.trace.append({frameId:this.frameId,time:render.time,phase:this.snapshot.phase,pauseReason:this.snapshot.reason,position:[rp.x,rp.y,rp.z],camera:{position:this.camera.position.toArray(),quaternion:this.camera.quaternion.toArray(),fov:this.camera.fov,near:this.camera.near,far:this.camera.far},surface:{daylight:this.environmentClock.snapshot(this.environmentPolicy()),activeView:this.observation.target?.id??'flight',generation:this.observation.generation,waterTime:this.reviewWaterTime,waveFrozen:this.scenery.review.freezeWater,shadowEnabled:this.scenery.review.shadows,depthFrozen:this.scenery.review.freezeBathymetry,identity:this.terrain.surfaceIdentity(rp.x,rp.z),riverReady:this.scenery.river.ready,waterOwner:this.scenery.river.ready&&!this.reviewIsolation.hideRiver&&rp.x>=this.world.river.bounds.minX&&rp.x<this.world.river.bounds.maxX&&rp.z>=this.world.river.bounds.minZ&&rp.z<this.world.river.bounds.maxZ?'finite-water':'ocean',isolation:{...this.reviewIsolation}},quality:this.snapshot.quality,deltaMs:deltaSeconds*1000,cpu:{...this.frameCpu},budget:{...this.workBudget.metrics},terrain:{...this.terrain.diagnostics(),far:{...this.farTerrain.metrics}},props:{...this.scenery.metrics,farCanopy:{...this.scenery.farCanopy.metrics}},bathymetry:{...this.scenery.environment.metrics},gpuMs:null})
     if(((this.observationActive && !this.observation.sceneryPaused) || this.reviewMotionActive) && Number.isFinite(deltaSeconds)) {
       this.frameTimes.push(deltaSeconds*1000);if(this.frameTimes.length>3600)this.frameTimes.shift()
     }
@@ -490,6 +518,7 @@ export class FlightRuntime implements ExternalExperience {
     return { observation:{phase:this.observation.phase,generation:this.observation.generation,target:this.observation.target,sceneryPaused:this.observation.sceneryPaused}, animation:{sourceTime:this.model?.action?.time??null,sourceWeight:this.model?.action?.getEffectiveWeight()??null,visible:this.root.visible,mode:this.reviewAnimation,state:this.reviewAnimation==='powered'?'powered':this.reviewAnimation==='glide'?'glide':'source',poweredWeight:this.poweredAction?.getEffectiveWeight()??0,clip:this.reviewAnimation==='powered'?poweredFlapData.name:this.reviewAnimation==='glide'?glideData.name:this.model?.action?.getClip().name},surface:this.surface.sample(this.simulation.position.x,this.simulation.position.z),river:{ready:this.scenery.river.ready,error:this.scenery.river.error,length:this.world.river.length},isolation:{...this.reviewIsolation},frameId:this.frameId, preparation:{...this.workBudget.metrics}, traceFrames:this.trace.size, lookdev:this.lookdevActive?this.lookdev?.metadata():null, world: this.world.config, phase: this.snapshot.phase, quality: this.snapshot.quality,
       position: { ...this.simulation.position }, heading: this.simulation.heading, time: this.simulation.time,
       commands: { ...this.simulation.commands, mode: this.simulation.avoidance, vY: this.simulation.climbRate, aY: this.simulation.verticalAcceleration },
+      daylight: this.environmentClock.snapshot(this.environmentPolicy()),
       clock: { motionSeconds: this.environmentClock.motionSeconds, solarDayProgress: this.environmentClock.solarDayProgress, solarMode: this.environmentClock.solarMode },
       origin: this.origin, originShifts: this.originShifts, droppedSeconds: this.simulation.droppedSeconds,
       frameTimeMs: { samples: sorted.length, p50: percentile(.5), p95: percentile(.95), p99: percentile(.99), spikes100: sorted.filter(n => n > 100).length },

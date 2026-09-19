@@ -7,7 +7,7 @@ export interface ClockPolicy {
   readonly allowExplicitSolarPreview: boolean
   readonly allowBudgetedPreparation: boolean
 }
-export function clockPolicy(activity: EnvironmentActivity, sceneryPaused = false, _scrubbing = false): ClockPolicy {
+export function clockPolicy(activity: EnvironmentActivity, sceneryPaused = false): ClockPolicy {
   const active = activity === 'flying' || activity === 'viewpoint'
   const suspended = ['hidden', 'context-lost', 'error', 'closed'].includes(activity)
   return {
