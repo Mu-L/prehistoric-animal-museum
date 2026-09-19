@@ -116,8 +116,8 @@ A fatal error stops the loop, invalidates the observation generation and exposes
 and museum exit. Returning to travel requires explicit resume; Restart preserves the
 selected time in a new fixed-mode session, while Defaults restores the original time.
 
-Cloud shadows, rain and wildlife are later stages. Default production still excludes
-flight and all landscape candidates.
+Cloud shadows and rain are included in the weather system below; wildlife remains
+a later stage. Default production still excludes flight and all landscape candidates.
 
 ### W1 cloud and weather candidate
 
@@ -142,5 +142,5 @@ Review-only controls provide independent water/cloud/weather/sun freezes, explic
 static weather capture, a W1-off comparison, same-frame PBR PNG plus metadata, and
 segmented real-time cycle recording. These controls and local evidence endpoints
 are excluded from production. A missing cloud image marks simplified weather and
-cannot block terrain preparation. The package remains a Draft candidate; real-device
-performance and human G3 acceptance are separate from local tests and builds.
+cannot block terrain preparation. The feature remains opt-in; physical-device
+performance validation is separate from local tests and desktop visual review.
