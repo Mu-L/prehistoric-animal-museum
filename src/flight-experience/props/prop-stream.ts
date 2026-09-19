@@ -1,6 +1,8 @@
+import { VegetationWind, VEGETATION_WIND_BOUND, installVegetationPhase, vegetationPhase } from '../living/vegetation-wind'
+import ecologyManifest from '../assets/ecology-r5/manifest.json'
 import { bakePropGeometry } from './bake-prop-geometry'
 import { decorateShadowFade } from '../environment/shadow-fade'
-import { DynamicDrawUsage, Frustum, Group, InstancedMesh, Matrix4, Mesh, Object3D, Sphere, Texture, MeshStandardMaterial, type BufferGeometry, type Material, type PerspectiveCamera } from 'three'
+import { DynamicDrawUsage, InstancedBufferAttribute, Frustum, Group, InstancedMesh, Matrix4, Mesh, Object3D, Sphere, Texture, MeshStandardMaterial, type BufferGeometry, type Material, type PerspectiveCamera } from 'three'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import assetUrl from '../assets/ecology-r5/ecology-r5.glb?url'
@@ -30,7 +32,9 @@ function disposeMaterials(materials: Set<Material>) {
  * are unchanged from R3 (169 cells, <=16 grid candidates/cell, 512 slots/template). */
 export class PropStream {
   readonly root = new Group()
-  readonly metrics = { pending: 0, installMs: 0, peakInstallMs: 0, installedThisFrame: 0, bytes: 0, batches: 0, instances: 0, cells: 0, nearInstances: 0, ready: false, failed: false, failureReason: '',
+  readonly wind = new VegetationWind()
+  setWind(motionSeconds:number,strength:number,camera?:PerspectiveCamera,reducedMotion=false){this.wind.update(motionSeconds,strength,camera,reducedMotion);this.metrics.windStrength=this.wind.uniforms.flightWindStrength.value;this.metrics.windMotionSeconds=motionSeconds}
+  readonly metrics = { windStrength:0,windMotionSeconds:0,pending: 0, installMs: 0, peakInstallMs: 0, installedThisFrame: 0, bytes: 0, batches: 0, instances: 0, cells: 0, nearInstances: 0, ready: false, failed: false, failureReason: '',
     submitted: 0, visible: 0, submittedVertices: 0, slotFailures: 0, missingAssets: 0, deferred: 0, groundDirty: 0, groundMaxWaitFrames: 0, frameId: 0, compactMs: 0, matrixUploads: 0 }
   private readonly cells = new Map<string, Cell>()
   private readonly tileCandidates = new Map<string, Prop[]>()
@@ -84,8 +88,22 @@ export class PropStream {
           if(object.name.startsWith('tree-1-'))for(const m of Array.isArray(typed.material)?typed.material:[typed.material])if(m instanceof MeshStandardMaterial){m.aoMapIntensity=.28;m.normalScale.setScalar(.45)}
           const geometry = bakePropGeometry(typed.geometry,part.matrixWorld)
           this.geometries.add(geometry)
-          for (const material of Array.isArray(typed.material) ? typed.material : [typed.material]) this.materials.add(material)
-          const mesh = new InstancedMesh(geometry, typed.material, this.capacity)
+          const vegetation=/^(tree|understory)-/.test(object.name)
+          const asset=ecologyManifest.assets.find(asset=>asset.id===object.name.replace(/-lod[012]$/,''))
+          const wind=vegetation&&asset&&typed.material instanceof MeshStandardMaterial?this.wind.decorate(typed.material,asset.groundAnchor[1]!,asset.physicalHeight,object.name.startsWith('tree-')):undefined
+          const material=wind?.color??typed.material
+          for (const owned of Array.isArray(material)?material:[material])this.materials.add(owned)
+          const mesh = new InstancedMesh(geometry, material, this.capacity)
+          if(wind){
+            installVegetationPhase(geometry,this.capacity)
+            mesh.customDepthMaterial=wind.depth;mesh.customDistanceMaterial=wind.distance
+            this.materials.add(wind.depth);this.materials.add(wind.distance)
+            // GPU instancing is culled below in physical world units. Also expand local
+            // geometry bounds conservatively for tools that inspect the baked geometry.
+            const minimumScale=(object.name.startsWith('tree-')?8:.7)/asset!.physicalHeight
+            geometry.boundingBox?.expandByScalar(VEGETATION_WIND_BOUND/minimumScale)
+            if(geometry.boundingSphere)geometry.boundingSphere.radius+=VEGETATION_WIND_BOUND/minimumScale
+          }
           mesh.count = 0; mesh.instanceMatrix.setUsage(DynamicDrawUsage); mesh.frustumCulled = false; mesh.castShadow = object.name.endsWith('lod0'); mesh.receiveShadow = true
           mesh.name = object.name; pool.meshes.push(mesh); this.root.add(mesh)
         })
@@ -270,14 +288,14 @@ export class PropStream {
   private propInFrustum(prop: Prop) {
     const physical = dimensions(prop)
     this.sphere.center.set(prop.x - this.origin.x, prop.y + physical.physicalHeight * .5, prop.z - this.origin.z)
-    this.sphere.radius = Math.hypot(physical.physicalHeight * .5, physical.crownRadius)
+    this.sphere.radius = Math.hypot(physical.physicalHeight * .5, physical.crownRadius)+(prop.kind==='plant'||prop.kind==='understory'?VEGETATION_WIND_BOUND:0)
     return this.frustum.intersectsSphere(this.sphere)
   }
   private inFrustum(instance: Instance) {
     const physical = dimensions(instance.prop)
     const height = instance.fixedScale === undefined ? physical.physicalHeight : instance.fixedScale * CLIFF_SAMPLE.height
     this.sphere.center.set(instance.matrix.elements[12], instance.matrix.elements[13] + height * .5, instance.matrix.elements[14])
-    this.sphere.radius = Math.hypot(height * .5, instance.fixedScale === undefined ? physical.crownRadius : instance.fixedScale * CLIFF_SAMPLE.radius)
+    this.sphere.radius = Math.hypot(height * .5, instance.fixedScale === undefined ? physical.crownRadius : instance.fixedScale * CLIFF_SAMPLE.radius)+(instance.prop.kind==='plant'||instance.prop.kind==='understory'?VEGETATION_WIND_BOUND:0)
     return this.frustum.intersectsSphere(this.sphere)
   }
   private compact(camera: PerspectiveCamera | undefined, x: number, y: number, z: number) {
@@ -298,10 +316,10 @@ export class PropStream {
       const signature = entries.map(instance => `${instance.slot}:${instance.prop.id}:${instance.revision}`).join('|')
       const changed = signature !== pool.submission
       for (const mesh of pool.meshes) mesh.userData.propIds = entries.map(instance => instance.prop.id)
-      entries.forEach((instance, index) => { instance.submittedSlot = index; if (changed) for (const mesh of pool.meshes) mesh.setMatrixAt(index, instance.matrix) })
+      entries.forEach((instance, index) => { instance.submittedSlot = index; if (changed) for (const mesh of pool.meshes) {mesh.setMatrixAt(index, instance.matrix);mesh.geometry.getAttribute('flightWindPhase')?.setX(index,vegetationPhase(instance.prop.id))} })
       for (const mesh of pool.meshes) {
         mesh.count = entries.length; mesh.visible = entries.length > 0
-        if (changed && entries.length) { mesh.instanceMatrix.clearUpdateRanges(); mesh.instanceMatrix.addUpdateRange(0, entries.length * 16); mesh.instanceMatrix.needsUpdate = true; uploads += entries.length * 64 }
+        if (changed && entries.length) { mesh.instanceMatrix.clearUpdateRanges(); mesh.instanceMatrix.addUpdateRange(0, entries.length * 16); mesh.instanceMatrix.needsUpdate = true; uploads += entries.length * 64;const phase=mesh.geometry.getAttribute('flightWindPhase');if(phase instanceof InstancedBufferAttribute){phase.clearUpdateRanges();phase.addUpdateRange(0,entries.length);phase.needsUpdate=true;uploads+=entries.length*4} }
         if (entries.length) { batches++; vertices += (mesh.geometry.index?.count ?? mesh.geometry.getAttribute('position').count) * entries.length }
       }
       submitted += entries.length; pool.submission = signature

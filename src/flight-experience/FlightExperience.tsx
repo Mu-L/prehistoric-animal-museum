@@ -1,3 +1,5 @@
+import { NaturePanel } from './living/NaturePanel'
+import {DEFAULT_LIVING_INTENT,type LivingIntent} from './living/living-context'
 import { WeatherPanel } from './WeatherPanel'
 import type { WeatherState } from './environment/weather-controller'
 import { LightViewpointPanel } from './LightViewpointPanel'
@@ -15,21 +17,23 @@ import { FlightReviewControls } from './FlightReviewControls'
 const initial: FlightSnapshot = { phase: 'preparing', reason: null, simplified: false, region: 'coast', gentle: false, assisted: false, quality: 'low', settings: { ...DEFAULT_FLIGHT_SETTINGS } }
 const noSubscription = () => () => {}
 const initialSnapshot = () => initial
-interface Props { controller: ViewerController; descriptor: ViewerModelDescriptor; onClose: () => void }
-export function FlightExperience({ controller, descriptor, onClose }: Props) {
+interface Props { controller: ViewerController; descriptor: ViewerModelDescriptor; onClose: () => void; narrationActive?:boolean }
+export function FlightExperience({ controller, descriptor, onClose, narrationActive=false }: Props) {
   const { locale, setPreference } = useI18n(), copy = flightMessages[locale]
   const [runtime, setRuntime] = useState<FlightRuntime | null>(null)
   const [retry, setRetry] = useState(0), [settings, setSettings] = useState(false), [observe, setObserve] = useState(false)
-  const [section,setSection] = useState<'sunlight'|'flight'|'viewpoints'|'weather'>('sunlight')
+  const [section,setSection] = useState<'sunlight'|'flight'|'viewpoints'|'weather'|'nature'>('sunlight')
   const settingsTrigger=useRef<HTMLButtonElement>(null)
   const closeSettings=()=>{setSettings(false);settingsTrigger.current?.focus()}
   const root = useRef<HTMLElement>(null), nudgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const descriptorRef = useRef(descriptor)
+  const chosenLiving = useRef<LivingIntent>({...DEFAULT_LIVING_INTENT})
   const chosenWeather = useRef<WeatherState | null>(null)
   const chosenSunlight = useRef<number | null>(null)
   const chosenSettings = useRef<FlightSettings>({ ...DEFAULT_FLIGHT_SETTINGS })
   const [draft, setDraft] = useState<FlightSettings>({ ...DEFAULT_FLIGHT_SETTINGS })
   const snapshot = useSyncExternalStore(runtime?.subscribe ?? noSubscription, runtime?.getSnapshot ?? initialSnapshot, initialSnapshot)
+  useEffect(()=>{runtime?.setNarrationActive(narrationActive)},[runtime,narrationActive])
   const previousObservation = useRef(snapshot.observation)
   useEffect(() => {
     if (previousObservation.current && previousObservation.current !== 'inactive' && snapshot.observation === 'inactive') settingsTrigger.current?.focus()
@@ -37,6 +41,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
   }, [snapshot.observation])
   useEffect(() => {
     const instance = new FlightRuntime(controller, window.matchMedia('(prefers-reduced-motion: reduce)').matches, chosenSettings.current, import.meta.env.DEV && [193706,193707,193708].includes(Number(new URLSearchParams(location.search).get('flightSeed'))) ? {...WORLD,seed:Number(new URLSearchParams(location.search).get('flightSeed'))} : WORLD)
+    Object.assign(instance.livingIntent,chosenLiving.current)
     if(chosenWeather.current)instance.weather.restore(chosenWeather.current)
     if(chosenSunlight.current!==null)instance.setSolarDayProgress(chosenSunlight.current)
     let active = true
@@ -103,7 +108,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); runtime?.input.point(turn, climb, event.pointerId)
   }
   const configure = (next: FlightSettings) => { setDraft(next); chosenSettings.current = next; runtime?.configure(next) }
-  const restart = (next = draft, resetSunlight = false) => { if(!resetSunlight&&runtime){runtime.weather.restart();chosenWeather.current=runtime.weather.serialize()}else chosenWeather.current=null; chosenSunlight.current=resetSunlight?null:runtime?.environmentClock.solarDayProgress??null; chosenSettings.current = next; setDraft(next); setSettings(false); setObserve(false); setRetry(n => n + 1) }
+  const restart = (next = draft, resetSunlight = false) => { chosenLiving.current=resetSunlight?{...DEFAULT_LIVING_INTENT}:{...runtime?.livingIntent??DEFAULT_LIVING_INTENT}; if(!resetSunlight&&runtime){runtime.weather.restart();chosenWeather.current=runtime.weather.serialize()}else chosenWeather.current=null; chosenSunlight.current=resetSunlight?null:runtime?.environmentClock.solarDayProgress??null; chosenSettings.current = next; setDraft(next); setSettings(false); setObserve(false); setRetry(n => n + 1) }
   const reason = snapshot.reason === 'terrain' ? copy.terrain : ['safety', 'camera'].includes(snapshot.reason ?? '') ? copy.safety : snapshot.reason === 'context' ? copy.context : snapshot.reason === 'hidden' ? copy.hidden : copy.quiet
   return <section ref={root} className="flight-experience" role="dialog" aria-modal="true" aria-label={copy.title} tabIndex={-1} data-flight-phase={snapshot.phase}>
     <header className="flight-toolbar">
@@ -119,7 +124,8 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
     {snapshot.reason === 'error' ? <section className="flight-card" role="alert"><h1>{copy.error}</h1>{runtime?.canReturnToTravel&&<button type="button" onClick={()=>runtime.returnFromViewpoint()}>{locale==='zh-CN'?'返回原飞行位置':'Return to flight position'}</button>}<button type="button" onClick={()=>restart()}>{copy.retry}</button><button type="button" onClick={onClose}>{copy.back}</button></section> : settings ? <section id="flight-settings-panel" className="flight-card flight-settings" aria-label={locale==='zh-CN'?'飞行与风景':'Flight & scenery'}>
       <div className="flight-card__heading"><h2>{locale==='zh-CN'?'飞行与风景':'Flight & scenery'}</h2><button type="button" aria-label={copy.close} onClick={closeSettings}><X size={20}/></button></div>
       <p className="flight-panel-status">{inViewpoint ? (locale==='zh-CN'?'已停下观景':'Stopped at a viewpoint') : flying ? (locale==='zh-CN'?'飞翔继续中 · 可以边飞边调':'Still flying · adjust as you go') : (locale==='zh-CN'?'飞翔已停下 · 可以安心调整':'Flight stopped · take your time')}</p>
-      <div className="flight-panel-sections" role="group" aria-label={locale==='zh-CN'?'设置分类':'Settings sections'}>{(['sunlight','weather','flight','viewpoints'] as const).map((value,i)=><button key={value} type="button" aria-pressed={section===value} onClick={()=>setSection(value)}>{(locale==='zh-CN'?['阳光','天气','飞行','观景']:['Sunlight','Weather','Flying','Viewpoints'])[i]}</button>)}</div>
+      <div className="flight-panel-sections" role="group" aria-label={locale==='zh-CN'?'设置分类':'Settings sections'}>{(['sunlight','weather','flight','viewpoints','nature'] as const).map((value,i)=><button key={value} type="button" aria-pressed={section===value} onClick={()=>setSection(value)}>{(locale==='zh-CN'?['阳光','天气','飞行','观景','自然动静']:['Sunlight','Weather','Flying','Viewpoints','Nature'])[i]}</button>)}</div>
+      {section==='nature'&&runtime&&<NaturePanel runtime={runtime} snapshot={snapshot} locale={locale}/>}
       {section==='weather'&&runtime&&<WeatherPanel runtime={runtime} snapshot={snapshot} locale={locale}/>}
       {(section==='sunlight'||section==='viewpoints')&&runtime&&<LightViewpointPanel runtime={runtime} snapshot={snapshot} locale={locale} mode={section}/>}
       {section==='flight'&&<>
@@ -144,7 +150,7 @@ export function FlightExperience({ controller, descriptor, onClose }: Props) {
       {snapshot.phase === 'ready' && <p className="flight-instructions">{copy.instruction}</p>}
       {snapshot.phase !== 'preparing' && <div className="flight-card__actions">
         {runtime?.canResume && <button type="button" className="flight-primary" onClick={start}><Play size={18}/>{snapshot.phase === 'ready' ? copy.start : copy.resume}</button>}
-        {(snapshot.phase === 'recovering' || ['safety', 'camera', 'terrain'].includes(snapshot.reason ?? '')) && <button type="button" className="flight-primary" onClick={() => setRetry(v => v + 1)}>{copy.retry}</button>}
+        {(snapshot.phase === 'recovering' || ['safety', 'camera', 'terrain'].includes(snapshot.reason ?? '')) && <button type="button" className="flight-primary" onClick={() => restart()}>{copy.retry}</button>}
         <button type="button" onClick={() => setObserve(v => !v)}>{copy.static}</button>
       </div>}
       <small>{copy.art}</small>

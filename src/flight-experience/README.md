@@ -2,7 +2,7 @@
 
 A local-review candidate for Pteranodon exploration. The normal production build
 keeps this feature disabled until its art, animation, comfort and device reviews
-are complete. Flight has no sound, tracking, account, score or failure penalty.
+are complete. Flight has no tracking, account, score or failure penalty; natural sound requires an explicit gesture.
 
 ## Run
 
@@ -116,8 +116,8 @@ A fatal error stops the loop, invalidates the observation generation and exposes
 and museum exit. Returning to travel requires explicit resume; Restart preserves the
 selected time in a new fixed-mode session, while Defaults restores the original time.
 
-Cloud shadows and rain are included in the weather system below; wildlife remains
-a later stage. Default production still excludes flight and all landscape candidates.
+Cloud shadows and rain are included in the weather system below; the living coast
+candidate adds opt-in same-species companions. Default production still excludes flight and all landscape candidates.
 
 ### W1 cloud and weather candidate
 
@@ -144,3 +144,31 @@ segmented real-time cycle recording. These controls and local evidence endpoints
 are excluded from production. A missing cloud image marks simplified weather and
 cannot block terrain preparation. The feature remains opt-in; physical-device
 performance validation is separate from local tests and desktop visual review.
+
+### Living coast candidate
+
+Nature adds three independent controls, all off on entry: vegetation breeze,
+brief same-species companions, and explicitly enabled natural sound. Restart
+retains the two visual choices but requires a fresh sound gesture; Defaults clears
+all three. The existing host update and admitted environment frame drive motion.
+Wind and sound do not steer the player or change the 600/480-second schedules.
+
+The four sound loops are original offline synthetic candidates, with no animal
+calls, speech or music. One owned AudioContext mixes at most four sources; decoded
+PCM is measured from actual AudioBuffers and capped at 12 MiB. Museum narration
+has priority. Pause, visibility/focus loss and context failure mute the mix.
+
+Near companions reuse the original Idle rig; the distant derivative retains the
+original animation samples and borrows source textures. Low quality admits one
+near and three distant actors (25,638 triangles); balanced admits two and six
+(51,276). A quality downgrade allows the old cohort six active seconds to depart.
+NPCs check a bounded terrain corridor and yield to the player. These groups are
+artistic scenes, not claims about Pteranodon social behaviour.
+
+The three observation prompts appear only when requested, pause scenery and mute
+sound, and remain paused when closed. Postcards copy the completed host frame into
+one temporary 2D canvas, then encode asynchronously. Output is at most 1280 pixels
+on its longest side, with three local previews and explicit download. Nothing is
+uploaded. Candidate asset provenance and deterministic validators accompany the
+source; subjective sound, movement and physical-device acceptance remain separate
+from automated checks. Flight remains disabled in the normal build.

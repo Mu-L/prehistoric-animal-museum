@@ -2709,7 +2709,7 @@ function MuseumApp({
         <section className="scale-encounter-module-loading" role="dialog" aria-modal="true" aria-label={locale === 'zh-CN' ? '准备飞行' : 'Preparing flight'}>
           <button type="button" onClick={closeFlight}>{locale === 'zh-CN' ? '返回展馆' : 'Back to museum'}</button>
         </section>
-      }><FlightExperience controller={viewerController} descriptor={activeAnimal.viewer} onClose={closeFlight}/></Suspense></FlightModuleBoundary> : null}
+      }><FlightExperience narrationActive={narrationSnapshot.playback === 'playing'} controller={viewerController} descriptor={activeAnimal.viewer} onClose={closeFlight}/></Suspense></FlightModuleBoundary> : null}
 
       {scaleEncounterOpen &&
       DirectScaleEncounter &&

@@ -48,3 +48,13 @@ it('fades a late overcast asset on effective motion time, freezing on pause and 
  expect(env.sky.material.uniforms.cloudAppearanceWeight!.value).toBe(1)
  env.dispose()
 })
+it('cancels the development slow-load probe when its environment closes',()=>{
+ vi.useFakeTimers()
+ const original=globalThis.location.href
+ globalThis.history.replaceState(null,'','?flightCloudDelayMs=5000')
+ const load=vi.spyOn(TextureLoader.prototype,'loadAsync').mockResolvedValue(new Texture())
+ const env=new EnvironmentScene(new Scene(),()=>-30)
+ expect(load).not.toHaveBeenCalled();env.dispose();vi.advanceTimersByTime(6000)
+ expect(load).not.toHaveBeenCalled()
+ globalThis.history.replaceState(null,'',original);vi.useRealTimers()
+})

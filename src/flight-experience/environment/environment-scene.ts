@@ -111,7 +111,7 @@ gl_FragColor=vec4(c,1.);
 export class EnvironmentScene {
   readonly root=new Group()
   readonly review={flatWater:false,freezeWater:false,oceanEdges:false,skyColors:false,shadows:true,highlight:true,freezeBathymetry:false,ownerColors:false,depthColors:false}
-  readonly metrics={weatherTextureBytes:1398102,weatherDrawCalls:0,bathymetrySamples:0,textureBytes:DEPTH_SIZE*DEPTH_SIZE*4*3,shadowMapSize:0,shadowExtent:384,bathymetryRevision:0,bathymetryMs:0,peakBathymetryMs:0,bathymetryEpoch:0,bathymetryDirtyPages:0,bathymetryBlend:1,bathymetryUploadBytes:0,bathymetryPendingAgeFrames:0,bathymetryStarvedFrames:0}
+  readonly metrics={cloudDataReady:false,cloudAppearanceWeight:0,weatherTextureBytes:1398102,weatherDrawCalls:0,bathymetrySamples:0,textureBytes:DEPTH_SIZE*DEPTH_SIZE*4*3,shadowMapSize:0,shadowExtent:384,bathymetryRevision:0,bathymetryMs:0,peakBathymetryMs:0,bathymetryEpoch:0,bathymetryDirtyPages:0,bathymetryBlend:1,bathymetryUploadBytes:0,bathymetryPendingAgeFrames:0,bathymetryStarvedFrames:0}
   solarLayout: SolarLayout = 'legacy'
   solarDayProgress: number | undefined
   weatherState:WeatherState=new WeatherController().serialize()
@@ -119,6 +119,7 @@ export class EnvironmentScene {
   weatherEnabled=true
   private readonly clearWeather=new WeatherController().serialize()
   private disposed=false
+  private cloudLoadTimer:ReturnType<typeof setTimeout>|undefined
   readonly cloudAppearance=new CloudAppearance()
   private cloudTexture:Texture=new DataTexture(new Uint8Array([128,128,0,255]),1,1,RGBAFormat)
   private frameRevision = 0
@@ -150,7 +151,10 @@ export class EnvironmentScene {
   get busy(){return this.field.busy||this.coarseField.busy}
   constructor(scene:Scene,private readonly surface:(x:number,z:number)=>number,wake:()=>void=()=>{}){
     this.uniforms.cloudDensityMap.value=this.cloudTexture
-    void new TextureLoader().loadAsync(cloudUrl).then(texture=>{if(this.disposed){texture.dispose();return}this.cloudTexture.dispose();this.cloudTexture=texture;texture.colorSpace=NoColorSpace;texture.wrapS=texture.wrapT=RepeatWrapping;this.uniforms.cloudDensityMap.value=texture;this.cloudAppearance.markDataReady();this.uniforms.cloudDataReady.value=1;wake()}).catch(()=>{if(!this.disposed){this.weatherDegraded=true;wake()}})
+    const loadCloud=()=>{this.cloudLoadTimer=undefined;void new TextureLoader().loadAsync(cloudUrl).then(texture=>{if(this.disposed){texture.dispose();return}this.cloudTexture.dispose();this.cloudTexture=texture;texture.colorSpace=NoColorSpace;texture.wrapS=texture.wrapT=RepeatWrapping;this.uniforms.cloudDensityMap.value=texture;this.cloudAppearance.markDataReady();this.uniforms.cloudDataReady.value=1;wake()}).catch(()=>{if(!this.disposed){this.weatherDegraded=true;wake()}})}
+    // Local-only reproducible slow resource probe. Production has no query override.
+    const delay=import.meta.env.DEV?Math.min(180000,Math.max(0,Number(new URLSearchParams(globalThis.location?.search).get('flightCloudDelayMs'))||0)):0
+    if(delay)this.cloudLoadTimer=setTimeout(loadCloud,delay);else loadCloud()
     for(const texture of [this.texture,this.previousTexture,this.coarseTexture]){texture.minFilter=NearestFilter;texture.magFilter=NearestFilter;texture.generateMipmaps=false}
     this.sky.frustumCulled=false;this.sky.renderOrder=-10
     this.water.frustumCulled=false;this.water.receiveShadow=true
@@ -161,6 +165,7 @@ export class EnvironmentScene {
   update(camera:PerspectiveCamera,origin:Address,time:number,quality:'low'|'balanced',preset:SolarPreset='afternoon',options:EnvironmentUpdateOptions={}){
     const f=this.currentFrame=composeWeather(sampleEnvironment(this.solarDayProgress ?? preset,time,this.solarLayout,++this.frameRevision),this.weatherEnabled?this.weatherState:this.clearWeather)
     this.uniforms.cloudAppearanceWeight.value=this.cloudAppearance.update(time,this.weatherEnabled)
+    this.metrics.cloudDataReady=this.cloudAppearance.dataReady;this.metrics.cloudAppearanceWeight=this.cloudAppearance.appearanceWeight
     this.fog.update(f)
     this.rain.update(camera,origin,this.weatherState.rainSeconds,f.rainRate,quality);this.curtains.update(origin,this.weatherEnabled?this.weatherState.resolved.curtain:0)
     this.metrics.weatherDrawCalls=Number(this.rain.mesh.visible)+Number(this.curtains.mesh.visible)
@@ -222,5 +227,5 @@ export class EnvironmentScene {
     this.metrics.bathymetryEpoch=this.field.publication?.epoch??0;this.metrics.bathymetryDirtyPages=this.field.publication?.dirtyRects.length??0;this.metrics.bathymetryBlend=this.field.blend
     this.waterUniforms.hasDepth.value=Number(this.field.revision>0);this.waterUniforms.depthOrigin.value.set(Number.isFinite(this.field.startX)?this.field.startX-origin.x:0,Number.isFinite(this.field.startZ)?this.field.startZ-origin.z:0)
   }
-  dispose(){if(this.disposed)return;this.disposed=true;this.rain.dispose();this.curtains.dispose();this.cloudTexture.dispose();this.root.removeFromParent();this.sky.geometry.dispose();this.sky.material.dispose();this.water.geometry.dispose();this.water.material.dispose();this.texture.dispose();this.previousTexture.dispose();this.coarseTexture.dispose();this.field.dispose();this.coarseField.dispose();this.sun.dispose();this.fill.dispose();this.root.clear()}
+  dispose(){if(this.disposed)return;this.disposed=true;clearTimeout(this.cloudLoadTimer);this.rain.dispose();this.curtains.dispose();this.cloudTexture.dispose();this.root.removeFromParent();this.sky.geometry.dispose();this.sky.material.dispose();this.water.geometry.dispose();this.water.material.dispose();this.texture.dispose();this.previousTexture.dispose();this.coarseTexture.dispose();this.field.dispose();this.coarseField.dispose();this.sun.dispose();this.fill.dispose();this.root.clear()}
 }

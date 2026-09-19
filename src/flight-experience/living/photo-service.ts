@@ -4,17 +4,19 @@ export type PhotoState = { status: 'idle'|'waiting'|'encoding'|'error'; photos: 
 export class PhotoService {
   private generation = 0
   private closed = false
+  private encodingBusy = false
   private state: PhotoState = {status:'idle',photos:[]}
   constructor(private readonly changed:()=>void) {}
   getSnapshot = () => this.state
   request() {
-    if(this.closed || this.state.status==='waiting' || this.state.status==='encoding')return false
+    if(this.closed || this.encodingBusy || this.state.status==='waiting' || this.state.status==='encoding')return false
     this.state={...this.state,status:'waiting'};this.changed();return true
   }
   cancel() {this.generation++;this.state={...this.state,status:'idle'};this.changed()}
   completedFrame(canvas:HTMLCanvasElement, metadata:Omit<Photo,'url'|'width'|'height'>) {
     if(this.closed||this.state.status!=='waiting')return
     const token=this.generation
+    this.encodingBusy=true
     this.state={...this.state,status:'encoding'};this.changed()
     try {
       const ratio=Math.min(1,1280/Math.max(canvas.width,canvas.height),Math.sqrt(1500000/(canvas.width*canvas.height)))
@@ -25,15 +27,17 @@ export class PhotoService {
       context.drawImage(canvas,0,0,copy.width,copy.height)
       const width=copy.width,height=copy.height
       copy.toBlob(blob=>{
-        copy.width=copy.height=0
+        copy.width=copy.height=0;this.encodingBusy=false
         if(this.closed||token!==this.generation)return
         if(!blob){this.error();return}
-        const photo={...metadata,width,height,url:URL.createObjectURL(blob)}
+        let url:string
+        try {url=URL.createObjectURL(blob)} catch {this.error();return}
+        const photo={...metadata,width,height,url}
         const photos=[photo,...this.state.photos]
         for(const removed of photos.splice(3))URL.revokeObjectURL(removed.url)
         this.state={status:'idle',photos};this.changed()
       },'image/png')
-    } catch {if(token===this.generation&&!this.closed)this.error()}
+    } catch {this.encodingBusy=false;if(token===this.generation&&!this.closed)this.error()}
   }
   private error(){this.state={...this.state,status:'error'};this.changed()}
   remove(url:string){URL.revokeObjectURL(url);this.state={...this.state,photos:this.state.photos.filter(p=>p.url!==url)};this.changed()}

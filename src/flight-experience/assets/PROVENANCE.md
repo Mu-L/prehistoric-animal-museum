@@ -120,3 +120,22 @@ third-party imagery or private source material and is distributed under AGPL-3.0
 `weather/manifest.json` records its SHA-256, channel meanings, dimensions and mipmapped
 RGBA8 allocation estimate. Regeneration and `validate-weather.mjs` must agree.
 Cloud lighting, rain geometry and rain motion are procedural code; no audio assets are added.
+
+## W2 optional living-coast candidates
+
+`companions/pteranodon-far.glb` simplifies the attributed original Pteranodon model
+by Chistodrako._. / Oscar López Riviello (CC BY 4.0), retaining the original Idle
+animation, skin, bone names and scale. Source: https://sketchfab.com/3d-models/pteranodon-animated-7d7683df41d1405283f160e81a5dff1b.
+The derivative omits textures and borrows the original material at runtime.
+`companions/manifest.json` records source/output hashes, modifications and licence.
+Distant shape and original-cycle browser review remain pending; this does not use
+or approve the authored PoweredFlap derivative described above.
+
+`soundscape/{wind,surf,rain,river}.wav` are original deterministic procedural
+synthesis candidates generated for Leon做了个 using Codex and dedicated under
+CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/.
+No external recordings are included. These are artistic soundscapes, not field
+recordings or a reconstruction of prehistoric sounds. Each mono loop is 11.9 seconds;
+`soundscape/manifest.json` records hashes, format, loop boundaries and measurements.
+Subjective listening approval remains pending. These optional assets ship only in
+the explicitly enabled flight candidate build; the default build excludes them.

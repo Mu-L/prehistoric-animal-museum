@@ -113,8 +113,14 @@ describe('flight owned resources and recovery', () => {
     runtime.update(1 / 60)
     expect(runtime.getSnapshot().phase).toBe('buffering')
     const position = { ...runtime.simulation.position }, time = runtime.simulation.time
+    runtime.setVisibilityState(false); runtime.setFocusState(false); runtime.contextLost()
+    // Actual generator results can arrive while presentation is unavailable.
+    TestWorker.instances.forEach(w => w.finish()); runtime.update(60)
+    expect(runtime.running).toBe(false)
+    runtime.setVisibilityState(true); runtime.contextRestored(); expect(runtime.running).toBe(false)
+    runtime.setFocusState(true); expect(runtime.running).toBe(true)
     // Fixed coastal/river coverage is denser; preserve the shared per-frame budget.
-    for (let i = 0; i < 600 && runtime.getSnapshot().phase==='buffering'; i++) { TestWorker.instances.forEach(w => w.finish()); runtime.update(1 / 60) }
+    for (let i = 0; i < 600 && !runtime.canResume; i++) { TestWorker.instances.forEach(w => w.finish()); runtime.update(1 / 60) }
     expect(runtime.getSnapshot().phase).toBe('paused'); expect(runtime.canResume).toBe(true)
     expect(runtime.simulation.position).toEqual(position); expect(runtime.simulation.time).toBe(time)
     runtime.simulation.safetyStop = true; runtime.start()

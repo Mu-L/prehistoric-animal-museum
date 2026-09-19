@@ -92,7 +92,18 @@ describe('R4 independent patch tasks, fixed epochs and shared work budget',()=>{
     }
    })
    expect(attributeError,'shared rendered normal/color').toBeLessThan(.001)
-   for(const [key,values] of edges){const [a,b]=key.split(':').map(point=>point.split(',').map(Number));const mx=(a![0]!+b![0]!)/2,mz=(a![1]!+b![1]!)/2;if(mx>512&&mx<1024&&mz> -1536&&mz< -1024)expect(values.length,`open rendered edge ${key}`).toBe(4);expect(values.length,`duplicate rendered edge ${key}`).toBeLessThanOrEqual(4);if(values.length===4){expect(Math.abs(values[0]!-values[2]!),key).toBeLessThan(.001);expect(Math.abs(values[1]!-values[3]!),key).toBeLessThan(.001)}}
+   // Keep every edge and every checkpoint; aggregate numerical bounds instead
+   // of constructing tens of thousands of Chai assertions on successful edges.
+   let openEdge:string|null=null,duplicateEdge:string|null=null,maxHeightError=0,heightErrorEdge=''
+   for(const [key,values] of edges){
+    const [a,b]=key.split(':').map(point=>point.split(',').map(Number)),mx=(a![0]!+b![0]!)/2,mz=(a![1]!+b![1]!)/2
+    if(mx>512&&mx<1024&&mz> -1536&&mz< -1024&&values.length!==4)openEdge??=key
+    if(values.length>4)duplicateEdge??=key
+    if(values.length===4){const error=Math.max(Math.abs(values[0]!-values[2]!),Math.abs(values[1]!-values[3]!));if(!Number.isFinite(error)||error>maxHeightError){maxHeightError=error;heightErrorEdge=key}}
+   }
+   expect(openEdge,'open rendered edge').toBeNull()
+   expect(duplicateEdge,'duplicate rendered edge').toBeNull()
+   expect(maxHeightError,`shared rendered heights ${heightErrorEdge}`).toBeLessThan(.001)
   }
   check();for(let i=0;i<500;i++){step(stream);if(i%20===0)check()}check();stream.dispose()
  },30_000)

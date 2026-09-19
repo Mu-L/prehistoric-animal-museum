@@ -1,3 +1,4 @@
+import {findFlightAssetBoundaryFindings} from './build-asset-boundary.mjs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 const root = process.argv[2] ?? 'dist'
@@ -8,6 +9,8 @@ if (enabled !== (flight.length > 0)) throw new Error(`Flight build boundary mism
 const files = []
 async function walk(dir) { for (const entry of await fs.readdir(dir, {withFileTypes:true})) { const p=path.join(dir,entry.name); if(entry.isDirectory()) await walk(p); else files.push(p) } }
 await walk(root)
+const assetFindings=await findFlightAssetBoundaryFindings(root,enabled,files,manifest)
+if(assetFindings.length)throw new Error(assetFindings.join('\n'))
 const workers = files.filter(p => /terrain.worker-.*\.js$/.test(p))
 if (enabled !== (workers.length === 1)) throw new Error(`Unexpected terrain workers: ${workers.length}`)
 for (const file of files.filter(p => /\.(js|json|html|css|md)$/.test(p))) {
