@@ -25,3 +25,12 @@ it('preserves keyboard focus and gives a fresh four seconds after a panel closes
  void act(()=>vi.advanceTimersByTime(1));expect(screen.getByTestId('hud')).toHaveAttribute('data-idle','true')
  view.unmount();expect(vi.getTimerCount()).toBe(0)
 })
+
+it('retains keyboard modality when an open panel closes and focus returns to its trigger',async()=>{
+ vi.useFakeTimers();const view=render(<Harness blocked/>);await act(async()=>{})
+ fireEvent.keyDown(screen.getByTestId('hud'),{key:'Escape'});act(()=>screen.getByRole('button').focus())
+ view.rerender(<Harness/>);await act(async()=>{})
+ void act(()=>vi.advanceTimersByTime(5000));expect(screen.getByTestId('hud')).toHaveAttribute('data-idle','false')
+ fireEvent.pointerDown(screen.getByRole('button'));fireEvent.pointerUp(window)
+ void act(()=>vi.advanceTimersByTime(4000));expect(screen.getByTestId('hud')).toHaveAttribute('data-idle','true')
+})
