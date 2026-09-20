@@ -16,9 +16,9 @@ export function LightViewpointPanel({runtime,snapshot,locale,mode='sunlight'}:{r
  return <section className="flight-light-content" aria-label={mode==='sunlight'?t.time:t.title}>
   {mode==='viewpoints'&&<><p>{t.help}</p>
   <div className="flight-light-options" role="group" aria-label={t.title}>
-   <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='seaward'} onClick={()=>runtime.enterViewpoint('seaward')}>{t.sea}</button>
-   <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='cliff'} onClick={()=>runtime.enterViewpoint('cliff')}>{t.cliff}</button>
-   <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='waterline'} onClick={()=>runtime.enterViewpoint('waterline')}>{t.waterline}</button>
+   <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='seaward'} onClick={()=>runtime.navigateViewpoint('seaward')}>{t.sea}</button>
+   <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='cliff'} onClick={()=>runtime.navigateViewpoint('cliff')}>{t.cliff}</button>
+   <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='waterline'} onClick={()=>runtime.navigateViewpoint('waterline')}>{t.waterline}</button>
   </div>
   </>}
   {mode==='sunlight'&&<>
@@ -29,12 +29,14 @@ export function LightViewpointPanel({runtime,snapshot,locale,mode='sunlight'}:{r
   <small>{locale==='zh-CN'?'从当前时刻继续，完整白昼约10分钟。手动调节会切回固定时刻。':'Continues from here; a full daylight sequence takes about 10 minutes. Manual adjustments switch back to a fixed time.'}</small>
   <p role="status">{statusText}</p>
   {status==='ended'&&<button type="button" onClick={()=>runtime.restartDaylightFromMorning()}>{locale==='zh-CN'?'从晨光重新播放白昼':'Replay daylight from morning'}</button>}
-  <div className="flight-light-options" role="group" aria-label={t.time}>{(['morning','afternoon','evening'] as SolarPreset[]).map(p=><button type="button" key={p} disabled={preparing} aria-pressed={Math.abs((snapshot.solarDayProgress??.42)-solarProgress(p))<.001} onClick={()=>runtime.setSolarDayProgress(solarProgress(p))}>{t[p as 'morning'|'afternoon'|'evening']}</button>)}</div>
-  <label className="flight-light-range">{t.time}<input type="range" min={DAYLIGHT_START} max={DAYLIGHT_END} aria-valuetext={`${t.time} ${percent}%`} step="0.005" disabled={preparing} value={snapshot.solarDayProgress??.42} onChange={e=>runtime.setSolarDayProgress(Number(e.target.value))}/></label>
+  <div className="flight-daylight-timeline">
+  <label className="flight-light-range flight-daylight-range">{t.time}<input type="range" min={DAYLIGHT_START} max={DAYLIGHT_END} aria-valuetext={`${t.time} ${percent}%`} step="0.005" disabled={preparing} value={snapshot.solarDayProgress??.42} onChange={e=>runtime.setSolarDayProgress(Number(e.target.value))}/></label>
+  <div className="flight-daylight-stops" role="group" aria-label={t.time}>{(['morning','afternoon','evening'] as SolarPreset[]).map(p=><button type="button" key={p} style={{left:`${(solarProgress(p)-DAYLIGHT_START)/(DAYLIGHT_END-DAYLIGHT_START)*100}%`}} disabled={preparing} aria-pressed={Math.abs((snapshot.solarDayProgress??.42)-solarProgress(p))<.001} onClick={()=>runtime.setSolarDayProgress(solarProgress(p))}>{t[p as 'morning'|'afternoon'|'evening']}</button>)}</div>
+  </div>
   <small>{locale==='zh-CN'?'即时生效，不打断飞翔。':'Applies immediately without interrupting flight.'}</small></>}
   {mode==='viewpoints'&&phase!=='inactive'&&<><p role="status">{phase==='failed'?t.failed:preparing?phase==='returning'?t.returning:t.preparing:t.active}</p><div className="flight-light-options">
     {phase==='active'&&<button type="button" onClick={()=>runtime.toggleScenery()}>{snapshot.sceneryPaused?t.resume:t.pause}</button>}
-    <button type="button" onClick={()=>runtime.returnFromViewpoint()}>{t.back}</button>
+    <button type="button" onClick={()=>runtime.navigateBack()}>{t.back}</button>
   </div></>}
 
   {mode==='sunlight'&&import.meta.env.DEV&&<details><summary>{locale==='zh-CN'?'本地验收工具':'Local review tools'}</summary>

@@ -41,9 +41,9 @@ export function PostcardDock({runtime,snapshot,locale,galleryOpen,onGalleryChang
  const photos=state.photos.filter(photo=>photo.frame!==capture?.frame)
  const dismiss=()=>{setOpen(false);destination.current?.focus()}
  return <div className="flight-postcards" onKeyDown={e=>{if(e.key==='Escape'&&open){e.stopPropagation();dismiss()}}}>
-  <button className="flight-postcard-shutter" type="button" disabled={busy||snapshot.phase==='preparing'||snapshot.phase==='recovering'} onClick={()=>{runtime.input.clear();setOpen(false);setUnavailable(!runtime.requestPhoto())}} aria-label={zh?'拍张明信片':'Take a postcard'}><Camera size={20}/><span>{zh?'拍张明信片':'Take a postcard'}</span></button>
+  <button className="flight-postcard-shutter" type="button" disabled={busy||snapshot.viewTransition?.waiting||Boolean(snapshot.viewTransition?.canvas)||snapshot.phase==='preparing'||snapshot.phase==='recovering'} onClick={()=>{runtime.input.clear();setOpen(false);setUnavailable(!runtime.requestPhoto())}} aria-label={zh?'拍张明信片':'Take a postcard'}><Camera size={20}/><span>{zh?'拍张明信片':'Take a postcard'}</span></button>
   <button ref={destination} className="flight-postcard-pocket" type="button" aria-label={zh?`查看明信片，${photos.length}张`:`View postcards, ${photos.length}`} aria-expanded={open} aria-controls="flight-postcard-gallery" onClick={()=>{runtime.input.clear();setOpen(!open)}}>
-   {photos[0]?<img src={photos[0].url} alt=""/>:<Images size={22}/>}<small>{photos.length||'+'}</small>
+   {photos[0]?<img src={photos[0].url} alt=""/>:<Images size={22}/>}{photos.length>0&&<small>{photos.length}</small>}
   </button>
   <span className="flight-postcard-feedback" role="status">{state.status==='error'?(zh?'没能拍下，请再试一次':'Could not capture. Try again.'):unavailable?(zh?'等风景准备好再拍':'Wait for the scenery to be ready'):busy?(zh?'正在收好这一刻…':'Keeping this moment…'):photos.length?(zh?'已拍下，可保存':'Captured · ready to save'):''}</span>
   {capture&&<div ref={stage} className="flight-postcard-stage" aria-hidden="true"/>}

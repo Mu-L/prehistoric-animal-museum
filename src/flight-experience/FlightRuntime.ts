@@ -1,3 +1,4 @@
+import { ViewTransition } from './viewpoints/view-transition'
 import { CompanionDirector } from './living/companion-director'
 import { Soundscape } from './living/soundscape'
 import { PhotoService } from './living/photo-service'
@@ -40,6 +41,7 @@ export interface FlightSnapshot {
   companions?: CompanionDirector['metrics']
   living?: LivingIntent
   sound?: ReturnType<Soundscape['getSnapshot']>
+  viewTransition?: {canvas: HTMLCanvasElement | null; waiting: boolean}
   photos?: ReturnType<PhotoService['getSnapshot']>
   weather?: ReturnType<WeatherController['snapshot']>
   daylight?: DaylightSnapshot
@@ -65,11 +67,22 @@ export class FlightRuntime implements ExternalExperience {
   disableSound(){this.soundscape.disable();this.publish({})}
   setSoundVolume(value:number){this.soundscape.setVolume(value);this.publish({})}
   readonly photos = new PhotoService(() => this.publish({}))
+  readonly viewTransition = new ViewTransition(() => this.publish({viewTransition:{canvas:this.viewTransition.canvas,waiting:this.viewTransition.waiting}}))
+  navigateViewpoint(id: Viewpoint['id']) {
+    if (!this.available || !this.modelAttached || (this.observationActive && this.observation.target?.id === id)) return
+    this.viewTransition.request(() => this.enterViewpoint(id), this.observationPreparing || this.observation.phase === 'failed'); this.invalidate()
+  }
+  navigateBack() {
+    if (!this.canReturnToTravel) return
+    this.viewTransition.request(() => this.returnFromViewpoint(), this.observationPreparing || this.observation.phase === 'failed'); this.invalidate()
+  }
   requestPhoto() {
+    if(this.viewTransition.canvas || this.viewTransition.waiting)return false
     if(!this.available || !this.modelAttached || this.preparationPending || this.observationPreparing || !this.terrain.previewReady)return false
     const requested=this.photos.request();if(requested)this.invalidate();return requested
   }
   completedFrame(canvas:HTMLCanvasElement) {
+    if (this.available && this.modelAttached) this.viewTransition.completedFrame(canvas, !this.observationPreparing && this.observation.phase !== 'failed' && !this.preparationPending && this.terrain.previewReady)
     if(!this.available || !this.modelAttached || this.preparationPending || this.observationPreparing || !this.terrain.previewReady){if(this.photos.getSnapshot().status==='waiting')this.photos.cancel();return}
     this.photos.completedFrame(canvas,{frame:this.frameId,sun:this.environmentClock.solarDayProgress,weather:this.weather.serialize().resolved.rain>0?'light-rain':this.weather.serialize().resolved.coverage>.65?'overcast':this.weather.serialize().resolved.coverage>.1?'fair':'clear'})
   }
@@ -193,7 +206,7 @@ export class FlightRuntime implements ExternalExperience {
   private get available() { return !this.disposed && !this.fatalError && this.contextAvailable && this.visible && this.focused }
   private invalidate() { if (this.available) this.lease?.invalidate() }
   private syncAvailability() {
-    if(!this.available){this.photos.cancel();this.soundscape?.update({camera:{x:0,y:0,z:0},rain:0,wind:0,active:false,delta:0})}
+    if(!this.available){this.viewTransition.cancelPending();this.photos.cancel();this.soundscape?.update({camera:{x:0,y:0,z:0},rain:0,wind:0,active:false,delta:0})}
     this.observation.setPreparationAvailable(this.available, performance.now())
     this.publishObservation()
     if (this.available) this.invalidate()
@@ -635,6 +648,7 @@ export class FlightRuntime implements ExternalExperience {
     this.companions?.dispose();this.companions=null
     this.soundscape.dispose()
     this.photos.dispose()
+    this.viewTransition.dispose()
     this.livingScope.dispose()
     if (this.disposed) return
     this.observation.close();this.disposed = true; this.abort.abort(); this.input.clear(); this.groundLibrary?.dispose(); this.terrain.dispose(); this.farTerrain.dispose(); this.horizonTerrain.dispose(); this.scenery.dispose(); this.lookdev?.dispose()
