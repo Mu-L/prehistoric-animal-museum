@@ -2,7 +2,7 @@ import type { Material, Color, Vector3 } from 'three'
 
 const decorated = new WeakSet<Material>()
 
-/** Art-directed sunset edge light on the staged flight animal only.
+/** Soft sky bounce and art-directed sunset edge light on the staged flight animal only.
  * Uses the skinned, normal-mapped view normal and the actual world solar direction.
  * Retains the original material, textures, animation and existing compile hooks.
  */
@@ -18,6 +18,12 @@ export function decorateAnimalRim(material: Material, uniforms: {
     // Environment fog supplies these same uniforms and declarations.
     Object.assign(shader.uniforms, uniforms)
     shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform float animalRim;').replace('#include <opaque_fragment>', `
+      // A small textured sky bounce keeps the underside legible against the sea.
+      // It follows daylight and cloud cover without lifting the landscape/exposure.
+      float animalDay=smoothstep(-.08,.5,sunDirection.y);
+      float animalCloud=clamp(cloudCoverage*cloudThickness,0.,1.);
+      vec3 animalBounce=mix(vec3(.15,.105,.075),vec3(.13,.16,.19),animalDay);
+      outgoingLight+=diffuseColor.rgb*animalBounce*mix(1.,.78,animalCloud);
       vec3 rimView=normalize(vViewPosition);
       vec3 rimSun=normalize(mat3(viewMatrix)*sunDirection);
       float rimEdge=pow(1.-abs(dot(normal,rimView)),3.5);
@@ -27,6 +33,6 @@ export function decorateAnimalRim(material: Material, uniforms: {
       #include <opaque_fragment>
     `)
   }
-  material.customProgramCacheKey = () => `${cacheKey()}:flight-animal-rim-v1`
+  material.customProgramCacheKey = () => `${cacheKey()}:flight-animal-rim-v2`
   material.needsUpdate = true
 }

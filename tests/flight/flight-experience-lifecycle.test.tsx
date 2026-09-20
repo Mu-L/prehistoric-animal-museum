@@ -49,7 +49,8 @@ describe('whole FlightExperience events with the actual Runtime (GPU/worker read
   expect(key).not.toHaveBeenCalled()
   view.rerender(element);expect(instances).toHaveLength(1)
   fireEvent.click(screen.getByRole('tab',{name:'Flight'}))
-  fireEvent.change(screen.getByRole('combobox',{name:/Language/}),{target:{value:'zh-CN'}})
+  fireEvent.click(screen.getByRole('button',{name:'Change language, current English'}))
+  fireEvent.click(screen.getByRole('menuitemradio',{name:'简体中文'}))
   expect(instances).toHaveLength(1);expect(runtime.environmentClock.solarMode).toBe('auto')
   expect(runtime.getSnapshot().phase).toBe('flying')
   fireEvent.keyDown(window,{code:'Escape',key:'Escape'})
@@ -150,7 +151,7 @@ it('preserves automatic mode through a quality preparation but waits for explici
  fireEvent.click(screen.getByRole('tab',{name:'Flight'}))
  const progress=runtime.environmentClock.solarDayProgress
  fireEvent.click(screen.getByText('Picture quality'))
- fireEvent.change(screen.getByRole('combobox',{name:/Scenery/}),{target:{value:'balanced'}})
+ fireEvent.click(screen.getByRole('button',{name:'Standard'}))
  expect(runtime.getSnapshot().phase).toBe('buffering')
  expect(runtime.getSnapshot().daylight?.status).toBe('suspended')
  expect(runtime.environmentClock.solarMode).toBe('auto')
@@ -274,7 +275,7 @@ it('keeps a completed still and a global return command available across setting
  act(()=>runtime.start())
  fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}))
  // Language belongs to the panel shell, independently of the selected section.
- expect(screen.getByRole('combobox',{name:'Language'})).toBeVisible()
+ expect(screen.getByRole('button',{name:'Change language, current English'})).toBeVisible()
  fireEvent.click(screen.getByRole('tab',{name:'Views'}))
  fireEvent.click(screen.getByRole('button',{name:'Out to sea Look beyond the shore'}))
  expect(runtime.observation.phase).toBe('inactive')
@@ -290,4 +291,35 @@ it('keeps a completed still and a global return command available across setting
  expect(screen.getByRole('button',{name:'Back to flight'})).toBeDisabled()
  expect(runtime.getSnapshot().phase).toBe('paused')
  view.unmount();expect(still?.width).toBe(0)
+})
+
+
+it.each(['ready','paused'] as const)('quiet viewing dismisses the %s card and retains one working flight action',async(phase)=>{
+ const {runtime,view,onClose}=await mount()
+ if(phase==='paused')act(()=>{runtime.start();runtime.setFocusState(false);runtime.setFocusState(true)})
+ const position={...runtime.simulation.position}
+ fireEvent.click(screen.getByRole('button',{name:'Just look at the scenery'}))
+ expect(document.querySelector('.flight-intro')).toBeNull()
+ expect(screen.queryByRole('button',{name:'Just look at the scenery'})).toBeNull()
+ act(()=>runtime.update(1/60))
+ expect(runtime.simulation.position).toEqual(position)
+ fireEvent.click(screen.getByRole('button',{name:phase==='ready'?'Start flying':'Continue flying'}))
+ expect(runtime.getSnapshot().phase).toBe('flying')
+ expect(onClose).not.toHaveBeenCalled()
+ view.unmount()
+})
+
+it('closes the museum language menu before the flight card, restoring focus in order',async()=>{
+ const {view,onClose}=await mount()
+ fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}))
+ const language=screen.getByRole('button',{name:'Change language, current English'})
+ fireEvent.click(language)
+ fireEvent.keyDown(screen.getByRole('menuitemradio',{name:'English'}),{key:'Escape',code:'Escape'})
+ await waitFor(()=>expect(language).toHaveFocus())
+ expect(screen.queryByRole('menu')).toBeNull()
+ expect(screen.getByRole('tab',{name:'Scenery'})).toBeVisible()
+ fireEvent.keyDown(language,{key:'Escape',code:'Escape'})
+ expect(screen.queryByRole('tab',{name:'Scenery'})).toBeNull()
+ expect(onClose).not.toHaveBeenCalled()
+ view.unmount()
 })

@@ -1,3 +1,4 @@
+import { LanguageMenu } from '../components/LanguageMenu'
 import {FlightToggle} from './FlightToggle'
 import {useQuietHud} from './useQuietHud'
 import { ViewPreparation } from './viewpoints/ViewPreparation'
@@ -26,7 +27,7 @@ const noSubscription = () => () => {}
 const initialSnapshot = () => initial
 interface Props { controller: ViewerController; descriptor: ViewerModelDescriptor; onClose: () => void; narrationActive?:boolean }
 export function FlightExperience({ controller, descriptor, onClose, narrationActive=false }: Props) {
-  const { locale, setPreference } = useI18n(), copy = flightMessages[locale]
+  const { locale } = useI18n(), copy = flightMessages[locale]
   const [runtime, setRuntime] = useState<FlightRuntime | null>(null)
   const [retry, setRetry] = useState(0), [settings, setSettings] = useState(false), [observe, setObserve] = useState(false), [galleryOpen,setGalleryOpen]=useState(false)
   const [section,setSection] = useState<'scenery'|'viewpoints'|'flight'>('scenery')
@@ -115,7 +116,7 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
   const inViewpoint=snapshot.reason !== 'error' && Boolean(snapshot.observation && snapshot.observation!=='inactive')
   const preparingView=snapshot.viewTransition?.waiting||snapshot.observation==='preparing'||snapshot.observation==='returning'||snapshot.observation==='failed'
   const flying = snapshot.phase === 'flying'
-  const hudIdle=useQuietHud(root,settings||galleryOpen||Boolean(preparingView)||Boolean(snapshot.photos?.capture)||['waiting','encoding','error'].includes(snapshot.photos?.status??'')||(!flying&&!inViewpoint&&snapshot.phase!=='paused')||Boolean(snapshot.reason&&snapshot.reason!=='user'))
+  const hudIdle=useQuietHud(root,settings||galleryOpen||Boolean(preparingView)||Boolean(snapshot.photos?.capture)||['waiting','encoding','error'].includes(snapshot.photos?.status??'')||(!observe&&!flying&&!inViewpoint&&snapshot.phase!=='paused')||(!observe&&Boolean(snapshot.reason&&snapshot.reason!=='user')))
   const start = () => { setObserve(false); runtime?.start(); root.current?.focus() }
   const stopPointer = (event: PointerEvent<HTMLButtonElement>) => runtime?.input.release(event.pointerId)
   const direction = (event: PointerEvent<HTMLButtonElement>, turn: number, climb: number) => {
@@ -129,7 +130,7 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
       <button type="button" aria-label={copy.back} onClick={onClose}><ChevronLeft size={20}/><span>{copy.back}</span></button>
       <div className="flight-toolbar__right">
         {inViewpoint && <button className="flight-travel-return" type="button" disabled={snapshot.observation==='returning'} onClick={()=>runtime?.navigateBack()}><ArrowLeft size={18}/><span>{locale==='zh-CN'?'回到飞行':'Back to flight'}</span></button>}
-        {!inViewpoint && ['flying', 'paused'].includes(snapshot.phase) && <button type="button" aria-label={flying?copy.pause:copy.resume} disabled={!flying && !runtime?.canResume} onClick={() => flying ? runtime?.pause() : start()}>{flying ? <Pause size={19}/> : <Play size={19}/>}<span>{flying ? copy.pause : copy.resume}</span></button>}
+        {!inViewpoint && (['flying', 'paused'].includes(snapshot.phase)||(observe&&snapshot.phase==='ready')) && <button type="button" aria-label={flying?copy.pause:snapshot.phase==='ready'?copy.start:copy.resume} disabled={!flying && !runtime?.canResume} onClick={() => flying ? runtime?.pause() : start()}>{flying ? <Pause size={19}/> : <Play size={19}/>}<span>{flying ? copy.pause : snapshot.phase==='ready'?copy.start:copy.resume}</span></button>}
         <button className="flight-settings-trigger" title={locale==='zh-CN'?'飞行与风景':'Flight & scenery'} type="button" ref={settingsTrigger} disabled={snapshot.phase==='preparing'||snapshot.phase==='recovering'} aria-label={locale==='zh-CN'?'飞行与风景':'Flight & scenery'} aria-controls="flight-settings-panel" aria-expanded={settings} onClick={()=>{runtime?.input.clear();setGalleryOpen(false);setSettings(v=>!v)}}><Settings2 size={20}/><span>{locale==='zh-CN'?'飞行与风景':'Flight & scenery'}</span></button>
         {runtime&&<PostcardDock key={retry} runtime={runtime} snapshot={snapshot} locale={locale} onCapture={()=>setSettings(false)} galleryOpen={galleryOpen} onGalleryChange={open=>{setGalleryOpen(open);if(open)setSettings(false)}}/>}
       </div>
@@ -138,7 +139,7 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
     {(preparingView||snapshot.viewTransition?.canvas) && <ViewPreparation snapshot={snapshot} zh={locale==='zh-CN'}/>}
 
     {snapshot.reason === 'error' ? <section className="flight-card" role="alert"><h1>{copy.error}</h1>{runtime?.canReturnToTravel&&<button type="button" onClick={()=>runtime.navigateBack()}>{locale==='zh-CN'?'返回原飞行位置':'Return to flight position'}</button>}<button type="button" onClick={()=>restart()}>{copy.retry}</button><button type="button" onClick={onClose}>{copy.back}</button></section> : settings ? <section id="flight-settings-panel" className="flight-card flight-settings" aria-label={locale==='zh-CN'?'飞行与风景':'Flight & scenery'}>
-      <div className="flight-settings-heading"><div className="flight-card__heading"><div><h2>{locale==='zh-CN'?'飞行与风景':'Flight & scenery'}</h2></div><label className="flight-language"><span className="flight-sr-only">{copy.language}</span><select value={locale} onChange={e => setPreference(e.target.value === 'en' ? 'en' : 'zh-CN')}><option value="zh-CN">中文</option><option value="en">English</option></select></label><button type="button" aria-label={copy.close} onClick={closeSettings}><X size={20}/></button></div>
+      <div className="flight-settings-heading"><div className="flight-card__heading"><div><h2>{locale==='zh-CN'?'飞行与风景':'Flight & scenery'}</h2></div><div className="flight-language"><LanguageMenu/></div><button type="button" aria-label={copy.close} onClick={closeSettings}><X size={20}/></button></div>
 </div>
       <div className="flight-panel-sections" role="tablist" aria-label={locale==='zh-CN'?'风景面板分区':'Scenery panel sections'}>{(['scenery','viewpoints','flight'] as const).map((value,i)=>{const Icon=[Sun,Binoculars,Feather][i]!;return <button key={value} id={`flight-tab-${value}`} type="button" role="tab" aria-selected={section===value} aria-controls={`flight-section-${value}`} tabIndex={section===value?0:-1} onKeyDown={event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();event.stopPropagation();const next=event.key==='Home'?0:event.key==='End'?2:(i+(event.key==='ArrowRight'?1:2))%3;const target=(['scenery','viewpoints','flight'] as const)[next]!;selectSection(target);document.getElementById(`flight-tab-${target}`)?.focus()}}} onClick={()=>selectSection(value)}><Icon size={18} aria-hidden="true"/><span>{(locale==='zh-CN'?['风景','观景','飞行']:['Scenery','Views','Flight'])[i]}</span></button>})}</div>
       <div className="flight-settings-scroll-shell" data-scrollable={metrics.isScrollable}>
@@ -155,7 +156,7 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
        {runtime&&<LightViewpointPanel runtime={runtime} snapshot={snapshot} locale={locale} mode="viewpoints"/>}
        <details className="flight-new-start"><summary>{locale==='zh-CN'?'重新选择出发位置':'Choose a new starting point'} <span aria-hidden="true">→</span></summary>
         <div className="flight-start-places" role="group" aria-label={copy.startPlace}>{(['coast','valley','overview'] as const).map((place,i)=><button type="button" key={place} aria-pressed={draft.start===place} onClick={()=>setDraft({...draft,start:place})}><svg viewBox="0 0 96 54" aria-hidden="true"><path d={['M0 35 Q24 40 40 28 T96 18 L96 54 H0Z','M0 38 L24 12 49 43 73 15 96 37 V54 H0Z','M0 42 L28 22 45 36 69 12 96 38 V54 H0Z'][i]}/><path className="flight-start-route" d={['M12 43 Q38 50 50 31 T84 16','M40 52 Q66 42 52 31 T47 6','M8 18 Q50 4 87 17'][i]}/></svg><span>{copy.starts[i]}<small>{(locale==='zh-CN'?['沿着海陆交界飞行','顺着山谷向前探索','从高处俯瞰山与海']:['Follow the coastline','Explore along the valley','See the land from above'])[i]}</small></span></button>)}</div>
-        <label className="flight-setting">{copy.height}<select value={draft.height} onChange={e=>setDraft({...draft,height:Number(e.target.value) as FlightSettings['height']})}>{([100,190,350] as const).map((v,i)=><option key={v} value={v}>{copy.heights[i]}</option>)}</select></label>
+        <div className="flight-setting flight-choice-setting"><span>{copy.height}</span><div className="flight-inline-choices" role="group" aria-label={copy.height}>{([100,190,350] as const).map((v,i)=><button type="button" key={v} aria-pressed={draft.height===v} onClick={()=>setDraft({...draft,height:v})}>{copy.heights[i]}</button>)}</div></div>
         <p className="flight-start-notice">{locale==='zh-CN'?'会重新准备风景，并清空尚未保存的明信片。':'Prepares a new landscape and clears unsaved postcards.'}</p><button className="flight-primary" type="button" onClick={()=>restart()}>{locale==='zh-CN'?`从${copy.starts[(['coast','valley','overview'] as const).indexOf(draft.start)]}出发`:`Start from ${copy.starts[(['coast','valley','overview'] as const).indexOf(draft.start)]}`}</button>
         <details className="flight-more"><summary>{locale==='zh-CN'?'恢复初始设置':'Restore initial settings'}</summary><button type="button" onClick={()=>restart({...DEFAULT_FLIGHT_SETTINGS},true)}>{copy.defaults}</button></details>
        </details>
@@ -166,20 +167,20 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
       <FlightToggle label={copy.gentle} checked={snapshot.gentle} onChange={gentle=>configure({...draft,quality:snapshot.quality,gentle})}/>
       <label className="flight-setting flight-comfort-range"><span>{locale==='zh-CN'?'飞行速度':'Flight speed'}</span><span><input aria-label={copy.speed} aria-valuetext={(locale==='zh-CN'?['慢慢飞','自在飞','快一些']:['Slow','Steady','Faster'])[([18,28,36] as const).indexOf(draft.speed)]} type="range" min="0" max="2" step="1" value={([18,28,36] as const).indexOf(draft.speed)} onChange={e=>configure({...draft,quality:snapshot.quality,gentle:snapshot.gentle,speed:([18,28,36] as const)[Number(e.target.value)]!})}/><small><span>{locale==='zh-CN'?'慢':'Slow'}</span><span>{locale==='zh-CN'?'快':'Fast'}</span></small></span></label>
       <label className="flight-setting flight-comfort-range"><span>{locale==='zh-CN'?'镜头':'Camera'}</span><span><input aria-label={copy.camera} aria-valuetext={copy.views[(['near','standard','wide'] as const).indexOf(draft.view)]} type="range" min="0" max="2" step="1" value={(['near','standard','wide'] as const).indexOf(draft.view)} onChange={e=>configure({...draft,quality:snapshot.quality,gentle:snapshot.gentle,view:(['near','standard','wide'] as const)[Number(e.target.value)]!})}/><small><span>{locale==='zh-CN'?'跟近一点':'Closer'}</span><span>{locale==='zh-CN'?'看远一点':'Wider'}</span></small></span></label>
-      <details className="flight-fine-tune"><summary>{locale==='zh-CN'?'画面质量':'Picture quality'}</summary><label className="flight-setting"><span>{copy.quality}<small>{locale==='zh-CN'?'切换时会短暂停留':'Changing quality briefly stops flight'}</small></span><select disabled={inViewpoint} value={snapshot.quality} onChange={e=>configure({...draft,gentle:snapshot.gentle,quality:e.target.value==='balanced'?'balanced':'low'})}><option value="low">{copy.low}</option><option value="balanced">{copy.balanced}</option></select></label></details>
+      <details className="flight-fine-tune"><summary>{locale==='zh-CN'?'画面质量':'Picture quality'}</summary><div className="flight-setting flight-choice-setting"><span>{copy.quality}<small>{locale==='zh-CN'?'切换时会短暂停留':'Changing quality briefly stops flight'}</small></span><div className="flight-inline-choices" role="group" aria-label={copy.quality}>{(['low','balanced'] as const).map(quality=><button type="button" key={quality} disabled={inViewpoint} aria-pressed={snapshot.quality===quality} onClick={()=>configure({...draft,gentle:snapshot.gentle,quality})}>{quality==='low'?copy.low:copy.balanced}</button>)}</div></div></details>
 
       </div>
       {!inViewpoint&&snapshot.phase==='ready'&&runtime?.canResume&&<button type="button" className="flight-primary flight-panel-return" onClick={()=>{closeSettings();start()}}>{copy.start}</button>}
       </div></div><TransientScrollbar isScrolling={isScrolling} metrics={metrics}/></div>
-    </section> : !flying && !inViewpoint && !galleryOpen && (snapshot.phase!=='paused'||Boolean(snapshot.reason&&snapshot.reason!=='user')) && <section className="flight-card flight-intro" aria-live="polite">
+    </section> : !flying && !inViewpoint && !galleryOpen && !(observe&&['ready','paused'].includes(snapshot.phase)&&runtime?.canResume) && (snapshot.phase!=='paused'||Boolean(snapshot.reason&&snapshot.reason!=='user')) && <section className="flight-card flight-intro" aria-live="polite">
       <span className="flight-eyebrow">{copy.title} · PTERANODON</span>
-      <h1>{snapshot.phase === 'buffering' ? copy.terrain : snapshot.phase === 'preparing' ? copy.preparing : snapshot.phase === 'recovering' ? copy.error : observe ? copy.observation : snapshot.phase === 'ready' ? copy.ready : copy.paused}</h1>
-      <p>{observe ? copy.observeText : snapshot.phase === 'ready' ? copy.subtitle : reason}</p>
+      <h1>{snapshot.phase === 'buffering' ? copy.terrain : snapshot.phase === 'preparing' ? copy.preparing : snapshot.phase === 'recovering' ? copy.error : snapshot.phase === 'ready' ? copy.ready : copy.paused}</h1>
+      <p>{snapshot.phase === 'ready' ? copy.subtitle : reason}</p>
       {snapshot.phase === 'ready' && <p className="flight-instructions">{copy.instruction}</p>}
       {snapshot.phase !== 'preparing' && <div className="flight-card__actions">
         {runtime?.canResume && <button type="button" className="flight-primary" onClick={start}><Play size={18}/>{snapshot.phase === 'ready' ? copy.start : copy.resume}</button>}
         {(snapshot.phase === 'recovering' || ['safety', 'camera', 'terrain'].includes(snapshot.reason ?? '')) && <button type="button" className="flight-primary" onClick={() => restart()}>{copy.retry}</button>}
-        <button type="button" onClick={() => setObserve(v => !v)}>{copy.static}</button>
+        <button type="button" disabled={!runtime?.canResume} onClick={() => {setObserve(true);root.current?.focus()}}>{copy.static}</button>
       </div>}
       <small>{copy.art}</small>
     </section>}
