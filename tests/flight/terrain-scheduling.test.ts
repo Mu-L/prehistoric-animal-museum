@@ -20,6 +20,17 @@ function bounded(stream:TerrainStream){
  expect(diagnostics.renderPatches).toBeLessThanOrEqual(diagnostics.resident+80)
  expect(diagnostics.readyBytes).toBeLessThanOrEqual(8*1024*1024)
 }
+it.each([4,6])('keeps the radius %i all-direction published window through a full camera turn',radius=>{
+ const stream=new TerrainStream(()=>{},()=>{});stream.radius=radius;stream.plan(0,0,.3,190);coverage(stream)
+ const ids=[...stream.resident.keys()],revision=stream.surfaceRevision,generated=stream.metrics.generated
+ const jumps=vi.spyOn(stream,'prepareStaticView'),plans=vi.spyOn(stream,'plan')
+ stream.setViewProjection(844,55,{x:0,y:190,z:20})
+ for(let i=0;i<360;i++){const yaw=i*Math.PI/180;stream.setCameraDirection({x:Math.sin(yaw),y:0,z:-Math.cos(yaw)},{x:Math.sin(yaw+.3),y:0,z:-Math.cos(yaw+.3)})}
+ expect(stream.resident.size).toBe((radius*2+1)**2);expect([...stream.resident.keys()]).toEqual(ids)
+ expect(stream.surfaceRevision).toBe(revision);expect(stream.metrics.generated).toBe(generated)
+ expect(plans).not.toHaveBeenCalled();expect(jumps).not.toHaveBeenCalled()
+ expect(stream.diagnostics().viewPriorityUpdates).toBeLessThan(30);bounded(stream);stream.dispose()
+},30_000)
 describe('R4 independent patch tasks, fixed epochs and shared work budget',()=>{
  it('rejects a late patch packet after static-view preparation removed its base tile',()=>{
   const stream=new TerrainStream(()=>{},()=>{});stream.plan(745.23,-1032.93,-.09,540);coverage(stream)

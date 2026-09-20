@@ -1,4 +1,4 @@
-export interface Photo { url: string; width: number; height: number; frame: number; sun: number; weather: string }
+export interface Photo { camera?: { requested:{yaw:number;pitch:number};resolved:{yaw:number;pitch:number};perspective:string;generation:number;fov:number;position:number[];viewKind:string }; url: string; width: number; height: number; frame: number; sun: number; weather: string }
 export interface PhotoCapture { id:number; canvas:HTMLCanvasElement; frame:number }
 export type PhotoState = { capture?:PhotoCapture|undefined; status: 'idle'|'waiting'|'encoding'|'error'; photos: readonly Photo[] }
 /** The host supplies only the completed canvas, never renderer ownership. */

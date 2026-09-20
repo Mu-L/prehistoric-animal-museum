@@ -43,6 +43,32 @@ export class TerrainStream {
   private topologyTables=new Map<string,Int16Array>()
   private projection={focalPixels:600,configured:false,position:null as Position|null}
   setViewProjection(framebufferHeight:number,fovYDegrees:number,position?:Position){this.projection={focalPixels:framebufferHeight/(2*Math.tan(fovYDegrees*Math.PI/360)),configured:true,position:position?{...position}:this.projection.position}}
+  private cameraBucket: number | null = null
+  private cameraHeading = 0
+  private predictedHeading = 0
+  private viewHalfAngle = Math.PI/4
+  private viewPriorityUpdates = 0
+  /** Reorder existing work only. Travel priority and all-direction coverage survive. */
+  setCameraDirection(direction: Position, predicted: Position = direction, horizontalFov = Math.PI/2) {
+    const heading=Math.atan2(direction.x,-direction.z),future=Math.atan2(predicted.x,-predicted.z)
+    const difference=(a:number,b:number)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)))
+    if(this.cameraBucket!==null && difference(heading,this.cameraHeading)<Math.PI/12 && difference(future,this.predictedHeading)<Math.PI/12 && Math.abs(horizontalFov/2-this.viewHalfAngle)<.05)return
+    this.cameraHeading=heading;this.predictedHeading=future;this.viewHalfAngle=horizontalFov/2
+    this.cameraBucket=Math.round(heading/(Math.PI/12));this.viewPriorityUpdates++
+    this.prioritizeView()
+  }
+  private prioritizeView() {
+    const p=this.projection.position;if(!p||this.cameraBucket===null)return
+    for(const item of this.wanted.values()){
+      const dx=(item.chunk.x+.5)*512-p.x,dz=(item.chunk.z+.5)*512-p.z
+      const facing=(dx*Math.sin(this.cameraHeading)-dz*Math.cos(this.cameraHeading))/Math.max(1,Math.hypot(dx,dz))
+      const predicted=(dx*Math.sin(this.predictedHeading)-dz*Math.cos(this.predictedHeading))/Math.max(1,Math.hypot(dx,dz))
+      const cone=Math.cos(Math.min(Math.PI,this.viewHalfAngle+.2))
+      const old=(item as WantedChunk & {viewPriority?:number}).viewPriority??0
+      const next=-(facing>=cone?.7:Math.max(0,facing)*.2)-(predicted>=cone?.3:0)
+      item.priority+=next-old;(item as WantedChunk & {viewPriority?:number}).viewPriority=next
+    }
+  }
   private prepared: TerrainResult[] = []
   private rawResults:Array<{data:unknown;job:TerrainJob;slot:Slot;bytes:number}>=[]
   private slots: Slot[] = []
@@ -154,6 +180,7 @@ export class TerrainStream {
     this.patchKeys = new Set([...this.wanted.entries()].filter(([,item])=>item.lod===0)
       .sort(([,a],[,b])=>Math.hypot((a.chunk.x+.5)*CHUNK_SIZE-x,(a.chunk.z+.5)*CHUNK_SIZE-z)-Math.hypot((b.chunk.x+.5)*CHUNK_SIZE-x,(b.chunk.z+.5)*CHUNK_SIZE-z))
       .slice(0,4).map(([key])=>key))
+    this.prioritizeView()
     const retireStart=performance.now()
     for (const [key, resident] of this.resident) if (!this.wanted.has(key)) {
       resident.mesh.removeFromParent(); this.retireGeometry(resident.mesh.geometry); resident.patches.forEach(p=>{p.mesh.removeFromParent();this.retireGeometry(p.mesh.geometry)}); if(this.patchBuild?.tile===resident)this.patchBuild=null; this.resident.delete(key); this.dirtyGround.delete(key)
@@ -507,7 +534,7 @@ export class TerrainStream {
     for(const geometry of [...geometries,...this.retired]){for(const attribute of Object.values(geometry.attributes)){add(attribute.array);gpuGeometryBytes+=attribute.array.byteLength}if(geometry.index){add(geometry.index.array);gpuGeometryBytes+=geometry.index.array.byteLength}}
     return {...this.metrics,resident:this.resident.size,prepared:this.prepared.length,rawPending:this.rawResults.length,pending:this.slots.filter(s=>s.job).length,sessionId:this.sessionId,simplified:this.simplified,
       renderPatches:draws,independentPatches,pendingPatchBuild:Number(this.patchBuild!==null),retiredGeometries:this.retired.length,
-      surfaceRevision:this.surfaceRevision,projectionConfigured:this.projection.configured,topologyLayouts:this.topologyTables.size,
+      surfaceRevision:this.surfaceRevision,viewPriorityUpdates:this.viewPriorityUpdates,cameraHeading:this.cameraHeading,predictedHeading:this.predictedHeading,projectionConfigured:this.projection.configured,topologyLayouts:this.topologyTables.size,
       gpuGeometryBytes,geometryBytes:[...buffers].reduce((sum,buffer)=>sum+buffer.byteLength,0)}
   }
   dispose() {

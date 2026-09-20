@@ -205,6 +205,7 @@ export class CompanionDirector {
       rejectedRoutes:this.rejected,resourceReferences:this.far?.references??0,
       actors:this.birds.map(bird=>({id:bird.route.id,phase:bird.departure!==null?'departing':bird.motion.avoiding?'yielding':'patrol',distance:bird.motion.clearance,predictedDistance:bird.motion.predictedClearance,speed:magnitude(bird.motion.velocity),cruiseSpeed:bird.motion.cruiseSpeed,acceleration:magnitude(bird.motion.acceleration),turnDegreesPerSecond:bird.motion.turnRate*180/Math.PI,avoidWeight:bird.motion.avoidWeight}))}
   }
+  cameraSpheres() { return this.birds.map(bird=>({position:{...bird.motion.position},radius:16})) }
   private clearBirds() { for(const bird of this.birds) { bird.visual.dispose(); bird.wrapper.removeFromParent() } this.birds.length=0 }
   private stop() {
     this.revision++;this.loading=false;this.loadFailed=false;this.clearBirds();this.far?.dispose();this.far=null
