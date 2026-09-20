@@ -2,15 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ViewTransition } from '../../src/flight-experience/viewpoints/view-transition'
 const draw = vi.fn()
 beforeEach(() => { draw.mockClear(); vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({drawImage:draw} as unknown as CanvasRenderingContext2D) })
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {vi.restoreAllMocks();vi.useRealTimers()})
 function source() { const c=document.createElement('canvas'); c.width=2400;c.height=1400;return c }
 describe('viewpoint frame continuity',()=>{
  it('copies the completed old view before changing camera and releases only after the settled frame',()=>{
+  vi.useFakeTimers()
   const service=new ViewTransition(vi.fn()),input=source(),move=vi.fn(()=>expect(draw).toHaveBeenCalledWith(input,0,0,1280,746))
   service.request(move,false);expect(move).not.toHaveBeenCalled();service.completedFrame(input,true)
   expect(move).toHaveBeenCalledOnce();const held=service.canvas!;expect(held.width*held.height).toBeLessThan(1_500_000)
   service.completedFrame(input,false);expect(service.canvas).toBe(held)
-  service.completedFrame(input,true);expect(service.canvas).toBeNull();expect(held.width).toBe(0)
+  service.completedFrame(input,true);expect(service.canvas).toBe(held);vi.advanceTimersByTime(320);expect(service.canvas).toBeNull();expect(held.width).toBe(0)
  })
  it('keeps the same still while the user changes target or returns during preparation',()=>{
   const service=new ViewTransition(vi.fn()),input=source();service.request(vi.fn(),false);service.completedFrame(input,true)
@@ -30,4 +31,14 @@ describe('viewpoint frame continuity',()=>{
 it('bounds a square or portrait still to 1.5 megapixels',()=>{
  const service=new ViewTransition(vi.fn()),input=source();input.width=2000;input.height=2000
  service.request(vi.fn(),false);service.completedFrame(input,true);expect(service.canvas!.width*service.canvas!.height).toBeLessThanOrEqual(1_500_000);service.dispose()
+})
+
+it('cancels a reveal timer when a new view is requested and releases on dispose',()=>{
+ vi.useFakeTimers()
+ const changed=vi.fn(),service=new ViewTransition(changed),input=source()
+ service.request(vi.fn(),false);service.completedFrame(input,true);const held=service.canvas!
+ service.completedFrame(input,true);service.request(vi.fn(),true)
+ vi.advanceTimersByTime(400);expect(service.canvas).toBe(held)
+ service.completedFrame(input,true);service.dispose();const calls=changed.mock.calls.length
+ vi.advanceTimersByTime(400);expect(held.width).toBe(0);expect(changed).toHaveBeenCalledTimes(calls)
 })

@@ -22,3 +22,7 @@
 @media(max-width:600px){.flight-postcard-feedback{top:120px}}
 .flight-postcard-pocket img{position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);max-height:calc(100% - 8px);min-height:0;object-fit:contain}
 @media(max-width:360px){.flight-toolbar .flight-postcard-shutter span{max-width:none;white-space:nowrap}}
+.flight-postcard-gallery{width:min(330px,calc(100vw - 24px));background:#f8f8eff2;border:0;backdrop-filter:blur(16px);box-shadow:0 12px 40px #143a4224}
+.flight-postcard-gallery h2{font-size:17px}
+.flight-postcard-list figure{padding:0;background:transparent;box-shadow:none}
+.flight-postcard-gallery header button,.flight-postcard-list button{border:0;background:transparent;box-shadow:none;min-height:40px;padding:8px}

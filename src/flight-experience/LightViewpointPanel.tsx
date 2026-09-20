@@ -1,3 +1,6 @@
+import waterlinePreview from './assets/viewpoints/waterline.webp'
+import seawardPreview from './assets/viewpoints/seaward.webp'
+import cliffPreview from './assets/viewpoints/cliff.webp'
 import { useState } from 'react'
 import { DAYLIGHT_START, DAYLIGHT_END } from './environment/environment-clock'
 import type { FlightRuntime, FlightSnapshot } from './FlightRuntime'
@@ -14,30 +17,22 @@ export function LightViewpointPanel({runtime,snapshot,locale,mode='sunlight'}:{r
  const statusText=locale==='zh-CN'?{idle:'固定时刻',running:'白昼正在前进',suspended:'白昼已暂停，继续飞翔或景色后恢复',ended:'已停留在夕照'}[status]:{idle:'Fixed time',running:'Daylight is advancing',suspended:'Daylight paused; resume flight or scenery to continue',ended:'Holding at sunset'}[status]
  const t=copy[locale],phase=snapshot.observation??'inactive',preparing=phase==='preparing'||phase==='returning'
  return <section className="flight-light-content" aria-label={mode==='sunlight'?t.time:t.title}>
-  {mode==='viewpoints'&&<><p>{t.help}</p>
-  <div className="flight-light-options" role="group" aria-label={t.title}>
-   <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='seaward'} onClick={()=>runtime.navigateViewpoint('seaward')}>{t.sea}</button>
-   <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='cliff'} onClick={()=>runtime.navigateViewpoint('cliff')}>{t.cliff}</button>
-   <button type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint==='waterline'} onClick={()=>runtime.navigateViewpoint('waterline')}>{t.waterline}</button>
-  </div>
+  {mode==='viewpoints'&&<>
+  <div className="flight-view-choices" role="group" aria-label={t.title}>{(['waterline','seaward','cliff'] as const).map((id,i)=><button key={id} type="button" aria-pressed={phase!=='inactive'&&snapshot.viewpoint===id} onClick={()=>runtime.navigateViewpoint(id)}><img src={{waterline:waterlinePreview,seaward:seawardPreview,cliff:cliffPreview}[id]} alt="" width="160" height="90"/><span>{(locale==='zh-CN'?['贴近海面','向海远眺','海崖俯瞰']:['By the water','Out to sea','Above the cliffs'])[i]}<small>{(locale==='zh-CN'?['与海浪平视','从海岸望向远方','从高处看看山与海']:['Meet the waves','Look beyond the shore','See the coast from above'])[i]}</small></span></button>)}</div>
+  <small>{locale==='zh-CN'?'观景时暂停飞翔，可随时从顶部返回。':'Flight pauses here. Return any time from the top bar.'}</small>
   </>}
   {mode==='sunlight'&&<>
-  <div className="flight-light-options" role="group" aria-label={locale==='zh-CN'?'阳光模式':'Sunlight mode'}>
-   <button type="button" aria-pressed={!automatic} onClick={()=>runtime.setSolarMode('fixed')}>{locale==='zh-CN'?'固定时刻':'Fixed time'}</button>
-   <button type="button" aria-pressed={automatic} onClick={()=>runtime.setSolarMode('auto')}>{locale==='zh-CN'?'自动白昼':'Automatic daylight'}</button>
+  <div className="flight-light-options flight-chips" role="group" aria-label={locale==='zh-CN'?'阳光':'Sunlight'}>
+   {(['morning','afternoon','evening'] as SolarPreset[]).map(p=><button type="button" key={p} disabled={preparing} aria-pressed={!automatic&&Math.abs((snapshot.solarDayProgress??.42)-solarProgress(p))<.001} onClick={()=>runtime.setSolarDayProgress(solarProgress(p))}>{t[p as 'morning'|'afternoon'|'evening']}</button>)}
+   <button type="button" disabled={preparing} aria-pressed={automatic} onClick={()=>runtime.setSolarMode('auto')}>{locale==='zh-CN'?'自动':'Auto'}</button>
   </div>
-  <small>{locale==='zh-CN'?'从当前时刻继续，完整白昼约10分钟。手动调节会切回固定时刻。':'Continues from here; a full daylight sequence takes about 10 minutes. Manual adjustments switch back to a fixed time.'}</small>
-  <p role="status">{statusText}</p>
-  {status==='ended'&&<button type="button" onClick={()=>runtime.restartDaylightFromMorning()}>{locale==='zh-CN'?'从晨光重新播放白昼':'Replay daylight from morning'}</button>}
-  <div className="flight-daylight-timeline">
-  <label className="flight-light-range flight-daylight-range">{t.time}<input type="range" min={DAYLIGHT_START} max={DAYLIGHT_END} aria-valuetext={`${t.time} ${percent}%`} step="0.005" disabled={preparing} value={snapshot.solarDayProgress??.42} onChange={e=>runtime.setSolarDayProgress(Number(e.target.value))}/></label>
-  <div className="flight-daylight-stops" role="group" aria-label={t.time}>{(['morning','afternoon','evening'] as SolarPreset[]).map(p=><button type="button" key={p} style={{left:`${(solarProgress(p)-DAYLIGHT_START)/(DAYLIGHT_END-DAYLIGHT_START)*100}%`}} disabled={preparing} aria-pressed={Math.abs((snapshot.solarDayProgress??.42)-solarProgress(p))<.001} onClick={()=>runtime.setSolarDayProgress(solarProgress(p))}>{t[p as 'morning'|'afternoon'|'evening']}</button>)}</div>
-  </div>
-  <small>{locale==='zh-CN'?'即时生效，不打断飞翔。':'Applies immediately without interrupting flight.'}</small></>}
-  {mode==='viewpoints'&&phase!=='inactive'&&<><p role="status">{phase==='failed'?t.failed:preparing?phase==='returning'?t.returning:t.preparing:t.active}</p><div className="flight-light-options">
-    {phase==='active'&&<button type="button" onClick={()=>runtime.toggleScenery()}>{snapshot.sceneryPaused?t.resume:t.pause}</button>}
-    <button type="button" onClick={()=>runtime.navigateBack()}>{t.back}</button>
-  </div></>}
+  {status==='ended'&&<button className="flight-text-action" type="button" onClick={()=>runtime.restartDaylightFromMorning()}>{locale==='zh-CN'?'再看一次日出到日落':'Replay daylight from morning'}</button>}
+  <details className="flight-fine-tune"><summary>{locale==='zh-CN'?'细调光线':'Fine-tune the light'}</summary>
+   <div className="flight-daylight-timeline"><label className="flight-light-range flight-daylight-range">{t.time}<input type="range" min={DAYLIGHT_START} max={DAYLIGHT_END} aria-valuetext={`${t.time} ${percent}%`} step="0.005" disabled={preparing} value={snapshot.solarDayProgress??.42} onChange={e=>runtime.setSolarDayProgress(Number(e.target.value))}/></label></div>
+   <small role="status">{automatic?(locale==='zh-CN'?'约 10 分钟，从晨光走到夕照。':'Ten minutes from morning to sunset.'):(locale==='zh-CN'?'停留在你喜欢的时刻。':'Stay in the light you love.')} {statusText}</small>
+  </details></>}
+  {mode==='viewpoints'&&(preparing||phase==='failed')&&<p role="status">{phase==='failed'?t.failed:phase==='returning'?t.returning:t.preparing}</p>}
+  {mode==='viewpoints'&&phase==='active'&&<button className="flight-text-action" type="button" onClick={()=>runtime.toggleScenery()}>{snapshot.sceneryPaused?t.resume:t.pause}</button>}
 
   {mode==='sunlight'&&import.meta.env.DEV&&<details><summary>{locale==='zh-CN'?'本地验收工具':'Local review tools'}</summary>
    <label><input type="checkbox" defaultChecked={runtime.scenery?.review.highlight??true} onChange={e=>{runtime.setWaterReview('highlight',e.target.checked)}}/>{locale==='zh-CN'?'太阳反射':'Sun reflection'}</label>

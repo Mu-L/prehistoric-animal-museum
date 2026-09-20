@@ -44,3 +44,17 @@ describe('postcard moment and pocket',()=>{
   expect(animate).not.toHaveBeenCalled();expect(release).toHaveBeenCalledExactlyOnceWith(3)
  })
 })
+
+it('briefly acknowledges a completed photo without opening the gallery or implying a download',async()=>{
+ vi.useFakeTimers()
+ try {
+  const {view,runtime,snapshot}=setup(true)
+  view.rerender(<PostcardDock runtime={runtime} snapshot={snapshot({status:'idle',photos:[{url:'blob:new',frame:7,width:1280,height:720,sun:.4,weather:'clear'}]})} locale="zh-CN"/> )
+  await act(async()=>{})
+  expect(screen.getByRole('status')).toHaveTextContent('已留住这一刻')
+  expect(screen.queryByRole('link',{name:'保存到设备'})).toBeNull()
+  void act(()=>vi.advanceTimersByTime(2600));expect(screen.getByRole('status',{hidden:true})).toBeEmptyDOMElement()
+  expect(screen.getByRole('button',{name:'查看明信片，1张'})).toBeInTheDocument()
+  view.unmount()
+ } finally {vi.useRealTimers()}
+})
