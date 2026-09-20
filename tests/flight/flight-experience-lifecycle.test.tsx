@@ -36,6 +36,22 @@ async function mount() {
  return {runtime,instances,view,element,onClose}
 }
 describe('whole FlightExperience events with the actual Runtime (GPU/worker readiness stubbed)',()=>{
+ it('offers camera presets, click nudges and focused keyboard without steering the animal',async()=>{
+  const {runtime,view}=await mount()
+  fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}));fireEvent.click(screen.getByRole('tab',{name:'Flight'}))
+  const heading=runtime.simulation.heading,time=runtime.simulation.time,key=vi.spyOn(runtime.input,'key')
+  fireEvent.click(screen.getByRole('button',{name:'In front'}))
+  expect(runtime.cameraRig.perspective).toBe('front')
+  fireEvent.keyDown(screen.getByRole('button',{name:'Look left'}),{key:'ArrowLeft',code:'ArrowLeft'})
+  expect(key).not.toHaveBeenCalled();expect(runtime.cameraRig.perspective).toBe('custom')
+  fireEvent.click(screen.getByRole('button',{name:'Look up'}));expect(runtime.cameraRig.requested.pitch).toBeLessThan(0)
+  expect(runtime.simulation.heading).toBe(heading);expect(runtime.simulation.time).toBe(time)
+  fireEvent.click(screen.getByText('Where are we?'))
+  expect(screen.getByText(/The screen is our viewing position/)).toBeVisible()
+  act(()=>runtime.contextLost());expect(runtime.cameraRig.moving).toBe(false)
+  act(()=>runtime.contextRestored());expect(runtime.getSnapshot().phase).toBe('paused')
+  view.unmount()
+ })
  it('keeps mode and movement on panel/rerender/language changes and isolates range keyboard shortcuts',async()=>{
   const {runtime,instances,view,element}=await mount()
   act(()=>runtime.start())

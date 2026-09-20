@@ -172,3 +172,47 @@ on its longest side, with three local previews and explicit download. A persiste
 uploaded. Candidate asset provenance and deterministic validators accompany the
 source; subjective sound, movement and physical-device acceptance remain separate
 from automated checks. Flight remains disabled in the normal build.
+
+## C1 observation camera
+
+The default rear follow camera retains the W2 offset, target and damping. Viewing
+`rear/front/left/right/custom` is separate from `near/standard/wide` distance.
+The screen represents the viewing position; flight does not import an avatar.
+Front steering continues to use the animal's left and right.
+
+`camera-rig.ts` owns requested and resolved angles. Presets use an accelerated,
+bounded shortest arc (front candidate 165°, maximum 2.1 rad/s). The reduced-motion
+path sweeps the same arc for safety before presenting its target frame. The
+Runtime remains the only camera writer and uses the existing host lease/loop.
+Paused camera presentation does not tick simulation or environment time.
+`camera-safety.ts` separates swept near-plane clearance, the animation envelope,
+companion separation and terrain line of sight. Unknown coverage retains the last
+resolved angle; camera requests never steer the animal.
+
+The original Idle envelope can be reproduced with
+`node --import tsx scripts/flight/inspect-camera-envelope.mjs`. It samples 121
+phases, preserves the source GLB, and checks four aspect ratios, three distances
+and six directions. The measured rotation-invariant radius is 4.797m; the rig
+uses 5.5m plus near-plane clearance. This is geometric validation, not GPU or
+comfort signoff. The unchanged W2 rear/near composition has a small lower-edge
+contact at the most extended phase in phone landscape; front/side compositions
+fit throughout the sampled cycle.
+
+Scene-only pointer capture is independent of flight button pointers. Presets,
+click nudges and focused arrow keys offer alternatives to dragging. Releasing a
+drag keeps its last displayed angle. Fixed viewpoints turn in place; returning
+checks and restores the complete travel camera bookmark and remains paused.
+Photos retain actual completed-frame camera metadata only in the local session.
+
+Camera direction changes reprioritize the existing terrain window at a 15°
+threshold. Current and requested view cones supplement, rather than replace,
+the travel heading and missing-coverage priority. No window radius, renderer,
+model, texture, reflection pass or source animation is added.
+
+Local DEV review controls save six-view PBR comparisons, a camera-transition
+video and an original-flap video through the existing private evidence endpoint.
+`flightCamera=off` restores the rear-only interaction for comparison.
+`flightCold=model` and `flightCold=materials` explicitly delay cold assembly and
+exercise real WebGL context loss/restoration; these probes are DEV-only.
+The default production build still excludes flight. G5 comfort/understanding,
+physical-phone endurance and release approval remain separate human checks.

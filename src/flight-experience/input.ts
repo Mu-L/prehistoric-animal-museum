@@ -1,6 +1,6 @@
 import type { FlightInput } from './simulation'
 export function isFlightShortcutTarget(target: EventTarget | null): boolean {
-  return target instanceof HTMLElement && !!target.closest('button,input,select,textarea,a,[contenteditable="true"],[role="dialog"] input')
+  return target instanceof HTMLElement && !!target.closest('button,input,select,textarea,a,summary,[contenteditable="true"],[role="dialog"] input')
 }
 export class FlightInputState {
   private readonly keys = new Set<string>()

@@ -1,3 +1,6 @@
+import { CameraInput } from './camera-input'
+import { CameraPanel } from './CameraPanel'
+import { cameraCopy } from './camera-messages'
 import { LanguageMenu } from '../components/LanguageMenu'
 import {FlightToggle} from './FlightToggle'
 import {useQuietHud} from './useQuietHud'
@@ -46,6 +49,14 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
   const [draft, setDraft] = useState<FlightSettings>({ ...DEFAULT_FLIGHT_SETTINGS })
   const snapshot = useSyncExternalStore(runtime?.subscribe ?? noSubscription, runtime?.getSnapshot ?? initialSnapshot, initialSnapshot)
   useEffect(()=>{runtime?.setNarrationActive(narrationActive)},[runtime,narrationActive])
+  const cameraInteractive=Boolean(runtime?.canObserveCamera&&!settings&&!galleryOpen)
+  const cameraLayer = useRef<HTMLDivElement>(null)
+  useEffect(()=>{
+    const element=cameraLayer.current
+    if(!runtime||!element||!cameraInteractive)return
+    const input=new CameraInput(element,(yaw,pitch)=>runtime.orbitCamera(yaw,pitch),()=>runtime.cancelCameraInput())
+    return ()=>input.dispose()
+  },[runtime,cameraInteractive,snapshot.cameraInputEpoch])
   const previousObservation = useRef(snapshot.observation)
   useEffect(() => {
     if (previousObservation.current && previousObservation.current !== 'inactive' && snapshot.observation === 'inactive') settingsTrigger.current?.focus()
@@ -117,7 +128,7 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
   const preparingView=snapshot.viewTransition?.waiting||snapshot.observation==='preparing'||snapshot.observation==='returning'||snapshot.observation==='failed'
   const flying = snapshot.phase === 'flying'
   const quietViewing=observe&&['ready','paused'].includes(snapshot.phase)&&Boolean(runtime?.canResume)
-  const hudIdle=useQuietHud(root,settings||galleryOpen||Boolean(preparingView)||Boolean(snapshot.photos?.capture)||['waiting','encoding','error'].includes(snapshot.photos?.status??'')||(!quietViewing&&!flying&&!inViewpoint&&snapshot.phase!=='paused')||(!quietViewing&&Boolean(snapshot.reason&&snapshot.reason!=='user')))
+  const hudIdle=useQuietHud(root,Boolean(snapshot.cameraRig&&(snapshot.cameraRig.moving||snapshot.cameraRig.rejection))||settings||galleryOpen||Boolean(preparingView)||Boolean(snapshot.photos?.capture)||['waiting','encoding','error'].includes(snapshot.photos?.status??'')||(!quietViewing&&!flying&&!inViewpoint&&snapshot.phase!=='paused')||(!quietViewing&&Boolean(snapshot.reason&&snapshot.reason!=='user')))
   const start = () => { setObserve(false); runtime?.start(); root.current?.focus() }
   const stopPointer = (event: PointerEvent<HTMLButtonElement>) => runtime?.input.release(event.pointerId)
   const direction = (event: PointerEvent<HTMLButtonElement>, turn: number, climb: number) => {
@@ -126,10 +137,12 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
   const configure = (next: FlightSettings) => { setDraft(next); chosenSettings.current = next; runtime?.configure(next) }
   const restart = (next = draft, resetSunlight = false) => { chosenLiving.current=resetSunlight?{...DEFAULT_LIVING_INTENT}:{...runtime?.livingIntent??DEFAULT_LIVING_INTENT}; if(!resetSunlight&&runtime){runtime.weather.restart();chosenWeather.current=runtime.weather.serialize()}else chosenWeather.current=null; chosenSunlight.current=resetSunlight?null:runtime?.environmentClock.solarDayProgress??null; chosenSettings.current = next; setDraft(next); setSettings(false); setGalleryOpen(false); setObserve(false); setRetry(n => n + 1) }
   const reason = snapshot.reason === 'terrain' ? copy.terrain : ['safety', 'camera'].includes(snapshot.reason ?? '') ? copy.safety : snapshot.reason === 'context' ? copy.context : snapshot.reason === 'hidden' ? copy.hidden : copy.quiet
-  return <section ref={root} className="flight-experience" role="dialog" aria-modal="true" aria-label={copy.title} tabIndex={-1} data-flight-phase={snapshot.phase} data-hud-idle={hudIdle}>
+  return <section ref={root} className="flight-experience" role="dialog" aria-modal="true" aria-label={copy.title} tabIndex={-1} data-flight-phase={snapshot.phase} data-hud-idle={hudIdle} data-camera-offset={snapshot.cameraRig?.perspective!=='rear'}>
+    {cameraInteractive&&<div ref={cameraLayer} className="flight-camera-gesture" aria-hidden="true"/>}
     <header className="flight-toolbar">
       <button type="button" aria-label={copy.back} onClick={onClose}><ChevronLeft size={20}/><span>{copy.back}</span></button>
       <div className="flight-toolbar__right">
+        {snapshot.cameraRig&&(snapshot.cameraRig.perspective!=='rear'||snapshot.cameraRig.rejection)&&<button type="button" className="flight-camera-reset" onClick={()=>runtime?.selectPerspective('rear')}>{inViewpoint?cameraCopy[locale].fixedReset:cameraCopy[locale].reset}</button>}
         {inViewpoint && <button className="flight-travel-return" type="button" disabled={snapshot.observation==='returning'} onClick={()=>runtime?.navigateBack()}><ArrowLeft size={18}/><span>{locale==='zh-CN'?'回到飞行':'Back to flight'}</span></button>}
         {!inViewpoint && (['flying', 'paused'].includes(snapshot.phase)||(observe&&snapshot.phase==='ready')) && <button type="button" aria-label={flying?copy.pause:snapshot.phase==='ready'?copy.start:copy.resume} disabled={!flying && !runtime?.canResume} onClick={() => flying ? runtime?.pause() : start()}>{flying ? <Pause size={19}/> : <Play size={19}/>}<span>{flying ? copy.pause : snapshot.phase==='ready'?copy.start:copy.resume}</span></button>}
         <button className="flight-settings-trigger" title={locale==='zh-CN'?'飞行与风景':'Flight & scenery'} type="button" ref={settingsTrigger} disabled={snapshot.phase==='preparing'||snapshot.phase==='recovering'} aria-label={locale==='zh-CN'?'飞行与风景':'Flight & scenery'} aria-controls="flight-settings-panel" aria-expanded={settings} onClick={()=>{runtime?.input.clear();setGalleryOpen(false);setSettings(v=>!v)}}><Settings2 size={20}/><span>{locale==='zh-CN'?'飞行与风景':'Flight & scenery'}</span></button>
@@ -155,6 +168,7 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
       <div id="flight-section-viewpoints" className="flight-tabpanel" role="tabpanel" aria-labelledby="flight-tab-viewpoints" hidden={section!=='viewpoints'}>
        <h3 className="flight-view-heading">{locale==='zh-CN'?'推荐观景位':'A few favourite views'}</h3>
        {runtime&&<LightViewpointPanel runtime={runtime} snapshot={snapshot} locale={locale} mode="viewpoints"/>}
+       {runtime?.cameraObservationEnabled&&inViewpoint&&<CameraPanel runtime={runtime} snapshot={snapshot} locale={locale}/>}
        <details className="flight-new-start"><summary>{locale==='zh-CN'?'重新选择出发位置':'Choose a new starting point'} <span aria-hidden="true">→</span></summary>
         <div className="flight-start-places" role="group" aria-label={copy.startPlace}>{(['coast','valley','overview'] as const).map((place,i)=><button type="button" key={place} aria-pressed={draft.start===place} onClick={()=>setDraft({...draft,start:place})}><svg viewBox="0 0 96 54" aria-hidden="true"><path d={['M0 35 Q24 40 40 28 T96 18 L96 54 H0Z','M0 38 L24 12 49 43 73 15 96 37 V54 H0Z','M0 42 L28 22 45 36 69 12 96 38 V54 H0Z'][i]}/><path className="flight-start-route" d={['M12 43 Q38 50 50 31 T84 16','M40 52 Q66 42 52 31 T47 6','M8 18 Q50 4 87 17'][i]}/></svg><span>{copy.starts[i]}<small>{(locale==='zh-CN'?['沿着海陆交界飞行','顺着山谷向前探索','从高处俯瞰山与海']:['Follow the coastline','Explore along the valley','See the land from above'])[i]}</small></span></button>)}</div>
         <div className="flight-setting flight-choice-setting"><span>{copy.height}</span><div className="flight-inline-choices" role="group" aria-label={copy.height}>{([100,190,350] as const).map((v,i)=><button type="button" key={v} aria-pressed={draft.height===v} onClick={()=>setDraft({...draft,height:v})}>{copy.heights[i]}</button>)}</div></div>
@@ -165,6 +179,7 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
 
       </div>
       <div id="flight-section-flight" className="flight-tabpanel" role="tabpanel" aria-labelledby="flight-tab-flight" hidden={section!=='flight'}>
+      {runtime?.cameraObservationEnabled&&<CameraPanel runtime={runtime} snapshot={snapshot} locale={locale}/>}
       <FlightToggle label={copy.gentle} checked={snapshot.gentle} onChange={gentle=>configure({...draft,quality:snapshot.quality,gentle})}/>
       <label className="flight-setting flight-comfort-range"><span>{locale==='zh-CN'?'飞行速度':'Flight speed'}</span><span><input aria-label={copy.speed} aria-valuetext={(locale==='zh-CN'?['慢慢飞','自在飞','快一些']:['Slow','Steady','Faster'])[([18,28,36] as const).indexOf(draft.speed)]} type="range" min="0" max="2" step="1" value={([18,28,36] as const).indexOf(draft.speed)} onChange={e=>configure({...draft,quality:snapshot.quality,gentle:snapshot.gentle,speed:([18,28,36] as const)[Number(e.target.value)]!})}/><small><span>{locale==='zh-CN'?'慢':'Slow'}</span><span>{locale==='zh-CN'?'快':'Fast'}</span></small></span></label>
       <label className="flight-setting flight-comfort-range"><span>{locale==='zh-CN'?'镜头':'Camera'}</span><span><input aria-label={copy.camera} aria-valuetext={copy.views[(['near','standard','wide'] as const).indexOf(draft.view)]} type="range" min="0" max="2" step="1" value={(['near','standard','wide'] as const).indexOf(draft.view)} onChange={e=>configure({...draft,quality:snapshot.quality,gentle:snapshot.gentle,view:(['near','standard','wide'] as const)[Number(e.target.value)]!})}/><small><span>{locale==='zh-CN'?'跟近一点':'Closer'}</span><span>{locale==='zh-CN'?'看远一点':'Wider'}</span></small></span></label>
