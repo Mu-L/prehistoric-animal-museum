@@ -64,7 +64,7 @@ describe('bounded companion routes',()=>{
       director.update(context({player,camera:{x:player.x,y:player.y,z:player.z+10}}),{x:0,z:0})
       if(director.metrics.near){const q=director.root.children[0]!.position;minimum=Math.min(minimum,Math.hypot(q.x-player.x,q.y-player.y,q.z-player.z))}
     }
-    expect(minimum).toBeGreaterThanOrEqual(25);expect(director.metrics.near).toBe(0);director.dispose()
+    expect(minimum).toBeGreaterThanOrEqual(25);expect(director.metrics.near).toBe(1);director.dispose()
   })
 
   it('turning companions off while paused removes the static actors immediately',()=>{
@@ -138,13 +138,65 @@ describe('bounded companion routes',()=>{
     const heading=.22,c=context({heading}),route=planCompanionRoute(89,true,c,()=>0,28)!
     const camera=new PerspectiveCamera(55,1.8224666142969363,.5,24000)
     camera.quaternion.set(-.15514407565764407,-.1084327744878713,-.017135015365026984,.9817734160454936)
-    for(const age of [21,24,28,32]){
+    for(const age of [32,36,40,48]){
       const player={x:Math.sin(heading)*28*age,y:190,z:-Math.cos(heading)*28*age}
       camera.position.set(player.x-Math.sin(heading)*11,195,player.z+Math.cos(heading)*11);camera.updateMatrixWorld(true)
       const point=routePoint(route,age),projected=new Vector3(point.x,point.y,point.z).project(camera)
       expect(Math.abs(projected.x)).toBeLessThan(.9);expect(Math.abs(projected.y)).toBeLessThan(.8)
       expect(Math.hypot(point.x-player.x,point.y-player.y,point.z-player.z)).toBeGreaterThan(25)
     }
+  })
+
+  it('checks the actual avoidance turn against a cliff outside the original straight route',()=>{
+    const scene=new Group(),hero=new Group();hero.add(new Mesh(new BoxGeometry(),new MeshBasicMaterial()))
+    const queried:number[]=[]
+    const surface=(x:number)=>{queried.push(x);return Math.abs(x)>65?350:0}
+    const director=new CompanionDirector(scene,createWorldSampler(),hero,new AnimationClip('Idle',2,[]),surface)
+    for(let i=0;i<40;i++)director.update(context(),{x:0,z:0})
+    expect(director.metrics.near).toBe(1)
+    let player={x:0,y:190,z:0},furthest=0
+    for(let i=0;i<300&&director.metrics.near;i++){
+      const p=director.root.children[0]!.position,dx=p.x-player.x,dy=p.y-player.y,dz=p.z-player.z,length=Math.hypot(dx,dy,dz)
+      player={x:player.x+dx/length*3.6,y:player.y+dy/length*3.6,z:player.z+dz/length*3.6}
+      director.update(context({player,camera:{x:player.x,y:player.y,z:player.z+10}}),{x:0,z:0})
+      if(director.metrics.near)furthest=Math.max(furthest,Math.abs(director.root.children[0]!.position.x))
+    }
+    expect(queried.some(x=>Math.abs(x)>65)).toBe(true)
+    expect(furthest).toBeLessThanOrEqual(65);expect(director.metrics.near).toBe(0);director.dispose()
+  })
+
+  it('adapts an existing slow-start patrol to authoritative 18→28m/s flight without velocity impulses',()=>{
+    const scene=new Group(),hero=new Group();hero.add(new Mesh(new BoxGeometry(),new MeshBasicMaterial()))
+    const director=new CompanionDirector(scene,createWorldSampler(),hero,new AnimationClip('Idle',2,[]),()=>0)
+    let z=0,previousSpeed:number|null=null,firstCruise:number|null=null
+    for(let i=0;i<450;i++){
+      const speed=18+Math.min(10,i*.1)
+      z-=speed*.1
+      // Deliberately irregular render positions cannot corrupt the supplied velocity.
+      const player={x:0,y:190,z:z+(i%2?-.3:.3)}
+      director.update(context({player,playerVelocity:{x:0,y:0,z:-speed},camera:{x:0,y:195,z:player.z+11},motionSeconds:i*.1}),{x:0,z:0})
+      const actor=director.metrics.actors[0]
+      if(actor){
+        firstCruise??=actor.cruiseSpeed
+        if(previousSpeed!==null)expect(Math.abs(actor.speed-previousSpeed)/.1).toBeLessThan(4.501)
+        previousSpeed=actor.speed
+      }
+    }
+    const actor=director.metrics.actors[0]!
+    expect(firstCruise).toBeLessThan(25)
+    expect(actor.cruiseSpeed).toBeGreaterThan(29.8);expect(actor.cruiseSpeed).toBeLessThanOrEqual(29.96)
+    expect(actor.speed).toBeGreaterThan(29);expect(actor.speed).toBeLessThan(32)
+    const held=director.root.children[0]!.position.clone(),speed=actor.speed
+    for(let i=0;i<40;i++)director.update(context({active:false,delta:0,playerVelocity:{x:0,y:0,z:0},player:{x:0,y:190,z},camera:{x:0,y:195,z:z+11}}),{x:0,z:0})
+    expect(director.root.children[0]!.position.toArray()).toEqual(held.toArray());expect(director.metrics.actors[0]!.speed).toBe(speed)
+    director.dispose()
+  })
+  it('an observation-camera pass keeps an independent 18m/s cruise with zero player velocity',()=>{
+    const scene=new Group(),hero=new Group();hero.add(new Mesh(new BoxGeometry(),new MeshBasicMaterial()))
+    const director=new CompanionDirector(scene,createWorldSampler(),hero,new AnimationClip('Idle',2,[]),()=>0)
+    for(let i=0;i<100;i++)director.update(context({camera:{x:500,y:190,z:0},playerVelocity:{x:0,y:0,z:0}}),{x:0,z:0})
+    expect(director.metrics.actors[0]!.cruiseSpeed).toBe(18)
+    expect(director.metrics.actors[0]!.speed).toBeCloseTo(18);director.dispose()
   })
 
 })

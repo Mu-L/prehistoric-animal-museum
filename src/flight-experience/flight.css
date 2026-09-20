@@ -66,47 +66,107 @@
 .flight-experience:has(.flight-review[data-lookdev-active="true"]) .flight-intro,
 .flight-experience:has(.flight-review[data-lookdev-active="true"]) .flight-controls { display:none; }
 
-.flight-settings{z-index:22;padding:20px;width:min(380px,calc(100% - 32px));max-height:calc(100dvh - 180px);scrollbar-width:thin}
-.flight-settings .flight-card__heading button{min-height:40px;padding:7px;box-shadow:none}
-.flight-settings .flight-panel-status{font-size:12px;color:#52716d;margin:8px 0 12px}
-.flight-panel-sections{display:flex;gap:4px;padding:4px;background:#e5ece4;border-radius:14px;margin-bottom:16px}
-.flight-panel-sections button{flex:1;min-height:42px;padding:8px;background:transparent;border-color:transparent;box-shadow:none;font-size:14px}
-.flight-panel-sections button[aria-pressed=true]{background:#315d60;color:white}
-.flight-settings .flight-setting{padding:12px 0;font-size:14px}
-.flight-settings .flight-setting small{max-width:160px}
+/* A fixed coastal shell; only the purpose-led body scrolls. */
+.flight-settings{z-index:22;top:88px;right:24px;width:min(440px,calc(100vw - 48px));max-height:calc(100dvh - 116px - env(safe-area-inset-bottom));padding:0;display:flex;flex-direction:column;overflow:hidden;border:1px solid #fff9;border-radius:24px;background:#f8f8f1f7;box-shadow:0 16px 60px #163c4930,0 1px 0 #fff inset;backdrop-filter:blur(18px)}
+.flight-settings-heading{padding:22px 22px 12px;background:radial-gradient(ellipse at 92% 0%,#dbecef 0,transparent 68%),linear-gradient(160deg,#fbfbf0,#ecf3ef);flex:none}
+.flight-settings .flight-eyebrow{font-size:10px;letter-spacing:.13em;color:#5c7c7a;display:block;margin-bottom:6px}
+.flight-settings .flight-card__heading h2{font-size:23px;font-weight:650;letter-spacing:-.02em}
+.flight-settings .flight-card__heading button{min-height:44px;min-width:44px;padding:9px;border:0;background:#fff8;box-shadow:none;border-radius:50%}
+.flight-settings .flight-panel-status{display:flex;align-items:center;gap:7px;font-size:12px;line-height:1.5;color:#5c7674;margin:12px 0 0}
+.flight-panel-status>span{flex:none;width:6px;height:6px;border-radius:50%;background:#608a79}
+.flight-panel-sections{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0;padding:6px 12px 12px;background:#edf3ee;flex:none;border-bottom:1px solid #365b5014}
+.flight-experience .flight-panel-sections button{display:flex;flex-direction:column;gap:5px;min-width:0;min-height:62px;padding:8px 4px;border:1px solid transparent;box-shadow:none;border-radius:14px;background:transparent;font-size:12px;font-weight:650;line-height:1.35;white-space:normal;color:#617b79}
+.flight-experience .flight-panel-sections button[aria-selected=true]{background:#fffdf5;color:#234f56;border-color:#d2dfd8;box-shadow:0 2px 5px #36594b09}
+.flight-settings-scroll-shell{position:relative;min-height:0;overflow:hidden;flex:1;isolation:isolate}
+.flight-settings-scroll{height:100%;max-height:inherit;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;scroll-padding:18px;touch-action:pan-y}
+.flight-settings-scroll::-webkit-scrollbar{display:none}
+.flight-settings-scroll-shell[data-scrollable=true]::after{content:'';position:absolute;bottom:0;left:0;right:0;height:20px;background:linear-gradient(transparent,#f8f8f1);pointer-events:none;z-index:1}
+.flight-settings-body{padding:8px 22px 24px}
+.flight-tabpanel[hidden]{display:none}
+.flight-tabpanel{min-width:0}
+.flight-scenery-group{padding:20px 0;border-bottom:1px solid #355f5520}
+.flight-scenery-group:last-child{border-bottom:0;padding-bottom:4px}
+.flight-settings h3{margin:0 0 14px;font-size:16px;line-height:1.45;font-weight:700;color:#2b5558}
+.flight-scenery-group>h3{display:flex;align-items:center;gap:9px}
+.flight-scenery-group--light>h3 svg{color:#b18539}.flight-scenery-group--weather>h3 svg{color:#668a9c}.flight-scenery-group--nature>h3 svg{color:#5b8774}
+.flight-settings .flight-setting{padding:15px 0;font-size:14px;gap:12px}
+.flight-settings .flight-setting small{max-width:none;font-size:11px;color:#627b73;opacity:1;margin-top:4px}
+.flight-setting input[type=checkbox]{flex:none;width:22px;height:22px;margin:10px 0;cursor:pointer}
 .flight-light-options{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}
-.flight-light-options button{flex:1;min-height:46px;padding:10px 8px;border:1px solid #42636633;border-radius:12px;background:#fff9;font-size:14px}
-.flight-light-options button[aria-pressed=true]{background:#315d60;color:white}
-.flight-light-range{display:flex;gap:10px;align-items:center;font-size:13px;margin:14px 0}
-.flight-light-range input{min-width:0;flex:1;accent-color:#315d60;min-height:44px}
-.flight-light-content small{font-size:12px;line-height:1.6;display:block}
-.flight-settings details{margin-top:18px}.flight-settings summary{cursor:pointer;padding:10px 0;font-size:14px}
+.flight-experience .flight-light-options button{flex:1;min-width:0;min-height:45px;padding:10px 8px;border:1px solid #cddbd5;border-radius:12px;background:#fffdf6;box-shadow:none;font-size:12px;line-height:1.35;font-weight:600}
+.flight-experience .flight-light-options button[aria-pressed=true]{background:#dceae4;color:#214e4e;border-color:#91b5a8;box-shadow:0 1px 0 #fff8 inset}
+.flight-scenery-group--light .flight-light-options[aria-label="白昼进度"] button,.flight-scenery-group--light .flight-light-options[aria-label="Daylight progress"] button{padding-top:28px;background:linear-gradient(175deg,#dbe9ed 0%,#f7e9bd 55%,#fffdf6 100%);color:#5d624d;position:relative}
+.flight-scenery-group--light .flight-light-options[aria-label="白昼进度"] button:nth-child(2),.flight-scenery-group--light .flight-light-options[aria-label="Daylight progress"] button:nth-child(2){background:linear-gradient(175deg,#b8dbe9,#f8f2d8 80%)}
+.flight-scenery-group--light .flight-light-options[aria-label="白昼进度"] button:nth-child(3),.flight-scenery-group--light .flight-light-options[aria-label="Daylight progress"] button:nth-child(3){background:linear-gradient(175deg,#dfc0ae,#f5d6ad 60%,#f9f2dc)}
+.flight-scenery-group--weather .flight-light-options[role=group] button{padding-top:26px;background:linear-gradient(160deg,#dcecf1,#fffdf6)}
+.flight-scenery-group--weather .flight-light-options[role=group] button:nth-child(3){background:linear-gradient(160deg,#cbd8da,#edf0e9)}
+.flight-scenery-group--weather .flight-light-options[role=group] button:nth-child(4){background:linear-gradient(160deg,#bdced1,#e3ece6)}
+.flight-light-range{display:flex;gap:12px;align-items:center;font-size:12px;margin:14px 0;color:#4b6a67}
+.flight-light-range input{min-width:0;flex:1;accent-color:#397975;min-height:44px}
+.flight-light-content small{font-size:11px;line-height:1.65;display:block;color:#627b73;opacity:1}
+.flight-settings .flight-light-content p{font-size:12px;line-height:1.6;color:#54726d;margin:9px 0}
+.flight-settings details{margin-top:18px}.flight-settings summary{cursor:pointer;padding:12px 0;font-size:13px;line-height:1.5}
 .flight-light-content details label{display:flex;gap:8px;align-items:center;padding:8px 0}
 .flight-light-content details button{font-size:12px;min-height:40px;padding:8px}
-.flight-panel-return{margin-top:16px;width:100%}
-.flight-view-preparing{position:absolute;inset:0;z-index:16;background:#e0e5e3;pointer-events:none}
-.flight-view-return{position:absolute;bottom:22px;right:22px;z-index:22;pointer-events:auto;border:0;border-radius:14px;padding:14px;background:#f6f8ee;color:#315d60}
+.flight-settings summary:focus-visible{outline:3px solid #164f63;outline-offset:2px;border-radius:6px}
+.flight-panel-return{margin-top:18px;width:100%}
+.flight-panel-intro{padding:20px 0 8px}.flight-panel-intro h3{font-size:20px;line-height:1.4;margin:0}
+#flight-section-viewpoints .flight-light-content>.flight-light-options[role=group]{display:grid;grid-template-columns:1fr}
+#flight-section-viewpoints .flight-light-options[role=group] button{justify-content:flex-start;min-height:64px;padding:18px 18px 18px 58px;background:linear-gradient(100deg,#cfe6e8 0, #e2efea 42px,#fffdf6 43px);text-align:left;font-size:14px}
+#flight-section-viewpoints .flight-light-options[role=group] button:nth-child(2){background:linear-gradient(100deg,#dbd6b9 0,#e9e7cc 42px,#fffdf6 43px)}
+#flight-section-viewpoints .flight-light-options[role=group] button:nth-child(3){background:linear-gradient(100deg,#b9d9d9 0,#d5e8e6 42px,#fffdf6 43px)}
+.flight-control-title{display:flex;gap:8px;align-items:center;font-size:13px;font-weight:650;color:#315d5b}
+.flight-sound-choice{display:flex;flex-direction:column;gap:12px;padding-top:2px}.flight-sound-choice small{margin:5px 0 0 26px}
+.flight-experience .flight-sound-choice button{min-height:44px;padding:10px 14px;font-size:13px;align-self:flex-start;box-shadow:none;background:#e7f0e9;border-color:#c0d5c7}
+.flight-experience .flight-sound-choice .flight-sound-enable{background:#356b67;border-color:#356b67;color:#fffef5}
+.flight-settings .flight-nature-status{font-size:11px;line-height:1.6;color:#627b73;margin:8px 0 4px}
+.flight-nature-toggle:last-of-type{border-bottom:0}
+.flight-observation-notes{border-top:1px solid #355f5520;padding-top:10px}
+.flight-observation-notes>summary{display:flex;gap:10px;align-items:center;color:#355d5b;list-style:none;font-weight:650}
+.flight-observation-notes>summary::after{content:'+';margin-left:auto;font-size:20px;font-weight:400}.flight-observation-notes[open]>summary::after{content:'−'}
+.flight-note-topics{display:grid;gap:7px;margin-top:8px}
+.flight-experience .flight-note-topics button{justify-content:space-between;text-align:left;min-height:60px;padding:12px;font-size:13px;box-shadow:none;background:#f0f3e8;border-color:#d5ded0}
+.flight-note-topics small{font-size:11px;font-weight:400;margin-top:3px}
+.flight-observation-backdrop{position:fixed;inset:0;z-index:39;background:#102d3866;pointer-events:auto}
+.flight-observation-card{position:fixed;z-index:40;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;overscroll-behavior:contain;border:1px solid #e1e3ce;border-radius:22px;padding:24px;background:#fffdf3;box-shadow:0 16px 60px #102d3840}
+.flight-observation-card h3{font-size:23px;line-height:1.5;margin:20px 0 12px}.flight-observation-card p{font-size:15px;line-height:1.8}.flight-observation-card a{color:#276b70;overflow-wrap:anywhere}.flight-observation-card .flight-note-paused{font-size:12px;color:#698179}
+.flight-view-preparing{position:absolute;inset:0;z-index:16;background:#e0e5e3;pointer-events:none}.flight-view-return{position:absolute;bottom:22px;right:22px;z-index:22;pointer-events:auto}
 .flight-toolbar{z-index:25}
 @media(max-width:600px){
- .flight-settings{top:82px;right:12px;width:min(360px,calc(100% - 24px));max-height:min(54dvh,calc(100dvh - 240px));padding:16px}
- .flight-toolbar__right{gap:6px}.flight-toolbar__right>button{font-size:12px;padding:10px 8px}
- .flight-toolbar__right>button[aria-controls] span{display:none}
- .flight-card .flight-panel-status{font-size:12px}
- .flight-experience:has(.flight-settings) .flight-place{visibility:hidden}
+ .flight-settings{top:86px;right:10px;width:calc(100vw - 20px);max-height:calc(100dvh - 244px - env(safe-area-inset-bottom));border-radius:20px}
+ .flight-settings-heading{padding:17px 17px 10px}.flight-settings-body{padding:4px 17px 24px}.flight-settings .flight-card__heading h2{font-size:21px}
+ .flight-panel-sections{padding:4px 9px 10px}.flight-panel-sections button{font-size:12px;min-height:58px}
+ .flight-toolbar__right{gap:6px}.flight-toolbar__right>button{font-size:12px;padding:10px 8px}.flight-toolbar__right>button[aria-controls] span{display:none}
+ .flight-experience:has(.flight-settings) .flight-place{visibility:hidden}.flight-settings .flight-light-options button{font-size:12px}
 }
-@media(max-height:520px){.flight-settings{top:80px;max-height:calc(100dvh - 94px);width:min(380px,50vw);right:12px}.flight-experience:has(.flight-settings) .flight-assist{display:none}}
-
-.flight-panel-sections{flex-wrap:wrap}
-.flight-panel-sections button{white-space:nowrap;flex:1 0 auto}
-.flight-nature .flight-setting:has(input[type=range]){display:grid;gap:8px}
-.flight-nature input[type=range]{width:100%;height:28px}
-.flight-nature figure{margin:16px 0}
-.flight-nature figcaption{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.flight-nature figcaption a{color:#24595b;font-weight:700}
-.flight-observation-card{border:1px solid #aebfb7;border-radius:14px;padding:14px;margin:16px 0;background:#fffdf4}
-.flight-observation-card h3{margin:8px 0}
-
-.flight-observation-card{position:fixed;z-index:40;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 40px));max-height:80dvh;overflow:auto;box-shadow:0 0 0 100vmax #102d3866}
-
-.flight-observation-backdrop{position:fixed;inset:0;z-index:39;background:#102d3866}
-.flight-observation-card{box-shadow:0 12px 60px #102d3855}
+@media(max-width:360px){.flight-settings-body{padding-inline:13px}.flight-settings-heading{padding-inline:13px}.flight-settings .flight-card__heading h2{font-size:20px}.flight-panel-sections button span{font-size:11px}.flight-setting select{font-size:16px}}
+@media(max-height:520px){.flight-settings{top:78px;max-height:calc(100dvh - 90px);width:min(440px,55vw);right:12px}.flight-settings-heading{padding:12px 16px 8px}.flight-settings .flight-eyebrow{display:none}.flight-panel-sections{padding-bottom:6px}.flight-experience .flight-panel-sections button{min-height:45px;flex-direction:row}.flight-settings .flight-panel-status{margin-top:5px}.flight-experience:has(.flight-settings) .flight-assist{display:none}}
+@media(prefers-reduced-motion:reduce){.flight-settings *, .flight-observation-card *{scroll-behavior:auto;transition:none}}
+/* Two deliberate mobile toolbar rows retain a readable camera action at 320px. */
+@media(max-width:600px){
+ .flight-toolbar{align-items:flex-start}.flight-toolbar>button{min-width:44px;min-height:44px;padding:10px}.flight-toolbar>button>span{display:none}
+ .flight-toolbar__right{flex:1;min-width:0;flex-wrap:wrap;justify-content:flex-end;gap:6px}.flight-toolbar__right>button{min-height:44px}
+ .flight-toolbar .flight-postcards{flex-basis:100%;justify-content:flex-end;min-width:0}.flight-toolbar .flight-postcard-shutter{min-height:44px}.flight-toolbar .flight-postcard-pocket{min-height:44px}
+ .flight-settings{top:130px;max-height:calc(100dvh - 286px - env(safe-area-inset-bottom))}.flight-postcard-feedback{top:106px}
+}
+@media(max-height:520px) and (min-width:601px){.flight-toolbar .flight-postcard-shutter span{font-size:12px}.flight-toolbar{left:12px;right:12px}.flight-toolbar>button{padding:10px}.flight-toolbar>button>span{display:none}.flight-toolbar__right{gap:6px}.flight-toolbar__right>button{padding:10px}.flight-toolbar__right>button[aria-controls] span{display:none}}
+@media(max-height:520px) and (max-width:600px){.flight-settings{top:130px;max-height:calc(100dvh - 142px);width:calc(100vw - 20px)}}
+.flight-scroll-cue{position:absolute;z-index:3;bottom:5px;left:50%;transform:translateX(-50%);pointer-events:none;white-space:nowrap;color:#496d64;background:#f8faf0ed;border:1px solid #d5e1d6;border-radius:14px;padding:2px 10px;font-size:10px;line-height:1.5}
+@media(max-width:600px){
+ .flight-toolbar__right>button>span{display:none}.flight-toolbar__right>button{width:44px;height:44px;min-height:44px;padding:10px;flex:none;border-radius:14px}
+ .flight-toolbar>button{width:44px;height:44px;flex:none}.flight-toolbar .flight-postcard-shutter{height:44px;min-height:44px;padding:8px 12px;white-space:nowrap}
+ .flight-toolbar .flight-postcard-shutter span{white-space:nowrap;max-width:none;font-size:12px;line-height:1.4}.flight-toolbar .flight-postcard-pocket{height:44px;min-height:44px}
+}
+/* Definite flex sizing keeps the scroll viewport inside the fixed shell. */
+.flight-settings-scroll-shell{display:flex;flex-direction:column}
+.flight-settings-scroll{height:auto;min-height:0;flex:1}
+/* Reading keeps its close button fixed while parent notes share the museum scrollbar. */
+.flight-observation-card{display:flex;flex-direction:column;overflow:hidden;padding:0}
+.flight-observation-card>.flight-card__heading{flex:none;padding:18px 22px 14px;border-bottom:1px solid #365b5014;background:linear-gradient(135deg,#f6f8eb,#eef4eb)}
+.flight-observation-card>.flight-card__heading button{width:44px;min-height:44px;padding:9px;border:0;border-radius:50%;box-shadow:none;background:#fff9}
+.flight-note-scroll-shell{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.flight-note-scroll{height:auto;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;touch-action:pan-y;scroll-padding:20px}
+.flight-note-scroll::-webkit-scrollbar{display:none}
+.flight-note-body{padding:12px 24px 24px}
+.flight-note-scroll-shell[data-scrollable=true]::after{content:'';position:absolute;inset:auto 0 0;height:15px;pointer-events:none;background:linear-gradient(transparent,#fffdf3)}
+@media(max-width:600px){.flight-observation-card>.flight-card__heading{padding:14px 18px 10px}.flight-note-body{padding:10px 18px 20px}}

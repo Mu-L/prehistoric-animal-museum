@@ -147,7 +147,7 @@ performance validation is separate from local tests and desktop visual review.
 
 ### Living coast candidate
 
-Nature adds three independent controls, all off on entry: vegetation breeze,
+The scenery panel groups light, weather and three independent controls, all off on entry: vegetation breeze,
 brief same-species companions, and explicitly enabled natural sound. Restart
 retains the two visual choices but requires a fresh sound gesture; Defaults clears
 all three. The existing host update and admitted environment frame drive motion.
@@ -162,13 +162,13 @@ Near companions reuse the original Idle rig; the distant derivative retains the
 original animation samples and borrows source textures. Low quality admits one
 near and three distant actors (25,638 triangles); balanced admits two and six
 (51,276). A quality downgrade allows the old cohort six active seconds to depart.
-NPCs check a bounded terrain corridor and yield to the player. These groups are
+NPCs predict terrain along their integrated path. Companions cruise slightly faster than the player, with bounded acceleration, turning and predictive yielding; ordinary proximity does not trigger disappearance. These groups are
 artistic scenes, not claims about Pteranodon social behaviour.
 
-The three observation prompts appear only when requested, pause scenery and mute
+The panel has scenery, viewpoints and flight preferences. Observation notes are collapsed under viewpoints. The three prompts appear only when requested, pause scenery and mute
 sound, and remain paused when closed. Postcards copy the completed host frame into
 one temporary 2D canvas, then encode asynchronously. Output is at most 1280 pixels
-on its longest side, with three local previews and explicit download. Nothing is
+on its longest side, with three local previews and explicit download. A persistent camera button captures the scene; the same canvas briefly floats into a thumbnail pocket while flight continues. Encoding and presentation share a bounded canvas lease. Reduced motion skips the travel animation, and resize, backgrounding or exit safely release it. Closing the gallery preserves flight; previews must be downloaded before leaving. Nothing is
 uploaded. Candidate asset provenance and deterministic validators accompany the
 source; subjective sound, movement and physical-device acceptance remain separate
 from automated checks. Flight remains disabled in the normal build.

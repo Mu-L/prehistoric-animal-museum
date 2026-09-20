@@ -1,18 +1,28 @@
 export interface Photo { url: string; width: number; height: number; frame: number; sun: number; weather: string }
-export type PhotoState = { status: 'idle'|'waiting'|'encoding'|'error'; photos: readonly Photo[] }
+export interface PhotoCapture { id:number; canvas:HTMLCanvasElement; frame:number }
+export type PhotoState = { capture?:PhotoCapture|undefined; status: 'idle'|'waiting'|'encoding'|'error'; photos: readonly Photo[] }
 /** The host supplies only the completed canvas, never renderer ownership. */
 export class PhotoService {
   private generation = 0
   private closed = false
   private encodingBusy = false
+  private nextCapture = 0
+  private activeCopy: {capture:PhotoCapture; encoding:boolean; released:boolean}|null = null
   private state: PhotoState = {status:'idle',photos:[]}
   constructor(private readonly changed:()=>void) {}
   getSnapshot = () => this.state
   request() {
-    if(this.closed || this.encodingBusy || this.state.status==='waiting' || this.state.status==='encoding')return false
+    if(this.closed || this.state.capture || this.encodingBusy || this.state.status==='waiting' || this.state.status==='encoding')return false
     this.state={...this.state,status:'waiting'};this.changed();return true
   }
-  cancel() {this.generation++;this.state={...this.state,status:'idle'};this.changed()}
+  releaseCapture(id:number) {
+    const copy=this.activeCopy
+    if(!copy||copy.capture.id!==id)return
+    copy.released=true
+    if(!copy.encoding){copy.capture.canvas.width=copy.capture.canvas.height=0;this.activeCopy=null}
+    this.state={...this.state,capture:undefined};this.changed()
+  }
+  cancel() {this.generation++;if(this.activeCopy)this.releaseCapture(this.activeCopy.capture.id);this.state={...this.state,status:'idle'};this.changed()}
   completedFrame(canvas:HTMLCanvasElement, metadata:Omit<Photo,'url'|'width'|'height'>) {
     if(this.closed||this.state.status!=='waiting')return
     const token=this.generation
@@ -26,8 +36,12 @@ export class PhotoService {
       // Synchronous copy within renderer.render's callback, before the drawing buffer clears.
       context.drawImage(canvas,0,0,copy.width,copy.height)
       const width=copy.width,height=copy.height
+      const owned={capture:{id:++this.nextCapture,canvas:copy,frame:metadata.frame},encoding:true,released:false}
+      this.activeCopy=owned
+      this.state={...this.state,capture:owned.capture};this.changed()
       copy.toBlob(blob=>{
-        copy.width=copy.height=0;this.encodingBusy=false
+        owned.encoding=false;this.encodingBusy=false
+        if(owned.released){copy.width=copy.height=0;if(this.activeCopy===owned)this.activeCopy=null}
         if(this.closed||token!==this.generation)return
         if(!blob){this.error();return}
         let url:string
@@ -35,11 +49,11 @@ export class PhotoService {
         const photo={...metadata,width,height,url}
         const photos=[photo,...this.state.photos]
         for(const removed of photos.splice(3))URL.revokeObjectURL(removed.url)
-        this.state={status:'idle',photos};this.changed()
+        this.state={...this.state,status:'idle',photos};this.changed()
       },'image/png')
-    } catch {this.encodingBusy=false;if(token===this.generation&&!this.closed)this.error()}
+    } catch {this.encodingBusy=false;if(this.activeCopy)this.activeCopy.encoding=false;if(token===this.generation&&!this.closed)this.error()}
   }
-  private error(){this.state={...this.state,status:'error'};this.changed()}
+  private error(){if(this.activeCopy)this.releaseCapture(this.activeCopy.capture.id);this.state={...this.state,status:'error'};this.changed()}
   remove(url:string){URL.revokeObjectURL(url);this.state={...this.state,photos:this.state.photos.filter(p=>p.url!==url)};this.changed()}
-  dispose(){if(this.closed)return;this.closed=true;this.generation++;for(const p of this.state.photos)URL.revokeObjectURL(p.url);this.state={status:'idle',photos:[]}}
+  dispose(){if(this.closed)return;this.closed=true;this.generation++;if(this.activeCopy)this.releaseCapture(this.activeCopy.capture.id);for(const p of this.state.photos)URL.revokeObjectURL(p.url);this.state={status:'idle',photos:[]}}
 }

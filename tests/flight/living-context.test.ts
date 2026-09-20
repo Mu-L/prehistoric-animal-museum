@@ -1,5 +1,5 @@
 import {expect,it,vi} from 'vitest'
-import {LivingScope,DEFAULT_LIVING_INTENT,livingContext} from '../../src/flight-experience/living/living-context'
+import {LivingScope,DEFAULT_LIVING_INTENT,livingContext,livingPlayerVelocity} from '../../src/flight-experience/living/living-context'
 import {clockPolicy} from '../../src/flight-experience/environment/environment-clock'
 import {WeatherController} from '../../src/flight-experience/environment/weather-controller'
 it('derives one admitted clock and separates intent from permission',()=>{
@@ -12,4 +12,12 @@ it('invalidates late ownership and releases each resource once',()=>{
  const remove=scope.own(release);scope.invalidate();expect(scope.accepts(token)).toBe(false)
  remove();scope.dispose();remove();expect(release).toHaveBeenCalledOnce()
  scope.own(release);expect(release).toHaveBeenCalledTimes(2);expect(scope.accepts(scope.generation)).toBe(false)
+})
+
+it('uses simulation speed in world heading only during real flight, never the retained observation velocity',()=>{
+ const heading=.22,velocity=livingPlayerVelocity(true,28,heading,3)
+ expect(Math.hypot(velocity.x,velocity.z)).toBeCloseTo(28);expect(velocity.y).toBe(3)
+ expect(velocity.x).toBeCloseTo(Math.sin(heading)*28)
+ expect(livingPlayerVelocity(false,28,heading,3)).toEqual({x:0,y:0,z:0})
+ expect(livingPlayerVelocity(true,NaN,heading,3)).toEqual({x:0,y:0,z:0})
 })

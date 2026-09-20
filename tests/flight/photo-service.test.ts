@@ -21,6 +21,7 @@ describe('completed-frame postcard ownership',()=>{
    const p=service.getSnapshot().photos[0]!
    expect(p.frame).toBe(frame);expect(p.width).toBe(1280);expect(p.height).toBe(720)
    expect(service.getSnapshot().photos.length).toBeLessThanOrEqual(3)
+   service.releaseCapture(service.getSnapshot().capture!.id)
   }
   expect(revoke).toHaveBeenCalledTimes(17)
   service.dispose();service.dispose();expect(revoke).toHaveBeenCalledTimes(20)
@@ -36,6 +37,16 @@ describe('completed-frame postcard ownership',()=>{
   create.mockImplementation(()=>{throw new Error('out-of-memory')})
   service.completedFrame(canvas,{frame:2,sun:.2,weather:'clear'});callbacks.shift()!(new Blob(['png']))
   expect(service.getSnapshot().status).toBe('error');expect(service.request()).toBe(true)
+ })
+ it('leases the identical captured canvas until both encoding and presentation finish',()=>{
+  const {service,canvas,callbacks}=setup();service.request();service.completedFrame(canvas,{frame:4,sun:.2,weather:'clear'})
+  const capture=service.getSnapshot().capture!;expect(capture.frame).toBe(4);expect(capture.canvas.width).toBe(1280)
+  service.releaseCapture(capture.id);expect(capture.canvas.width).toBe(1280);expect(service.request()).toBe(false)
+  callbacks.shift()!(new Blob(['png']));expect(capture.canvas.width).toBe(0);expect(service.request()).toBe(true)
+  service.completedFrame(canvas,{frame:5,sun:.2,weather:'clear'});const next=service.getSnapshot().capture!
+  callbacks.shift()!(new Blob(['png']));expect(next.canvas.width).toBe(1280);expect(service.request()).toBe(false)
+  service.releaseCapture(capture.id);expect(next.canvas.width).toBe(1280)
+  service.releaseCapture(next.id);expect(next.canvas.width).toBe(0);expect(service.request()).toBe(true)
  })
  it('recovers from null blobs and a tainted canvas without stopping travel',()=>{
   const {service,canvas,callbacks,draw}=setup();service.request();service.completedFrame(canvas,{frame:1,sun:.2,weather:'clear'})

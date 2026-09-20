@@ -11,6 +11,8 @@ export interface LivingContext {
   readonly motionSeconds: number
   readonly camera: Readonly<{x:number;y:number;z:number}>
   readonly player: Readonly<{x:number;y:number;z:number}>
+  /** Authoritative world velocity; render-position differences are only a fallback. */
+  readonly playerVelocity?: Readonly<{x:number;y:number;z:number}>
   readonly heading: number
   readonly quality: 'low' | 'balanced'
   readonly gentle: boolean
@@ -42,4 +44,10 @@ export class LivingScope {
     for (const release of this.releases) release()
     this.releases.clear()
   }
+}
+
+/** Observation and pause never report motion from the retained hero simulation. */
+export function livingPlayerVelocity(flying:boolean,speed:number,heading:number,climbRate:number) {
+  if(!flying||![speed,heading,climbRate].every(Number.isFinite))return{x:0,y:0,z:0}
+  return{x:Math.sin(heading)*speed,y:climbRate,z:-Math.cos(heading)*speed}
 }
