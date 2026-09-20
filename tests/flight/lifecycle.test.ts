@@ -161,7 +161,7 @@ describe('flight owned resources and recovery', () => {
     expect(runtime.observation.phase).toBe('returning');expect(runtime.observation.target).toBeNull()
     expect(runtime.environmentClock.solarDayProgress).toBe(.94)
     runtime.close();expect(runtime.observation.bookmark).toBeNull()
-  })
+  }, 12_000) // Real generator setup exceeded the default 5s on Ubuntu; keep the complete state assertions.
   it('recovers entry and return preparation after hidden/context overlap without reviving scenery', async () => {
     const h = host(), runtime = new FlightRuntime(h.controller, false)
     const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending

@@ -18,7 +18,8 @@ beforeEach(() => {
   vi.spyOn(TextureLoader.prototype, 'loadAsync').mockResolvedValue(new Texture())
 })
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
-// Real generator integration stress: latest Ubuntu CI measured 30.038s (run 35427540301).
+// Real generator integration stress: Ubuntu run 35518984621 exceeded 45s.
+// This is a correctness route, not a wall-clock performance benchmark.
 // Keep the full 19km route and every resource assertion; allowance is per-test only.
 describe('terrain generator integration stress', () => {
   it('keeps queues/resources bounded over a long deterministic route and releases twice safely', () => {
@@ -36,5 +37,5 @@ describe('terrain generator integration stress', () => {
     stream.dispose(); stream.dispose()
     resources.forEach(spy => expect(spy).toHaveBeenCalledTimes(1))
     expect(stream.resident.size).toBe(0); expect(TestWorker.instances.every(w => w.terminated)).toBe(true)
-  }, 45_000)
+  }, 90_000)
 })
