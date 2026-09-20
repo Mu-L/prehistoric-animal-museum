@@ -232,6 +232,6 @@
 @media(max-height:520px){.flight-settings{top:78px;max-height:calc(100dvh - 92px)}.flight-view-loading{bottom:16px;width:250px;padding:16px}.flight-view-loading strong{font-size:14px}}
 @media(prefers-reduced-motion:reduce){.flight-view-loading__line{animation:none}}
 .flight-daylight-stops{position:relative;height:36px;margin-inline:12px}
-.flight-daylight-stops button{position:absolute;top:0;transform:translateX(-50%)}
+.flight-daylight-stops button{position:absolute;top:0;width:max-content;white-space:nowrap;transform:translateX(-50%)}
 .flight-daylight-stops button:first-child{transform:translateX(-10px)}
 .flight-daylight-stops button:last-child{transform:translateX(calc(-100% + 10px))}
