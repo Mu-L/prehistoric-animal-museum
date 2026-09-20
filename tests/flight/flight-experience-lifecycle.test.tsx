@@ -323,3 +323,19 @@ it('closes the museum language menu before the flight card, restoring focus in o
  expect(onClose).not.toHaveBeenCalled()
  view.unmount()
 })
+
+it('keeps failure controls awake after quiet viewing and avoids duplicate start actions',async()=>{
+ const {runtime,view}=await mount()
+ vi.useFakeTimers()
+ try {
+  fireEvent.click(screen.getByRole('button',{name:'Just look at the scenery'}))
+  fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}))
+  expect(screen.getAllByRole('button',{name:'Start flying'})).toHaveLength(1)
+  fireEvent.keyDown(window,{key:'Escape',code:'Escape'})
+  vi.spyOn(console,'error').mockImplementation(()=>{})
+  act(()=>runtime.fail(new Error('injected quiet-view fault')))
+  act(()=>{vi.advanceTimersByTime(5000)})
+  expect(screen.getByRole('alert')).toBeVisible()
+  expect(screen.getByRole('dialog')).toHaveAttribute('data-hud-idle','false')
+ } finally {view.unmount();vi.useRealTimers()}
+})

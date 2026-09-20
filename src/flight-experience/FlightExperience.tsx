@@ -116,7 +116,8 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
   const inViewpoint=snapshot.reason !== 'error' && Boolean(snapshot.observation && snapshot.observation!=='inactive')
   const preparingView=snapshot.viewTransition?.waiting||snapshot.observation==='preparing'||snapshot.observation==='returning'||snapshot.observation==='failed'
   const flying = snapshot.phase === 'flying'
-  const hudIdle=useQuietHud(root,settings||galleryOpen||Boolean(preparingView)||Boolean(snapshot.photos?.capture)||['waiting','encoding','error'].includes(snapshot.photos?.status??'')||(!observe&&!flying&&!inViewpoint&&snapshot.phase!=='paused')||(!observe&&Boolean(snapshot.reason&&snapshot.reason!=='user')))
+  const quietViewing=observe&&['ready','paused'].includes(snapshot.phase)&&Boolean(runtime?.canResume)
+  const hudIdle=useQuietHud(root,settings||galleryOpen||Boolean(preparingView)||Boolean(snapshot.photos?.capture)||['waiting','encoding','error'].includes(snapshot.photos?.status??'')||(!quietViewing&&!flying&&!inViewpoint&&snapshot.phase!=='paused')||(!quietViewing&&Boolean(snapshot.reason&&snapshot.reason!=='user')))
   const start = () => { setObserve(false); runtime?.start(); root.current?.focus() }
   const stopPointer = (event: PointerEvent<HTMLButtonElement>) => runtime?.input.release(event.pointerId)
   const direction = (event: PointerEvent<HTMLButtonElement>, turn: number, climb: number) => {
@@ -170,9 +171,9 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
       <details className="flight-fine-tune"><summary>{locale==='zh-CN'?'画面质量':'Picture quality'}</summary><div className="flight-setting flight-choice-setting"><span>{copy.quality}<small>{locale==='zh-CN'?'切换时会短暂停留':'Changing quality briefly stops flight'}</small></span><div className="flight-inline-choices" role="group" aria-label={copy.quality}>{(['low','balanced'] as const).map(quality=><button type="button" key={quality} disabled={inViewpoint} aria-pressed={snapshot.quality===quality} onClick={()=>configure({...draft,gentle:snapshot.gentle,quality})}>{quality==='low'?copy.low:copy.balanced}</button>)}</div></div></details>
 
       </div>
-      {!inViewpoint&&snapshot.phase==='ready'&&runtime?.canResume&&<button type="button" className="flight-primary flight-panel-return" onClick={()=>{closeSettings();start()}}>{copy.start}</button>}
+      {!observe&&!inViewpoint&&snapshot.phase==='ready'&&runtime?.canResume&&<button type="button" className="flight-primary flight-panel-return" onClick={()=>{closeSettings();start()}}>{copy.start}</button>}
       </div></div><TransientScrollbar isScrolling={isScrolling} metrics={metrics}/></div>
-    </section> : !flying && !inViewpoint && !galleryOpen && !(observe&&['ready','paused'].includes(snapshot.phase)&&runtime?.canResume) && (snapshot.phase!=='paused'||Boolean(snapshot.reason&&snapshot.reason!=='user')) && <section className="flight-card flight-intro" aria-live="polite">
+    </section> : !flying && !inViewpoint && !galleryOpen && !quietViewing && (snapshot.phase!=='paused'||Boolean(snapshot.reason&&snapshot.reason!=='user')) && <section className="flight-card flight-intro" aria-live="polite">
       <span className="flight-eyebrow">{copy.title} · PTERANODON</span>
       <h1>{snapshot.phase === 'buffering' ? copy.terrain : snapshot.phase === 'preparing' ? copy.preparing : snapshot.phase === 'recovering' ? copy.error : snapshot.phase === 'ready' ? copy.ready : copy.paused}</h1>
       <p>{snapshot.phase === 'ready' ? copy.subtitle : reason}</p>
