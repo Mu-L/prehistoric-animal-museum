@@ -169,7 +169,7 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
       <details className="flight-fine-tune"><summary>{locale==='zh-CN'?'画面质量':'Picture quality'}</summary><label className="flight-setting"><span>{copy.quality}<small>{locale==='zh-CN'?'切换时会短暂停留':'Changing quality briefly stops flight'}</small></span><select disabled={inViewpoint} value={snapshot.quality} onChange={e=>configure({...draft,gentle:snapshot.gentle,quality:e.target.value==='balanced'?'balanced':'low'})}><option value="low">{copy.low}</option><option value="balanced">{copy.balanced}</option></select></label></details>
 
       </div>
-      {!inViewpoint&&!flying&&runtime?.canResume&&<button type="button" className="flight-primary flight-panel-return" onClick={()=>{closeSettings();start()}}>{snapshot.phase==='ready'?copy.start:copy.resume}</button>}
+      {!inViewpoint&&snapshot.phase==='ready'&&runtime?.canResume&&<button type="button" className="flight-primary flight-panel-return" onClick={()=>{closeSettings();start()}}>{copy.start}</button>}
       </div></div><TransientScrollbar isScrolling={isScrolling} metrics={metrics}/></div>
     </section> : !flying && !inViewpoint && !galleryOpen && (snapshot.phase!=='paused'||Boolean(snapshot.reason&&snapshot.reason!=='user')) && <section className="flight-card flight-intro" aria-live="polite">
       <span className="flight-eyebrow">{copy.title} · PTERANODON</span>
