@@ -723,6 +723,8 @@ export class FlightRuntime implements ExternalExperience {
     if (!import.meta.env.DEV || this.observation.phase !== 'inactive') return
     this.reviewRoute=null;this.lastReviewRouteId='manual'
     this.pause('user'); this.input.clear()
+    // A DEV anchor is an explicit scene reset, not an orbit from the old location.
+    this.cancelCameraInput();this.cameraRig.reset()
     Object.assign(this.simulation.position,anchor.position);this.simulation.heading=anchor.heading
     this.environmentClock.setSolarDayProgress(solarProgress(anchor.preset))
     if(anchor.weather)this.weather.restore(anchor.weather)

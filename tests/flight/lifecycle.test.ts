@@ -297,8 +297,11 @@ describe('flight owned resources and recovery', () => {
     runtime.reviewIsolation.freezeWorld=true
     for(const preset of ['evening','morning','afternoon'] as const){
       runtime.setSolarMode('auto')
+      runtime.cameraRig.select('front');runtime.cameraRig.step(.01,true,()=>null)
       runtime.applyCaptureAnchor({...CAPTURE_ANCHORS[0]!,preset})
       runtime.update(0)
+      expect(runtime.cameraRig.rear).toBe(true)
+      expect(runtime.cameraRig.rejection).toBeNull()
       expect(runtime.scenery.environment.frame.solarDayProgress).toBe(runtime.environmentClock.solarDayProgress)
       expect(runtime.environmentClock.solarMode).toBe('fixed')
     }
