@@ -1,18 +1,18 @@
+import {angleDelta} from './camera-rig'
 import {cameraCopy} from './camera-messages'
 import type { FlightRuntime, FlightSnapshot } from './FlightRuntime'
 export function CameraPanel({runtime,snapshot,locale}:{runtime:FlightRuntime;snapshot:FlightSnapshot;locale:'en'|'zh-CN'}) {
   const c=cameraCopy[locale],state=snapshot.cameraRig, fixed=state?.fixed
-  const hint=fixed?c.fixed:state?.perspective==='front'?c.front:state?.perspective==='rear'?c.behind:state?.perspective==='custom'?c.custom:c.side
-  const yaw=state?.resolved.yaw??0
-  return <section className="flight-camera-panel" aria-label={c.title} onKeyDown={event=>{
-    const delta:Record<string,[number,number]>={ArrowLeft:[-.15,0],ArrowRight:[.15,0],ArrowUp:[0,.1],ArrowDown:[0,-.1]}
-    const step=delta[event.key];if(step){event.preventDefault();event.stopPropagation();runtime.orbitCamera(step[0],step[1])}
-  }}>
-    <h3>{c.title}</h3>
+  const transitioning=Boolean(state && !state.rejection && (Math.abs(angleDelta(state.resolved.yaw,state.requested.yaw))+Math.abs(state.resolved.pitch-state.requested.pitch)>1e-6))
+  return <section className="flight-camera-panel" aria-label={c.title}>
+    <h3>{locale==='zh-CN'?'看它飞':'Watch it fly'}</h3><p className="flight-control-help">{fixed?c.fixed:locale==='zh-CN'?'拖动画面换角度 · 滚轮拉近拉远':'Drag to orbit · Scroll to zoom'}</p>
     {!fixed&&<div className="flight-inline-choices">{(['rear','front','left','right'] as const).map((preset,i)=><button key={preset} type="button" aria-pressed={state?.perspective===preset} onClick={()=>runtime.selectPerspective(preset)}>{c.presets[i]}</button>)}</div>}
-    <div className="flight-camera-nudges" role="group" aria-label={c.title}>{([[-.15,0],[.15,0],[0,.1],[0,-.1]] as const).map((step,i)=><button key={i} type="button" onClick={()=>runtime.orbitCamera(step[0],step[1])}>{c.nudges[i]}</button>)}</div>
-    <button type="button" onClick={()=>runtime.selectPerspective('rear')}>{fixed?c.fixedReset:c.reset}</button>
-    {state?.rejection&&<p role="status">{c.blocked}</p>}
-    <details><summary>{c.help}</summary><p>{hint}</p>{!fixed&&<svg viewBox="0 0 160 120" role="img" aria-label={c.diagram}><circle cx="80" cy="60" r="40" fill="none" stroke="currentColor" strokeDasharray="3 5"/><path d="M80 40 L87 70 L80 64 L73 70 Z" fill="currentColor"/><circle cx={80+40*Math.sin(yaw)} cy={60+40*Math.cos(yaw)} r="6" fill="#aa5432"/><path d={`M${80+32*Math.sin(yaw)} ${60+32*Math.cos(yaw)} L80 60`} stroke="#aa5432"/><text x="80" y="117" textAnchor="middle" fontSize="10" fill="currentColor">{c.diagram}</text></svg>}</details>
+    {!fixed&&<label className="flight-camera-distance"><span>{locale==='zh-CN'?'离它多远':'Camera distance'}</span><input aria-label={locale==='zh-CN'?'镜头距离':'Camera distance'} type="range" min="0.72" max="1.7" step="0.01" value={snapshot.settings.zoom??1} onChange={e=>runtime.configure({...snapshot.settings,zoom:Number(e.target.value)})}/><small><span>{locale==='zh-CN'?'近一点':'Closer'}</span><span>{locale==='zh-CN'?'远一点':'Farther'}</span></small></label>}
+    <details><summary>{c.adjust}</summary><div className="flight-camera-nudges" role="group" aria-label={c.adjust} onKeyDown={event=>{
+      const delta:Record<string,[number,number]>={ArrowLeft:[-.15,0],ArrowRight:[.15,0],ArrowUp:[0,.1],ArrowDown:[0,-.1]}
+      const step=delta[event.key];if(step){event.preventDefault();event.stopPropagation();runtime.orbitCamera(step[0],step[1])}
+    }}>{([[-.15,0],[.15,0],[0,.1],[0,-.1]] as const).map((step,i)=><button key={i} type="button" onClick={()=>runtime.orbitCamera(step[0],step[1])}>{c.nudges[i]}</button>)}</div></details>
+    {fixed&&<button type="button" onClick={()=>runtime.selectPerspective('rear')}>{c.fixedReset}</button>}
+    {(state?.rejection||transitioning)&&<p role="status">{state?.rejection?c.blocked:c.transitioning}</p>}
   </section>
 }

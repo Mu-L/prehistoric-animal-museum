@@ -1,3 +1,4 @@
+import {DEFAULT_FLIGHT_SPECIES,type FlightSpeciesProfile} from '../species/profiles'
 import { Group, Mesh, Vector3, type AnimationClip, type BufferGeometry, type Material, type Object3D } from 'three'
 import type { WorldSampler } from '../world'
 import type { LivingContext } from './living-context'
@@ -188,7 +189,7 @@ export class CompanionDirector {
   private travelSpeed = 28
   private previousPlayer: Point | null = null
   private previousCamera: Point | null = null
-  constructor(scene: Object3D, private readonly world: WorldSampler, private readonly heroRoot: Object3D, private readonly clip: AnimationClip, safeSurface?: (x:number,z:number)=>number) {
+  constructor(scene: Object3D, private readonly world: WorldSampler, private readonly heroRoot: Object3D, private readonly clip: AnimationClip, safeSurface?: (x:number,z:number)=>number,private readonly species:FlightSpeciesProfile=DEFAULT_FLIGHT_SPECIES) {
     scene.add(this.root); this.root.name='Living companions'
     this.surface=safeSurface??world.safeSurface
     // Match the hero correction group exactly; retain its source-space center.
@@ -201,7 +202,7 @@ export class CompanionDirector {
     const near=this.birds.filter(b=>b.route.near).length,far=this.birds.length-near
     const budgetTransition=this.quality==='low'&&(near>1||far>3)
     return {near,far,loading:this.loading,status:!this.enabled?'off':this.loadFailed?'degraded':this.loading?'loading':'ready',
-      triangles:this.birds.reduce((sum,bird)=>sum+(bird.lod==='source'?13494:4048),0),sourceLod:this.birds.filter(bird=>bird.lod==='source').length,budgetTransition,budgetTransitionMaxEffectiveSeconds:6,
+      triangles:this.birds.reduce((sum,bird)=>sum+(bird.lod==='source'?this.species.companionTriangles.near:this.species.companionTriangles.far),0),sourceLod:this.birds.filter(bird=>bird.lod==='source').length,budgetTransition,budgetTransitionMaxEffectiveSeconds:6,
       rejectedRoutes:this.rejected,resourceReferences:this.far?.references??0,
       actors:this.birds.map(bird=>({id:bird.route.id,phase:bird.departure!==null?'departing':bird.motion.avoiding?'yielding':'patrol',distance:bird.motion.clearance,predictedDistance:bird.motion.predictedClearance,speed:magnitude(bird.motion.velocity),cruiseSpeed:bird.motion.cruiseSpeed,acceleration:magnitude(bird.motion.acceleration),turnDegreesPerSecond:bird.motion.turnRate*180/Math.PI,avoidWeight:bird.motion.avoidWeight}))}
   }
@@ -213,7 +214,7 @@ export class CompanionDirector {
   private load() {
     if(this.loading||this.loadFailed||this.far||this.material===null)return
     this.loading=true;const revision=this.revision
-    void loadFarCompanionTemplate(this.material).then(library=>{
+    void loadFarCompanionTemplate(this.material,this.species.id,this.heroRoot).then(library=>{
       if(this.disposed||!this.enabled||revision!==this.revision){library.dispose();return}
       this.loading=false;this.far=library
     },()=>{if(revision===this.revision){this.loading=false;this.loadFailed=true}})
@@ -280,7 +281,7 @@ export class CompanionDirector {
         if(replacement){bird.wrapper.add(replacement.root);bird.visual.dispose();bird.visual=replacement;bird.lod=lod}
       }
       bird.wrapper.position.set(current.x-origin.x,current.y,current.z-origin.z)
-      bird.wrapper.rotation.y=bird.motion.heading+Math.PI
+      bird.wrapper.rotation.y=(this.species.id==='pteranodon'?bird.motion.heading:-bird.motion.heading)+this.species.yaw
       const bank=clamp(-bird.motion.turnRate*1.2,context.gentle?-.1:-.2,context.gentle?.1:.2)
       bird.wrapper.rotation.z+=(bank-bird.wrapper.rotation.z)*(1-Math.exp(-dt/1.2))
       bird.visual.setOpacity(Math.min(1,age/4,(bird.route.duration-age)/6,1-departureAge/6,Number.isFinite(bird.safetyExpiry)?Math.max(0,(bird.safetyExpiry-now)/1.5):1))
@@ -302,7 +303,7 @@ export class CompanionDirector {
       const lod=companionGeometryLod(near,distance(route.start,context.camera),'source',this.far!==null)
       const visual=this.makeVisual(lod,id)
       if(!visual)continue
-      const wrapper=new Group();wrapper.scale.setScalar(this.modelScale);wrapper.rotation.y=route.heading+Math.PI;wrapper.add(visual.root);this.root.add(wrapper)
+      const wrapper=new Group();wrapper.scale.setScalar(this.modelScale);wrapper.rotation.y=(this.species.id==='pteranodon'?route.heading:-route.heading)+this.species.yaw;wrapper.add(visual.root);this.root.add(wrapper)
       visual.setOpacity(0)
       this.birds.push({lod,route,born:this.localTime,motion:createCompanionMotion(route),departure:null,safetyExpiry:Infinity,nextTerrain:nextCompanionTerrainTime(this.localTime,id),visual,wrapper})
     }

@@ -1,3 +1,4 @@
+import { preparePterosaurMotion } from './pterosaur-motion'
 import {
   ACESFilmicToneMapping,
   AnimationMixer,
@@ -653,6 +654,7 @@ export class ViewerController {
         signal.throwIfAborted()
       }
 
+      gltf.animations = preparePterosaurMotion(gltf.scene, descriptor.id, gltf.animations)
       const modelRoot = gltf.scene
       modelRoot.name = `${descriptor.id}-model`
       modelRoot.rotation.y = (descriptor.presentation.initialYawDegrees * Math.PI) / 180

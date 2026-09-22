@@ -7,8 +7,10 @@ export async function findFlightAssetBoundaryFindings(root,enabled,files,manifes
  const readJson=async source=>JSON.parse(await readFile(path.join(sourceRoot,source),'utf8'))
  const ecology=await readJson('src/flight-experience/assets/ecology-r5/manifest.json')
  const companion=await readJson('src/flight-experience/assets/companions/manifest.json')
+ const speciesCompanions=await readJson('src/flight-experience/assets/companions/species-manifest.json')
  const sound=await readJson('src/flight-experience/assets/soundscape/manifest.json')
  const expected=[
+  ...speciesCompanions.assets.map(asset=>({source:asset.output,sha256:asset.sha256})),
   {source:'src/flight-experience/assets/ecology-r5/ecology-r5.glb',sha256:ecology.sha256},
   {source:companion.output,sha256:companion.sha256},
   ...sound.assets.map(asset=>({source:`src/flight-experience/assets/soundscape/${asset.file}`,sha256:asset.sha256})),

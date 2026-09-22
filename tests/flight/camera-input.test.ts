@@ -24,3 +24,14 @@ it('allows a secondary touch while flight has the primary, ignores third fingers
  f.event('pointercancel');f.event('lostpointercapture');expect(f.finish).toHaveBeenCalledOnce();expect(flight.read().climb).toBe(1)
  f.input.dispose();f.event('pointerdown');expect(f.capture.size).toBe(0)
 })
+
+it('zooms only the scene, normalizes wheel units, preserves browser pinch zoom and removes its listener',()=>{
+ const element=document.createElement('div');document.body.append(element);const zoom=vi.fn()
+ const input=new CameraInput(element,vi.fn(),vi.fn(),zoom)
+ const wheel=(deltaY:number,extra:WheelEventInit={})=>{const e=new WheelEvent('wheel',{deltaY,bubbles:true,cancelable:true,...extra});element.dispatchEvent(e);return e}
+ expect(wheel(100).defaultPrevented).toBe(true);expect(zoom).toHaveBeenLastCalledWith(.15)
+ wheel(-1,{deltaMode:1});expect(zoom).toHaveBeenLastCalledWith(-.024)
+ expect(wheel(100,{ctrlKey:true}).defaultPrevented).toBe(false);expect(zoom).toHaveBeenCalledTimes(2)
+ const button=document.createElement('button');element.append(button);button.dispatchEvent(new WheelEvent('wheel',{deltaY:100,bubbles:true}));expect(zoom).toHaveBeenCalledTimes(2)
+ input.dispose();wheel(100);expect(zoom).toHaveBeenCalledTimes(2)
+})

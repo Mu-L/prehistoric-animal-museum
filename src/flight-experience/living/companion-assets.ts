@@ -1,8 +1,11 @@
+import { preparePterosaurMotion } from '../../viewer/pterosaur-motion'
 import { AnimationMixer, Box3, Mesh, SkinnedMesh, Sphere, Vector3, type AnimationClip, type BufferGeometry, type Group, type Material, type Object3D, type Skeleton } from 'three'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import farUrl from '../assets/companions/pteranodon-far.glb?url'
+import tupaFarUrl from '../assets/companions/tupandactylus-far.glb?url'
+import rhamFarUrl from '../assets/companions/rhamphorhynchus-far.glb?url'
 
 /** Sampled whole original Idle cycle, padded offline. Source GLB units. */
 export const COMPANION_SOURCE_BOUNDS = new Box3(new Vector3(-.579, -.337, -.318), new Vector3(.566, .449, .242))
@@ -28,7 +31,9 @@ export function createCompanion(template: Object3D, clip: AnimationClip, options
   const ownMaterials = new Map<Material, Material>()
   root.traverse(object => {
     if (object instanceof Mesh) {
-      object.castShadow = false; object.receiveShadow = true
+      // Like the hero, small moving companions cannot receive the 384 m
+      // landscape shadow tile reliably. Their PBR sunlight/cloud response remains.
+      object.castShadow = false; object.receiveShadow = false
       if (options.independentMaterials) {
         const mesh = object as Mesh<BufferGeometry, Material | Material[]>
         const copy = (source: Material) => {
@@ -87,19 +92,19 @@ export interface FarCompanionTemplate {
   dispose(): void
 }
 /** One session-owned far geometry, borrowing the hero's already loaded material. */
-export function ownFarCompanionTemplate(root: Group, clip: AnimationClip, material: Material | Material[]): FarCompanionTemplate {
+export function ownFarCompanionTemplate(root: Group, clip: AnimationClip, material: Material | Material[], byName?: ReadonlyMap<string,Material>): FarCompanionTemplate {
   const geometries = new Set<BufferGeometry>(), originalMaterials = new Set<Material>(), skeletons = new Set<Skeleton>()
   root.traverse(object => {
     if (object instanceof Mesh) {
       const mesh = object as Mesh<BufferGeometry, Material | Material[]>
       geometries.add(mesh.geometry)
       for (const value of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) originalMaterials.add(value)
-      mesh.material = material
+      mesh.material = byName ? (Array.isArray(mesh.material)?mesh.material.map(m=>byName.get(m.name)!):byName.get(mesh.material.name)!) : material
     }
     if (object instanceof SkinnedMesh) skeletons.add(object.skeleton)
   })
   // Far GLB has no textures. Its temporary loader materials are owned here.
-  const borrowed = new Set(Array.isArray(material) ? material : [material])
+  const borrowed = new Set(byName?[...byName.values()]:Array.isArray(material) ? material : [material])
   originalMaterials.forEach(value => { if (!borrowed.has(value)) value.dispose() })
   let references = 0, closed = false, released = false
   const release = () => {
@@ -121,12 +126,20 @@ export function ownFarCompanionTemplate(root: Group, clip: AnimationClip, materi
     dispose() { closed = true; release() },
   }
 }
-export async function loadFarCompanionTemplate(material: Material | Material[]): Promise<FarCompanionTemplate> {
-  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(farUrl)
-  const clip = gltf.animations.find(value => value.name === 'Idle')
+function materialsOf(mesh:Mesh<BufferGeometry,Material|Material[]>):Material[]{return Array.isArray(mesh.material)?mesh.material:[mesh.material]}
+export async function loadFarCompanionTemplate(material: Material | Material[],speciesId='pteranodon',heroRoot?:Object3D): Promise<FarCompanionTemplate> {
+  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(speciesId==='tupandactylus'?tupaFarUrl:speciesId==='rhamphorhynchus'?rhamFarUrl:farUrl)
+  const clip = preparePterosaurMotion(gltf.scene,speciesId,gltf.animations).find(value => value.name === 'Idle')
   if (!clip) {
     gltf.scene.traverse(object => { if (object instanceof Mesh) { const mesh = object as Mesh<BufferGeometry, Material | Material[]>; mesh.geometry.dispose(); for (const value of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) value.dispose() } })
     throw new Error('Far companion is missing the original Idle animation')
   }
-  return ownFarCompanionTemplate(gltf.scene, clip, material)
+  const byName=speciesId==='pteranodon'?undefined:new Map<string,Material>()
+  if(byName){
+    heroRoot?.traverse(object=>{if(object instanceof Mesh)for(const m of materialsOf(object as Mesh<BufferGeometry,Material|Material[]>))byName.set(m.name,m)})
+    let missing=false
+    gltf.scene.traverse(object=>{if(object instanceof Mesh)for(const m of materialsOf(object as Mesh<BufferGeometry,Material|Material[]>))if(!byName.has(m.name))missing=true})
+    if(missing){gltf.scene.traverse(object=>{if(object instanceof Mesh){(object as Mesh<BufferGeometry>).geometry.dispose();for(const m of materialsOf(object as Mesh<BufferGeometry,Material|Material[]>))m.dispose()}});throw new Error('Same-species companion material unavailable')}
+  }
+  return ownFarCompanionTemplate(gltf.scene, clip, material,byName)
 }

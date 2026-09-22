@@ -7,9 +7,9 @@ it('keeps distant world geometry bounded, budgeted and continuous while moving a
  const world=createWorldSampler(),layer=new HorizonTerrain(world,()=>{}),budget=new FrameWorkBudget(()=>0)
  for(let i=0;i<129;i++){budget.begin(i);layer.update(0,0,budget);expect(layer.metrics.preparedRows).toBeLessThanOrEqual(1)}
  expect(layer.ready).toBe(true);expect(layer.metrics.pending).toBe(0)
- expect(layer.metrics.vertices).toBe(9409);expect(layer.metrics.triangles).toBe(18432);expect(layer.metrics.bytes).toBeLessThan(500000)
+ expect(layer.metrics.vertices).toBeGreaterThan(9409);expect(layer.metrics.triangles).toBeGreaterThan(18432);expect(layer.metrics.bytes).toBeLessThanOrEqual(512*1024)
  const first=layer.root.children[0] as Mesh,position=first.geometry.getAttribute('position')
- expect(position.getY(0)).toBeCloseTo(world.terrainAt(-HORIZON_RADIUS,-HORIZON_RADIUS).height-8,3)
+ expect(position.getY(0)).toBeCloseTo(world.terrainAt(-HORIZON_RADIUS,-HORIZON_RADIUS).height,3)
  const dispose=vi.spyOn(first.geometry,'dispose')
  budget.begin(130);layer.update(2500,0,budget);expect(layer.root.children[0]).toBe(first);expect(dispose).not.toHaveBeenCalled()
  layer.relocate({x:2048,z:-2048});expect(first.position.x).toBe(-2048);expect(first.position.z).toBe(2048)
@@ -32,5 +32,26 @@ it('cuts coarse terrain wherever published near or far cells exist, across negat
  expect(texture.image.data![1]).toBe(0)
  layer.relocate({x:2048,z:-2048});expect(origin.toArray()).toEqual([-1024,-1536])
  layer.setCoverage([{x:4,z:0}]);expect(origin.toArray()).toEqual([2048,0]);expect(texture.image.data![3*33+6]).toBe(0)
+ layer.dispose()
+})
+
+it.each([4, 7, 8, 20, -3])('preserves physical land and seabed height %s without a display offset', height => {
+ const base=createWorldSampler()
+ const layer=new HorizonTerrain({...base,terrainAt:(x:number,z:number)=>({...base.terrainAt(x,z),height})},()=>{})
+ const budget=new FrameWorkBudget(()=>0)
+ for(let i=0;i<100;i++){budget.begin(i);layer.update(0,0,budget)}
+ const position=(layer.root.children[0] as Mesh).geometry.getAttribute('position')
+ for(let i=0;i<position.count;i++)expect(position.getY(i)).toBe(height)
+ layer.dispose()
+})
+
+it('caps adaptive coastline uploads even when every cell contains land and sea',()=>{
+ const base=createWorldSampler()
+ const world={...base,terrainAt:(x:number,z:number)=>({...base.terrainAt(x,z),height:(x%256===0&&z%256===0)?4:-3})}
+ const layer=new HorizonTerrain(world,()=>{}),budget=new FrameWorkBudget(()=>0)
+ for(let i=0;i<100;i++){budget.begin(i);layer.update(0,0,budget)}
+ expect(layer.ready).toBe(true)
+ expect(layer.metrics.bytes).toBeLessThanOrEqual(512*1024)
+ expect(layer.metrics.vertices).toBeGreaterThan(9409)
  layer.dispose()
 })

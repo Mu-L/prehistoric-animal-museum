@@ -24,7 +24,8 @@ const forbiddenMarkers = [
 
 const findings: string[] = []
 const flightEnabled=process.env.MUSEUM_FLIGHT === '1'
-const expectedFlightGlbCount = flightEnabled ? 2 : 0
+// One landscape plus three same-species companion LODs; hashes checked below.
+const expectedFlightGlbCount = flightEnabled ? 4 : 0
 const expectedFlightLandscapeCount=flightEnabled?1:0
 const files = await collectProductionFiles(distributionRoot)
 const distributionPaths = new Set(

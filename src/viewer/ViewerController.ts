@@ -1,3 +1,5 @@
+import { preparePterosaurMotion } from './pterosaur-motion'
+import {ExperienceWarmup} from './experience-warmup'
 import { createExperienceGpuTimer, type ExperienceGpuTimer } from './experience-gpu-timer'
 import { stopAfterAnimationFrame } from './deferred-loop-stop'
 import { rendererStateLease, type ExternalExperience, type ExperienceLease } from './external-experience'
@@ -1359,18 +1361,23 @@ export class ViewerController {
   private loopRunning = false
   private externalExperience: ExternalExperience | null = null
   private externalRelease: (() => void) | null = null
+  private externalWarmup:ExperienceWarmup|null=null
   private externalGpuTimer: ExperienceGpuTimer | null = null
   private readonly handleContextRestored = () => {
     this.renderer.domElement.removeAttribute('aria-hidden')
+    this.externalWarmup?.restart()
     this.externalExperience?.contextRestored()
     this.lastFrameTime = performance.now()
     this.startLoop()
   }
 
   acquireExternalExperience(experience: ExternalExperience): ExperienceLease {
-    if (this.destroyed || this.externalExperience || this.scaleEncounter || this.transition) {
+    if (this.destroyed || this.externalExperience || this.scaleEncounter) {
       throw new Error('viewer-experience-busy')
     }
+    // A committed animal may still be fading in. Finish that presentation
+    // before leasing the renderer, as the scale experience already does.
+    if(this.transition)this.finishTransition()
     const restoreRenderer = rendererStateLease(this.renderer)
     const controlsEnabled = this.controls.enabled
     const autoRotate = this.controls.autoRotate
@@ -1390,6 +1397,7 @@ export class ViewerController {
     const release = () => {
       if (released) return
       released = true
+      this.externalWarmup?.cancel();this.externalWarmup=null
       this.externalExperience = null
       this.externalGpuTimer?.dispose(); this.externalGpuTimer = null
       this.externalRelease = null
@@ -1409,6 +1417,16 @@ export class ViewerController {
     try { this.resize(); this.startLoop() } catch (error) { release(); throw error }
     return {
       release,
+      warmup: async textures => {
+        if(released||this.destroyed||this.externalExperience!==experience)return
+        // The current host renderer already has the experience's lights, fog,
+        // colour management and shadow policy. No auxiliary renderer or loop.
+        this.externalWarmup?.cancel()
+        const warmup=new ExperienceWarmup(textures,()=>this.renderer.compileAsync(experience.scene,experience.camera))
+        this.externalWarmup=warmup
+        await warmup.promise
+        if(this.externalWarmup===warmup)this.externalWarmup=null
+      },
       invalidate: () => {
         if (!released && !this.destroyed && !this.loopRunning) {
           this.lastFrameTime = performance.now()
@@ -1630,6 +1648,7 @@ export class ViewerController {
         signal.throwIfAborted()
       }
 
+      gltf.animations = preparePterosaurMotion(gltf.scene, descriptor.id, gltf.animations)
       const modelRoot = gltf.scene
       modelRoot.name = `${descriptor.id}-model`
       modelRoot.rotation.set(
@@ -5593,6 +5612,7 @@ export class ViewerController {
           experience.setFramebufferHeight?.(this.renderer.domElement.height)
           const flightFrameStart = performance.now()
           experience.update(rawDeltaSeconds)
+          if(this.externalWarmup?.step(texture=>this.renderer.initTexture(texture)))return
           this.renderer.shadowMap.enabled = experience.shadowsEnabled ?? false
           const gpuMs = this.externalGpuTimer?.pollSample()
           if (gpuMs !== undefined && gpuMs !== null) experience.recordGpu?.(gpuMs.milliseconds, gpuMs.frameId)

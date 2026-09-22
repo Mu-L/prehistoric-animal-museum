@@ -27,8 +27,11 @@ function clearLine(from:Position,to:Position,radius:number,surface:(x:number,z:n
   return null
 }
 /** Collision, body separation and visibility are deliberately independent. */
-export function cameraSafety(from:Position,pose:CameraPose,hero:Position,surface:(x:number,z:number)=>number,radius:number,companions:readonly CameraSphere[]=[]):CameraRejection|null {
-  if(segmentPointDistance(from,pose.position,hero)<HERO_RADIUS+radius)return 'body-clearance'
+export function cameraSafety(from:Position,pose:CameraPose,hero:Position,surface:(x:number,z:number)=>number,radius:number,companions:readonly CameraSphere[]=[],bodyRadius=HERO_RADIUS,previousHero:Position=hero):CameraRejection|null {
+  // The camera and animal translate together. Test body separation in the
+  // animal's relative frame; keep terrain and visibility sweeps in world space.
+  const relativeFrom={x:from.x+hero.x-previousHero.x,y:from.y+hero.y-previousHero.y,z:from.z+hero.z-previousHero.z}
+  if(segmentPointDistance(relativeFrom,pose.position,hero)<bodyRadius+radius)return 'body-clearance'
   for(const sphere of companions)if(segmentPointDistance(from,pose.position,sphere.position)<sphere.radius+radius)return 'companion-clearance'
   const swept=clearLine(from,pose.position,radius,surface)
   if(swept)return swept

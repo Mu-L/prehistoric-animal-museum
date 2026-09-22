@@ -3,7 +3,7 @@ export type FlightSpeed = 18 | 28 | 36
 export type FlightHeight = 100 | 190 | 350
 export type FlightView = 'near' | 'standard' | 'wide'
 export type FlightStart = 'coast' | 'valley' | 'overview'
-export interface FlightSettings { speed: FlightSpeed; height: FlightHeight; view: FlightView; start: FlightStart; quality: 'low' | 'balanced'; gentle: boolean }
+export interface FlightSettings { speed: FlightSpeed; height: FlightHeight; view: FlightView; start: FlightStart; quality: 'low' | 'balanced'; gentle: boolean; zoom?:number }
 export const DEFAULT_FLIGHT_SETTINGS: FlightSettings = { speed: 28, height: 190, view: 'standard', start: 'coast', quality: 'low', gentle: false }
 export function spawnState(settings: FlightSettings, world: WorldSampler = createWorldSampler()) {
   const { safeSurface, terrainAt, valleyAt } = world
@@ -17,11 +17,11 @@ export function spawnState(settings: FlightSettings, world: WorldSampler = creat
   }
   return { position: { x, y, z }, heading }
 }
-export function framingDistance(aspect: number, view: FlightView, wingspan = 7): number {
+export function framingDistance(aspect: number, view: FlightView, wingspan = 7, height = 4, minimum = 10, zoom?:number): number {
   const fraction = aspect < .85 ? .5 : .34
-  const multiplier = view === 'near' ? .86 : view === 'wide' ? 1.28 : 1
+  const multiplier = Math.max(.72,Math.min(1.7,zoom ?? (view === 'near' ? .86 : view === 'wide' ? 1.28 : 1)))
   const horizontalDistance = wingspan / (2 * Math.tan(55 * Math.PI / 360) * Math.max(.3, aspect) * fraction)
   // Bounding wing motion also needs vertical screen room, including phone landscape.
-  const verticalDistance = 4 / (2 * Math.tan(55 * Math.PI / 360) * .46)
-  return Math.max(10, horizontalDistance, verticalDistance) * multiplier
+  const verticalDistance = height / (2 * Math.tan(55 * Math.PI / 360) * .46)
+  return Math.max(minimum, horizontalDistance, verticalDistance) * multiplier
 }

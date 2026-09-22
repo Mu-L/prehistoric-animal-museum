@@ -11,7 +11,7 @@ export function cameraPathSafe(from: Position, to: Position, surface: (x: number
   return true
 }
 /** Dampen only the relative offset. Translation follows the render position without speed-dependent lag. */
-export function followOffset(previous: Vector3, heading: number, distance: number, delta: number) {
-  const desired = new Vector3(-Math.sin(heading) * distance, 5, Math.cos(heading) * distance)
+export function followOffset(previous: Vector3, heading: number, distance: number, delta: number, height=5) {
+  const desired = new Vector3(-Math.sin(heading) * distance, height, Math.cos(heading) * distance)
   return delta <= 0 ? desired : previous.clone().lerp(desired, 1 - Math.exp(-delta * 4))
 }

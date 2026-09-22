@@ -2223,8 +2223,9 @@ export const credits = [
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
     "sourceUrl": "https://sketchfab.com/3d-models/low-poly-rhamphorhynchus-idle-c1e35c7ac4374c778f78025717694675",
-    "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum. Runtime motion adapted from “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC-BY-4.0.",
     "modifications": [
+      "Viewer adds a 16-joint rig and retargets the bundled Pteranodon animation by Chistodrako._. / Oscar López Riviello (CC-BY-4.0), with species proportions and reduced wing twist; source GLB remains unchanged.",
       "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
@@ -2842,8 +2843,9 @@ export const credits = [
     "licenseName": "Creative Commons Attribution 4.0 International",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
     "sourceUrl": "https://sketchfab.com/3d-models/tupandactylus-4ea8f4466c2c4e61bc57c12af296d43a",
-    "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum. Runtime motion adapted from “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC-BY-4.0.",
     "modifications": [
+      "Viewer adds a 16-joint rig and retargets the bundled Pteranodon animation by Chistodrako._. / Oscar López Riviello (CC-BY-4.0), with species proportions and reduced wing twist; source GLB remains unchanged.",
       "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",

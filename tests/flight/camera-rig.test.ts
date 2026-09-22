@@ -5,11 +5,11 @@ import { followOffset } from '../../src/flight-experience/camera'
 import { framingDistance } from '../../src/flight-experience/settings'
 const p={x:4096,y:190,z:-8192}
 describe('flight camera intent and geometry',()=>{
-  it('retains the exact rear offset and look target without input',()=>{
+  it('retains the rear offset while keeping a continuous animal-centered look target',()=>{
     for(const aspect of [.4,1,2.2])for(const view of ['near','standard','wide'] as const){
       const pose=orbitPose(p,.7,{yaw:0,pitch:0},aspect,view)
       expect(pose.position.distanceTo(followOffset(new Vector3(),.7,framingDistance(aspect,view),0).add(new Vector3(p.x,p.y,p.z)))).toBeLessThan(1e-10)
-      expect(pose.target.x).toBe(p.x+Math.sin(.7)*20)
+      expect(pose.target.toArray()).toEqual([p.x,p.y,p.z])
     }
   })
   it('keeps the target in front across every direction and aspect outside the rear composition blend',()=>{
@@ -49,4 +49,16 @@ describe('flight camera intent and geometry',()=>{
     const rig=new FlightCameraRig();rig.select('left');rig.step(.01,true,()=>null);const saved=rig.snapshot()
     rig.reset();rig.restore(saved);expect(rig.resolved).toEqual(saved.resolved);expect(rig.moving).toBe(false)
   })
+})
+
+it('keeps the look target and height continuous through rear and permits a safe underside orbit',()=>{
+ for(const yaw of [-.02,0,.02,Math.PI/2,Math.PI]){
+  const pose=orbitPose(p,0,{yaw,pitch:0},16/9,'standard')
+  expect(pose.target.toArray()).toEqual([p.x,p.y,p.z])
+  expect(pose.position.y).toBeCloseTo(p.y+5)
+ }
+ const rig=new FlightCameraRig();rig.nudge(0,-2);rig.step(.016,true,()=>null)
+ const low=orbitPose(p,0,rig.resolved,16/9,'standard')
+ expect(low.position.y).toBeLessThan(p.y-5)
+ expect(low.position.distanceTo(low.target)).toBeGreaterThan(HERO_RADIUS+2)
 })

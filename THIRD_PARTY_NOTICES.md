@@ -1555,9 +1555,10 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Asset type: model
 - Source: [Low-poly Rhamphorhynchus idle](https://sketchfab.com/3d-models/low-poly-rhamphorhynchus-idle-c1e35c7ac4374c778f78025717694675) by Robear (@xiaorobear)
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Attribution: “Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum. Runtime motion adapted from “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC-BY-4.0.
 - Runtime SHA-256: `16b5ab37ac44e177c3e12c229e6f0b27fab669c3d6e74e5b5bdf54ed3a68a935`
 - Modifications:
+  - Viewer adds a 16-joint rig and retargets the bundled Pteranodon animation by Chistodrako._. / Oscar López Riviello (CC-BY-4.0), with species proportions and reduced wing twist; source GLB remains unchanged.
   - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.
   - Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.
@@ -1979,9 +1980,10 @@ content, contributions, and Brand Assets follow the separate scopes in
 - Asset type: model
 - Source: [Tupandactylus](https://sketchfab.com/3d-models/tupandactylus-4ea8f4466c2c4e61bc57c12af296d43a) by Paleo Modelist (@victory_)
 - License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-- Attribution: “Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.
+- Attribution: “Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum. Runtime motion adapted from “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC-BY-4.0.
 - Runtime SHA-256: `e2c232534c909899d266fb75e1787117d7e17396d677a82e1a63a0872f2f385e`
 - Modifications:
+  - Viewer adds a 16-joint rig and retargets the bundled Pteranodon animation by Chistodrako._. / Oscar López Riviello (CC-BY-4.0), with species proportions and reduced wing twist; source GLB remains unchanged.
   - Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.
   - Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.
   - Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.

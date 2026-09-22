@@ -1,6 +1,6 @@
 # Take Flight
 
-A local-review candidate for Pteranodon exploration. The normal production build
+A local-review candidate for Pteranodon, Tupandactylus and Rhamphorhynchus exploration. The normal production build
 keeps this feature disabled until its art, animation, comfort and device reviews
 are complete. Flight has no tracking, account, score or failure penalty; natural sound requires an explicit gesture.
 
@@ -14,7 +14,10 @@ Open `/zh-CN/?animal=pteranodon&experience=flight` or the English equivalent.
 A direct link opens a stationary preview; flying requires pressing Start.
 Arrow keys/WASD steer and change height. Space pauses when a semantic control
 is not focused. Escape first closes settings, then exits. Touch users hold the
-four direction buttons. Settings offer gentle movement, low/balanced scenery, three speeds and camera distances.
+four direction buttons. Settings offer gentle movement, low/balanced scenery and three speeds.
+Drag the scene to orbit above or below the animal; the wheel and distance slider
+zoom continuously. A press outside settings closes the panel without consuming
+the same gesture, so Resume and scene dragging remain available.
 Starting place and height are applied only with an explicit restart. Touch inputs
 combine independently by pointer ID. Assisted cruise follows a short coast-to-valley
 route; any direction input immediately returns control to the visitor.
@@ -159,9 +162,11 @@ PCM is measured from actual AudioBuffers and capped at 12 MiB. Museum narration
 has priority. Pause, visibility/focus loss and context failure mute the mix.
 
 Near companions reuse the original Idle rig; the distant derivative retains the
-original animation samples and borrows source textures. Low quality admits one
-near and three distant actors (25,638 triangles); balanced admits two and six
-(51,276). A quality downgrade allows the old cohort six active seconds to depart.
+original animation samples and borrows source textures. Tupandactylus and
+Rhamphorhynchus use the shared articulated motion described below, including their
+distant companions. Low quality admits one near and three distant actors;
+balanced admits two and six. Per-species triangle counts are recorded in
+`species/profiles.ts`. A quality downgrade allows the old cohort six active seconds to depart.
 NPCs predict terrain along their integrated path. Companions cruise slightly faster than the player, with bounded acceleration, turning and predictive yielding; ordinary proximity does not trigger disappearance. These groups are
 artistic scenes, not claims about Pteranodon social behaviour.
 
@@ -173,10 +178,12 @@ uploaded. Candidate asset provenance and deterministic validators accompany the
 source; subjective sound, movement and physical-device acceptance remain separate
 from automated checks. Flight remains disabled in the normal build.
 
-## C1 observation camera
+## Observation camera
 
-The default rear follow camera retains the W2 offset, target and damping. Viewing
-`rear/front/left/right/custom` is separate from `near/standard/wide` distance.
+The orbit target stays centered on the animal across rear, front and side views,
+avoiding a pitch jump when passing through the rear position. Species profiles
+set framing and clearance. Viewing `rear/front/left/right/custom` is separate
+from continuous distance; `near/standard/wide` remain internal framing presets.
 The screen represents the viewing position; flight does not import an avatar.
 Front steering continues to use the animal's left and right.
 
@@ -192,11 +199,9 @@ resolved angle; camera requests never steer the animal.
 The original Idle envelope can be reproduced with
 `node --import tsx scripts/flight/inspect-camera-envelope.mjs`. It samples 121
 phases, preserves the source GLB, and checks four aspect ratios, three distances
-and six directions. The measured rotation-invariant radius is 4.797m; the rig
-uses 5.5m plus near-plane clearance. This is geometric validation, not GPU or
-comfort signoff. The unchanged W2 rear/near composition has a small lower-edge
-contact at the most extended phase in phone landscape; front/side compositions
-fit throughout the sampled cycle.
+and six directions. Pass a supported species ID to inspect another source model.
+This audit measures the original source animation; it does not cover every
+retargeted runtime pose or continuous zoom value, and is not GPU or comfort signoff.
 
 Scene-only pointer capture is independent of flight button pointers. Presets,
 click nudges and focused arrow keys offer alternatives to dragging. Releasing a
@@ -216,3 +221,24 @@ video and an original-flap video through the existing private evidence endpoint.
 exercise real WebGL context loss/restoration; these probes are DEV-only.
 The default production build still excludes flight. G5 comfort/understanding,
 physical-phone endurance and release approval remain separate human checks.
+
+## Shared motion and flight lighting
+
+The two originally morph-animated species receive a 16-joint runtime rig shared
+with the museum viewer. Coordinated Pteranodon source motion is retargeted to
+their proportions, with species cadence, head balance, restrained jaw opening and
+tail response. Pteranodon keeps its original cruise and uses a periodic large
+source wingbeat for sustained climb. Original model files remain unchanged;
+`assets/PROVENANCE.md` records motion attribution and adaptations.
+
+Small moving animals do not receive the coarse 384 m landscape shadow map,
+which otherwise produces brightness pulses across their thin surfaces. The hero
+still casts onto the landscape, and sunlight, sky fill, cloud attenuation and rim
+lighting remain active. Fine self-shadows and occluder shadows on animals are
+omitted; a dedicated close-range shadow solution is outside this candidate.
+
+Initial preparation loads the model and materials concurrently with cancellation
+and late-result disposal. The existing host renderer warms textures and shaders
+before the first completed preview frame. Visible active-stage and total budgets
+bound preparation; failures expose retry and exit. Slow-network prefetch respects
+Save-Data and 2G connections. Flight remains an explicitly enabled build capability.

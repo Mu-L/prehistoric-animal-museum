@@ -7,7 +7,7 @@ const temporary:string[]=[]
 afterEach(async()=>{await Promise.all(temporary.splice(0).map(root=>rm(root,{recursive:true,force:true})))})
 async function fixture(){
  const root=await mkdtemp(join(tmpdir(),'flight-boundary-'));temporary.push(root);await mkdir(join(root,'assets'))
- const sources=['src/flight-experience/assets/ecology-r5/ecology-r5.glb','src/flight-experience/assets/companions/pteranodon-far.glb',...['wind','surf','rain','river'].map(id=>`src/flight-experience/assets/soundscape/${id}.wav`)]
+ const sources=['src/flight-experience/assets/ecology-r5/ecology-r5.glb','src/flight-experience/assets/companions/pteranodon-far.glb',...['wind','surf','rain','river'].map(id=>`src/flight-experience/assets/soundscape/${id}.wav`),...['tupandactylus','rhamphorhynchus'].map(id=>`src/flight-experience/assets/companions/${id}-far.glb`)]
  const files:string[]=[],manifest:Record<string,{file:string;src:string}>={}
  for(const [i,src] of sources.entries()){
   const file=`assets/candidate-${i}.${src.endsWith('.wav')?'wav':'glb'}`

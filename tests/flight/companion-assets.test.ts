@@ -1,3 +1,7 @@
+import {readFile} from 'node:fs/promises'
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js'
+import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js'
+import {Mesh,type Object3D} from 'three'
 import { describe, expect, it, vi } from 'vitest'
 import { AnimationClip, Bone, BufferGeometry, Float32BufferAttribute, Group, MeshBasicMaterial, QuaternionKeyframeTrack, Skeleton, SkinnedMesh, MeshStandardMaterial, ShaderLib, Texture, type WebGLRenderer, type Material } from 'three'
 import { decorateAnimalRim } from '../../src/flight-experience/environment/animal-rim'
@@ -28,6 +32,15 @@ describe('companion resource ownership and original motion', () => {
     expect(geometryDispose).not.toHaveBeenCalled(); expect(materialDispose).not.toHaveBeenCalled()
     b.setMotionSeconds(.25); expect(bBone.quaternion.equals(other)).toBe(false)
     b.dispose()
+  })
+  it('excludes near and far flight clones from coarse landscape shadows without changing their template',()=>{
+    const source=fixture();source.mesh.receiveShadow=true
+    for(const independentMaterials of [false,true]){
+      const actor=createCompanion(source.root,source.clip,{independentMaterials})
+      actor.root.traverse(object=>{if(object instanceof Mesh){expect(object.receiveShadow).toBe(false);expect(object.castShadow).toBe(false)}})
+      expect(source.mesh.receiveShadow).toBe(true)
+      actor.dispose()
+    }
   })
   it('far library defers owned geometry release until every clone releases it, and never disposes hero material', () => {
     const source=fixture(), heroMaterial=new MeshBasicMaterial()
@@ -67,3 +80,21 @@ describe('companion resource ownership and original motion', () => {
   })
 
 })
+
+it.each(['tupandactylus','rhamphorhynchus'])('preserves independent morph phases and named borrowed materials for %s',async id=>{
+ const bytes=await readFile(`src/flight-experience/assets/companions/${id}-far.glb`)
+ const buffer=new ArrayBuffer(bytes.byteLength);new Uint8Array(buffer).set(bytes)
+ const gltf=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(buffer,'')
+ const named=new Map<string,Material>()
+ gltf.scene.traverse(object=>{if(object instanceof Mesh)for(const m of materialsOf(object as Mesh<BufferGeometry,Material|Material[]>)){const hero=new MeshStandardMaterial();hero.name=m.name;named.set(m.name,hero)}})
+ const disposals=[...named.values()].map(m=>vi.spyOn(m,'dispose'))
+ const library=ownFarCompanionTemplate(gltf.scene,gltf.animations[0]!,[...named.values()][0]!,named)
+ const a=library.create(),b=library.create({phase:2})
+ const morphs=(root:Object3D)=>{const values:number[][]=[];root.traverse(o=>{if(o instanceof Mesh&&o.morphTargetInfluences)values.push([...o.morphTargetInfluences])});return values}
+ expect(morphs(a.root)).not.toEqual(morphs(b.root))
+ const other=morphs(b.root);a.setMotionSeconds(1);expect(morphs(b.root)).toEqual(other)
+ a.root.traverse(o=>{if(o instanceof Mesh)for(const m of materialsOf(o as Mesh<BufferGeometry,Material|Material[]>))expect(m).toBe(named.get(m.name))})
+ library.dispose();a.dispose();b.dispose();disposals.forEach(spy=>expect(spy).not.toHaveBeenCalled())
+})
+
+function materialsOf(mesh:Mesh<BufferGeometry,Material|Material[]>):Material[]{return Array.isArray(mesh.material)?mesh.material:[mesh.material]}

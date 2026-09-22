@@ -1,4 +1,4 @@
-import { Color, Vector4, type PerspectiveCamera, type Scene, type WebGLRenderer } from 'three'
+import { Color, Vector4, type PerspectiveCamera, type Scene, type Texture, type WebGLRenderer } from 'three'
 
 /** Renderer belongs to the viewer. The experience owns only its scene resources. */
 export interface ExternalExperience {
@@ -20,6 +20,7 @@ export interface ExternalExperience {
   dispose(): void
 }
 export interface ExperienceLease {
+  warmup?(textures: readonly Texture[]): Promise<void>
   invalidate(): void
   release(): void
 }

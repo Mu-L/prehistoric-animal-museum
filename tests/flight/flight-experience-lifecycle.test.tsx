@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { BoxGeometry, Group, Mesh, MeshBasicMaterial, Texture, TextureLoader } from 'three'
 import { FlightExperience } from '../../src/flight-experience/FlightExperience'
 import type { FlightRuntime } from '../../src/flight-experience/FlightRuntime'
+import { HorizonTerrain } from '../../src/flight-experience/horizon-terrain'
 import { TerrainStream } from '../../src/flight-experience/terrain-stream'
 import { I18nProvider } from '../../src/i18n/I18nProvider'
 import type { ViewerController, ViewerModelDescriptor, StagedViewerModel } from '../../src/viewer/ViewerController'
@@ -11,6 +12,7 @@ import type { ViewerController, ViewerModelDescriptor, StagedViewerModel } from 
 class IdleWorker { postMessage() {} terminate() {} }
 beforeEach(() => {
  vi.stubGlobal('Worker', IdleWorker)
+ vi.spyOn(HorizonTerrain.prototype,'ready','get').mockReturnValue(true)
  vi.spyOn(TextureLoader.prototype, 'loadAsync').mockResolvedValue(new Texture())
  vi.spyOn(TerrainStream.prototype, 'previewReady', 'get').mockReturnValue(true)
  vi.spyOn(TerrainStream.prototype, 'ready', 'get').mockReturnValue(true)
@@ -32,7 +34,7 @@ async function mount() {
  const runtime=instances[0]!
  // Allow the actual asynchronous model/material attach to finish.
  await waitFor(()=>expect(runtime.pose.children).toHaveLength(1))
- act(()=>runtime.update(0))
+ act(()=>{runtime.update(0);runtime.completedFrame(document.createElement('canvas'))})
  return {runtime,instances,view,element,onClose}
 }
 describe('whole FlightExperience events with the actual Runtime (GPU/worker readiness stubbed)',()=>{
@@ -42,14 +44,40 @@ describe('whole FlightExperience events with the actual Runtime (GPU/worker read
   const heading=runtime.simulation.heading,time=runtime.simulation.time,key=vi.spyOn(runtime.input,'key')
   fireEvent.click(screen.getByRole('button',{name:'In front'}))
   expect(runtime.cameraRig.perspective).toBe('front')
-  fireEvent.keyDown(screen.getByRole('button',{name:'Look left'}),{key:'ArrowLeft',code:'ArrowLeft'})
+  fireEvent.click(screen.getByText('Adjust angle'))
+  fireEvent.keyDown(screen.getByRole('button',{name:'Orbit left'}),{key:'ArrowLeft',code:'ArrowLeft'})
   expect(key).not.toHaveBeenCalled();expect(runtime.cameraRig.perspective).toBe('custom')
-  fireEvent.click(screen.getByRole('button',{name:'Look up'}));expect(runtime.cameraRig.requested.pitch).toBeLessThan(0)
+  fireEvent.click(screen.getByRole('button',{name:'View from above'}));expect(runtime.cameraRig.requested.pitch).toBeGreaterThan(0)
   expect(runtime.simulation.heading).toBe(heading);expect(runtime.simulation.time).toBe(time)
-  fireEvent.click(screen.getByText('Where are we?'))
-  expect(screen.getByText(/The screen is our viewing position/)).toBeVisible()
+  expect(screen.queryByText('Where are we?')).not.toBeInTheDocument()
   act(()=>runtime.contextLost());expect(runtime.cameraRig.moving).toBe(false)
   act(()=>runtime.contextRestored());expect(runtime.getSnapshot().phase).toBe('paused')
+  view.unmount()
+ })
+ it('dismisses settings on an outside press and preserves the first orbit drag',async()=>{
+  const {runtime,view}=await mount()
+  act(()=>runtime.start());act(()=>runtime.pause())
+  fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}))
+  const layer=view.container.querySelector<HTMLElement>('.flight-camera-gesture')!
+  expect(layer).not.toBeNull()
+  layer.setPointerCapture=vi.fn();layer.hasPointerCapture=()=>false
+  vi.spyOn(layer,'getBoundingClientRect').mockReturnValue({width:1000,height:700} as DOMRect)
+  const orbit=vi.spyOn(runtime,'orbitCamera')
+  const pointer=(type:string,x:number)=>{const event=new Event(type,{bubbles:true});Object.assign(event,{pointerId:1,pointerType:'mouse',button:0,buttons:1,clientX:x,clientY:200});fireEvent(layer,event)}
+  pointer('pointerdown',200)
+  expect(view.container.querySelector('#flight-settings-panel')).toBeNull()
+  expect(view.container.querySelector('.flight-camera-gesture')).toBe(layer)
+  pointer('pointermove',300);pointer('pointerup',300)
+  expect(orbit).toHaveBeenCalled()
+  view.unmount()
+ })
+ it('resumes with one toolbar click while settings are open',async()=>{
+  const {runtime,view}=await mount()
+  act(()=>runtime.start());act(()=>runtime.pause())
+  fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}))
+  fireEvent.click(screen.getByRole('button',{name:'Continue flying'}))
+  expect(runtime.getSnapshot().phase).toBe('flying')
+  expect(view.container.querySelector('#flight-settings-panel')).toBeNull()
   view.unmount()
  })
  it('keeps mode and movement on panel/rerender/language changes and isolates range keyboard shortcuts',async()=>{
@@ -149,7 +177,7 @@ it('preserves the selected progress but resets auto on Restart, and Defaults res
  expect(restarted.weather.snapshot().resolved).toEqual(weatherBefore.resolved);expect(restarted.weather.snapshot().wetness).toBe(weatherBefore.wetness);expect(restarted.weather.snapshot().phase).toEqual(weatherBefore.phase)
  expect(runtime.running).toBe(false)
  await waitFor(()=>expect(restarted.pose.children).toHaveLength(1))
- act(()=>restarted.update(0))
+ act(()=>{restarted.update(0);restarted.completedFrame(document.createElement('canvas'))})
  fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}))
  fireEvent.click(screen.getByText('Restore initial settings'))
  fireEvent.click(screen.getByRole('button',{name:'Restore defaults and restart'}))
@@ -166,12 +194,12 @@ it('preserves automatic mode through a quality preparation but waits for explici
  fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}))
  fireEvent.click(screen.getByRole('tab',{name:'Flight'}))
  const progress=runtime.environmentClock.solarDayProgress
- fireEvent.click(screen.getByText('Picture quality'))
+ fireEvent.click(screen.getByText('Flight & display settings'))
  fireEvent.click(screen.getByRole('button',{name:'Standard'}))
  expect(runtime.getSnapshot().phase).toBe('buffering')
  expect(runtime.getSnapshot().daylight?.status).toBe('suspended')
  expect(runtime.environmentClock.solarMode).toBe('auto')
- act(()=>runtime.update(0))
+ act(()=>{runtime.update(0);runtime.completedFrame(document.createElement('canvas'))})
  expect(runtime.getSnapshot().phase).toBe('paused')
  expect(runtime.environmentClock.solarDayProgress).toBe(progress)
  act(()=>runtime.start());expect(runtime.getSnapshot().daylight?.status).toBe('running')

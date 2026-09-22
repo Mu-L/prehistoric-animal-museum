@@ -25,13 +25,14 @@ export const provenance = [
       "sha256": "16b5ab37ac44e177c3e12c229e6f0b27fab669c3d6e74e5b5bdf54ed3a68a935"
     },
     "modifications": [
+      "Viewer adds a 16-joint rig and retargets the bundled Pteranodon animation by Chistodrako._. / Oscar López Riviello (CC-BY-4.0), with species proportions and reduced wing twist; source GLB remains unchanged.",
       "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
       "Export one traceable, closed-loop, in-place project Idle. Operation: replace-runtime-animation.",
       "Authored and validator-checked one closed eight-second flying-wing Idle for the shared museum viewer."
     ],
-    "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "attribution": "“Low-poly Rhamphorhynchus idle” by Robear (@xiaorobear), CC-BY-4.0; modified for the Prehistoric Animal Museum. Runtime motion adapted from “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC-BY-4.0.",
     "redistributionAllowed": true,
     "evidencePaths": [
       "provenance/LICENSES/model-license.txt",

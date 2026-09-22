@@ -78,7 +78,12 @@ export class FarTerrain {
  get coveredChunks(): Address[] {
   const cells=new Map<string,Address>()
   for(const strip of this.strips.values())for(let x=strip.x;x<strip.x+strip.half*2;x+=512){
-   if(Math.max(Math.abs(x+256-strip.cx),Math.abs(strip.z+256-strip.cz))<strip.inner)continue
+   // A512m ownership bit is valid only when every64m subcell was built.
+   // Centre-only tests incorrectly hide horizon under partially omitted cells.
+   let complete=true
+   for(let dz=32;dz<512;dz+=64)for(let dx=32;dx<512;dx+=64)
+    if(Math.max(Math.abs(x+dx-strip.cx),Math.abs(strip.z+dz-strip.cz))<strip.inner)complete=false
+   if(!complete)continue
    const cell={x:x/512,z:strip.z/512};cells.set(`${cell.x},${cell.z}`,cell)
   }
   return [...cells.values()]

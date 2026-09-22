@@ -1,0 +1,11 @@
+{
+  "type": "actual-runtime-render",
+  "sourceSha256": "a556efeff3742399784e0df304f505af6e18c439e3ca6cd30b403a61da6a99b7",
+  "worldSeed": 193706,
+  "solarDayProgress": 0.42,
+  "weather": "clear",
+  "crop": "Upper coastline only; excludes the animal and UI.",
+  "transform": "640x320 WebP, quality78",
+  "sourceLicenses": "Existing flight landscape asset provenance applies",
+  "publicApproval": "pending"
+}

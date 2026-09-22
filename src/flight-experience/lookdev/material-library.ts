@@ -11,11 +11,26 @@ import groundcoverNormalUrl from '../assets/lookdev-materials/leafy_grass-normal
 import groundcoverArmUrl from '../assets/lookdev-materials/leafy_grass-arm.webp?url'
 import {flipRgbaRows,unpackMaterialAtlas} from './material-array'
 /** Shared art-trial library. Albedo is sRGB; ARM/OpenGL normals are linear data. */
-export async function loadLookdevMaterials(){
+export async function loadLookdevMaterials(signal?:AbortSignal){
  const textures:Texture[]=[],materials:MeshStandardMaterial[]=[]
+ let closed=false
+ const dispose=()=>{closed=true;materials.splice(0).forEach(m=>m.dispose());textures.splice(0).forEach(t=>t.dispose())}
+ const check=()=>{if(closed||signal?.aborted)throw new DOMException('Material preparation cancelled','AbortError')}
+ signal?.addEventListener('abort',dispose,{once:true})
+ const loader=new TextureLoader()
+ const load=async(url:string)=>{
+  check()
+  const texture=await loader.loadAsync(url)
+  if(closed||signal?.aborted){texture.dispose();check()}
+  textures.push(texture);return texture
+ }
+ const release=(texture:Texture)=>{const i=textures.indexOf(texture);if(i>=0)textures.splice(i,1);texture.dispose()}
  try {
-  const loader=new TextureLoader(),inverse=await loader.loadAsync(inverseUrl);inverse.generateMipmaps=false;inverse.minFilter=inverse.magFilter=LinearFilter;textures.push(inverse)
-  const [albedoImage,gaussianImage,normalImage,armImage]=await Promise.all([loader.loadAsync(albedoUrl),loader.loadAsync(gaussianUrl),loader.loadAsync(normalUrl),loader.loadAsync(armUrl)])
+  check()
+  // Five independent inputs form a fixed-size cohort; each result is owned as
+  // soon as it arrives, including successes after another input has failed.
+  const [inverse,albedoImage,gaussianImage,normalImage,armImage]=await Promise.all([load(inverseUrl),load(albedoUrl),load(gaussianUrl),load(normalUrl),load(armUrl)])
+  check();inverse.generateMipmaps=false;inverse.minFilter=inverse.magFilter=LinearFilter
   const cell=544,columns=3,rows=Math.ceil(manifest.entries.length/columns)
   const unpack=(image:Texture)=>{
    const canvas=document.createElement('canvas');canvas.width=columns*cell;canvas.height=rows*cell
@@ -26,7 +41,7 @@ export async function loadLookdevMaterials(){
    const array=new DataArrayTexture(data,512,512,manifest.entries.length)
    array.wrapS=array.wrapT=RepeatWrapping;array.magFilter=LinearFilter;array.minFilter=LinearMipmapLinearFilter
    array.generateMipmaps=true;array.anisotropy=4;array.needsUpdate=true;textures.push(array)
-   image.dispose()
+   release(image);canvas.width=canvas.height=0
    return array
   }
   const map=unpack(albedoImage),gaussian=unpack(gaussianImage),normalMap=unpack(normalImage),arm=unpack(armImage)
@@ -42,7 +57,7 @@ export async function loadLookdevMaterials(){
   // multi-material atlas. Never download these extra textures in the visitor path.
   if(import.meta.env.DEV&&new URLSearchParams(location.search).get('flightA0')==='standalone'){
    const [independentGaussian,independentNormal,independentArm]=await Promise.all([
-    loader.loadAsync(groundcoverGaussianUrl),loader.loadAsync(groundcoverNormalUrl),loader.loadAsync(groundcoverArmUrl),
+    load(groundcoverGaussianUrl),load(groundcoverNormalUrl),load(groundcoverArmUrl),
    ])
    const standalone=(texture:Texture)=>{
     const canvas=document.createElement('canvas');canvas.width=canvas.height=512
@@ -51,11 +66,11 @@ export async function loadLookdevMaterials(){
     const data=flipRgbaRows(context.getImageData(0,0,512,512).data,512,512)
     const array=new DataArrayTexture(data,512,512,1)
     array.wrapS=array.wrapT=RepeatWrapping;array.magFilter=LinearFilter;array.minFilter=LinearMipmapLinearFilter
-    array.generateMipmaps=true;array.anisotropy=4;array.needsUpdate=true;textures.push(array);texture.dispose();return array
+    array.generateMipmaps=true;array.anisotropy=4;array.needsUpdate=true;textures.push(array);release(texture);canvas.width=canvas.height=0;return array
    }
    const groundcover=materials[5]!.userData.stochastic as {independent?:{gaussian:Texture;normal:Texture;arm:Texture}}
    groundcover.independent={gaussian:standalone(independentGaussian),normal:standalone(independentNormal),arm:standalone(independentArm)}
   }
-  return {materials,textures,dispose(){materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose())}}
- }catch(error){materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());throw error}
+  check();return {materials,textures,dispose}
+ }catch(error){dispose();throw error}finally{signal?.removeEventListener('abort',dispose)}
 }

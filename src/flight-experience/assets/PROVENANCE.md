@@ -139,3 +139,20 @@ recordings or a reconstruction of prehistoric sounds. Each mono loop is 11.9 sec
 `soundscape/manifest.json` records hashes, format, loop boundaries and measurements.
 Subjective listening approval remains pending. These optional assets ship only in
 the explicitly enabled flight candidate build; the default build excludes them.
+
+## Additional same-species flight companions
+
+- Tupandactylus by Paleo Modelist (@victory_), [source](https://sketchfab.com/3d-models/tupandactylus-4ea8f4466c2c4e61bc57c12af296d43a), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Low-poly Rhamphorhynchus idle by Robear (@xiaorobear), [source](https://sketchfab.com/3d-models/low-poly-rhamphorhynchus-idle-c1e35c7ac4374c778f78025717694675), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+Both derive from the corresponding museum runtime GLBs, whose canonical transforms and project Idle animation are documented in each animal's provenance. Far companions weld bitwise-equal vertices, simplify indices (ratio0.30, error0.003, locked borders), and remap surviving vertex and morph attributes together. The asset-generation step preserves the source Idle samplers and node transforms; runtime motion is adapted as described below. Textures are borrowed from the same species at runtime. Hashes and recipe are in `companions/species-manifest.json`.
+
+The flight entry thumbnail is a cropped actual local flight render (world seed193706, clear sky, daylight0.42), excluding animals and interface elements. Existing landscape asset attribution above applies.
+
+### Shared articulated motion
+
+`src/viewer/pterosaur-motion.ts` builds a 16-joint skin rig for Tupandactylus and Rhamphorhynchus at model load, shared by museum exhibits, flight and companions. `scripts/prepare-pterosaur-motion.mjs` samples the attributed Pteranodon Idle animation into `src/viewer/pterosaur-motion-reference.json`; this animation derivative remains CC BY 4.0, with source URL, attribution, modifications and source hash recorded alongside the samples. All original GLBs remain unchanged.
+
+Retargeting adapts joint axes and species proportions, reduces axial wing twist, and retains coordinated body, articulated wing, neck and head movement. Species-specific cadence, head balance, limited jaw opening and tail response are added at runtime. Tupandactylus keeps its crest attached to the skull, uses conservative jaw clearance and separates intersecting inner wing sheets from the back. Skin weights preserve shared material seams. These adaptations are artistic animation, not a reconstruction of measured biomechanics.
+
+Pteranodon retains its original cruising animation. Climb uses a periodic 1.5-second cycle interpolated from six coordinated poses within one large source wingbeat; descent blends toward an extended-wing pose. Tupandactylus and Rhamphorhynchus retarget the same source motion into phase-aligned cruise, climb and descent clips. Runtime motion adaptation does not change the candidate assets' recorded review status.

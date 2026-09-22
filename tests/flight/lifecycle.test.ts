@@ -11,6 +11,9 @@ import type { StagedViewerModel, ViewerController, ViewerModelDescriptor } from 
 import { disposeObject3D } from '../../src/viewer/dispose'
 import { chunkKey } from '../../src/flight-experience/world'
 import glide from '../../src/flight-experience/assets/pteranodon-glide.json'
+// Host fixture presents a completed frame after each update. This models the
+// renderer callback contract; these tests still do not assert real GPU pixels.
+function hostFrame(runtime:FlightRuntime,delta:number){runtime.update(delta);runtime.completedFrame(document.createElement('canvas'))}
 class TestWorker {
   static instances: TestWorker[] = []
   onmessage: ((e: { data: unknown }) => void) | null = null
@@ -93,12 +96,12 @@ describe('flight owned resources and recovery', () => {
     expect(runtime.canResume).toBe(false); expect(runtime.running).toBe(false)
     runtime.setVisibilityState(true); expect(runtime.running).toBe(false)
     runtime.setFocusState(true)
-    for (let i = 0; i < 180; i++) { runtime.update(1 / 60); TestWorker.instances.forEach(w => w.finish()) }
+    for (let i = 0; i < 180; i++) { hostFrame(runtime,1 / 60); TestWorker.instances.forEach(w => w.finish()) }
     expect(runtime.canResume).toBe(false)
     runtime.start(); expect(runtime.getSnapshot().phase).not.toBe('flying')
     if (stage === 'model') h.resolve(model()); else releaseTextures?.()
     await pending
-    for (let i = 0; i < 600 && !runtime.canResume; i++) { runtime.update(1 / 60); TestWorker.instances.forEach(w => w.finish()) }
+    for (let i = 0; i < 600 && !runtime.canResume; i++) { hostFrame(runtime,1 / 60); TestWorker.instances.forEach(w => w.finish()) }
     expect(runtime.getSnapshot().phase).toBe('ready'); expect(runtime.canResume).toBe(true)
     expect(runtime.simulation.time).toBe(0); expect(runtime.environmentClock.motionSeconds).toBe(0)
     runtime.close()
@@ -106,23 +109,40 @@ describe('flight owned resources and recovery', () => {
   it('presents camera arcs while paused without advancing simulation, weather, animation or displayed terrain', async () => {
     const h=host(),runtime=new FlightRuntime(h.controller,false)
     const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(model());await pending
-    for(let i=0;i<180;i++){runtime.update(1/60);TestWorker.instances.forEach(w=>w.finish())}
+    for(let i=0;i<600&&!runtime.canResume;i++){hostFrame(runtime,1/60);TestWorker.instances.forEach(w=>w.finish())}
     runtime.setSolarMode('auto');runtime.setWeatherMode('auto')
     const clock=runtime.environmentClock.motionSeconds,weather=runtime.weather.serialize(),revision=runtime.terrain.surfaceRevision
     const position={...runtime.simulation.position},originalCamera=runtime.camera.position.clone()
     runtime.selectPerspective('front');expect(runtime.running).toBe(true)
-    for(let i=0;i<180;i++)runtime.update(1/60)
+    for(let i=0;i<180;i++)hostFrame(runtime,1/60)
     expect(runtime.cameraRig.rejection).toBeNull();expect(runtime.cameraRig.moving).toBe(false)
     expect(runtime.camera.position.distanceTo(originalCamera)).toBeGreaterThan(10)
     expect(runtime.simulation.position).toEqual(position);expect(runtime.simulation.time).toBe(0)
     expect(runtime.environmentClock.motionSeconds).toBe(clock);expect(runtime.weather.serialize()).toEqual(weather)
     expect(runtime.terrain.surfaceRevision).toBe(revision)
-    const angle={...runtime.cameraRig.resolved};runtime.contextLost();runtime.contextRestored();runtime.update(60)
+    const angle={...runtime.cameraRig.resolved};runtime.contextLost();runtime.contextRestored();hostFrame(runtime,60)
     expect(runtime.cameraRig.resolved).toEqual(angle);expect(runtime.getSnapshot().phase).toBe('paused')
-    runtime.selectPerspective('rear');for(let i=0;i<180;i++)runtime.update(1/60)
+    runtime.selectPerspective('rear');for(let i=0;i<180;i++)hostFrame(runtime,1/60)
     expect(runtime.cameraRig.rear).toBe(true);expect(runtime.simulation.time).toBe(0)
     runtime.close()
   },20_000)
+  it('keeps the small flight actor out of the landscape shadow receiver pass through recovery', async () => {
+    const h=host(),runtime=new FlightRuntime(h.controller,false),owned=model()
+    const actor=owned.modelRoot.children[0] as Mesh,material=actor.material
+    actor.receiveShadow=true
+    const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(owned);await pending
+    for(const quality of ['low','balanced'] as const){
+      runtime.setQuality(quality,false)
+      runtime.contextLost();runtime.contextRestored()
+      expect(actor.receiveShadow).toBe(false)
+      expect(actor.castShadow).toBe(true)
+      expect(actor.material).toBe(material)
+      expect(runtime.shadowsEnabled).toBe(true)
+      expect(runtime.scenery.environment.sun.castShadow).toBe(true)
+      expect(runtime.scenery.environment.water.receiveShadow).toBe(true)
+    }
+    runtime.close()
+  })
   it('disposes a model that finishes after its session closes', async () => {
     const h = host(), runtime = new FlightRuntime(h.controller, false)
     const pending = runtime.prepare({} as ViewerModelDescriptor)
@@ -133,39 +153,39 @@ describe('flight owned resources and recovery', () => {
     const h = host(), runtime = new FlightRuntime(h.controller, false), owned = model()
     const spy = vi.spyOn((owned.modelRoot.children[0] as Mesh).geometry, 'dispose')
     const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(owned); await pending
-    for (let i = 0; i < 180; i++) { runtime.update(1 / 60); TestWorker.instances.forEach(w => w.finish()) }
+    for (let i = 0; i < 600 && !runtime.canResume; i++) { hostFrame(runtime,1 / 60); TestWorker.instances.forEach(w => w.finish()) }
     expect(runtime.getSnapshot().phase).toBe('ready')
-    runtime.start(); runtime.update(1 / 60); runtime.pause('hidden')
+    runtime.start(); hostFrame(runtime,1 / 60); runtime.pause('hidden')
     const time = runtime.simulation.time, pos = { ...runtime.simulation.position }, motion = runtime.environmentClock.motionSeconds
-    runtime.update(60)
+    hostFrame(runtime,60)
     expect(runtime.environmentClock.motionSeconds).toBe(motion)
     expect(runtime.simulation.time).toBe(time); expect(runtime.simulation.position).toEqual(pos)
     expect(runtime.running).toBe(false)
     runtime.contextLost(); expect(runtime.getSnapshot().phase).toBe('recovering')
     runtime.reviewIsolation.animateWater = true
     runtime.contextRestored(); expect(runtime.getSnapshot().phase).toBe('paused')
-    runtime.update(60); expect(runtime.environmentClock.motionSeconds).toBe(motion)
+    hostFrame(runtime,60); expect(runtime.environmentClock.motionSeconds).toBe(motion)
     runtime.close(); runtime.close(); expect(spy).toHaveBeenCalledTimes(1)
   })
   it('installs delayed terrain while buffering without moving, and never bypasses a safety guard', async () => {
     const h = host(), runtime = new FlightRuntime(h.controller, false)
     const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
-    for (let i = 0; i < 180; i++) { runtime.update(1 / 60); TestWorker.instances.forEach(w => w.finish()) }
+    for (let i = 0; i < 600 && !runtime.canResume; i++) { hostFrame(runtime,1 / 60); TestWorker.instances.forEach(w => w.finish()) }
     runtime.start()
     for (const resident of runtime.terrain.resident.values()) { resident.mesh.removeFromParent(); resident.mesh.geometry.dispose() }
     runtime.terrain.resident.clear()
     runtime.pause('terrain')
-    runtime.update(1 / 60)
+    hostFrame(runtime,1 / 60)
     expect(runtime.getSnapshot().phase).toBe('buffering')
     const position = { ...runtime.simulation.position }, time = runtime.simulation.time
     runtime.setVisibilityState(false); runtime.setFocusState(false); runtime.contextLost()
     // Actual generator results can arrive while presentation is unavailable.
-    TestWorker.instances.forEach(w => w.finish()); runtime.update(60)
+    TestWorker.instances.forEach(w => w.finish()); hostFrame(runtime,60)
     expect(runtime.running).toBe(false)
     runtime.setVisibilityState(true); runtime.contextRestored(); expect(runtime.running).toBe(false)
     runtime.setFocusState(true); expect(runtime.running).toBe(true)
     // Fixed coastal/river coverage is denser; preserve the shared per-frame budget.
-    for (let i = 0; i < 600 && !runtime.canResume; i++) { TestWorker.instances.forEach(w => w.finish()); runtime.update(1 / 60) }
+    for (let i = 0; i < 600 && !runtime.canResume; i++) { TestWorker.instances.forEach(w => w.finish()); hostFrame(runtime,1 / 60) }
     expect(runtime.getSnapshot().phase).toBe('paused'); expect(runtime.canResume).toBe(true)
     expect(runtime.simulation.position).toEqual(position); expect(runtime.simulation.time).toBe(time)
     runtime.simulation.safetyStop = true; runtime.start()
@@ -175,8 +195,8 @@ describe('flight owned resources and recovery', () => {
   it('keeps live sunlight and flight adjustments moving without relocating or resetting clocks', async () => {
     const h=host(),runtime=new FlightRuntime(h.controller,false)
     const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(model());await pending
-    for(let i=0;i<180;i++){runtime.update(1/60);TestWorker.instances.forEach(w=>w.finish())}
-    runtime.start();runtime.update(1/60)
+    for(let i=0;i<600&&!runtime.canResume;i++){hostFrame(runtime,1/60);TestWorker.instances.forEach(w=>w.finish())}
+    runtime.start();hostFrame(runtime,1/60)
     const position={...runtime.simulation.position},time=runtime.simulation.time,motion=runtime.environmentClock.motionSeconds
     runtime.setSolarDayProgress(.94)
     runtime.configure({...runtime.getSnapshot().settings,speed:18,view:'wide',gentle:true})
@@ -184,7 +204,7 @@ describe('flight owned resources and recovery', () => {
     expect(runtime.simulation.position).toEqual(position);expect(runtime.simulation.time).toBe(time)
     expect(runtime.environmentClock.motionSeconds).toBe(motion)
     expect(runtime.getSnapshot().solarDayProgress).toBe(.94)
-    runtime.update(1/60)
+    hostFrame(runtime,1/60)
     expect(runtime.simulation.time).toBeGreaterThan(time);expect(runtime.environmentClock.motionSeconds).toBeGreaterThan(motion)
     runtime.pause('user');runtime.setSolarDayProgress(.3)
     expect(runtime.getSnapshot().phase).toBe('paused')
@@ -193,12 +213,12 @@ describe('flight owned resources and recovery', () => {
   it('keeps real travel state frozen through a viewpoint request and cancellation', async () => {
     const h=host(),runtime=new FlightRuntime(h.controller,false),owned=model()
     const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(owned);await pending
-    for(let i=0;i<180;i++){runtime.update(1/60);TestWorker.instances.forEach(w=>w.finish())}
-    runtime.start();runtime.update(1/60);runtime.pause('user')
+    for(let i=0;i<600&&!runtime.canResume;i++){hostFrame(runtime,1/60);TestWorker.instances.forEach(w=>w.finish())}
+    runtime.start();hostFrame(runtime,1/60);runtime.pause('user')
     const position={...runtime.simulation.position},time=runtime.simulation.time,heading=runtime.simulation.heading
     runtime.enterViewpoint('seaward');runtime.enterViewpoint('cliff');runtime.enterViewpoint('seaward')
     runtime.setSolarDayProgress(.94)
-    for(let i=0;i<25;i++){runtime.update(1/60);TestWorker.instances.forEach(w=>w.finish())}
+    for(let i=0;i<25;i++){hostFrame(runtime,1/60);TestWorker.instances.forEach(w=>w.finish())}
     expect(runtime.simulation.position).toEqual(position);expect(runtime.simulation.time).toBe(time);expect(runtime.simulation.heading).toBe(heading)
     expect(runtime.root.visible).toBe(false);expect(runtime.canResume).toBe(false)
     runtime.start();expect(runtime.getSnapshot().phase).toBe('paused')
@@ -220,11 +240,11 @@ describe('flight owned resources and recovery', () => {
       runtime.setVisibilityState(false); runtime.setFocusState(false)
       now += 60000
       const frame = runtime.frameId, motion = runtime.environmentClock.motionSeconds
-      runtime.contextLost(); runtime.contextRestored(); runtime.update(60)
+      runtime.contextLost(); runtime.contextRestored(); hostFrame(runtime,60)
       expect(runtime.running).toBe(false); expect(runtime.frameId).toBe(frame)
       runtime.setVisibilityState(true); expect(runtime.running).toBe(false)
       runtime.setFocusState(true); expect(runtime.running).toBe(true)
-      runtime.update(0)
+      hostFrame(runtime,0)
       expect(runtime.frameId).toBe(frame + 1)
       expect(runtime.environmentClock.motionSeconds).toBe(motion)
       expect(runtime.observation.sceneryPaused).toBe(true)
@@ -243,7 +263,7 @@ describe('flight owned resources and recovery', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     runtime.fail(new Error('injected render failure'))
     runtime.contextLost(); runtime.contextRestored(); runtime.setVisibilityState(true); runtime.setFocusState(true)
-    runtime.update(60); runtime.fail(new Error('late repeated failure'))
+    hostFrame(runtime,60); runtime.fail(new Error('late repeated failure'))
     expect(runtime.running).toBe(false); expect(error).toHaveBeenCalledTimes(1)
     expect(runtime.environmentClock.motionSeconds).toBe(motion)
     expect(runtime.observation.complete(token)).toBe(false)
@@ -270,7 +290,7 @@ describe('flight owned resources and recovery', () => {
     expect(runtime.environmentClock.solarDayProgress).toBe(progress)
     expect(runtime.environmentClock.motionSeconds).toBe(motion)
     const published = vi.fn(); runtime.subscribe(published)
-    for (let frame = 0; frame < 60; frame++) runtime.update(1/60)
+    for (let frame = 0; frame < 60; frame++) hostFrame(runtime,1/60)
     expect(published.mock.calls.length).toBeLessThanOrEqual(4)
     expect(runtime.scenery.environment.solarDayProgress).toBe(runtime.environmentClock.solarDayProgress)
     expect(runtime.scenery.environment.frame.solarDayProgress).toBe(runtime.environmentClock.solarDayProgress)
@@ -278,10 +298,10 @@ describe('flight owned resources and recovery', () => {
     expect(runtime.scenery.environment.solarLayout).toBe(layout)
     expect(runtime.simulation.position).toEqual(position)
     runtime.toggleScenery(); const frozen = runtime.environmentClock.solarDayProgress
-    runtime.update(60); expect(runtime.environmentClock.solarDayProgress).toBe(frozen)
+    hostFrame(runtime,60); expect(runtime.environmentClock.solarDayProgress).toBe(frozen)
     expect(runtime.getSnapshot().daylight?.status).toBe('suspended')
     runtime.setSolarDayProgress(.94); runtime.setSolarMode('auto'); runtime.toggleScenery()
-    const beforeEnd = runtime.environmentClock.motionSeconds; runtime.update(1/60)
+    const beforeEnd = runtime.environmentClock.motionSeconds; hostFrame(runtime,1/60)
     expect(runtime.getSnapshot().daylight?.status).toBe('ended')
     expect(runtime.environmentClock.motionSeconds).toBeGreaterThan(beforeEnd)
     runtime.restartDaylightFromMorning()
@@ -299,7 +319,7 @@ describe('flight owned resources and recovery', () => {
       runtime.setSolarMode('auto')
       runtime.cameraRig.select('front');runtime.cameraRig.step(.01,true,()=>null)
       runtime.applyCaptureAnchor({...CAPTURE_ANCHORS[0]!,preset})
-      runtime.update(0)
+      hostFrame(runtime,0)
       expect(runtime.cameraRig.rear).toBe(true)
       expect(runtime.cameraRig.rejection).toBeNull()
       expect(runtime.scenery.environment.frame.solarDayProgress).toBe(runtime.environmentClock.solarDayProgress)
@@ -308,11 +328,11 @@ describe('flight owned resources and recovery', () => {
     runtime.enterViewpoint('seaward');runtime.observation.complete(runtime.observation.generation)
     runtime.scenery.review.freezeWater=true;runtime.setSolarMode('auto');runtime.setWeather('fair')
     const water=runtime.scenery.environment.waterMotionSeconds,solar=runtime.environmentClock.solarDayProgress
-    runtime.update(1/60)
+    hostFrame(runtime,1/60)
     expect(runtime.scenery.environment.waterMotionSeconds).toBe(water)
     expect(runtime.environmentClock.solarDayProgress).toBeGreaterThan(solar)
     expect(runtime.weather.snapshot().phase[0]).toBeGreaterThan(0)
-    runtime.toggleScenery();const state=runtime.weather.serialize();runtime.update(60);expect(runtime.weather.serialize()).toEqual(state)
+    runtime.toggleScenery();const state=runtime.weather.serialize();hostFrame(runtime,60);expect(runtime.weather.serialize()).toEqual(state)
     runtime.close()
   })
   it('completes twenty actual Runtime observation roundtrips with bounded resources and unchanged travel', async () => {
@@ -328,7 +348,7 @@ describe('flight owned resources and recovery', () => {
     const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
     const prepareUntil = async (phase: string) => {
       for (let frame = 0; frame < 1200 && runtime.observation.phase !== phase; frame++) {
-        TestWorker.instances.forEach(worker => worker.finish()); runtime.update(1/60)
+        TestWorker.instances.forEach(worker => worker.finish()); hostFrame(runtime,1/60)
         await new Promise(resolve => setTimeout(resolve, 0))
       }
       expect(runtime.observation.phase, JSON.stringify({props:runtime.scenery.metrics,far:runtime.farTerrain.metrics,horizon:runtime.horizonTerrain.metrics,river:runtime.scenery.river.busy,environment:runtime.scenery.environment.busy})).toBe(phase)
@@ -342,7 +362,7 @@ describe('flight owned resources and recovery', () => {
       await prepareUntil('active')
       runtime.toggleScenery()
       const fixed=runtime.camera.position.clone()
-      runtime.orbitCamera(.3,.1);for(let i=0;i<30;i++)runtime.update(1/60)
+      runtime.orbitCamera(.3,.1);for(let i=0;i<30;i++)hostFrame(runtime,1/60)
       expect(runtime.camera.position.distanceTo(fixed)).toBeLessThan(.01)
       const progress = runtime.environmentClock.solarDayProgress
       runtime.returnFromViewpoint(); await prepareUntil('inactive')

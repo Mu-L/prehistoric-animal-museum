@@ -1,3 +1,4 @@
+import { DEFAULT_FLIGHT_SPECIES, type FlightSpeciesProfile } from './species/profiles'
 import { Vector3 } from 'three'
 import { framingDistance, type FlightView } from './settings'
 import type { Position } from './world'
@@ -14,16 +15,14 @@ export const angleDelta = (from: number, to: number) => {
   const d = Math.atan2(Math.sin(to - from), Math.cos(to - from))
   return Math.abs(Math.abs(d) - Math.PI) < 1e-8 ? Math.PI : d
 }
-export function orbitPose(p: Position, heading: number, angles: CameraAngles, aspect: number, view: FlightView): CameraPose {
-  const distance = framingDistance(aspect, view)
-  const elevation = clamp(Math.atan2(5, distance) + angles.pitch, -Math.PI / 18, 55 * Math.PI / 180)
-  const radius = Math.max(HERO_RADIUS + 3, Math.hypot(distance, 5))
+export function orbitPose(p: Position, heading: number, angles: CameraAngles, aspect: number, view: FlightView, framing:FlightSpeciesProfile['camera']=DEFAULT_FLIGHT_SPECIES.camera, zoom?:number): CameraPose {
+  const distance = framingDistance(aspect, view,framing.span,framing.height,framing.minDistance,zoom)
+  const elevation = clamp(Math.atan2(framing.offsetHeight, distance) + angles.pitch, -Math.PI * .38, Math.PI * .38)
+  const radius = Math.max(framing.radius + Math.min(3,framing.span*3/7), Math.hypot(distance, framing.offsetHeight))
   const h = heading - angles.yaw, horizontal = radius * Math.cos(elevation)
-  const weight = Math.min(1, Math.hypot(angleDelta(0, angles.yaw), angles.pitch) / .7)
-  const blend = weight * weight * (3 - 2 * weight)
   return {
     position: new Vector3(p.x - Math.sin(h) * horizontal, p.y + Math.sin(elevation) * radius, p.z + Math.cos(h) * horizontal),
-    target: new Vector3(p.x + Math.sin(heading) * 20 * (1 - blend), p.y - 5 * (1 - blend), p.z - Math.cos(heading) * 20 * (1 - blend)),
+    target: new Vector3(p.x, p.y, p.z),
   }
 }
 export function fixedTarget(position: Position, recommended: Position, angles: CameraAngles): Vector3 {
@@ -47,7 +46,7 @@ export class FlightCameraRig {
   }
   nudge(yaw: number, pitch: number) {
     if(!Number.isFinite(yaw)||!Number.isFinite(pitch))return
-    this.perspective='custom';this.requested={yaw:this.requested.yaw+yaw,pitch:clamp(this.requested.pitch+pitch,-.45,.65)};this.rejection=null;this.generation++
+    this.perspective='custom';this.requested={yaw:this.requested.yaw+yaw,pitch:clamp(this.requested.pitch+pitch,-1.2,.95)};this.rejection=null;this.generation++
   }
   cancel() { this.requested={...this.resolved};this.speed=0;this.generation++ }
   reset() { this.requested={yaw:0,pitch:0};this.resolved={...this.requested};this.perspective='rear';this.rejection=null;this.speed=0;this.generation++ }

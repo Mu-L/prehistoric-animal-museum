@@ -38,3 +38,18 @@ export async function recordCameraFlight(runtime:FlightRuntime){
   await saveWeatherCapture(runtime)
   return filename
 }
+export async function recordFlightEffort(runtime:FlightRuntime){
+  runtime.pause('user');runtime.selectPerspective('left');await settle(runtime)
+  runtime.trace.start();const video=recordFlightReview(20);runtime.start()
+  try{
+    await wait(2000)
+    runtime.input.point(0,1,-98);await wait(6500)
+    runtime.input.point(0,-1,-98);await wait(6500)
+    runtime.input.point(0,0,-98)
+    const filename=await video
+    return filename
+  } finally {
+    runtime.input.clear();runtime.pause('user');runtime.trace.stop()
+    await fetch('/__flight-review/trace',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(runtime.traceEvidence())})
+  }
+}

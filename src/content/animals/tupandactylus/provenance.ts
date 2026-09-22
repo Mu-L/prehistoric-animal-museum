@@ -25,6 +25,7 @@ export const provenance = [
       "sha256": "e2c232534c909899d266fb75e1787117d7e17396d677a82e1a63a0872f2f385e"
     },
     "modifications": [
+      "Viewer adds a 16-joint rig and retargets the bundled Pteranodon animation by Chistodrako._. / Oscar López Riviello (CC-BY-4.0), with species proportions and reduced wing twist; source GLB remains unchanged.",
       "Compressed geometry and animation with high-precision Meshopt and converted embedded PNG textures to lossless WebP for browser delivery.",
       "Freeze the reviewed source pose and, when eligible, a source-rig partial mouth-close target before making morph animation deterministic. Operation: bake-and-join.",
       "Align length to X, center the visible bounds, and apply habitat grounding. Operation: canonical-transform.",
@@ -32,7 +33,7 @@ export const provenance = [
       "Authored and validator-checked one closed eight-second flying-wing Idle for the shared museum viewer.",
       "Included the human-reviewed curated-components partial mouth relaxation in the same Idle loop."
     ],
-    "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum.",
+    "attribution": "“Tupandactylus” by Paleo Modelist (@victory_), CC-BY-4.0; modified for the Prehistoric Animal Museum. Runtime motion adapted from “Pteranodon (Animated)” by Chistodrako._. / Oscar López Riviello, CC-BY-4.0.",
     "redistributionAllowed": true,
     "evidencePaths": [
       "provenance/LICENSES/model-license.txt",

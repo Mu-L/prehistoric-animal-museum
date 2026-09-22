@@ -1,5 +1,6 @@
-import { FlightModuleBoundary } from './flight-experience/FlightModuleBoundary'
-import { loadFlightExperience } from 'virtual:flight-experience-entry'
+import type { FlightRestartPreferences } from './flight-experience/FlightExperience'
+import { FlightModule } from './flight-experience/FlightModuleBoundary'
+import { loadFlightExperience, flightCapabilities, flightPreviewUrl, prefetchFlightExperience } from 'virtual:flight-experience-entry'
 import {
   BookOpen,
   ChevronLeft,
@@ -23,6 +24,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
   useEffect,
+  useEffectEvent,
   useId,
   useLayoutEffect,
   useMemo,
@@ -138,7 +140,6 @@ const DirectScaleEncounter = directScaleEncounterLoader
     })
   : null
 
-const FlightExperience = loadFlightExperience ? lazy(async () => ({ default: (await loadFlightExperience!()).FlightExperience })) : null
 const FLIGHT_HISTORY_KEY = '__museumFlight'
 
 const SCALE_ENCOUNTER_HISTORY_KEY = '__museumScaleEncounter'
@@ -944,6 +945,8 @@ function MuseumApp({
   const flightOwnedTokensRef = useRef(new Set<string>())
   const flightHistoryPendingRef = useRef(false)
   const flightQueryAppliedRef = useRef(false)
+  const flightSwitchRef=useRef<string|null>(null)
+  const [flightPreferences,setFlightPreferences]=useState<FlightRestartPreferences|undefined>(undefined)
   const flightTriggerRef = useRef<HTMLButtonElement>(null)
   const [scaleEncounterOpen, setScaleEncounterOpen] = useState(false)
   const [scaleEncounterPhase, setScaleEncounterPhase] = useState<
@@ -1774,6 +1777,17 @@ function MuseumApp({
     void coordinator.request(animalId)
   }
 
+  const switchFlightAnimal=(id:string,preferences:FlightRestartPreferences)=>{
+    if(!flightCapabilities.some(p=>p.id===id)||id===activeAnimal.id)return
+    flightSwitchRef.current=id;setFlightPreferences(preferences)
+    flightOpenRef.current=false;setFlightOpen(false);flightQueryAppliedRef.current=false
+    flightHistoryRef.current=null
+    requestAnimal(id)
+    const url=new URL(window.location.href);url.searchParams.set('animal',id);url.searchParams.set('experience','flight')
+    const state=currentHistoryRecord();delete state[FLIGHT_HISTORY_KEY]
+    window.history.replaceState(state,'',url)
+  }
+
   const retryAnimal = () => {
     idlePreloadCoordinatorRef.current?.cancelAll()
     clearLargeModelNotice()
@@ -1991,7 +2005,7 @@ function MuseumApp({
   }, [activeAnimal.id, loadSnapshot.phase, modelReady])
 
   const openFlight = useCallback((pushHistory = true) => {
-    if (!FlightExperience || !modelReady || activeAnimal.id !== 'pteranodon' ||
+    if (!loadFlightExperience || !modelReady || !flightCapabilities.some(p=>p.id===activeAnimal.id) ||
       !viewerControllerRef.current || flightOpenRef.current || flightHistoryPendingRef.current) return
     narration.reset()
     idlePreloadCoordinatorRef.current?.cancelAll()
@@ -2001,7 +2015,7 @@ function MuseumApp({
     if (pushHistory) {
       const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`
       const url = new URL(window.location.href)
-      url.searchParams.set('animal', 'pteranodon'); url.searchParams.set('experience', 'flight')
+      url.searchParams.set('animal', activeAnimal.id); url.searchParams.set('experience', 'flight')
       window.history.pushState({ ...currentHistoryRecord(), [FLIGHT_HISTORY_KEY]: token }, '', url)
       flightHistoryRef.current = token
       flightOwnedTokensRef.current.add(token)
@@ -2019,6 +2033,7 @@ function MuseumApp({
     window.setTimeout(() => flightTriggerRef.current?.focus(), 0)
   }, [locale])
   const closeFlight = useCallback(() => {
+    flightSwitchRef.current=null;setFlightPreferences(undefined)
     finishFlight()
     if (flightHistoryRef.current && currentHistoryRecord()[FLIGHT_HISTORY_KEY] === flightHistoryRef.current) {
       flightHistoryPendingRef.current = true
@@ -2032,23 +2047,25 @@ function MuseumApp({
   }, [finishFlight])
 
   useEffect(() => {
-    if (!flightQueryAppliedRef.current && modelReady && activeAnimal.id === 'pteranodon' &&
+    if (!flightQueryAppliedRef.current && (!flightSwitchRef.current||flightSwitchRef.current===activeAnimal.id) && modelReady && flightCapabilities.some(p=>p.id===activeAnimal.id) &&
       new URLSearchParams(window.location.search).get('experience') === 'flight') {
       flightQueryAppliedRef.current = true
+      flightSwitchRef.current=null
       openFlight(false)
     }
   }, [activeAnimal.id, modelReady, openFlight])
-  useEffect(() => {
-    const pop = () => {
+  const handleFlightHistory = useEffectEvent(() => {
       const closing = flightHistoryPendingRef.current
       flightHistoryPendingRef.current = false
       if (closing) { finishFlight(); return }
       if (new URLSearchParams(window.location.search).get('experience') === 'flight') openFlight(false)
       else if (flightOpenRef.current) { flightHistoryRef.current = null; finishFlight() }
-    }
+  })
+  useEffect(() => {
+    const pop = () => handleFlightHistory()
     window.addEventListener('popstate', pop)
     return () => window.removeEventListener('popstate', pop)
-  }, [finishFlight, openFlight])
+  }, [])
 
   const openScaleEncounter = useCallback(() => {
     if (
@@ -2451,14 +2468,13 @@ function MuseumApp({
           posterUrl={activeAnimal.assets.poster}
           posterPortraitUrl={activeAnimal.assets.posterPortrait}
         />
+        {!focusMode&&!overlayOpen&&loadFlightExperience&&flightCapabilities.some(p=>p.id===activeAnimal.id)&&<button type="button" className="flight-entry-card" onPointerEnter={()=>prefetchFlightExperience?.()} onFocus={()=>prefetchFlightExperience?.()} ref={flightTriggerRef} disabled={!modelReady||loadSnapshot.phase!=='idle'} onClick={()=>openFlight()}>
+          <img src={flightPreviewUrl} alt="" width="88" height="76" loading="lazy"/>
+          <span><strong>{locale==='zh-CN'?'一起飞进史前天地':'Explore a prehistoric world'}</strong><small>{locale==='zh-CN'?`跟着${activeAnimal.name}，看海岸、山谷和天气。`:`Follow ${activeAnimal.name} through coasts, valleys and weather.`}</small><b>{locale==='zh-CN'?'进入飞行 →':'Enter flight →'}</b></span>
+        </button>}
         {!focusMode ? (
           <div aria-hidden={overlayOpen} className="stage-actions" inert={overlayOpen}>
             <LanguageMenu />
-            {FlightExperience && activeAnimal.id === 'pteranodon' && <button
-              type="button" className="scale-encounter-entry" ref={flightTriggerRef}
-              disabled={!modelReady || loadSnapshot.phase !== 'idle'} onClick={() => openFlight()}>
-              {locale === 'zh-CN' ? '一起飞翔' : 'Take Flight'}
-            </button>}
             {DIRECT_SCALE_ENCOUNTER_ENABLED &&
             isScaleEncounterAnimal(activeAnimal.id) ? (
               <button
@@ -2705,11 +2721,7 @@ function MuseumApp({
         {liveMessage}
       </p>
 
-      {flightOpen && FlightExperience && viewerController ? <FlightModuleBoundary locale={locale} onClose={closeFlight}><Suspense fallback={
-        <section className="scale-encounter-module-loading" role="dialog" aria-modal="true" aria-label={locale === 'zh-CN' ? '准备飞行' : 'Preparing flight'}>
-          <button type="button" onClick={closeFlight}>{locale === 'zh-CN' ? '返回展馆' : 'Back to museum'}</button>
-        </section>
-      }><FlightExperience narrationActive={narrationSnapshot.playback === 'playing'} controller={viewerController} descriptor={activeAnimal.viewer} onClose={closeFlight}/></Suspense></FlightModuleBoundary> : null}
+      {flightOpen && loadFlightExperience && viewerController ? <FlightModule loader={loadFlightExperience} locale={locale} onClose={closeFlight} experienceProps={{initialPreferences:flightPreferences,onSpeciesChange:switchFlightAnimal,narrationActive:narrationSnapshot.playback === 'playing',controller:viewerController,descriptor:activeAnimal.viewer,onClose:closeFlight}}/> : null}
 
       {scaleEncounterOpen &&
       DirectScaleEncounter &&

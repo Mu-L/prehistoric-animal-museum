@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "recipe": "scripts/flight/assets/prepare-species-companions.mjs",
+  "assets": [
+    {
+      "id": "tupandactylus",
+      "source": "src/content/animals/tupandactylus/model/model.glb",
+      "sourceSha256": "e2c232534c909899d266fb75e1787117d7e17396d677a82e1a63a0872f2f385e",
+      "output": "src/flight-experience/assets/companions/tupandactylus-far.glb",
+      "sha256": "582cffeff2e00d88765595ffcf9c1f52bf4eca681d57a82b6df7a32ff9083545",
+      "bytes": 188212,
+      "triangles": 7828,
+      "materials": [
+        "Material.001",
+        "Material.003"
+      ],
+      "morphTargets": [
+        3,
+        3
+      ],
+      "animationHash": "34d5b7d92e696d8e62472e5e5b9599e70b2e369089cde9a9d478e094ee486b04",
+      "animation": "Idle",
+      "provenanceRef": "src/content/animals/tupandactylus/provenance.ts",
+      "license": "CC-BY-4.0",
+      "modifications": "Meshopt index selection and vertex/morph attribute remapping, ratio0.30/error0.003/locked borders; bitwise-equal vertex welding. Original Idle samplers and node transforms retained. Textures borrowed from same source hero.",
+      "reviewStatus": "needs_review",
+      "approval": null
+    },
+    {
+      "id": "rhamphorhynchus",
+      "source": "src/content/animals/rhamphorhynchus/model/model.glb",
+      "sourceSha256": "16b5ab37ac44e177c3e12c229e6f0b27fab669c3d6e74e5b5bdf54ed3a68a935",
+      "output": "src/flight-experience/assets/companions/rhamphorhynchus-far.glb",
+      "sha256": "0bb78eb387b1e4449d179c6033cdcf664759617f4bce63ebd90180437deed1bf",
+      "bytes": 179196,
+      "triangles": 6536,
+      "materials": [
+        "lowpolyrhampho"
+      ],
+      "morphTargets": [
+        2
+      ],
+      "animationHash": "d25472b0bb21a17a7a76b3ea0bc17488286c4088899577954cfbef2c13895dc9",
+      "animation": "Idle",
+      "provenanceRef": "src/content/animals/rhamphorhynchus/provenance.ts",
+      "license": "CC-BY-4.0",
+      "modifications": "Meshopt index selection and vertex/morph attribute remapping, ratio0.30/error0.003/locked borders; bitwise-equal vertex welding. Original Idle samplers and node transforms retained. Textures borrowed from same source hero.",
+      "reviewStatus": "needs_review",
+      "approval": null
+    }
+  ]
+}
