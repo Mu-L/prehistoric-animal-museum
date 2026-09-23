@@ -306,10 +306,10 @@ export class FlightRuntime implements ExternalExperience {
     this.snapshot.settings = { ...settings }
     const spawn = spawnState(settings, this.world); Object.assign(this.simulation.position, spawn.position); this.simulation.heading = spawn.heading
     if (settings.start === 'coast') {
-      // The portrait follow distance already lowers the horizon. A wider view
-      // needs more lift to keep the sun, wing and headland in one opening frame.
+      // Keep a modest view down over each species' snout while preserving the
+      // sun and headland in the opening frame across portrait and wide screens.
       const wide=Math.max(0,Math.min(1,(window.innerWidth/Math.max(1,window.innerHeight)-.6)/.95))
-      this.cameraRig.restore({...this.cameraRig.snapshot(),resolved:{yaw:.10*(1-wide),pitch:-.16-.19*wide},perspective:'custom'})
+      this.cameraRig.restore({...this.cameraRig.snapshot(),resolved:{yaw:.10*(1-wide),pitch:-.04-.19*wide},perspective:'custom'})
     }
     this.simulation.cruiseSpeed = settings.speed; this.simulation.speed = settings.speed; this.simulation.clearAccumulator()
     this.snapshot.gentle = gentle || settings.gentle; this.simulation.gentle = this.snapshot.gentle
