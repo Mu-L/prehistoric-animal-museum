@@ -729,6 +729,11 @@ export class FlightRuntime implements ExternalExperience {
         this.camera.up.set(0,1,0);this.camera.lookAt(pose.target.x-this.origin.x,pose.target.y,pose.target.z-this.origin.z)
         this.cameraOffset.copy(pose.position).sub(new Vector3(p.x,p.y,p.z));this.cameraInitialized=true
       }
+        // Only an actually accepted camera pose can release a camera pause.
+        // Keep the flight paused until the visitor explicitly resumes.
+        if(this.snapshot.phase==='paused' && this.snapshot.reason==='camera' && !this.simulation.safetyStop)
+          this.publish({reason:null})
+      }
       this.frameCpu.camera=performance.now()-began;this.cameraCpu.push(this.frameCpu.camera);if(this.cameraCpu.length>3600)this.cameraCpu.shift()
       this.publish({});return
     }

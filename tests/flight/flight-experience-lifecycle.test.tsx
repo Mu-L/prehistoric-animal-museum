@@ -38,6 +38,29 @@ async function mount() {
  return {runtime,instances,view,element,onClose}
 }
 describe('whole FlightExperience events with the actual Runtime (GPU/worker readiness stubbed)',()=>{
+ it('recovers a genuinely unsafe displayed camera and still requires an explicit resume',async()=>{
+  const {runtime,view}=await mount()
+  await waitFor(()=>expect(screen.getByRole('dialog')).toHaveAttribute('data-flight-phase','ready'))
+  vi.spyOn(runtime.terrain,'displayedHeight').mockReturnValue(0)
+  vi.spyOn(runtime.terrain,'safeToEnter').mockReturnValue(true)
+  act(()=>runtime.start())
+  act(()=>runtime.update(0))
+  const hero=runtime.simulation.renderState().position
+  runtime.camera.position.set(hero.x,hero.y,hero.z)
+  act(()=>runtime.update(1/60))
+  expect(runtime.getSnapshot()).toMatchObject({phase:'paused',reason:'camera'})
+  expect(runtime.canResume).toBe(false)
+  act(()=>{runtime.resize(1280,720);runtime.update(0)})
+  expect(runtime.cameraRig.rejection).toBeNull()
+  expect(runtime.getSnapshot()).toMatchObject({phase:'paused',reason:null})
+  expect(screen.getByRole('button',{name:'Continue flying'})).toBeVisible()
+  runtime.simulation.safetyStop=true
+  expect(runtime.canResume).toBe(false)
+  runtime.simulation.safetyStop=false
+  fireEvent.click(screen.getByRole('button',{name:'Continue flying'}))
+  expect(runtime.getSnapshot().phase).toBe('flying')
+  view.unmount()
+ })
  it('offers camera presets, click nudges and focused keyboard without steering the animal',async()=>{
   const {runtime,view}=await mount()
   fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}));fireEvent.click(screen.getByRole('tab',{name:'Flight'}))
