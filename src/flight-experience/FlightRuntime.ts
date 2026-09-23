@@ -349,6 +349,13 @@ export class FlightRuntime implements ExternalExperience {
   async prepare(descriptor: ViewerModelDescriptor) {
     this.species=descriptor.id?flightSpecies(descriptor.id)??DEFAULT_FLIGHT_SPECIES:DEFAULT_FLIGHT_SPECIES
     if(descriptor.id&&!flightSpecies(descriptor.id)){this.fail(new Error('unsupported-flight-species'));return}
+    if (this.species.id === 'rhamphorhynchus' && this.snapshot.settings.start === 'coast') {
+      // Its narrow body reads as a line from the shared rear angle. Lift and
+      // offset the opening camera enough to reveal the snout and wing surfaces.
+      const wide=Math.max(0,Math.min(1,(window.innerWidth/Math.max(1,window.innerHeight)-.6)/.95))
+      const opening=this.cameraRig.snapshot()
+      this.cameraRig.restore({...opening,resolved:{yaw:opening.resolved.yaw+.06+.04*wide,pitch:opening.resolved.pitch+.12+.06*wide}})
+    }
     this.camera.near=this.species.camera.near;this.camera.updateProjectionMatrix()
     this.preparation.setAvailable(performance.now(),this.available&&!document.hidden)
     const visibility=()=>this.setVisibilityState(!document.hidden)
