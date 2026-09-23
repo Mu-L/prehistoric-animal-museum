@@ -1,6 +1,11 @@
-.flight-entry-card{position:absolute;right:22px;bottom:32px;z-index:5;display:grid;grid-template-columns:78px minmax(0,1fr);gap:12px;align-items:center;width:320px;min-height:88px;padding:9px;text-align:left;border:1px solid #fff9;border-radius:18px;background:#fffdf2ed;color:#294f4b;box-shadow:0 8px 28px #18352b21;cursor:pointer}
-.flight-entry-card img{width:78px;height:68px;object-fit:cover;border-radius:10px}
+.flight-entry-card{position:absolute;right:22px;bottom:32px;z-index:5;display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;align-items:center;width:320px;min-height:96px;padding:10px;text-align:left;border:1px solid #fff9;border-radius:18px;background:#fffdf2ed;color:#294f4b;box-shadow:0 8px 28px #18352b21;cursor:pointer}
+.flight-entry-card img{width:88px;height:76px;object-fit:cover;border-radius:10px}
 .flight-entry-card strong,.flight-entry-card small,.flight-entry-card b{display:block}
 .flight-entry-card strong{font-size:15px;line-height:1.4}.flight-entry-card small{font-size:11px;line-height:1.5;margin:4px 0}.flight-entry-card b{font-size:12px;color:#326964}.flight-entry-card:focus-visible{outline:3px solid #397975;outline-offset:4px}.flight-entry-card:disabled{cursor:progress;opacity:.65}
-@media(max-width:767px){.flight-entry-card{left:12px;right:auto;bottom:max(110px,calc(env(safe-area-inset-bottom) + 104px));width:min(260px,calc(100% - 24px));min-height:68px;grid-template-columns:52px 1fr;gap:8px;padding:7px;border-radius:14px}.flight-entry-card img{width:52px;height:52px}.flight-entry-card strong{font-size:13px}.flight-entry-card small{display:none}.flight-entry-card b{margin-top:5px}}
+@media(max-width:767px){.flight-entry-card{left:12px;right:auto;bottom:max(110px,calc(env(safe-area-inset-bottom) + 104px));width:min(260px,calc(100% - 24px));min-height:76px;grid-template-columns:60px 1fr;gap:8px;padding:8px;border-radius:14px}.flight-entry-card img{width:60px;height:60px}.flight-entry-card strong{font-size:13px}.flight-entry-card small{display:none}.flight-entry-card b{margin-top:5px}}
+/* Match the card-to-hint gap to the hint-to-controls gap. Tall phone previews
+   have a 640:1000 composition frame centered inside the stage; its extra space
+   appears equally above and below the frame. */
+@media(max-width:767px) and (orientation:portrait){.flight-entry-card{bottom:52px}.museum-experience:has(.flight-entry-card) .model-data-notice{top:max(196px,calc(env(safe-area-inset-top) + 190px));bottom:auto}}
+@media(min-height:701px) and (max-width:599px) and (orientation:portrait){.flight-entry-card{bottom:max(52px,calc(100% - 156.25vw + 74px))}}
 @media(max-height:560px) and (orientation:landscape){.flight-entry-card{bottom:16px;right:16px;left:auto;width:240px;min-height:66px;grid-template-columns:60px 1fr;padding:7px}.flight-entry-card img{width:60px;height:50px}.flight-entry-card small{display:none}}
