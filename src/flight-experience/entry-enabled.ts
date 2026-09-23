@@ -3,7 +3,8 @@ import flightPreviewUrl from './assets/entry/coast-preview.webp?url'
 export {flightPreviewUrl}
 export const loadFlightExperience = () => import('./FlightExperience')
 
-export {FLIGHT_SPECIES as flightCapabilities} from './species/profiles'
+import {availableFlightSpecies} from './species/profiles'
+export const flightCapabilities=availableFlightSpecies('candidate')
 
 export function prefetchFlightExperience(){
  const connection=(navigator as Navigator&{connection?:{saveData?:boolean;effectiveType?:string}}).connection

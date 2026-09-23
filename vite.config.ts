@@ -17,6 +17,7 @@ import {
 } from './scripts/review-server-security'
 import { multilingualSeoPlugin } from './scripts/multilingual-seo'
 import { scaleEncounterGlacierAssetUrls } from './scripts/scale-encounter-glacier-assets'
+import { availableFlightSpecies } from './src/flight-experience/species/profiles'
 
 const redistributableNotices = [
   'LICENSE',
@@ -322,15 +323,19 @@ export default defineConfig(({ command, mode }) => {
   assertReviewModeIsServeOnly(command, mode)
   const env = loadEnv(mode, process.cwd(), '')
   const allowedHosts = parseAllowedHosts(env.MUSEUM_ALLOWED_HOSTS)
+  if(env.MUSEUM_FLIGHT_PUBLIC==='1' && env.MUSEUM_FLIGHT!=='1')throw new Error('Public flight mode requires MUSEUM_FLIGHT=1')
+  if(env.MUSEUM_FLIGHT_PUBLIC==='1' && availableFlightSpecies('public').length===0)throw new Error('Public flight mode requires an explicitly approved species')
 
   return {
     base: './',
     resolve: {
       alias: {
         'virtual:flight-experience-entry': fileURLToPath(new URL(
-          command === 'serve' || mode === 'e2e' || env.MUSEUM_FLIGHT === '1'
-            ? './src/flight-experience/entry-enabled.ts'
-            : './src/flight-experience/entry-disabled.ts', import.meta.url)),
+          env.MUSEUM_FLIGHT_PUBLIC==='1'
+            ? './src/flight-experience/entry-public.ts'
+            : command === 'serve' || mode === 'e2e' || env.MUSEUM_FLIGHT === '1'
+              ? './src/flight-experience/entry-enabled.ts'
+              : './src/flight-experience/entry-disabled.ts', import.meta.url)),
         'virtual:scale-encounter-entry': scaleEncounterEntryAlias(mode),
         'virtual:viewer-controller': viewerControllerEntryAlias(mode),
       },

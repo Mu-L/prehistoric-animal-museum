@@ -15,4 +15,7 @@ export const FLIGHT_SPECIES:readonly FlightSpeciesProfile[]=[
 ]
 export const DEFAULT_FLIGHT_SPECIES=FLIGHT_SPECIES[0]!
 export function flightSpecies(id:string){return FLIGHT_SPECIES.find(profile=>profile.id===id&&profile.publicState!=='deferred')}
+export function availableFlightSpecies(mode:'candidate'|'public',profiles:readonly FlightSpeciesProfile[]=FLIGHT_SPECIES){
+ return profiles.filter(profile=>mode==='public'?profile.publicState==='approved':profile.publicState!=='deferred')
+}
 export const DEFERRED_FLIGHT_SPECIES=['archaeopteryx','meganeura'] as const

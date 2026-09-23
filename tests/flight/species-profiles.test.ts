@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs'
 import {createHash} from 'node:crypto'
 import {expect,it} from 'vitest'
-import {FLIGHT_SPECIES,flightSpecies} from '../../src/flight-experience/species/profiles'
+import {FLIGHT_SPECIES,availableFlightSpecies,flightSpecies} from '../../src/flight-experience/species/profiles'
 import {orbitPose} from '../../src/flight-experience/camera-rig'
 it('binds each candidate to the actual source and preserves the unsupported boundary',()=>{
  for(const profile of FLIGHT_SPECIES){
@@ -10,6 +10,11 @@ it('binds each candidate to the actual source and preserves the unsupported boun
   expect(profile.publicState).toBe('candidate')
  }
  for(const id of ['archaeopteryx','meganeura','unknown'])expect(flightSpecies(id)).toBeUndefined()
+})
+it('keeps future candidates out of the approved public set',()=>{
+ const profiles=[...FLIGHT_SPECIES,{...FLIGHT_SPECIES[0]!,id:'future-candidate'},{...FLIGHT_SPECIES[0]!,id:'approved',publicState:'approved' as const}]
+ expect(availableFlightSpecies('candidate',profiles).map(p=>p.id)).toContain('future-candidate')
+ expect(availableFlightSpecies('public',profiles).map(p=>p.id)).toEqual(['approved'])
 })
 it('uses the authored wing axis for new species, separately from long body and tail',()=>{
  expect(flightSpecies('tupandactylus')).toMatchObject({spanMeters:2.7,spanAxis:'z',animationKind:'morph',derivedAnimations:false})

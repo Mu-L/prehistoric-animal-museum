@@ -2721,7 +2721,7 @@ function MuseumApp({
         {liveMessage}
       </p>
 
-      {flightOpen && loadFlightExperience && viewerController ? <FlightModule loader={loadFlightExperience} locale={locale} onClose={closeFlight} experienceProps={{initialPreferences:flightPreferences,onSpeciesChange:switchFlightAnimal,narrationActive:narrationSnapshot.playback === 'playing',controller:viewerController,descriptor:activeAnimal.viewer,onClose:closeFlight}}/> : null}
+      {flightOpen && loadFlightExperience && viewerController ? <FlightModule loader={loadFlightExperience} locale={locale} onClose={closeFlight} experienceProps={{initialPreferences:flightPreferences,onSpeciesChange:switchFlightAnimal,availableSpecies:flightCapabilities,narrationActive:narrationSnapshot.playback === 'playing',controller:viewerController,descriptor:activeAnimal.viewer,onClose:closeFlight}}/> : null}
 
       {scaleEncounterOpen &&
       DirectScaleEncounter &&
