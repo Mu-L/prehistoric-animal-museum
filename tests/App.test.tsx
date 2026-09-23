@@ -274,6 +274,28 @@ vi.mock('../src/scale-encounter/environment-review-candidate', () => ({
   ),
 }))
 
+vi.mock('../src/flight-experience/FlightModuleBoundary', async () => {
+  const { createElement } = await import('react')
+  return {
+    FlightModule: ({
+      experienceProps,
+    }: {
+      experienceProps: {
+        onSpeciesChange?: (id: string, preferences: unknown) => void
+      }
+    }) =>
+      createElement(
+        'button',
+        {
+          onClick: () =>
+            experienceProps.onSpeciesChange?.('tupandactylus', {}),
+          type: 'button',
+        },
+        'Switch mock flight species',
+      ),
+  }
+})
+
 function deferred<T>(): Deferred<T> {
   let resolvePromise: (value: T) => void = () => undefined
   let rejectPromise: (reason: unknown) => void = () => undefined
@@ -664,6 +686,66 @@ describe('App', () => {
     expect(encounter).toBeVisible()
     expect(viewerMock.setScaleEncounterSceneCandidateVariant).toHaveBeenCalledWith(
       'D',
+    )
+  })
+
+  it('cancels the pending flight route when another animal is chosen during a delayed switch', async () => {
+    const pending = deferred<ReturnType<typeof stagedModel>>()
+    viewerMock.stageModel.mockImplementation((descriptor: MockDescriptor) =>
+      descriptor.id === 'tupandactylus'
+        ? pending.promise
+        : Promise.resolve(stagedModel(descriptor)),
+    )
+    window.history.replaceState(
+      {},
+      '',
+      '/museum/zh-CN/animals/pteranodon/?experience=flight',
+    )
+    render(
+      <App
+        initialState={{
+          animalId: 'pteranodon',
+          locale: 'zh-CN',
+          pageKind: 'animal-detail',
+          preference: 'zh-CN',
+        }}
+      />,
+    )
+
+    fireEvent.click(await screen.findByRole('button', {
+      name: 'Switch mock flight species',
+    }))
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-animal-id="tupandactylus"]'),
+      ).toHaveAttribute('data-loading', 'true'),
+    )
+    fireEvent.click(
+      document.querySelector('[data-animal-id="rhamphorhynchus"]')!,
+    )
+    await waitFor(() =>
+      expect(document.getElementById('museum-experience')).toHaveAttribute(
+        'data-ready-animal-id',
+        'rhamphorhynchus',
+      ),
+    )
+    expect(new URL(window.location.href).searchParams.has('experience')).toBe(
+      false,
+    )
+    expect(
+      screen.queryByRole('button', { name: 'Switch mock flight species' }),
+    ).not.toBeInTheDocument()
+
+    await act(async () => {
+      pending.resolve(stagedModel({ id: 'tupandactylus' }))
+      await pending.promise
+    })
+    expect(document.getElementById('museum-experience')).toHaveAttribute(
+      'data-ready-animal-id',
+      'rhamphorhynchus',
+    )
+    expect(new URL(window.location.href).searchParams.has('experience')).toBe(
+      false,
     )
   })
 
