@@ -931,6 +931,8 @@ function MuseumApp({
     requestedAnimalId: initialAnimal.id,
   }))
   const [modelReady, setModelReady] = useState(false)
+  const [gestureHintFinishedCycle, setGestureHintFinishedCycle] =
+    useState<string | null>(null)
   const [modelLoadingProgress, setModelLoadingProgress] =
     useState<ModelLoadingProgress | null>(null)
   const [viewerFailure, setViewerFailure] =
@@ -976,6 +978,7 @@ function MuseumApp({
     narration.getServerSnapshot,
   )
   const activeAnimal = animalIndex.get(activeAnimalId) ?? initialAnimal
+  const gestureHintCycle = `${activeAnimal.id}:${loadSnapshot.requestToken}:${viewerRetryKey}`
   useEffect(() => {
     activeAnimalRef.current = activeAnimal
   }, [activeAnimal])
@@ -1875,6 +1878,9 @@ function MuseumApp({
       return
     }
     viewerControllerRef.current?.setFocusMode(true)
+    // The gesture hint replays when focus mode closes, so restart the card's
+    // alignment with that hint before either becomes visible again.
+    setGestureHintFinishedCycle(null)
     setFocusMode(true)
     setLiveMessage(messages.focusEntered)
   }
@@ -2460,6 +2466,16 @@ function MuseumApp({
         onPointerCancel={() => {
           focusPointerRef.current = null
         }}
+        onAnimationEndCapture={(event) => {
+          if (
+            event.animationName === 'gesture-hint' &&
+            (event.target as HTMLElement).classList.contains('model-gesture-hint') &&
+            modelReady &&
+            loadSnapshot.readyAnimalId === activeAnimal.id
+          ) {
+            setGestureHintFinishedCycle(gestureHintCycle)
+          }
+        }}
         onPointerDownCapture={handleFocusPointerDown}
         onPointerUpCapture={handleFocusPointerUp}
       >
@@ -2480,7 +2496,7 @@ function MuseumApp({
           posterUrl={activeAnimal.assets.poster}
           posterPortraitUrl={activeAnimal.assets.posterPortrait}
         />
-        {!focusMode&&!overlayOpen&&loadFlightExperience&&flightCapabilities.some(p=>p.id===activeAnimal.id)&&<button type="button" className="flight-entry-card" onPointerEnter={()=>prefetchFlightExperience?.()} onFocus={()=>prefetchFlightExperience?.()} ref={flightTriggerRef} disabled={!modelReady||loadSnapshot.phase!=='idle'} onClick={()=>openFlight()}>
+        {!focusMode&&!overlayOpen&&modelReady&&loadSnapshot.phase==='idle'&&loadFlightExperience&&flightCapabilities.some(p=>p.id===activeAnimal.id)&&<button type="button" className="flight-entry-card" data-hint-finished={gestureHintFinishedCycle===gestureHintCycle} onPointerEnter={()=>prefetchFlightExperience?.()} onFocus={()=>prefetchFlightExperience?.()} ref={flightTriggerRef} onClick={()=>openFlight()}>
           <img src={flightPreviewUrl} alt="" width="88" height="76" loading="lazy"/>
           <span><strong>{locale==='zh-CN'?'一起飞进史前天地':'Explore a prehistoric world'}</strong><small>{locale==='zh-CN'?`跟着${activeAnimal.name}，看海岸、山谷和天气。`:`Follow ${activeAnimal.name} through coasts, valleys and weather.`}</small><b>{locale==='zh-CN'?'进入飞行 →':'Enter flight →'}</b></span>
         </button>}

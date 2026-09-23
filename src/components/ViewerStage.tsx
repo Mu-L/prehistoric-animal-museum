@@ -107,12 +107,20 @@ export function ViewerStage({
     if (!stage) {
       return
     }
+    const stagePanel = stage.parentElement
+    const frameInsetProperty = '--model-frame-bottom-inset'
     const update = () => {
       const availableWidth = Math.max(stage.clientWidth, 1)
       const availableHeight = Math.max(stage.clientHeight, 1)
       const aspect = previewProfile.width / previewProfile.height
       const width = Math.min(availableWidth, availableHeight * aspect)
       const height = width / aspect
+      // The gesture hint is anchored to the centered preview frame. Expose its
+      // bottom inset so sibling controls can follow the same position.
+      stagePanel?.style.setProperty(
+        frameInsetProperty,
+        `${Math.max(0, (availableHeight - height) / 2)}px`,
+      )
       setViewportSize((current) => {
         if (
           current &&
@@ -129,12 +137,14 @@ export function ViewerStage({
       window.addEventListener('resize', update)
       return () => {
         window.removeEventListener('resize', update)
+        stagePanel?.style.removeProperty(frameInsetProperty)
       }
     }
     const observer = new ResizeObserver(update)
     observer.observe(stage)
     return () => {
       observer.disconnect()
+      stagePanel?.style.removeProperty(frameInsetProperty)
     }
   }, [previewProfile.height, previewProfile.width])
 
