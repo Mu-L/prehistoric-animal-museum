@@ -43,7 +43,9 @@ describe('unified finite river and surface contract',()=>{
    expect(x>hole.minX&&x<hole.maxX&&z>hole.minZ&&z<hole.maxZ).toBe(false)
    area+=((a.getZ(i+1)-a.getZ(i))*(a.getX(i+2)-a.getX(i))-(a.getX(i+1)-a.getX(i))*(a.getZ(i+2)-a.getZ(i)))/2
   }
-  expect(area).toBeCloseTo(10000**2-(hole.maxX-hole.minX)*(hole.maxZ-hole.minZ),4);g.dispose()
+  const farthestTerrain=5120+512 // Balanced far range plus one camera/flight centre cell.
+  expect(Math.max(...Array.from({length:a.count},(_,i)=>a.getX(i)))).toBeGreaterThan(farthestTerrain)
+  expect(area).toBeCloseTo(12288**2-(hole.maxX-hole.minX)*(hole.maxZ-hole.minZ),4);g.dispose()
  })
  it('queries the same water triangles rather than an unrelated analytic water level',()=>{
   const w=createWorldSampler()

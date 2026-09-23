@@ -3,7 +3,7 @@ import { RainField, RainCurtains } from './rain-field'
 import { WeatherController, type WeatherState, wrapCloud } from './weather-controller'
 import cloudUrl from '../assets/weather/cloud-density.png'
 import { RepeatWrapping, TextureLoader, NoColorSpace, type Texture } from 'three'
-import {oceanCoverage,type WaterRect} from '../hydrology/ocean-coverage'
+import {oceanCoverage,OCEAN_HALF_EXTENT,type WaterRect} from '../hydrology/ocean-coverage'
 import { BackSide, BufferGeometry, DataTexture, DirectionalLight, Group, HemisphereLight, Mesh, NearestFilter, RGBAFormat, ShaderMaterial, SphereGeometry, Vector2, Vector3, Vector4, type PerspectiveCamera, type Scene, UniformsLib, UniformsUtils } from 'three'
 import { terrainAt, type Address } from '../world'
 import { BathymetryField, DEPTH_SIZE, DEPTH_STEP, type BathymetryOptions } from './bathymetry'
@@ -31,7 +31,7 @@ const waterFragment=`
 #include <common>
 #include <packing>
 #include <shadowmap_pars_fragment>
-varying vec3 flowData;varying vec3 worldPosition;uniform vec4 waterOwnerRect;uniform vec2 waterWorldOrigin;uniform float riverReady;uniform float riverPass;uniform float waterTime;uniform vec4 waves[6];uniform vec2 envelopeOrigin;uniform sampler2D depthField;uniform sampler2D previousDepthField;uniform sampler2D coarseDepthField;uniform vec2 depthOrigin;uniform vec2 previousDepthOrigin;uniform vec2 coarseDepthOrigin;uniform float depthBlend;uniform float hasPreviousDepth;uniform float hasCoarseDepth;uniform float hasDepth;uniform float flatWater;uniform float edges;uniform float ownerColors;uniform float depthColors;
+varying vec3 flowData;varying vec3 worldPosition;uniform vec4 waterOwnerRect;uniform vec2 waterWorldOrigin;uniform vec2 waterCoverageCenter;uniform float riverReady;uniform float riverPass;uniform float waterTime;uniform vec4 waves[6];uniform vec2 envelopeOrigin;uniform sampler2D depthField;uniform sampler2D previousDepthField;uniform sampler2D coarseDepthField;uniform vec2 depthOrigin;uniform vec2 previousDepthOrigin;uniform vec2 coarseDepthOrigin;uniform float depthBlend;uniform float hasPreviousDepth;uniform float hasCoarseDepth;uniform float hasDepth;uniform float flatWater;uniform float edges;uniform float ownerColors;uniform float depthColors;
 ${atmosphere}
 // Periodic 8192m value noise with analytic derivatives; bounded origin coordinates.
 float oceanHash(vec2 p){p=mod(p,64.);return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -101,7 +101,7 @@ float weight=smoothstep(0.,.18,edge)*smoothstep(0.,.04,sp.z)*(1.-smoothstep(.94,
 visibility=mix(1.,getShadow(directionalShadowMap[0],directionalLightShadows[0].shadowMapSize,directionalLightShadows[0].shadowIntensity,directionalLightShadows[0].shadowBias,directionalLightShadows[0].shadowRadius,vDirectionalShadowCoord[0]),weight);
 #endif
 vec3 base=oceanBase(ray,n,shallow)*mix(.72,1.,visibility);vec3 c=base+(oceanColor(ray,n,shallow,worldPosition)-oceanBase(ray,n,shallow))*visibility;float farMix=smoothstep(3200.,4200.,distanceToEye);c=mix(c,distantColor(ray),farMix);
-if(edges>.5){float border=step(4750.,max(abs(worldPosition.x-cameraPosition.x),abs(worldPosition.z-cameraPosition.z)));c=mix(c,vec3(1.,0.,0.),border);}
+if(edges>.5){float border=step(${OCEAN_HALF_EXTENT-250}.,max(abs(worldPosition.x-waterCoverageCenter.x),abs(worldPosition.z-waterCoverageCenter.y)));c=mix(c,vec3(1.,0.,0.),border);}
 if(ownerColors>.5)c=riverPass>.5?vec3(.8,.25,.1):vec3(.1,.2,.8);if(depthColors>.5)c=vec3(shallow);
 gl_FragColor=vec4(c,1.);
 #include <tonemapping_fragment>
@@ -136,7 +136,7 @@ export class EnvironmentScene {
   private readonly uniforms=this.fog.uniforms
   readonly rain=new RainField()
   readonly curtains=new RainCurtains(this.uniforms)
-  private readonly waterUniforms={...this.uniforms,waterOwnerRect:{value:new Vector4()},waterWorldOrigin:{value:new Vector2()},riverReady:{value:0},riverPass:{value:0},waterTime:{value:0},envelopeOrigin:{value:new Vector2()},waves:{value:Array.from({length:6},()=>new Vector4())},depthField:{value:this.texture},previousDepthField:{value:this.previousTexture},coarseDepthField:{value:this.coarseTexture},previousDepthOrigin:{value:new Vector2()},coarseDepthOrigin:{value:new Vector2()},depthBlend:{value:1},hasPreviousDepth:{value:0},hasCoarseDepth:{value:0},depthOrigin:{value:new Vector2()},hasDepth:{value:0},flatWater:{value:0},edges:{value:0},ownerColors:{value:0},depthColors:{value:0}}
+  private readonly waterUniforms={...this.uniforms,waterOwnerRect:{value:new Vector4()},waterWorldOrigin:{value:new Vector2()},waterCoverageCenter:{value:new Vector2()},riverReady:{value:0},riverPass:{value:0},waterTime:{value:0},envelopeOrigin:{value:new Vector2()},waves:{value:Array.from({length:6},()=>new Vector4())},depthField:{value:this.texture},previousDepthField:{value:this.previousTexture},coarseDepthField:{value:this.coarseTexture},previousDepthOrigin:{value:new Vector2()},coarseDepthOrigin:{value:new Vector2()},depthBlend:{value:1},hasPreviousDepth:{value:0},hasCoarseDepth:{value:0},depthOrigin:{value:new Vector2()},hasDepth:{value:0},flatWater:{value:0},edges:{value:0},ownerColors:{value:0},depthColors:{value:0}}
   readonly sky=new Mesh(new SphereGeometry(1,24,12),new ShaderMaterial({vertexShader:skyVertex,fragmentShader:skyFragment,uniforms:this.uniforms,side:BackSide,depthWrite:false,depthTest:false}))
   private waterHole:WaterRect|undefined
   private waterLayout=''
@@ -176,6 +176,7 @@ export class EnvironmentScene {
     this.fill.color.setRGB(...f.skyZenith);this.fill.groundColor.setRGB(...f.groundFill);this.fill.intensity=f.fillIntensity
     this.sky.position.copy(camera.position)
     const waterCenter={x:Math.floor((camera.position.x+origin.x)/512)*512,z:Math.floor((camera.position.z+origin.z)/512)*512},waterLayout=JSON.stringify([waterCenter,origin,this.waterHole])
+    this.waterUniforms.waterCoverageCenter.value.set(waterCenter.x-origin.x,waterCenter.z-origin.z)
     if(waterLayout!==this.waterLayout){const old=this.water.geometry;this.water.geometry=oceanCoverage(waterCenter,origin,this.waterHole);old.dispose();this.waterLayout=waterLayout}
     const size=quality==='low'?1024:2048
     if(this.sun.shadow.mapSize.x!==size){this.sun.shadow.map?.dispose();this.sun.shadow.map=null;this.sun.shadow.mapSize.set(size,size)}

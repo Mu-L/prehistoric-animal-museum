@@ -46,6 +46,8 @@ export const CAPTURE_ANCHORS: readonly CaptureAnchor[] = [
   {id:'overcast-high-evening',world:WORLD,position:{x:-450,y:900,z:950},heading:0,view:'standard',pitch:0,presentationSeconds:0,preset:'evening',solarLayout:'sunset-bay',weather:overcastCapture.serialize(),camera:{position:{x:-450,y:900,z:950},target:{x:1000,y:120,z:-4000}}},
   {id:'overcast-seaward-evening',world:WORLD,position:{x:160,y:119.3,z:500},heading:-.59,view:'standard',pitch:0,presentationSeconds:0,preset:'evening',solarLayout:'sunset-bay',weather:overcastCapture.serialize(),camera:{position:{x:160,y:119.3,z:500},target:{x:-116,y:112,z:-461}}},
   {id:'coast-stream-crossing',world:WORLD,position:{x:100,y:900,z:64},heading:0,view:'standard',pitch:0,presentationSeconds:0,preset:'evening',solarLayout:'sunset-bay',weather:overcastCapture.serialize()},
+  {id:'sea-return-edge',world:WORLD,position:{x:-5000,y:350,z:500},heading:Math.PI*.75,view:'standard',pitch:0,presentationSeconds:0,preset:'evening',solarLayout:'sunset-bay',camera:{position:{x:-5000,y:355,z:500},target:{x:0,y:250,z:2500}}},
+  {id:'sea-return-beyond',world:WORLD,position:{x:-6000,y:350,z:500},heading:Math.PI*.75,view:'standard',pitch:0,presentationSeconds:0,preset:'evening',solarLayout:'sunset-bay',camera:{position:{x:-6000,y:355,z:500},target:{x:-1000,y:250,z:2500}}},
 ]
 
 /** Approximate feedback routes, never claimed to recover the user's screenshot coordinates. */
