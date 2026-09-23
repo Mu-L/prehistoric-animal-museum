@@ -252,6 +252,7 @@ export class FlightRuntime implements ExternalExperience {
   private get available() { return !this.disposed && !this.fatalError && this.contextAvailable && this.visible && this.focused }
   private invalidate() { if (this.available) this.lease?.invalidate() }
   private syncAvailability() {
+    if(this.preparation.setAvailable(performance.now(),this.available) && this.initialPreparationPending && !this.fatalError){this.abort.abort();this.fail(new Error('flight-preparation-timeout'));return}
     if(!this.available){this.cancelCameraInput();this.viewTransition.cancelPending();this.photos.cancel();this.soundscape?.update({camera:{x:0,y:0,z:0},rain:0,wind:0,active:false,delta:0})}
     this.observation.setPreparationAvailable(this.available, performance.now())
     this.publishObservation()
@@ -331,11 +332,11 @@ export class FlightRuntime implements ExternalExperience {
     this.species=descriptor.id?flightSpecies(descriptor.id)??DEFAULT_FLIGHT_SPECIES:DEFAULT_FLIGHT_SPECIES
     if(descriptor.id&&!flightSpecies(descriptor.id)){this.fail(new Error('unsupported-flight-species'));return}
     this.camera.near=this.species.camera.near;this.camera.updateProjectionMatrix()
-    let preparationVisible=!document.hidden
-    const visibility=()=>{this.preparation.tick(performance.now(),preparationVisible);preparationVisible=!document.hidden}
+    this.preparation.setAvailable(performance.now(),this.available&&!document.hidden)
+    const visibility=()=>this.setVisibilityState(!document.hidden)
     document.addEventListener('visibilitychange',visibility)
     const timeout=window.setInterval(()=>{
-      if(this.preparation.tick(performance.now(),preparationVisible&&this.contextAvailable) && this.initialPreparationPending){this.abort.abort();this.fail(new Error('flight-preparation-timeout'))}
+      if(this.preparation.tick(performance.now()) && this.initialPreparationPending){this.abort.abort();this.fail(new Error('flight-preparation-timeout'))}
     },250)
     this.stopPreparationWatch=()=>{window.clearInterval(timeout);document.removeEventListener('visibilitychange',visibility)}
     try {
@@ -728,7 +729,6 @@ export class FlightRuntime implements ExternalExperience {
         this.camera.position.set(pose.position.x-this.origin.x,pose.position.y,pose.position.z-this.origin.z)
         this.camera.up.set(0,1,0);this.camera.lookAt(pose.target.x-this.origin.x,pose.target.y,pose.target.z-this.origin.z)
         this.cameraOffset.copy(pose.position).sub(new Vector3(p.x,p.y,p.z));this.cameraInitialized=true
-      }
         // Only an actually accepted camera pose can release a camera pause.
         // Keep the flight paused until the visitor explicitly resumes.
         if(this.snapshot.phase==='paused' && this.snapshot.reason==='camera' && !this.simulation.safetyStop)

@@ -38,6 +38,37 @@ async function mount() {
  return {runtime,instances,view,element,onClose}
 }
 describe('whole FlightExperience events with the actual Runtime (GPU/worker readiness stubbed)',()=>{
+ it('keeps a visible but unfocused model load within its active budget',async()=>{
+  let resolveModel:((model:StagedViewerModel)=>void)|undefined
+  let runtime:FlightRuntime|undefined
+  const controller={
+   acquireExternalExperience:(instance:FlightRuntime)=>{runtime=instance;return {invalidate:vi.fn(),release:()=>instance.dispose()}},
+   stageModel:()=>new Promise<StagedViewerModel>(resolve=>{resolveModel=resolve}),
+   disposeStagedModel:vi.fn(),
+  } as unknown as ViewerController
+  const view=render(<I18nProvider initialState={{locale:'en',preference:'en'}}><FlightExperience controller={controller} descriptor={{} as ViewerModelDescriptor} onClose={vi.fn()}/></I18nProvider>)
+  try{
+   await waitFor(()=>expect(runtime).toBeDefined())
+   const instance=runtime!
+   await act(async()=>{await Promise.resolve()})
+   let now=instance.preparation.startedAt
+   vi.spyOn(performance,'now').mockImplementation(()=>now)
+   fireEvent(window,new Event('focus'))
+   now+=5000
+   fireEvent(window,new Event('blur'))
+   now+=60000
+   expect(instance.preparation.tick(now)).toBe(false)
+   expect(instance.preparation.snapshot().activeElapsed).toBeGreaterThanOrEqual(5000)
+   expect(instance.preparation.snapshot().activeElapsed).toBeLessThan(5100)
+   expect(instance.running).toBe(false)
+   fireEvent(window,new Event('focus'))
+   const root=new Group(),group=new Group();group.add(root);root.add(new Mesh(new BoxGeometry(7,1,2),new MeshBasicMaterial()))
+   await act(async()=>{resolveModel?.({group,modelRoot:root,mixer:null,action:null,disposed:false} as unknown as StagedViewerModel);await Promise.resolve()})
+   act(()=>{instance.update(0);instance.completedFrame(document.createElement('canvas'))})
+   expect(instance.getSnapshot().reason).not.toBe('error')
+   expect(instance.preparation.snapshot().activeElapsed).toBeLessThan(20000)
+  }finally{view.unmount()}
+ })
  it('recovers a genuinely unsafe displayed camera and still requires an explicit resume',async()=>{
   const {runtime,view}=await mount()
   await waitFor(()=>expect(screen.getByRole('dialog')).toHaveAttribute('data-flight-phase','ready'))
