@@ -15,8 +15,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: pages-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -28,6 +28,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Audit locked dependencies
+        run: npm audit --audit-level=moderate --registry=https://registry.npmjs.org
       - run: npm run lint
       - run: npm run typecheck
       - name: Fast contracts and component tests
@@ -59,7 +61,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, flight-candidate]
     steps:
       - name: Deploy
         id: deployment
