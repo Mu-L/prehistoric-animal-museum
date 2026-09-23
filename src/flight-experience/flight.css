@@ -264,12 +264,12 @@
 .flight-panel-return{margin-top:12px;min-height:44px;font-size:13px}
 .flight-toolbar,.flight-place,.flight-direction-pad,.flight-assist{transition:opacity .6s ease}
 .flight-experience[data-hud-idle=true] .flight-toolbar{opacity:.18}
-.flight-experience[data-hud-idle=true] .flight-place,.flight-experience[data-hud-idle=true] .flight-direction-pad,.flight-experience[data-hud-idle=true] .flight-assist{opacity:.08}
+.flight-experience[data-hud-idle=true] .flight-place,.flight-experience[data-hud-idle=true] .flight-direction-pad,.flight-experience[data-hud-idle=true] .flight-assist{opacity:.06}
 @media(max-width:600px){
  .flight-settings{width:calc(100vw - 24px);right:12px;max-height:calc(100dvh - 98px - env(safe-area-inset-bottom))}
  .flight-settings-heading{padding:16px 18px 8px}.flight-settings-body{padding:4px 18px 16px}.flight-panel-sections{padding:0 18px;gap:16px}
  .flight-view-choices img{width:94px;height:60px}.flight-view-choices small{font-size:10px}
- .flight-experience[data-hud-idle=true] .flight-toolbar{opacity:.35}.flight-experience[data-hud-idle=true] .flight-direction-pad{opacity:.2}
+ .flight-experience[data-hud-idle=true] .flight-toolbar{opacity:.22}.flight-experience[data-hud-idle=true] .flight-direction-pad{opacity:.12}
 }
 @media(prefers-reduced-motion:reduce){.flight-toolbar,.flight-place,.flight-direction-pad,.flight-assist,.flight-toggle-track,.flight-toggle-track::after{transition:none}}
 .flight-view-preparing[data-settled=true]{animation:flight-view-reveal .3s ease-out both}
@@ -306,8 +306,8 @@
 
 .flight-experience[data-hud-idle=true][data-camera-offset=true] .flight-toolbar{opacity:1}
 .flight-experience[data-hud-idle=true][data-camera-offset=true] .flight-toolbar>button,
-.flight-experience[data-hud-idle=true][data-camera-offset=true] .flight-toolbar__right>*{opacity:.25}
-.flight-experience[data-hud-idle=true][data-camera-offset=true] .flight-toolbar__right>.flight-camera-reset{opacity:1}
+.flight-experience[data-hud-idle=true][data-camera-offset=true] .flight-toolbar__right>*{opacity:.16}
+.flight-experience[data-hud-idle=true][data-camera-offset=true] .flight-toolbar__right>.flight-camera-reset{opacity:.55}
 
 /* Flight controls follow visitor questions: who, where to look, then pace. */
 .flight-species-picker{padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid #59665726}
