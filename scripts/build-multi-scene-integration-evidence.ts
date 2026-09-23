@@ -140,7 +140,7 @@ async function contactSheet(
   const labelHeight = 40
   const cellHeight = imageHeight + labelHeight
   const rows = Math.ceil(availableCells.length / columns)
-  const composites: sharp.OverlayOptions[] = []
+  const composites: Parameters<ReturnType<typeof sharp>['composite']>[0] = []
 
   for (const [index, cell] of availableCells.entries()) {
     const left = (index % columns) * cellWidth
