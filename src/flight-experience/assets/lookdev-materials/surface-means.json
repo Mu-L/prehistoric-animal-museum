@@ -1,0 +1,71 @@
+{
+  "schema": "linear-albedo-means-v1",
+  "entries": [
+    {
+      "id": "aerial_ground_rock",
+      "role": "rock",
+      "path": "aerial_ground_rock-albedo.webp",
+      "sha256": "93e827eb4aa6a6b5b52146c891c7094c8bdf96395efaa5234ce708d74a1f0e07",
+      "linearMean": [
+        0.21898107526596922,
+        0.14694724618758964,
+        0.10626725897717902
+      ]
+    },
+    {
+      "id": "sandy_gravel_02",
+      "role": "dry-soil",
+      "path": "sandy_gravel_02-albedo.webp",
+      "sha256": "680e21d87abfdfbeaae24022dd6e7f0d37316612a9b6d3ce2d9b25764fd931d9",
+      "linearMean": [
+        0.3239733512610499,
+        0.17311885044889272,
+        0.08551871235429079
+      ]
+    },
+    {
+      "id": "coast_sand_01",
+      "role": "wet-sand",
+      "path": "coast_sand_01-albedo.webp",
+      "sha256": "f76225b5603b07dba85b7b57e76a6438df00288e200e33a84c4e969332881bc0",
+      "linearMean": [
+        0.22552546984618896,
+        0.17321203213720102,
+        0.10866146193932617
+      ]
+    },
+    {
+      "id": "mud_forest",
+      "role": "river-mud",
+      "path": "mud_forest-albedo.webp",
+      "sha256": "29a4e4e8920ed5a06a5c4227f3cb69b9819b0f4ca7a675c85efd82e94a55b0b0",
+      "linearMean": [
+        0.04081880975511305,
+        0.02142742602167984,
+        0.008153051729346317
+      ]
+    },
+    {
+      "id": "forest_ground_04",
+      "role": "forest-floor",
+      "path": "forest_ground_04-albedo.webp",
+      "sha256": "651e20cac404f4aca7454df19ab3d6063f27901ee793f5e6f18b8a81fba7c826",
+      "linearMean": [
+        0.14938638849551705,
+        0.10661403287158588,
+        0.06126533689306035
+      ]
+    },
+    {
+      "id": "leafy_grass",
+      "role": "groundcover",
+      "path": "leafy_grass-albedo.webp",
+      "sha256": "ffb19c56e5adddae7b5dbea7abd019235aebf23cdcef84b548a1173055d78f44",
+      "linearMean": [
+        0.31675926267591065,
+        0.23373390434595495,
+        0.10435112680375741
+      ]
+    }
+  ]
+}

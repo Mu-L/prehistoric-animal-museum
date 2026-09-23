@@ -1,0 +1,59 @@
+export interface Photo { camera?: { requested:{yaw:number;pitch:number};resolved:{yaw:number;pitch:number};perspective:string;generation:number;fov:number;position:number[];viewKind:string }; url: string; width: number; height: number; frame: number; sun: number; weather: string }
+export interface PhotoCapture { id:number; canvas:HTMLCanvasElement; frame:number }
+export type PhotoState = { capture?:PhotoCapture|undefined; status: 'idle'|'waiting'|'encoding'|'error'; photos: readonly Photo[] }
+/** The host supplies only the completed canvas, never renderer ownership. */
+export class PhotoService {
+  private generation = 0
+  private closed = false
+  private encodingBusy = false
+  private nextCapture = 0
+  private activeCopy: {capture:PhotoCapture; encoding:boolean; released:boolean}|null = null
+  private state: PhotoState = {status:'idle',photos:[]}
+  constructor(private readonly changed:()=>void) {}
+  getSnapshot = () => this.state
+  request() {
+    if(this.closed || this.state.capture || this.encodingBusy || this.state.status==='waiting' || this.state.status==='encoding')return false
+    this.state={...this.state,status:'waiting'};this.changed();return true
+  }
+  releaseCapture(id:number) {
+    const copy=this.activeCopy
+    if(!copy||copy.capture.id!==id)return
+    copy.released=true
+    if(!copy.encoding){copy.capture.canvas.width=copy.capture.canvas.height=0;this.activeCopy=null}
+    this.state={...this.state,capture:undefined};this.changed()
+  }
+  cancel() {this.generation++;if(this.activeCopy)this.releaseCapture(this.activeCopy.capture.id);this.state={...this.state,status:'idle'};this.changed()}
+  completedFrame(canvas:HTMLCanvasElement, metadata:Omit<Photo,'url'|'width'|'height'>) {
+    if(this.closed||this.state.status!=='waiting')return
+    const token=this.generation
+    this.encodingBusy=true
+    this.state={...this.state,status:'encoding'};this.changed()
+    try {
+      const ratio=Math.min(1,1280/Math.max(canvas.width,canvas.height),Math.sqrt(1500000/(canvas.width*canvas.height)))
+      if(!Number.isFinite(ratio)||canvas.width<1||canvas.height<1)throw new Error('empty-frame')
+      const copy=document.createElement('canvas');copy.width=Math.max(1,Math.floor(canvas.width*ratio));copy.height=Math.max(1,Math.floor(canvas.height*ratio))
+      const context=copy.getContext('2d');if(!context)throw new Error('canvas-unavailable')
+      // Synchronous copy within renderer.render's callback, before the drawing buffer clears.
+      context.drawImage(canvas,0,0,copy.width,copy.height)
+      const width=copy.width,height=copy.height
+      const owned={capture:{id:++this.nextCapture,canvas:copy,frame:metadata.frame},encoding:true,released:false}
+      this.activeCopy=owned
+      this.state={...this.state,capture:owned.capture};this.changed()
+      copy.toBlob(blob=>{
+        owned.encoding=false;this.encodingBusy=false
+        if(owned.released){copy.width=copy.height=0;if(this.activeCopy===owned)this.activeCopy=null}
+        if(this.closed||token!==this.generation)return
+        if(!blob){this.error();return}
+        let url:string
+        try {url=URL.createObjectURL(blob)} catch {this.error();return}
+        const photo={...metadata,width,height,url}
+        const photos=[photo,...this.state.photos]
+        for(const removed of photos.splice(3))URL.revokeObjectURL(removed.url)
+        this.state={...this.state,status:'idle',photos};this.changed()
+      },'image/png')
+    } catch {this.encodingBusy=false;if(this.activeCopy)this.activeCopy.encoding=false;if(token===this.generation&&!this.closed)this.error()}
+  }
+  private error(){if(this.activeCopy)this.releaseCapture(this.activeCopy.capture.id);this.state={...this.state,status:'error'};this.changed()}
+  remove(url:string){URL.revokeObjectURL(url);this.state={...this.state,photos:this.state.photos.filter(p=>p.url!==url)};this.changed()}
+  dispose(){if(this.closed)return;this.closed=true;this.generation++;if(this.activeCopy)this.releaseCapture(this.activeCopy.capture.id);for(const p of this.state.photos)URL.revokeObjectURL(p.url);this.state={status:'idle',photos:[]}}
+}

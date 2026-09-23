@@ -110,6 +110,28 @@ export function I18nProvider({
   }, [])
 
   useEffect(() => {
+    let active = true
+    let historyTimer: ReturnType<typeof setTimeout> | undefined
+    const syncHistoryLocale = () => {
+      // Experience close handlers may normalize the destination URL during the
+      // same popstate event. Native event dispatch can run microtasks between
+      // listeners; use a task so locale rendering cannot remove later handlers.
+      clearTimeout(historyTimer)
+      historyTimer = setTimeout(() => {
+        if (!active) return
+        const next = readInitialLocaleState()
+        setState(historyFollowsSystem() ? { ...next, preference: 'system' } : next)
+      })
+    }
+    window.addEventListener('popstate', syncHistoryLocale)
+    return () => {
+      active = false
+      clearTimeout(historyTimer)
+      window.removeEventListener('popstate', syncHistoryLocale)
+    }
+  }, [])
+
+  useEffect(() => {
     document.documentElement.lang = state.locale
     document.documentElement.dataset.locale = state.locale
   }, [state.locale])

@@ -1,3 +1,6 @@
+import type { FlightRestartPreferences } from './flight-experience/FlightExperience'
+import { FlightModule } from './flight-experience/FlightModuleBoundary'
+import { loadFlightExperience, flightCapabilities, flightPreviewUrl, prefetchFlightExperience } from 'virtual:flight-experience-entry'
 import {
   BookOpen,
   ChevronLeft,
@@ -21,6 +24,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
   useEffect,
+  useEffectEvent,
   useId,
   useLayoutEffect,
   useMemo,
@@ -56,7 +60,7 @@ import { credits } from './content/credits.generated'
 import { staticAnimalDetailIds } from './content/static-animal-details'
 import type { PublishedAnimalPackage } from './content/types'
 import { I18nProvider, useI18n } from './i18n/I18nProvider'
-import { localeFromPath, type Locale } from './i18n/locale'
+import { buildLocaleUrl, localeFromPath, type Locale } from './i18n/locale'
 import { updateLocalizedMetadata } from './i18n/metadata'
 import {
   dietLabel,
@@ -135,6 +139,8 @@ const DirectScaleEncounter = directScaleEncounterLoader
       return { default: module.DirectScaleEncounter }
     })
   : null
+
+const FLIGHT_HISTORY_KEY = '__museumFlight'
 
 const SCALE_ENCOUNTER_HISTORY_KEY = '__museumScaleEncounter'
 
@@ -220,6 +226,7 @@ const SCALE_ENCOUNTER_REVIEW_QUERY_KEYS = [
 function hasScaleEncounterQuery(animalId: string): boolean {
   if (typeof window === 'undefined') return false
   const query = new URLSearchParams(window.location.search)
+  if (query.get('experience') === 'flight') return false
   const requested = query.get('scale-encounter')
   if (requested === '1' || requested === 'true' || requested === 'open') {
     return true
@@ -924,6 +931,8 @@ function MuseumApp({
     requestedAnimalId: initialAnimal.id,
   }))
   const [modelReady, setModelReady] = useState(false)
+  const [gestureHintFinishedCycle, setGestureHintFinishedCycle] =
+    useState<string | null>(null)
   const [modelLoadingProgress, setModelLoadingProgress] =
     useState<ModelLoadingProgress | null>(null)
   const [viewerFailure, setViewerFailure] =
@@ -932,6 +941,15 @@ function MuseumApp({
   const [collectionOpen, setCollectionOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
+  const [flightOpen, setFlightOpen] = useState(false)
+  const flightOpenRef = useRef(false)
+  const flightHistoryRef = useRef<string | null>(null)
+  const flightOwnedTokensRef = useRef(new Set<string>())
+  const flightHistoryPendingRef = useRef(false)
+  const flightQueryAppliedRef = useRef(false)
+  const flightSwitchRef=useRef<string|null>(null)
+  const [flightPreferences,setFlightPreferences]=useState<FlightRestartPreferences|undefined>(undefined)
+  const flightTriggerRef = useRef<HTMLButtonElement>(null)
   const [scaleEncounterOpen, setScaleEncounterOpen] = useState(false)
   const [scaleEncounterPhase, setScaleEncounterPhase] = useState<
     'setup' | 'active' | 'transition'
@@ -960,6 +978,7 @@ function MuseumApp({
     narration.getServerSnapshot,
   )
   const activeAnimal = animalIndex.get(activeAnimalId) ?? initialAnimal
+  const gestureHintCycle = `${activeAnimal.id}:${loadSnapshot.requestToken}:${viewerRetryKey}`
   useEffect(() => {
     activeAnimalRef.current = activeAnimal
   }, [activeAnimal])
@@ -996,7 +1015,7 @@ function MuseumApp({
     })
   }, [animalIndex, initialAnimalId, messages.loading])
   const overlayOpen =
-    drawerOpen || collectionOpen || aboutOpen || scaleEncounterOpen
+    drawerOpen || collectionOpen || aboutOpen || scaleEncounterOpen || flightOpen
   const collectionAnimals = useMemo<CollectionAnimal[]>(
     () =>
       animals.map((animal) => ({
@@ -1189,7 +1208,7 @@ function MuseumApp({
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
+      if (document.visibilityState === 'hidden' || flightOpenRef.current) {
         idlePreloadCoordinatorRef.current?.cancelAll()
         return
       }
@@ -1257,7 +1276,7 @@ function MuseumApp({
     }
     const schedule = () => {
       cancelScheduledWork()
-      if (document.visibilityState === 'hidden') {
+      if (document.visibilityState === 'hidden' || flightOpenRef.current) {
         return
       }
       delayTimer = window.setTimeout(() => {
@@ -1741,6 +1760,18 @@ function MuseumApp({
     if (!coordinator) {
       return
     }
+    if (
+      flightSwitchRef.current &&
+      flightSwitchRef.current !== animalId
+    ) {
+      flightSwitchRef.current = null
+      setFlightPreferences(undefined)
+      const url = new URL(window.location.href)
+      url.searchParams.delete('experience')
+      const state = currentHistoryRecord()
+      delete state[FLIGHT_HISTORY_KEY]
+      window.history.replaceState(state, '', url)
+    }
     const snapshot = coordinator.getSnapshot()
     if (
       (snapshot.phase === 'idle' && snapshot.readyAnimalId === animalId) ||
@@ -1759,6 +1790,17 @@ function MuseumApp({
     clearLargeModelNotice()
     setLiveMessage(messages.loading.preparingExhibit)
     void coordinator.request(animalId)
+  }
+
+  const switchFlightAnimal=(id:string,preferences:FlightRestartPreferences)=>{
+    if(!flightCapabilities.some(p=>p.id===id)||id===activeAnimal.id)return
+    flightSwitchRef.current=id;setFlightPreferences(preferences)
+    flightOpenRef.current=false;setFlightOpen(false);flightQueryAppliedRef.current=false
+    flightHistoryRef.current=null
+    requestAnimal(id)
+    const url=new URL(window.location.href);url.searchParams.set('animal',id);url.searchParams.set('experience','flight')
+    const state=currentHistoryRecord();delete state[FLIGHT_HISTORY_KEY]
+    window.history.replaceState(state,'',url)
   }
 
   const retryAnimal = () => {
@@ -1836,6 +1878,9 @@ function MuseumApp({
       return
     }
     viewerControllerRef.current?.setFocusMode(true)
+    // The gesture hint replays when focus mode closes, so restart the card's
+    // alignment with that hint before either becomes visible again.
+    setGestureHintFinishedCycle(null)
     setFocusMode(true)
     setLiveMessage(messages.focusEntered)
   }
@@ -1977,9 +2022,73 @@ function MuseumApp({
     }
   }, [activeAnimal.id, loadSnapshot.phase, modelReady])
 
+  const openFlight = useCallback((pushHistory = true) => {
+    if (!loadFlightExperience || !modelReady || !flightCapabilities.some(p=>p.id===activeAnimal.id) ||
+      !viewerControllerRef.current || flightOpenRef.current || flightHistoryPendingRef.current) return
+    narration.reset()
+    idlePreloadCoordinatorRef.current?.cancelAll()
+    viewerControllerRef.current.endScaleEncounter()
+    setScaleEncounterOpen(false)
+    setDrawerOpen(false); setCollectionOpen(false); setAboutOpen(false)
+    if (pushHistory) {
+      const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+      const url = new URL(window.location.href)
+      url.searchParams.set('animal', activeAnimal.id); url.searchParams.set('experience', 'flight')
+      window.history.pushState({ ...currentHistoryRecord(), [FLIGHT_HISTORY_KEY]: token }, '', url)
+      flightHistoryRef.current = token
+      flightOwnedTokensRef.current.add(token)
+    } else {
+      const token = currentHistoryRecord()[FLIGHT_HISTORY_KEY]
+      flightHistoryRef.current = typeof token === 'string' && flightOwnedTokensRef.current.has(token) ? token : null
+    }
+    flightOpenRef.current = true
+    setFlightOpen(true)
+  }, [activeAnimal.id, modelReady, narration])
+
+  const finishFlight = useCallback(() => {
+    window.history.replaceState(window.history.state, '', buildLocaleUrl(window.location.href, locale))
+    flightOpenRef.current = false; setFlightOpen(false)
+    window.setTimeout(() => flightTriggerRef.current?.focus(), 0)
+  }, [locale])
+  const closeFlight = useCallback(() => {
+    flightSwitchRef.current=null;setFlightPreferences(undefined)
+    finishFlight()
+    if (flightHistoryRef.current && currentHistoryRecord()[FLIGHT_HISTORY_KEY] === flightHistoryRef.current) {
+      flightHistoryPendingRef.current = true
+      flightHistoryRef.current = null
+      window.history.back()
+    } else {
+      const url = new URL(window.location.href); url.searchParams.delete('experience')
+      const state = currentHistoryRecord(); delete state[FLIGHT_HISTORY_KEY]
+      window.history.replaceState(state, '', url)
+    }
+  }, [finishFlight])
+
+  useEffect(() => {
+    if (!flightQueryAppliedRef.current && (!flightSwitchRef.current||flightSwitchRef.current===activeAnimal.id) && modelReady && flightCapabilities.some(p=>p.id===activeAnimal.id) &&
+      new URLSearchParams(window.location.search).get('experience') === 'flight') {
+      flightQueryAppliedRef.current = true
+      flightSwitchRef.current=null
+      openFlight(false)
+    }
+  }, [activeAnimal.id, modelReady, openFlight])
+  const handleFlightHistory = useEffectEvent(() => {
+      const closing = flightHistoryPendingRef.current
+      flightHistoryPendingRef.current = false
+      if (closing) { finishFlight(); return }
+      if (new URLSearchParams(window.location.search).get('experience') === 'flight') openFlight(false)
+      else if (flightOpenRef.current) { flightHistoryRef.current = null; finishFlight() }
+  })
+  useEffect(() => {
+    const pop = () => handleFlightHistory()
+    window.addEventListener('popstate', pop)
+    return () => window.removeEventListener('popstate', pop)
+  }, [])
+
   const openScaleEncounter = useCallback(() => {
     if (
       !DIRECT_SCALE_ENCOUNTER_ENABLED ||
+      flightOpenRef.current ||
       scaleEncounterHistoryBackPendingRef.current ||
       !modelReady ||
       loadSnapshot.phase !== 'idle' ||
@@ -2132,7 +2241,7 @@ function MuseumApp({
     <div className="museum-page">
       <main
       className={`museum-experience ${focusMode ? 'museum-experience--focus' : ''}${
-        scaleEncounterOpen ? ' museum-experience--scale-encounter' : ''
+        flightOpen ? ' museum-experience--flight' : scaleEncounterOpen ? ' museum-experience--scale-encounter' : ''
       }`}
       data-atmosphere={activeAnimal.atmosphere}
       data-habitat={activeAnimal.habitat}
@@ -2357,6 +2466,16 @@ function MuseumApp({
         onPointerCancel={() => {
           focusPointerRef.current = null
         }}
+        onAnimationEndCapture={(event) => {
+          if (
+            event.animationName === 'gesture-hint' &&
+            (event.target as HTMLElement).classList.contains('model-gesture-hint') &&
+            modelReady &&
+            loadSnapshot.readyAnimalId === activeAnimal.id
+          ) {
+            setGestureHintFinishedCycle(gestureHintCycle)
+          }
+        }}
         onPointerDownCapture={handleFocusPointerDown}
         onPointerUpCapture={handleFocusPointerUp}
       >
@@ -2377,6 +2496,10 @@ function MuseumApp({
           posterUrl={activeAnimal.assets.poster}
           posterPortraitUrl={activeAnimal.assets.posterPortrait}
         />
+        {!focusMode&&!overlayOpen&&modelReady&&loadSnapshot.phase==='idle'&&loadFlightExperience&&flightCapabilities.some(p=>p.id===activeAnimal.id)&&<button type="button" className="flight-entry-card" data-hint-finished={gestureHintFinishedCycle===gestureHintCycle} onPointerEnter={()=>prefetchFlightExperience?.()} onFocus={()=>prefetchFlightExperience?.()} ref={flightTriggerRef} onClick={()=>openFlight()}>
+          <img src={flightPreviewUrl} alt="" width="88" height="76" loading="lazy"/>
+          <span><strong>{locale==='zh-CN'?'一起飞进史前天地':'Explore a prehistoric world'}</strong><small>{locale==='zh-CN'?`跟着${activeAnimal.name}，看海岸、山谷和天气。`:`Follow ${activeAnimal.name} through coasts, valleys and weather.`}</small><b>{locale==='zh-CN'?'进入飞行 →':'Enter flight →'}</b></span>
+        </button>}
         {!focusMode ? (
           <div aria-hidden={overlayOpen} className="stage-actions" inert={overlayOpen}>
             <LanguageMenu />
@@ -2625,6 +2748,8 @@ function MuseumApp({
       <p aria-atomic="true" aria-live="polite" className="sr-only" role="status">
         {liveMessage}
       </p>
+
+      {flightOpen && loadFlightExperience && viewerController ? <FlightModule loader={loadFlightExperience} locale={locale} onClose={closeFlight} experienceProps={{initialPreferences:flightPreferences,onSpeciesChange:switchFlightAnimal,availableSpecies:flightCapabilities,narrationActive:narrationSnapshot.playback === 'playing',controller:viewerController,descriptor:activeAnimal.viewer,onClose:closeFlight}}/> : null}
 
       {scaleEncounterOpen &&
       DirectScaleEncounter &&

@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LanguageMenu } from '../src/components/LanguageMenu'
 import { I18nProvider, useI18n } from '../src/i18n/I18nProvider'
@@ -343,4 +343,43 @@ describe('LanguageMenu', () => {
     })
     expect(window.location.pathname).toBe('/museum/zh-CN/')
   })
+  it('follows history locale paths without overwriting the saved language choice', async () => {
+    window.localStorage.setItem(localePreferenceStorageKey, 'zh-CN')
+    window.history.replaceState({}, '', '/museum/zh-CN/animals/rhamphorhynchus/')
+    renderLanguageMenu()
+    await act(async () => {
+      window.history.replaceState({}, '', '/museum/en/animals/rhamphorhynchus/?experience=flight')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+      await Promise.resolve()
+    })
+    await waitFor(() => {
+      expect(screen.getByText('en:en')).toBeVisible()
+      expect(document.documentElement.lang).toBe('en')
+    })
+    expect(window.localStorage.getItem(localePreferenceStorageKey)).toBe('zh-CN')
+    await act(async () => {
+      window.history.replaceState({}, '', '/museum/zh-CN/animals/rhamphorhynchus/')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+      await Promise.resolve()
+    })
+    await waitFor(() => expect(screen.getByText('zh-CN:zh-CN')).toBeVisible())
+  })
+
+  it('reads the final URL after an experience normalizes its history destination', async () => {
+    window.history.replaceState({}, '', '/museum/en/')
+    renderLanguageMenu()
+    const normalize = () => window.history.replaceState({}, '', '/museum/zh-CN/')
+    window.addEventListener('popstate', normalize)
+    try {
+      await act(async () => {
+        window.dispatchEvent(new PopStateEvent('popstate'))
+        await Promise.resolve()
+      })
+      await waitFor(() => expect(screen.getByText('zh-CN:zh-CN')).toBeVisible())
+      expect(document.documentElement.lang).toBe('zh-CN')
+    } finally {
+      window.removeEventListener('popstate', normalize)
+    }
+  })
+
 })
