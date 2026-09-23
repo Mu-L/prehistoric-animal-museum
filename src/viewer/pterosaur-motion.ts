@@ -118,12 +118,10 @@ export function preparePterosaurMotion(root:Object3D,id:string,source:AnimationC
         // The reference head rests about 20° to one side. Recenter its gaze,
         // retaining the authored look-around rather than adding another cycle.
         globals[2]!.premultiply(new Quaternion().setFromAxisAngle(up,-.30))
-        if(mode==='climb'){
-          // This animal's beak slopes down in its rest mesh. Lift the neck and
-          // skull together so the gaze follows ascent, without changing wingbeats.
-          globals[1]!.premultiply(new Quaternion().setFromAxisAngle(side,-.30))
-          globals[2]!.premultiply(new Quaternion().setFromAxisAngle(side,-.60))
-        }
+        // Its rest mesh has a downward beak. Level the gaze in the exhibit and
+        // during glides as well as powered flight, without pitching the wings.
+        globals[1]!.premultiply(new Quaternion().setFromAxisAngle(side,mode==='climb'?-.30:-.14))
+        globals[2]!.premultiply(new Quaternion().setFromAxisAngle(side,mode==='climb'?-.60:-.30))
       }else{
         // A small, slow balancing response at the tail, independent of wingbeats.
         // Uneven rests keep it from reading as a metronomic side-to-side wag.
