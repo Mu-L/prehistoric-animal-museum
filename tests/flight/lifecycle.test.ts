@@ -151,6 +151,7 @@ describe('flight owned resources and recovery', () => {
   })
   it('freezes simulation on pause and returns only flight-owned resources', async () => {
     const h = host(), runtime = new FlightRuntime(h.controller, false), owned = model()
+    try {
     const spy = vi.spyOn((owned.modelRoot.children[0] as Mesh).geometry, 'dispose')
     const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(owned); await pending
     for (let i = 0; i < 600 && !runtime.canResume; i++) { hostFrame(runtime,1 / 60); TestWorker.instances.forEach(w => w.finish()) }
@@ -166,7 +167,8 @@ describe('flight owned resources and recovery', () => {
     runtime.contextRestored(); expect(runtime.getSnapshot().phase).toBe('paused')
     hostFrame(runtime,60); expect(runtime.environmentClock.motionSeconds).toBe(motion)
     runtime.close(); runtime.close(); expect(spy).toHaveBeenCalledTimes(1)
-  })
+    } finally { runtime.close() }
+  }, 12_000) // CI's real terrain setup took 6.84s; keep the full resource assertions.
   it('installs delayed terrain while buffering without moving, and never bypasses a safety guard', async () => {
     const h = host(), runtime = new FlightRuntime(h.controller, false)
     const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
@@ -194,6 +196,7 @@ describe('flight owned resources and recovery', () => {
   }, 12_000) // Real generator recovery: CI measured 6.47s; retain every safety assertion.
   it('keeps live sunlight and flight adjustments moving without relocating or resetting clocks', async () => {
     const h=host(),runtime=new FlightRuntime(h.controller,false)
+    try {
     const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(model());await pending
     for(let i=0;i<600&&!runtime.canResume;i++){hostFrame(runtime,1/60);TestWorker.instances.forEach(w=>w.finish())}
     runtime.start();hostFrame(runtime,1/60)
@@ -208,8 +211,8 @@ describe('flight owned resources and recovery', () => {
     expect(runtime.simulation.time).toBeGreaterThan(time);expect(runtime.environmentClock.motionSeconds).toBeGreaterThan(motion)
     runtime.pause('user');runtime.setSolarDayProgress(.3)
     expect(runtime.getSnapshot().phase).toBe('paused')
-    runtime.close()
-  })
+    } finally { runtime.close() }
+  }, 12_000) // CI's real terrain setup took 6.89s; this is not a global timeout.
   it('keeps real travel state frozen through a viewpoint request and cancellation', async () => {
     const h=host(),runtime=new FlightRuntime(h.controller,false),owned=model()
     const pending=runtime.prepare({} as ViewerModelDescriptor);h.resolve(owned);await pending
