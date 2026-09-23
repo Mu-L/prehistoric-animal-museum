@@ -55,7 +55,7 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
   })
   const snapshot = useSyncExternalStore(runtime?.subscribe ?? noSubscription, runtime?.getSnapshot ?? initialSnapshot, initialSnapshot)
   useEffect(()=>{runtime?.setNarrationActive(narrationActive)},[runtime,narrationActive])
-  const cameraInteractive=Boolean(runtime?.canObserveCamera&&!galleryOpen)
+  const cameraInteractive=Boolean(!galleryOpen&&(runtime?.canObserveCamera||runtime?.canAttemptResume))
   const cameraLayer = useRef<HTMLDivElement>(null)
   useEffect(()=>{
     const element=cameraLayer.current
@@ -133,9 +133,17 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
   const inViewpoint=snapshot.reason !== 'error' && Boolean(snapshot.observation && snapshot.observation!=='inactive')
   const preparingView=snapshot.viewTransition?.waiting||snapshot.observation==='preparing'||snapshot.observation==='returning'||snapshot.observation==='failed'
   const flying = snapshot.phase === 'flying'
-  const quietViewing=observe&&['ready','paused'].includes(snapshot.phase)&&Boolean(runtime?.canResume)
+  const canAttemptResume=Boolean(runtime?.canAttemptResume&&!document.hidden)
+  const quietViewing=observe&&['ready','paused'].includes(snapshot.phase)&&canAttemptResume
   const hudIdle=useQuietHud(root,Boolean(snapshot.cameraRig&&(snapshot.cameraRig.moving||snapshot.cameraRig.rejection))||settings||galleryOpen||Boolean(preparingView)||Boolean(snapshot.photos?.capture)||['waiting','encoding','error'].includes(snapshot.photos?.status??'')||(!quietViewing&&!flying&&!inViewpoint&&snapshot.phase!=='paused')||(!quietViewing&&Boolean(snapshot.reason&&snapshot.reason!=='user')))
-  const start = () => { setSettings(false); setObserve(false); runtime?.start(); root.current?.focus() }
+  const start = () => {
+    if (document.hidden) return
+    root.current?.focus()
+    runtime?.restorePresentationFromGesture()
+    runtime?.start()
+    setSettings(false)
+    setObserve(false)
+  }
   const stopPointer = (event: PointerEvent<HTMLButtonElement>) => runtime?.input.release(event.pointerId)
   const direction = (event: PointerEvent<HTMLButtonElement>, turn: number, climb: number) => {
     event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); runtime?.input.point(turn, climb, event.pointerId)
@@ -147,17 +155,20 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
   const restart = (next = {...runtime?.getSnapshot().settings??chosenSettings.current,...pendingStartDraft}, resetSunlight = false) => { chosenLiving.current=resetSunlight?{...DEFAULT_LIVING_INTENT}:{...runtime?.livingIntent??DEFAULT_LIVING_INTENT}; if(!resetSunlight&&runtime){runtime.weather.restart();chosenWeather.current=runtime.weather.serialize()}else chosenWeather.current=null; chosenSunlight.current=resetSunlight?null:runtime?.environmentClock.solarDayProgress??null; chosenSettings.current = next; setPendingStartDraft({start:next.start,height:next.height}); setSettings(false); setGalleryOpen(false); setObserve(false); setRetry(n => n + 1) }
   const reason = snapshot.reason === 'terrain' ? copy.terrain : ['safety', 'camera'].includes(snapshot.reason ?? '') ? copy.safety : snapshot.reason === 'context' ? copy.context : snapshot.reason === 'hidden' ? copy.hidden : copy.quiet
   return <section ref={root} className="flight-experience" role="dialog" aria-modal="true" aria-label={copy.title} tabIndex={-1} onPointerDownCapture={event=>{
+      // A visible touch after screen unlock is enough to restore
+      // presentation focus. The flight remains paused until Start is pressed.
+      if(!document.hidden)runtime?.restorePresentationFromGesture()
       // Dismiss without stealing focus or consuming the press: a toolbar click
       // or the first scene drag must still reach its original target.
-      if(settings && event.target instanceof Element && !event.target.closest('#flight-settings-panel,.flight-settings-trigger'))setSettings(false)
+      if(settings && event.target instanceof Element && !event.target.closest('#flight-settings-panel,.flight-settings-trigger,.language-menu__popover'))setSettings(false)
     }} data-flight-phase={snapshot.phase} data-hud-idle={hudIdle} data-camera-offset={snapshot.cameraRig?.perspective!=='rear'}>
     {(cameraInteractive||settings)&&<div ref={cameraLayer} className="flight-camera-gesture" aria-hidden="true"/>}
     <header className="flight-toolbar">
       <button type="button" aria-label={copy.back} onClick={onClose}><ChevronLeft size={20}/><span>{copy.back}</span></button>
       <div className="flight-toolbar__right">
-        {snapshot.cameraRig&&(snapshot.cameraRig.perspective!=='rear'||snapshot.cameraRig.rejection)&&<button type="button" className="flight-camera-reset" onClick={()=>runtime?.selectPerspective('rear')}>{inViewpoint?cameraCopy[locale].fixedReset:cameraCopy[locale].reset}</button>}
+        {!settings&&snapshot.cameraRig&&(snapshot.cameraRig.perspective!=='rear'||snapshot.cameraRig.rejection)&&<button type="button" className="flight-camera-reset" onClick={()=>runtime?.selectPerspective('rear')}>{inViewpoint?cameraCopy[locale].fixedReset:cameraCopy[locale].reset}</button>}
         {inViewpoint && <button className="flight-travel-return" type="button" disabled={snapshot.observation==='returning'} onClick={()=>runtime?.navigateBack()}><ArrowLeft size={18}/><span>{locale==='zh-CN'?'回到飞行':'Back to flight'}</span></button>}
-        {!inViewpoint && (['flying', 'paused'].includes(snapshot.phase)||(observe&&snapshot.phase==='ready')) && <button type="button" aria-label={flying?copy.pause:snapshot.phase==='ready'?copy.start:copy.resume} disabled={!flying && !runtime?.canResume} onClick={() => flying ? runtime?.pause() : start()}>{flying ? <Pause size={19}/> : <Play size={19}/>}<span>{flying ? copy.pause : snapshot.phase==='ready'?copy.start:copy.resume}</span></button>}
+        {!inViewpoint && (['flying', 'paused'].includes(snapshot.phase)||(observe&&snapshot.phase==='ready')) && <button type="button" aria-label={flying?copy.pause:snapshot.phase==='ready'?copy.start:copy.resume} disabled={!flying && !canAttemptResume} onClick={() => flying ? runtime?.pause() : start()}>{flying ? <Pause size={19}/> : <Play size={19}/>}<span>{flying ? copy.pause : snapshot.phase==='ready'?copy.start:copy.resume}</span></button>}
         <button className="flight-settings-trigger" title={locale==='zh-CN'?'飞行与风景':'Flight & scenery'} type="button" ref={settingsTrigger} disabled={snapshot.phase==='preparing'||snapshot.phase==='recovering'} aria-label={locale==='zh-CN'?'飞行与风景':'Flight & scenery'} aria-controls="flight-settings-panel" aria-expanded={settings} onClick={()=>{runtime?.input.clear();setGalleryOpen(false);setSettings(v=>!v)}}><Settings2 size={20}/><span>{locale==='zh-CN'?'飞行与风景':'Flight & scenery'}</span></button>
         {runtime&&<PostcardDock key={retry} runtime={runtime} snapshot={snapshot} locale={locale} onCapture={()=>setSettings(false)} galleryOpen={galleryOpen} onGalleryChange={open=>{setGalleryOpen(open);if(open)setSettings(false)}}/>}
       </div>
@@ -215,11 +226,10 @@ export function FlightExperience({ controller, descriptor, onClose, narrationAct
       <p>{snapshot.phase === 'ready' ? (locale==='zh-CN'?`跟随${descriptor.label??'无齿翼龙'}，看看海岸那一边。`:`Follow ${descriptor.label??'Pteranodon'} beyond the coastline.`) : reason}</p>
       {snapshot.phase === 'ready' && <p className="flight-instructions">{copy.instruction}</p>}
       {snapshot.phase !== 'preparing' && <div className="flight-card__actions">
-        {runtime?.canResume && <button type="button" className="flight-primary" onClick={start}><Play size={18}/>{snapshot.phase === 'ready' ? copy.start : copy.resume}</button>}
+        {canAttemptResume && <button type="button" className="flight-primary" onClick={start}><Play size={18}/>{snapshot.phase === 'ready' ? copy.start : copy.resume}</button>}
         {(snapshot.phase === 'recovering' || ['safety', 'camera', 'terrain'].includes(snapshot.reason ?? '')) && <button type="button" className="flight-primary" onClick={() => restart()}>{copy.retry}</button>}
-        <button type="button" disabled={!runtime?.canResume} onClick={() => {setObserve(true);root.current?.focus()}}>{copy.static}</button>
+        <button type="button" disabled={!canAttemptResume} onClick={() => {setObserve(true);root.current?.focus()}}>{copy.static}</button>
       </div>}
-      <small>{copy.art}</small>
     </section>}
     {import.meta.env.DEV && runtime && !inViewpoint && !settings && !galleryOpen && <FlightReviewControls runtime={runtime}/>}
     {flying && !settings && !galleryOpen && <>

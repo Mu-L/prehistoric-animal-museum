@@ -246,6 +246,7 @@ export class FlightRuntime implements ExternalExperience {
   private contextAvailable = true
   private visible = true
   private focused = true
+  get presentationActive() { return this.visible && this.focused }
   // Resource preparation survives presentation suspension; it never grants travel.
   private preparationPending = false
   private fatalError = false
@@ -268,6 +269,12 @@ export class FlightRuntime implements ExternalExperience {
     if (this.disposed) return
     this.focused = focused
     if (!focused) { const visible = this.visible; this.pause('hidden'); this.visible = visible }
+    this.syncAvailability()
+  }
+  restorePresentationFromGesture() {
+    if (this.disposed || this.presentationActive) return
+    this.visible = true
+    this.focused = true
     this.syncAvailability()
   }
   private snapshot: FlightSnapshot = { phase: 'preparing', reason: null, simplified: false, region: 'coast', gentle: false, assisted: false, quality: 'low', settings: { ...DEFAULT_FLIGHT_SETTINGS } }
@@ -408,10 +415,11 @@ export class FlightRuntime implements ExternalExperience {
     if (JSON.stringify(next) === JSON.stringify(this.snapshot)) return
     this.snapshot = next; this.listeners.forEach(l => l())
   }
-  get canResume() {
-    return this.available && this.modelAttached && !this.initialPreparationPending && this.observation.phase === 'inactive' && ['ready', 'paused'].includes(this.snapshot.phase) && this.contextAvailable &&
+  get canAttemptResume() {
+    return !this.disposed && !this.fatalError && this.modelAttached && !this.initialPreparationPending && this.observation.phase === 'inactive' && ['ready', 'paused'].includes(this.snapshot.phase) && this.contextAvailable &&
       !this.simulation.safetyStop && !['camera', 'safety', 'error'].includes(this.snapshot.reason ?? '') && this.terrain.ready
   }
+  get canResume() { return this.presentationActive && this.canAttemptResume }
   start() {
     if (this.observation.phase !== 'inactive' || this.observationCard) return
     if (!this.canResume) {
