@@ -9,7 +9,8 @@ export function spawnState(settings: FlightSettings, world: WorldSampler = creat
   const { safeSurface, terrainAt, valleyAt } = world
   const z = settings.start === 'coast' ? 350 : settings.start === 'valley' ? -1400 : -2600
   const x = settings.start === 'coast' ? -160 : valleyAt(z) + (settings.start === 'overview' ? 150 : 0)
-  const heading = settings.start === 'coast' ? .22 : -.12
+  // Face the evening sun from the coast while leaving the cliff in the right of frame.
+  const heading = settings.start === 'coast' ? -.32 : -.12
   let y = Math.max(0, terrainAt(x, z).height) + settings.height
   // Preflight covers the dynamic wings, follow camera and six seconds of cruise.
   for (let d = -40; d <= settings.speed * 6; d += 12) for (const side of [-20, 0, 20]) {

@@ -42,7 +42,7 @@ const photographicLooks = {
   morning: { color:'#ffe0b5',sky:'#567e9f',horizon:'#dec6a2',low:'#d4b7aa',mid:'#a4b2bf',upper:'#7895af',intensity:2.15,fill:1.35 },
   noon: { color:'#fff5e2',sky:'#48789b',horizon:'#bbcdd5',low:'#a9bfcd',mid:'#8bacc2',upper:'#678fab',intensity:2.8,fill:1.6 },
   afternoon: { color:'#ffe3b7',sky:'#526f91',horizon:'#dfc1a0',low:'#cbb5b1',mid:'#a8afc1',upper:'#7b96ae',intensity:2.4,fill:1.4 },
-  evening: { color:'#ffda94',sky:'#607f99',horizon:'#eebd82',low:'#dc9877',mid:'#bca9af',upper:'#819aad',intensity:1.65,fill:.95 },
+  evening: { color:'#ffca85',sky:'#607b99',horizon:'#f2aa66',low:'#e78d68',mid:'#c296a9',upper:'#8094ad',intensity:1.65,fill:.95 },
 } as const
 const solarAngles = { morning: [2.55,20], noon: [1.05,78], afternoon: [-.2,38], evening: [-.59,3.2] } as const
 const presets: readonly SolarPreset[] = ['morning','noon','afternoon','evening']

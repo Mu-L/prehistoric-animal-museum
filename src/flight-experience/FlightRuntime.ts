@@ -302,11 +302,18 @@ export class FlightRuntime implements ExternalExperience {
     this.simulation = new FlightSimulation(this.safeSurface, scenicRouteAnchors(this.world))
     this.snapshot.settings = { ...settings }
     const spawn = spawnState(settings, this.world); Object.assign(this.simulation.position, spawn.position); this.simulation.heading = spawn.heading
+    if (settings.start === 'coast') {
+      // The portrait follow distance already lowers the horizon. A wider view
+      // needs more lift to keep the sun, wing and headland in one opening frame.
+      const wide=Math.max(0,Math.min(1,(window.innerWidth/Math.max(1,window.innerHeight)-.6)/.95))
+      this.cameraRig.restore({...this.cameraRig.snapshot(),resolved:{yaw:.10*(1-wide),pitch:-.16-.19*wide},perspective:'custom'})
+    }
     this.simulation.cruiseSpeed = settings.speed; this.simulation.speed = settings.speed; this.simulation.clearAccumulator()
     this.snapshot.gentle = gentle || settings.gentle; this.simulation.gentle = this.snapshot.gentle
     this.scene.fog = new Fog('#b8d0d3', 750, 1650)
     this.root.add(this.pose); this.scene.add(this.root)
     this.scenery = new FlightScenery(this.scene, () => this.invalidate(), (x, z) => this.scenerySurface(x, z), this.world, (x,z)=>this.scenerySurface(x,z))
+    this.scenery.preset = 'evening'
     this.scenery.environment.solarLayout = 'sunset-bay'
     this.environmentClock.setSolarDayProgress(solarProgress(this.scenery.preset))
     this.snapshot.solarDayProgress=this.environmentClock.solarDayProgress
