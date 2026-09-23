@@ -47,3 +47,4 @@ tools/animal-onboarding/node_modules/
 # Local flight implementation evidence and unapproved review records.
 .flight-evidence/
 docs/flight/
+src/flight-experience/README.md

@@ -1,7 +1,8 @@
-# Take Flight candidate assets
+# Take Flight asset provenance
 
-The new flight experience and its Glide animation are local review candidates.
-This document records sources and modifications; it does not grant human approval.
+The three-species flight experience is included in the public museum build.
+This document records sources and modifications. Separate comparison assets retain
+their recorded review status.
 
 Pteranodon model and the original Idle flight loop are reused unchanged from
 `src/content/animals/pteranodon/model/model.glb`. Author: Chistodrako._. /
@@ -48,7 +49,8 @@ Reproduce in order with `scripts/flight/assets/create-landscape.py`,
 uses the existing glTF Transform/Meshopt/WebP toolchain and preserves named LOD roots.
 Run `node scripts/flight/assets/validate-landscape.mjs` for actual exported budgets
 and hash checks. Source Blender files and additional review angles remain local; the
-candidate GLB and runtime cutouts are imported only by the disabled-by-default flight module.
+candidate GLB remains a development comparison; runtime cutouts are imported by
+the public flight module.
 Human material, silhouette, scale and device-performance approval remain pending.
 
 ## R4 finite lookdev candidates (development only, needs review)
@@ -137,8 +139,8 @@ CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/.
 No external recordings are included. These are artistic soundscapes, not field
 recordings or a reconstruction of prehistoric sounds. Each mono loop is 11.9 seconds;
 `soundscape/manifest.json` records hashes, format, loop boundaries and measurements.
-Subjective listening approval remains pending. These optional assets ship only in
-the explicitly enabled flight candidate build; the default build excludes them.
+Subjective listening approval remains pending. These optional assets ship in the
+public flight build and play only after the visitor explicitly enables sound.
 
 ## Additional same-species flight companions
 

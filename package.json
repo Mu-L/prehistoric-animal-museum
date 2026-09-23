@@ -10,7 +10,9 @@
   "scripts": {
     "dev": "vite",
     "review": "npm run validate:review && vite --mode review",
-    "build": "npm run validate:content && npm run validate:model-previews && tsc -b && tsx scripts/build-static-site.ts && npm run validate:production-boundary",
+    "build": "npm run validate:flight && MUSEUM_FLIGHT=1 MUSEUM_FLIGHT_PUBLIC=1 npm run build:site && node scripts/flight/validate-build.mjs dist --enabled",
+    "build:site": "npm run validate:content && npm run validate:model-previews && tsc -b && tsx scripts/build-static-site.ts && npm run validate:production-boundary",
+    "build:disabled": "npm run build:site && node scripts/flight/validate-build.mjs dist --disabled",
     "build:readme-screenshots": "vite build --mode model-still",
     "build:cloudflare": "npm run build:cloudflare:assets",
     "build:cloudflare:assets": "npm run build && node scripts/prepare-cloudflare-pages.mjs",
@@ -38,7 +40,7 @@
     "test:e2e": "playwright test",
     "validate:flight": "node scripts/flight/validate-assets.mjs && node scripts/flight/assets/validate-weather.mjs && node scripts/flight/assets/validate-landscape.mjs && node scripts/flight/assets/validate-ecology.mjs && node scripts/flight/assets/validate-static-review.mjs && node scripts/flight/validate-powered-flap.mjs && node scripts/flight/assets/validate-soundscape.mjs && node scripts/flight/assets/validate-companion.mjs && node scripts/flight/assets/validate-species-companions.mjs",
     "test:flight": "vitest run tests/flight",
-    "build:flight": "npm run validate:flight && MUSEUM_FLIGHT=1 npm run build && node scripts/flight/validate-build.mjs dist --enabled"
+    "build:flight": "npm run validate:flight && MUSEUM_FLIGHT=1 npm run build:site && node scripts/flight/validate-build.mjs dist --enabled"
   },
   "dependencies": {
     "@fontsource-variable/fredoka": "5.3.0",

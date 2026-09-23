@@ -37,7 +37,7 @@ jobs:
       - name: Real geometry and lifecycle integration (isolated CPU)
         run: npx vitest run tests/flight/terrain-scheduling.test.ts tests/flight/terrain-stress.test.ts tests/flight/lifecycle.test.ts tests/flight/prop-stream.test.ts --maxWorkers=1
       - run: npm run build
-      - run: node scripts/flight/validate-build.mjs dist --disabled
+      - run: node scripts/flight/validate-build.mjs dist --enabled
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

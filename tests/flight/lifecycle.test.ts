@@ -81,7 +81,7 @@ describe('flight owned resources and recovery', () => {
     root.add(new Mesh(new BoxGeometry(7, 1, 2), new MeshBasicMaterial()))
     return { group, modelRoot: root, disposed: false, mixer: null, action: null } as unknown as StagedViewerModel
   }
-  it.each(['model', 'materials'])('recovers cold %s preparation only after visible assembly', async (stage) => {
+  it.each(['model', 'materials'])('keeps cold %s preparation active while visible and blocks travel until assembly', async (stage) => {
     const h = host(), runtime = new FlightRuntime(h.controller, false)
     let releaseTextures: (() => void) | undefined
     if (stage === 'materials') {
@@ -94,7 +94,8 @@ describe('flight owned resources and recovery', () => {
     runtime.contextLost(); runtime.setVisibilityState(false); runtime.setFocusState(false)
     runtime.contextRestored(); runtime.contextRestored()
     expect(runtime.canResume).toBe(false); expect(runtime.running).toBe(false)
-    runtime.setVisibilityState(true); expect(runtime.running).toBe(false)
+    runtime.setVisibilityState(true); expect(runtime.running).toBe(true)
+    expect(runtime.presentationActive).toBe(false)
     runtime.setFocusState(true)
     for (let i = 0; i < 180; i++) { hostFrame(runtime,1 / 60); TestWorker.instances.forEach(w => w.finish()) }
     expect(runtime.canResume).toBe(false)
@@ -287,6 +288,7 @@ describe('flight owned resources and recovery', () => {
     const pending = runtime.prepare({} as ViewerModelDescriptor); h.resolve(model()); await pending
     runtime.enterViewpoint('seaward'); runtime.observation.complete(runtime.observation.generation)
     runtime.reviewIsolation.freezeWorld = true
+    runtime.setSolarDayProgress(.7)
     const layout = runtime.scenery.environment.solarLayout
     const position = {...runtime.simulation.position}, motion = runtime.environmentClock.motionSeconds, progress = runtime.environmentClock.solarDayProgress
     runtime.setSolarMode('auto')

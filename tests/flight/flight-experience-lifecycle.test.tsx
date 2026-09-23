@@ -56,12 +56,11 @@ describe('whole FlightExperience events with the actual Runtime (GPU/worker read
    fireEvent(window,new Event('focus'))
    now+=5000
    fireEvent(window,new Event('blur'))
-   now+=60000
+   now+=10000
    expect(instance.preparation.tick(now)).toBe(false)
-   expect(instance.preparation.snapshot().activeElapsed).toBeGreaterThanOrEqual(5000)
-   expect(instance.preparation.snapshot().activeElapsed).toBeLessThan(5100)
-   expect(instance.running).toBe(false)
-   fireEvent(window,new Event('focus'))
+   expect(instance.preparation.snapshot().activeElapsed).toBeGreaterThanOrEqual(15000)
+   expect(instance.preparation.snapshot().activeElapsed).toBeLessThan(15100)
+   expect(instance.running).toBe(true)
    const root=new Group(),group=new Group();group.add(root);root.add(new Mesh(new BoxGeometry(7,1,2),new MeshBasicMaterial()))
    await act(async()=>{resolveModel?.({group,modelRoot:root,mixer:null,action:null,disposed:false} as unknown as StagedViewerModel);await Promise.resolve()})
    act(()=>{instance.update(0);instance.completedFrame(document.createElement('canvas'))})
@@ -266,7 +265,7 @@ describe('whole FlightExperience events with the actual Runtime (GPU/worker read
  })
  it.each(['entry','return'])('restores only necessary %s preparation after DOM hidden/focus events and preserves error UI',async(direction)=>{
   const {runtime,view,onClose}=await mount()
-  act(()=>{runtime.enterViewpoint('seaward');if(direction==='return')runtime.returnFromViewpoint();runtime.setSolarMode('auto')})
+  act(()=>{runtime.enterViewpoint('seaward');if(direction==='return')runtime.returnFromViewpoint();runtime.setSolarDayProgress(.7);runtime.setSolarMode('auto')})
   vi.spyOn(document,'hidden','get').mockReturnValue(true)
   fireEvent(document,new Event('visibilitychange'));fireEvent(window,new Event('blur'))
   act(()=>{runtime.contextLost();runtime.contextRestored()})
@@ -317,7 +316,7 @@ it('preserves the selected progress but resets auto on Restart, and Defaults res
 
 it('preserves automatic mode through a quality preparation but waits for explicit resume',async()=>{
  const {runtime,view}=await mount()
- act(()=>{runtime.start();runtime.setSolarMode('auto')})
+ act(()=>{runtime.start();runtime.setSolarDayProgress(.7);runtime.setSolarMode('auto')})
  fireEvent.click(screen.getByRole('button',{name:'Flight & scenery'}))
  fireEvent.click(screen.getByRole('tab',{name:'Flight'}))
  const progress=runtime.environmentClock.solarDayProgress
