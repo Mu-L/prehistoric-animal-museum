@@ -1757,6 +1757,18 @@ function MuseumApp({
     if (!coordinator) {
       return
     }
+    if (
+      flightSwitchRef.current &&
+      flightSwitchRef.current !== animalId
+    ) {
+      flightSwitchRef.current = null
+      setFlightPreferences(undefined)
+      const url = new URL(window.location.href)
+      url.searchParams.delete('experience')
+      const state = currentHistoryRecord()
+      delete state[FLIGHT_HISTORY_KEY]
+      window.history.replaceState(state, '', url)
+    }
     const snapshot = coordinator.getSnapshot()
     if (
       (snapshot.phase === 'idle' && snapshot.readyAnimalId === animalId) ||
