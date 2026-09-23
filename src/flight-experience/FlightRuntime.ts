@@ -93,9 +93,10 @@ export class FlightRuntime implements ExternalExperience {
     if(this.available && this.initialPreparationPending && this.initialVisualReady){
       this.preparation.mark('preview',performance.now())
       this.initialPreparationPending=false
+      this.preparation.mark('ready',performance.now())
+      this.stopPreparationWatch?.();this.stopPreparationWatch=null
       this.publish({phase:'ready'})
     }
-    if(this.canResume&&!this.preparation.milestones.ready){this.preparation.mark('ready',performance.now());this.stopPreparationWatch?.();this.stopPreparationWatch=null}
     if(this.preparation.milestones.ready!==undefined&&this.preparation.milestones.detail===undefined&&!this.scenery.busy&&this.farTerrain.metrics.pending===0&&this.horizonTerrain.metrics.pending===0&&this.terrain.previewReady)this.preparation.mark('detail',performance.now())
     if (this.available && this.modelAttached) this.viewTransition.completedFrame(canvas, !this.observationPreparing && this.observation.phase !== 'failed' && !this.preparationPending && this.terrain.previewReady)
     if(!this.available || !this.modelAttached || this.preparationPending || this.observationPreparing || !this.terrain.previewReady){if(this.photos.getSnapshot().status==='waiting')this.photos.cancel();return}
@@ -250,7 +251,9 @@ export class FlightRuntime implements ExternalExperience {
   // Resource preparation survives presentation suspension; it never grants travel.
   private preparationPending = false
   private fatalError = false
-  private get available() { return !this.disposed && !this.fatalError && this.contextAvailable && this.visible && this.focused }
+  // A visible page still needs frames to finish its opening scene when the
+  // browser has not given it keyboard focus. Travel resumes only on a gesture.
+  private get available() { return !this.disposed && !this.fatalError && this.contextAvailable && this.visible && (this.focused || this.initialPreparationPending) }
   private invalidate() { if (this.available) this.lease?.invalidate() }
   private syncAvailability() {
     if(this.preparation.setAvailable(performance.now(),this.available) && this.initialPreparationPending && !this.fatalError){this.abort.abort();this.fail(new Error('flight-preparation-timeout'));return}
