@@ -1,8 +1,8 @@
 /** Fixed wavelengths: weather changes amplitudes, never the active phase wavelength. */
 export const OCEAN_WAVES = Object.freeze([
-  { length:137, angle:-.19, amplitude:.8, speed:.57 }, { length:83,angle:.31,amplitude:.43,speed:.71 },
-  { length:41,angle:.06,amplitude:.21,speed:.95 }, { length:23,angle:.52,amplitude:.105,speed:1.17 },
-  { length:9.7,angle:-.39,amplitude:.037,speed:1.61 }, { length:4.3,angle:.23,amplitude:.013,speed:2.14 },
+  { length:137, angle:-.44, amplitude:.56, speed:.57 }, { length:83,angle:.82,amplitude:.37,speed:.71 },
+  { length:41,angle:.12,amplitude:.19,speed:.95 }, { length:23,angle:1.13,amplitude:.095,speed:1.17 },
+  { length:9.7,angle:-.61,amplitude:.04,speed:1.61 }, { length:4.3,angle:.55,amplitude:.016,speed:2.14 },
 ])
 export const wrapPhase = (value:number) => ((value % (Math.PI*2))+Math.PI*2)%(Math.PI*2)
 export function waveComponents(wind:readonly [number,number],origin:{x:number;z:number},time:number) {

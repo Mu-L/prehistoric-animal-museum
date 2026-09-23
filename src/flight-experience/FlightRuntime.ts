@@ -307,6 +307,7 @@ export class FlightRuntime implements ExternalExperience {
     this.scene.fog = new Fog('#b8d0d3', 750, 1650)
     this.root.add(this.pose); this.scene.add(this.root)
     this.scenery = new FlightScenery(this.scene, () => this.invalidate(), (x, z) => this.scenerySurface(x, z), this.world, (x,z)=>this.scenerySurface(x,z))
+    this.scenery.environment.solarLayout = 'sunset-bay'
     this.environmentClock.setSolarDayProgress(solarProgress(this.scenery.preset))
     this.snapshot.solarDayProgress=this.environmentClock.solarDayProgress
     this.snapshot.daylight=this.environmentClock.snapshot(clockPolicy('viewpoint-preparing'))

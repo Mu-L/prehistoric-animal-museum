@@ -33,7 +33,19 @@ vec3 skyColor(vec3 d){
  filtered+=overcast*(exp(-pow(angle/.042,2.))*.55+exp(-pow(angle/.12,2.))*.13);
  float solar=mix(legacy,filtered,photographicSky);
  float transmission=solar>.0001?cloudTransmission(cameraPosition,d):1.;
- return cloudSky(cameraPosition,d,skyGradient(d),skyZenith,sunColor,sunDirection)+sunColor*solar*mix(transmission,.65,overcast);
+ vec3 sky=cloudSky(cameraPosition,d,skyGradient(d),skyZenith,sunColor,sunDirection);
+ // High, faint cloud streaks give clear photographic skies a sense of distance.
+ // Reuse the weather atlas only on sky pixels; its world-space projection stays
+ // continuous when the renderer moves its local origin.
+ if(photographicSky>.5&&cloudDataReady>.5&&cloudCoverage<.55&&d.y>.02){
+  vec2 highPoint=cameraPosition.xz+cloudOrigin+d.xz*((6800.-cameraPosition.y)/max(d.y,.08));
+  vec2 wisp=texture2D(cloudDensityMap,highPoint/32768.).rg;
+  float heightMask=smoothstep(.03,.16,d.y)*(1.-smoothstep(.48,.75,d.y));
+  float amount=smoothstep(.53,.73,wisp.r*.7+wisp.g*.3)*heightMask*(1.-cloudCoverage*.7);
+  vec3 tint=mix(vec3(.68,.78,.88),sunColor*1.08,1.-smoothstep(.10,.38,sunDirection.y));
+  sky=mix(sky,tint,amount*.055);
+ }
+ return sky+sunColor*solar*mix(transmission,.65,overcast);
 }
 vec3 oceanBase(vec3 ray,vec3 n,float shallow){
  vec3 reflected=reflect(ray,n);float fresnel=.02+.98*pow(1.-max(0.,dot(-ray,n)),5.);
@@ -50,7 +62,7 @@ vec3 solarWaveNormal(vec3 surfacePosition,vec3 n){
  vec2 slope=vec2(0.);
  for(int i=0;i<5;i++){
   float fi=float(i),k=6.2831853*(13.+fi*9.)/8192.;
-  vec2 dir=normalize(vec2(.37+fi*.31,1.-fi*.27));
+  vec2 dir=normalize(vec2(.37+fi*.43,1.-fi*.41));
   // Integer wave vectors retain phase across the 8192m origin envelope.
   vec2 wave=floor(dir*k*8192./6.2831853+.5)*6.2831853/8192.;
   // Crossed, slowly advected swell bends the crest lines instead of parallel bands.
@@ -63,7 +75,7 @@ vec3 solarWaveNormal(vec3 surfacePosition,vec3 n){
   vec2 phaseGradient=wave+1.8*cos(a)*warpA+1.2*cos(b)*warpB;
   float footprint=length(vec2(dFdx(phase),dFdy(phase)));
   float resolved=1.-smoothstep(.7,2.5,footprint);
-  slope+=phaseGradient/length(wave)*cos(phase)*(.035+fi*.009)*resolved;
+  slope+=phaseGradient/length(wave)*cos(phase)*(.024+fi*.008)*resolved;
  }
  return normalize(vec3(n.x-slope.x*solarWaveStrength,n.y,n.z-slope.y*solarWaveStrength));
 }
