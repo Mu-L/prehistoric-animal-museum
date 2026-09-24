@@ -318,7 +318,7 @@ async function expectReadableEnglishStoryLayout(
     }
   }
 
-  expect(layout.stageActionButtons).toHaveLength(3)
+  expect(layout.stageActionButtons).toHaveLength(5)
   for (const [index, button] of layout.stageActionButtons.entries()) {
     expectRectInside(
       button,
@@ -330,7 +330,7 @@ async function expectReadableEnglishStoryLayout(
   }
   expect(
     layout.stageActionButtons[1].left - layout.stageActionButtons[0].right,
-    `${viewport.name}: language and reset controls need a visible gap`,
+    `${viewport.name}: language and share controls need a visible gap`,
   ).toBeGreaterThanOrEqual(5.5)
 
   expect(layout.bodyScrollWidth).toBeLessThanOrEqual(viewport.width + 1)
@@ -544,7 +544,7 @@ test('lets Tab and Shift+Tab leave the language menu naturally', async ({
   await expect(menu).toBeVisible()
   await page.keyboard.press('Tab')
   await expect(menu).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Reset the view' })).toBeFocused()
+  await expect(page.getByRole('button', { name: 'Share Stegosaurus' })).toBeFocused()
 
   await trigger.press('ArrowDown')
   await expect(

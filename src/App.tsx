@@ -13,6 +13,7 @@ import {
   Minimize2,
   Pause,
   RotateCcw,
+  Share2,
   Scaling,
   Volume2,
 } from 'lucide-react'
@@ -139,6 +140,8 @@ const DirectScaleEncounter = directScaleEncounterLoader
       return { default: module.DirectScaleEncounter }
     })
   : null
+
+const ShareDialog = lazy(() => import('./components/ShareDialog'))
 
 const FLIGHT_HISTORY_KEY = '__museumFlight'
 
@@ -903,6 +906,7 @@ function MuseumApp({
   const collectionTriggerRef = useRef<HTMLElement>(null)
   const aboutTriggerRef = useRef<HTMLButtonElement>(null)
   const scaleEncounterTriggerRef = useRef<HTMLButtonElement>(null)
+  const shareTriggerRef = useRef<HTMLButtonElement>(null)
   const scaleEncounterPreloadRef = useRef<{
     readonly abort: AbortController
     readonly key: string
@@ -940,6 +944,8 @@ function MuseumApp({
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collectionOpen, setCollectionOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const closeShare = useCallback(() => setShareOpen(false), [])
   const [focusMode, setFocusMode] = useState(false)
   const [flightOpen, setFlightOpen] = useState(false)
   const flightOpenRef = useRef(false)
@@ -1015,7 +1021,7 @@ function MuseumApp({
     })
   }, [animalIndex, initialAnimalId, messages.loading])
   const overlayOpen =
-    drawerOpen || collectionOpen || aboutOpen || scaleEncounterOpen || flightOpen
+    drawerOpen || collectionOpen || aboutOpen || scaleEncounterOpen || flightOpen || shareOpen
   const collectionAnimals = useMemo<CollectionAnimal[]>(
     () =>
       animals.map((animal) => ({
@@ -2503,6 +2509,12 @@ function MuseumApp({
         {!focusMode ? (
           <div aria-hidden={overlayOpen} className="stage-actions" inert={overlayOpen}>
             <LanguageMenu />
+            <IconButton
+              icon={Share2}
+              label={locale === 'zh-CN' ? `分享${activeAnimal.name}` : `Share ${activeAnimal.name}`}
+              onClick={() => setShareOpen(true)}
+              ref={shareTriggerRef}
+            />
             {DIRECT_SCALE_ENCOUNTER_ENABLED &&
             isScaleEncounterAnimal(activeAnimal.id) ? (
               <button
@@ -2825,6 +2837,22 @@ function MuseumApp({
         open={aboutOpen && !focusMode}
         returnFocusTo={aboutTriggerRef}
       />
+      {shareOpen ? (
+        <Suspense fallback={null}>
+          <ShareDialog
+            animal={{
+              id: activeAnimal.id,
+              name: activeAnimal.name,
+              intro: activeAnimal.intro,
+              backgroundPortrait: activeAnimal.assets.backgroundPortrait,
+              posterPortrait: activeAnimal.assets.posterPortrait,
+            }}
+            locale={locale}
+            onClose={closeShare}
+            returnFocusTo={shareTriggerRef}
+          />
+        </Suspense>
+      ) : null}
     </div>
   )
 }

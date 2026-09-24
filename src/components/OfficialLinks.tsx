@@ -34,7 +34,12 @@ export function OfficialLinks({ compact = false }: OfficialLinksProps) {
           </span>
           <ExternalLink aria-hidden="true" size={15} strokeWidth={2} />
         </a>
-        <a href={PERSONAL_SITE_URL} rel="noreferrer" target="_blank">
+        <a
+          href={PERSONAL_SITE_URL}
+          referrerPolicy="origin"
+          rel="noopener"
+          target="_blank"
+        >
           <Home aria-hidden="true" size={18} strokeWidth={2.1} />
           <span>
             <strong>{messages.official.personalSite}</strong>
