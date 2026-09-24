@@ -1,0 +1,277 @@
+.share-dialog-layer {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.share-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: rgb(17 31 27 / 55%);
+  cursor: default;
+  backdrop-filter: blur(7px);
+}
+
+.share-dialog-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(820px, 100%);
+  max-height: min(830px, calc(100dvh - 36px));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 75%);
+  border-radius: 29px;
+  color: #264234;
+  background: #fffdf7;
+  box-shadow: 0 25px 90px rgb(10 28 20 / 38%);
+}
+
+.share-dialog-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 23px 25px 16px;
+  border-bottom: 1px solid rgb(49 81 62 / 10%);
+}
+
+.share-dialog-eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: #748273;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.share-dialog-header h2 {
+  margin: 0;
+  font-size: clamp(1.3rem, 2.5vw, 1.7rem);
+  line-height: 1.25;
+}
+
+.share-dialog-close {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgb(49 81 62 / 12%);
+  border-radius: 13px;
+  color: #31513c;
+  background: #f3f5ed;
+  cursor: pointer;
+}
+
+.share-dialog-close:hover { background: #e9f0e5; }
+
+.share-dialog-scroll {
+  min-height: 0;
+  padding: 20px 25px 25px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.share-dialog-content {
+  display: grid;
+  grid-template-areas: "preview intro" "preview actions" "preview author";
+  grid-template-columns: minmax(0, 245px) minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  gap: 14px 26px;
+}
+
+.share-dialog-preview { grid-area: preview; }
+.share-dialog-intro { grid-area: intro; margin: 2px 0 0; line-height: 1.55; }
+.share-dialog-actions { grid-area: actions; display: grid; min-height: 0; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 9px; }
+
+.share-dialog-art {
+  position: relative;
+  width: min(100%, 245px);
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border-radius: 19px;
+  background: #9eba84;
+  box-shadow: 0 12px 35px rgb(19 39 27 / 22%);
+  isolation: isolate;
+}
+
+.share-dialog-art__background,
+.share-dialog-art__animal {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.share-dialog-art__background { object-fit: cover; }
+.share-dialog-art__animal { object-fit: contain; }
+
+.share-dialog-art__top {
+  position: absolute;
+  top: 5%;
+  left: 7%;
+  padding: 5px 8px;
+  border-radius: 9px;
+  color: #214332;
+  background: rgb(255 252 232 / 87%);
+  font-size: clamp(0.55rem, 1vw, 0.72rem);
+  font-weight: 800;
+}
+
+.share-dialog-art__caption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  gap: 5px;
+  padding: 17% 8% 7%;
+  color: #fffbea;
+  background: linear-gradient(transparent, rgb(16 39 28 / 93%));
+  text-shadow: 0 1px 5px rgb(15 30 17 / 30%);
+}
+
+.share-dialog-art__caption strong { font-size: clamp(1.25rem, 2.7vw, 2rem); line-height: 1.1; }
+.share-dialog-art__caption span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: clamp(0.65rem, 1.2vw, 0.85rem); line-height: 1.35; }
+.share-dialog-art__caption small { font-size: clamp(0.56rem, 1vw, 0.72rem); font-weight: 700; }
+
+.share-dialog-action {
+  display: flex;
+  min-width: 0;
+  min-height: 64px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 13px;
+  border: 1px solid #dfe7dc;
+  border-radius: 17px;
+  color: #263f30;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+.share-dialog-action:hover { border-color: #8eab8f; background: #f4f8f1; }
+.share-dialog-action:focus-visible,
+.share-dialog-close:focus-visible,
+.share-dialog-author a:focus-visible { outline: 3px solid #1e65a4; outline-offset: 3px; }
+
+.share-dialog-action__copy { display: grid; min-width: 0; gap: 3px; flex: 1; }
+.share-dialog-action__copy strong { font-size: 0.9rem; }
+.share-dialog-action__copy small { color: #728274; font-size: 0.73rem; line-height: 1.25; }
+
+.share-dialog-action__mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 11px;
+  color: #fff;
+  background: #24392d;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.share-dialog-action__mark--threads { background: #343638; }
+.share-dialog-action__mark--image { background: #3c755f; }
+.share-dialog-action__mark--link { background: #6a7e55; }
+
+.share-dialog-action--image {
+  padding-block: 6px;
+  border-color: #c6ddcb;
+  background: #f0f7ee;
+}
+
+.share-dialog-action--image:hover { background: #e8f2e6; }
+
+.share-dialog-action__thumbnail {
+  position: relative;
+  width: 34px;
+  height: 58px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #b1c8a0;
+  box-shadow: 0 2px 7px rgb(24 53 34 / 18%);
+}
+
+.share-dialog-action__thumbnail img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.share-dialog-action__thumbnail img:first-child { object-fit: cover; }
+.share-dialog-action__thumbnail img:last-child { object-fit: contain; }
+
+.share-dialog-author {
+  grid-area: author;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px 13px;
+  padding-top: 13px;
+  border-top: 1px solid #e7eae0;
+  color: #69796b;
+  font-size: 0.75rem;
+}
+
+.share-dialog-author__identity { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 7px; }
+.share-dialog-author__label { color: #788678; font-size: 0.68rem; }
+.share-dialog-author__identity strong { color: #2f503b; font-size: 0.82rem; }
+.share-dialog-author__identity small { color: #7d8b7e; font-size: 0.7rem; }
+.share-dialog-author__links { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.share-dialog-author__links a {
+  display: inline-flex;
+  min-height: 29px;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 9px;
+  border: 1px solid #dce7da;
+  border-radius: 9px;
+  color: #3c6247;
+  background: #f7faf5;
+  font-size: 0.71rem;
+  font-weight: 760;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.share-dialog-author__links a:hover { border-color: #9ebba2; background: #eef5eb; }
+.share-dialog-notice { display: flex; align-items: center; gap: 7px; margin: 16px 0 0; color: #356544; font-size: 0.84rem; font-weight: 730; }
+.share-dialog-manual-copy { display: block; width: 100%; margin-top: 9px; padding: 11px 12px; border: 1px solid #c9dac9; border-radius: 12px; color: #294031; background: #f7faf4; font: inherit; font-size: 0.82rem; }
+
+@media (max-width: 700px) {
+  .share-dialog-layer { align-items: flex-end; padding: 8px; }
+  .share-dialog-panel { width: 100%; max-height: calc(100dvh - 16px); border-radius: 22px; }
+  .share-dialog-header { padding: 17px 17px 13px; }
+  .share-dialog-scroll { padding: 15px 17px 18px; }
+  .share-dialog-content { grid-template-areas: "actions" "author"; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; gap: 14px; }
+  .share-dialog-intro,
+  .share-dialog-preview { display: none; }
+  .share-dialog-actions { grid-template-rows: none; grid-auto-rows: minmax(57px, auto); }
+  .share-dialog-action--image { min-height: 76px; }
+  .share-dialog-action { gap: 8px; padding: 9px; }
+  .share-dialog-action__mark { width: 30px; height: 30px; border-radius: 9px; }
+  .share-dialog-action__copy strong { font-size: 0.78rem; }
+  .share-dialog-action__copy small { font-size: 0.67rem; }
+  .share-dialog-author { display: grid; grid-template-columns: 1fr; justify-items: center; gap: 11px; padding: 13px 14px 14px; border: 1px solid #dce9da; border-radius: 16px; background: #f3f7f1; text-align: center; }
+  .share-dialog-author__identity { display: grid; justify-items: center; gap: 1px; }
+  .share-dialog-author__label { font-size: 0.63rem; }
+  .share-dialog-author__identity strong { font-size: 0.96rem; }
+  .share-dialog-author__identity small { font-size: 0.7rem; }
+  .share-dialog-author__links { display: grid; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .share-dialog-author__links a { min-height: 36px; padding: 6px 2px; border-radius: 10px; background: #fff; font-size: 0.73rem; }
+}

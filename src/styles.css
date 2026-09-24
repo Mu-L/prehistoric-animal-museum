@@ -3759,10 +3759,10 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .stage-actions {
-  gap: 0;
-  padding: 3px;
+  gap: 6px;
+  padding: 6px;
   border: 1px solid rgb(255 255 255 / 58%);
-  border-radius: 17px;
+  border-radius: 21px;
   background: rgb(255 253 247 / 72%);
   box-shadow: 0 9px 26px rgb(36 55 33 / 12%);
   backdrop-filter: blur(10px);
@@ -3770,16 +3770,18 @@ html[data-model-preview-capture] .viewer-host::after {
 }
 
 .stage-actions > .language-menu {
-  margin-inline-end: 6px;
+  margin-inline-end: 0;
 }
 
 .stage-actions .icon-button {
   border-color: transparent;
-  border-radius: 13px;
+  border-radius: 16px;
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
 }
+
+.stage-actions .language-menu__trigger { border-radius: 16px; }
 
 .stage-actions .icon-button:hover:not(:disabled) {
   background: rgb(255 255 255 / 76%);
@@ -5718,7 +5720,7 @@ html[data-model-preview-capture] .viewer-host::after {
    move the frame overlays away from that common coordinate system. */
 .museum-experience:not(.museum-experience--focus) .stage-actions {
   top: 0;
-  right: 0;
+  right: max(8px, env(safe-area-inset-right));
 }
 
 .model-composition-frame .stage-loading,
@@ -7379,7 +7381,7 @@ html[data-locale="en"] .collection-card__copy strong {
     height: 48px;
     min-height: 48px;
     padding: 0;
-    border-radius: 14px;
+    border-radius: 16px;
   }
 
   .stage-actions .scale-encounter-entry span {
@@ -7802,4 +7804,3 @@ html[data-locale="en"] .collection-card__copy strong {
     animation: none !important;
   }
 }
-
